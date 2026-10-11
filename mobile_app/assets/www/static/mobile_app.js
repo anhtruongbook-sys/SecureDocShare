@@ -1,5 +1,46 @@
 // mobile_app.js: Động cơ Mật Mã Học Cục Bộ Offline 100% trên Điện Thoại (Web Crypto API)
 
+// ==========================================
+// CHỦ ĐỀ GIAO DIỆN (NỀN TỐI LÀ MẶC ĐỊNH)
+// ==========================================
+function initTheme() {
+    try {
+        const saved = localStorage.getItem('sds_theme') || 'dark';
+        if (saved === 'light') {
+            document.body.classList.remove('dark-mode');
+            document.body.classList.add('light-mode');
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.innerText = '☀️';
+        } else {
+            document.body.classList.remove('light-mode');
+            document.body.classList.add('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.innerText = '🌙';
+        }
+    } catch (_) {}
+}
+
+function toggleTheme() {
+    try {
+        if (document.body.classList.contains('light-mode')) {
+            document.body.classList.remove('light-mode');
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('sds_theme', 'dark');
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.innerText = '🌙';
+        } else {
+            document.body.classList.remove('dark-mode');
+            document.body.classList.add('light-mode');
+            localStorage.setItem('sds_theme', 'light');
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.innerText = '☀️';
+        }
+    } catch (_) {}
+}
+
+document.addEventListener('DOMContentLoaded', initTheme);
+initTheme();
+
 let selectedLockFiles = [];
 let selectedUnlockFile = null;
 let currentProtectionLevel = "open_password";
@@ -457,7 +498,12 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
     const card = document.getElementById('results-lock');
     const list = document.getElementById('results-list-lock');
 
-    const displaySavedPath = savedPath ? `<div style="font-size:11.5px; color:#059669; margin-top:3px; font-weight:600;">✓ Đã lưu vào: ${savedPath}</div>` : '';
+    const displaySavedPath = savedPath ? `
+        <div class="saved-status-box">
+            <div class="saved-status-badge">✅ ĐÃ TỰ ĐỘNG LƯU VÀO MÁY</div>
+            <div class="saved-status-path">${savedPath}</div>
+        </div>
+    ` : '';
 
     list.innerHTML = `
         <div class="result-card-box">
@@ -465,28 +511,28 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                 <div class="result-file-icon" style="background: ${iconBg}; color: ${iconColor};">${fileIcon}</div>
                 <div class="result-file-meta">
                     <div class="result-file-name">${outFileName}</div>
-                    <div class="result-file-sub" style="color: #2563eb; font-weight: 500;">${subDesc}</div>
-                    ${displaySavedPath}
+                    <div class="result-file-sub" style="color: var(--primary); font-weight: 500;">${subDesc}</div>
                 </div>
             </div>
-            <div class="result-actions-grid">
-                <button type="button" class="btn-result-download" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>LƯU LẠI VÀO MÁY</span>
-                </button>
-                <button type="button" class="btn-result-share" onclick="shareNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            ${displaySavedPath}
+            <div class="result-actions-column">
+                <button type="button" class="btn-result-share-primary" onclick="shareNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
                         <circle cx="18" cy="19" r="3"></circle>
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                     </svg>
-                    <span>GỬI QUA ZALO</span>
+                    <span>GỬI QUA ZALO / CHIA SẺ TỆP</span>
+                </button>
+                <button type="button" class="btn-result-extra-copy" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Lưu thêm 1 bản sao khác</span>
                 </button>
             </div>
             <p class="result-note">${noteText}</p>
@@ -685,34 +731,42 @@ async function executeMobileUnlockFile() {
 window.onNativeUnlocked = function(originalName, sizeMb, savedPath, tempPath) {
     const card = document.getElementById('results-unlock');
     const list = document.getElementById('results-list-unlock');
+
+    const displaySavedPath = savedPath ? `
+        <div class="saved-status-box">
+            <div class="saved-status-badge">✅ ĐÃ TỰ ĐỘNG LƯU VÀO MÁY</div>
+            <div class="saved-status-path">${savedPath}</div>
+        </div>
+    ` : '';
+
     list.innerHTML = `
         <div class="result-card-box">
             <div class="result-file-title">
-                <div class="result-file-icon" style="background: #ecfdf5; color: #059669;">🔓</div>
+                <div class="result-file-icon" style="background: var(--success-light); color: var(--success);">🔓</div>
                 <div class="result-file-meta">
                     <div class="result-file-name">${originalName}</div>
-                    <div class="result-file-sub" style="color: #059669; font-weight: 500;">✓ Đã mở khóa thành công (${sizeMb} MB)</div>
-                    <div style="font-size:11.5px; color:#2563eb; margin-top:3px; font-weight:600;">✓ Đã lưu tại: ${savedPath}</div>
+                    <div class="result-file-sub" style="color: var(--success); font-weight: 500;">✓ Đã mở khóa thành công (${sizeMb} MB)</div>
                 </div>
             </div>
-            <div class="result-actions-grid">
-                <button type="button" class="btn-result-download" onclick="reSaveNativePdf('${originalName}', '${tempPath.replace(/\\/g, '\\\\')}')">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>LƯU LẠI VÀO MÁY</span>
-                </button>
-                <button type="button" class="btn-result-share" onclick="shareNativePdf('${originalName}', '${tempPath.replace(/\\/g, '\\\\')}')">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            ${displaySavedPath}
+            <div class="result-actions-column">
+                <button type="button" class="btn-result-share-primary" onclick="shareNativePdf('${originalName}', '${tempPath.replace(/\\/g, '\\\\')}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
                         <circle cx="18" cy="19" r="3"></circle>
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                     </svg>
-                    <span>GỬI QUA ZALO</span>
+                    <span>GỬI QUA ZALO / CHIA SẺ TỆP</span>
+                </button>
+                <button type="button" class="btn-result-extra-copy" onclick="reSaveNativePdf('${originalName}', '${tempPath.replace(/\\/g, '\\\\')}')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Lưu thêm 1 bản sao khác</span>
                 </button>
             </div>
         </div>

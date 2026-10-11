@@ -340,7 +340,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
   void _initController() async {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFFF8FAFC))
+      ..setBackgroundColor(const Color(0xFF0B0F19))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -461,17 +461,17 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                         Expanded(
                           child: Text(
                             '✓ Đã mã hóa $typeDesc thành công:\n$outFileName',
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF0F172A)),
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFFF8FAFC)),
                           ),
                         ),
                       ],
                     ),
-                    backgroundColor: const Color(0xFFFFFFFF),
+                    backgroundColor: const Color(0xFF131B2E),
                     behavior: SnackBarBehavior.floating,
                     margin: const EdgeInsets.all(14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                      side: const BorderSide(color: Color(0xFF232F48), width: 1),
                     ),
                     duration: const Duration(seconds: 4),
                   ),

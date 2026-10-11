@@ -62,15 +62,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.18
-          name: "SecureDocShare v1.0.18 (Android APK)"
+          tag_name: v1.0.19
+          name: "SecureDocShare v1.0.19 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.18)
-            - **Mã Hóa Microsoft Office Native 100% ([MS-OFFCRYPTO] Agile Encryption)**: Khóa các tệp Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`) theo chuẩn gốc của Microsoft Office. Khi người nhận mở bằng **Microsoft Word, Excel, PowerPoint hoặc WPS Office** trên điện thoại/máy tính, ứng dụng sẽ **tự động bật hộp thoại nhập mật khẩu để mở xem tài liệu**, hoàn toàn không bị lỗi unreadable content!
-            - **Mã Hóa Adobe PDF Native 100% (ISO 32000)**: Tệp PDF xuất ra `Cvt_Locked.pdf` mở trực tiếp bằng mật khẩu trên bất kỳ trình đọc PDF nào.
-            - **Hỗ Trợ Mở Khóa Hai Chiều**: Tích hợp giải mã Office Native ngay trong tab MỞ KHÓA của ứng dụng.
-            - **Thiết Kế Lại Giao Diện Toàn Diện (Sáng Màu, Hiện Đại, Tối Giản)**: Chuyển hoàn toàn sang phong cách Minimalist White sạch sẽ, nền sáng dịu mắt, các nút bấm nhỏ gọn, tinh tế và thanh lịch (phong cách Apple / Linear / Notion).
-            - **Động Cơ Native Streaming iTextG & Apache POI (0 RAM Overhead)**: Xử lý tệp lớn mượt mà chỉ trong vài giây.
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.19)
+            - **Giao Diện Nền Tối Hiện Đại (Dark Mode Mặc Định)**: Nền Obsidian Dark `#0b0f19` kết hợp thẻ Slate Navy `#131b2e` chống mỏi mắt và tiết kiệm pin tối đa cho màn hình OLED. Bổ sung nút chuyển đổi Sáng / Tối tiện lợi trên thanh tiêu đề.
+            - **Khắc Phục Nhầm Lẫn Nút Bấm Lưu Tệp**: Bổ sung hộp thông báo trạng thái rõ ràng `✅ ĐÃ TỰ ĐỘNG LƯU VÀO MÁY`. Chuyển nút hành động chính thành `🚀 GỬI QUA ZALO / CHIA SẺ TỆP` và nút phụ `💾 Lưu thêm 1 bản sao khác`, chấm dứt hoàn toàn tình trạng bấm nhầm lưu trùng lặp 2 lần.
+            - **Mã Hóa Microsoft Office Native 100% (ECMA-376 Standard Encryption)**: Khóa file Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`) chuẩn gốc Microsoft Office, mở trực tiếp trên điện thoại bằng Microsoft Word/Excel hoặc WPS Office với hộp thoại hỏi mật khẩu bản quyền.
+            - **Mã Hóa Adobe PDF Native (ISO 32000)**: Mở bằng mọi trình đọc PDF trên toàn cầu.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: build-output/SecureDocShare.apk
           draft: false
