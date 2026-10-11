@@ -19,9 +19,9 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF090D16),
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xFFF8FAFC),
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
   runApp(const SecureDocApp());
@@ -36,12 +36,12 @@ class SecureDocApp extends StatelessWidget {
       title: 'SecureDocShare',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF090D16),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF3B82F6),
-          secondary: Color(0xFF10B981),
-          surface: Color(0xFF111827),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF2563EB),
+          secondary: Color(0xFF059669),
+          surface: Color(0xFFFFFFFF),
         ),
       ),
       home: const SecureDocWebViewScreen(),
@@ -340,7 +340,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
   void _initController() async {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF090D16))
+      ..setBackgroundColor(const Color(0xFFF8FAFC))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -391,7 +391,10 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
 
               final isPdf = fileName.toLowerCase().endsWith('.pdf');
               final baseName = fileName.replaceAll(RegExp(r'\.[^/.]+$'), '');
-              final outFileName = isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf';
+              final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
+              final outFileName = isPdf 
+                  ? (isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf')
+                  : '${baseName}_Locked$ext';
 
               final tempDir = await getTemporaryDirectory();
               final outTempPath = '${tempDir.path}/$outFileName';
@@ -424,7 +427,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                   await compute(_runAdobePdfLockIsolate, adobeJob);
                 }
               } else {
-                // TỆP KHÁC: MÃ HÓA STREAM CIPHER SIÊU TỐC
+                // TỆP KHÁC (WORD, EXCEL, PPT, CAD, ZIP...): MÃ HÓA STREAM CIPHER SIÊU TỐC
                 final streamJob = _StreamLockJob(
                   srcPath: srcPath,
                   outTempPath: outTempPath,
@@ -437,30 +440,31 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
 
               final savedFullPath = await _saveToDownloadsFolder(outTempPath, outFileName);
               final displaySaved = savedFullPath ?? 'Thư mục Downloads của máy';
+              final typeDesc = isPdf ? 'Adobe PDF Native' : 'Bảo Mật AES-256';
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 24),
-                        const SizedBox(width: 12),
+                        const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 22),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            '✓ Đã mã hóa Adobe PDF Native thành công:\n$outFileName',
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+                            '✓ Đã mã hóa $typeDesc thành công:\n$outFileName',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF0F172A)),
                           ),
                         ),
                       ],
                     ),
-                    backgroundColor: const Color(0xFF1E293B),
+                    backgroundColor: const Color(0xFFFFFFFF),
                     behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.all(14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                      borderRadius: BorderRadius.circular(10),
+                      side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
                     ),
-                    duration: const Duration(seconds: 5),
+                    duration: const Duration(seconds: 4),
                   ),
                 );
               }
@@ -468,7 +472,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               final escName = outFileName.replaceAll("'", r"\'");
               final escTemp = outTempPath.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
               final escSaved = displaySaved.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
-              await _controller.runJavaScript("if (window.onNativePdfLocked) { window.onNativePdfLocked('$escName', '$escTemp', '$escSaved'); }");
+              await _controller.runJavaScript("if (window.onNativePdfLocked) { window.onNativePdfLocked('$escName', '$escTemp', '$escSaved', $isPdf); }");
               return;
             }
 

@@ -62,14 +62,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.15
-          name: "SecureDocShare v1.0.15 (Android APK)"
+          tag_name: v1.0.16
+          name: "SecureDocShare v1.0.16 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.15)
-            - **Động Cơ Native Streaming iTextG Trực Tiếp Trên Ổ Đĩa (0 RAM Overhead)**: Khắc phục triệt để lỗi "Out of Memory" trên các tệp bản vẽ khổng lồ (355 MB+). Xử lý trực tiếp từ đĩa với bộ đệm nhỏ vài KB, tốc độ cực nhanh chỉ trong 2-4 giây!
-            - **Mã Hóa Adobe PDF Native 100% (Mở Trực Tiếp Bằng Mật Khẩu)**: Tệp xuất ra `Cvt_Locked.pdf` chứa toàn bộ 100% nội dung bản vẽ gốc. Mở bằng bất kỳ trình đọc PDF nào (Adobe Acrobat, Foxit, WPS, Samsung PDF, Xiaomi PDF) đều tự động bật hộp thoại native yêu cầu nhập mật khẩu để xem toàn bộ tài liệu!
-            - **Hỗ Trợ Mở Khóa Hai Chiều (Native Decrypt)**: Hỗ trợ mở khóa trực tiếp tệp PDF bảo mật ngay trong app hoặc qua bất kỳ trình đọc PDF nào.
-            - **Sạch Mã Cảnh Báo Play Protect**: Ký số v1 + v2 chuẩn mực, tối ưu hóa toàn diện.
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.16)
+            - **Thiết Kế Lại Giao Diện Toàn Diện (Sáng Màu, Hiện Đại, Tối Giản)**: Chuyển hoàn toàn sang phong cách Minimalist White sạch sẽ, nền sáng dịu mắt, các nút bấm nhỏ gọn, tinh tế và thanh lịch (phong cách Apple / Linear / Notion).
+            - **Khắc Phục Triệt Để Lỗi File Office Bị Đổi Thành PDF**: Giữ nguyên vẹn 100% phần mở rộng gốc của các tệp Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`), CAD (`.dwg`), ZIP (`.zip`). Không còn tình trạng tệp Office bị ép đuôi `.pdf` gây lỗi.
+            - **Mã Hóa Adobe PDF Native 100% (ISO 32000)**: Tệp PDF xuất ra `Cvt_Locked.pdf` mở trực tiếp bằng mật khẩu trên bất kỳ trình đọc PDF nào.
+            - **Động Cơ Native Streaming iTextG (0 RAM Overhead)**: Xử lý tệp khổng lồ 355 MB+ chỉ trong 2-4 giây, không bị tràn bộ nhớ.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: build-output/SecureDocShare.apk
           draft: false

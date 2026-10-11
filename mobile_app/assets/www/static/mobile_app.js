@@ -404,32 +404,68 @@ function renderMobileResults(results) {
     card.scrollIntoView({ behavior: 'smooth' });
 }
 
-window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath) {
+window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf) {
     hideProcessingModal();
+    if (isPdf === undefined) {
+        isPdf = outFileName.toLowerCase().endsWith('.pdf');
+    }
 
     const isViewOnly = (currentProtectionLevel === "view_only_restricted");
-    const subDesc = isViewOnly 
-        ? "✓ Tệp PDF Native • Mở xem tự do, CẤM IN, CẤM COPY (Chuẩn Adobe R6)"
-        : "✓ Tệp PDF Native Khóa Chặt • Nhập Mật Khẩu để Mở (Chuẩn Adobe R6)";
+    let subDesc = "";
+    let noteText = "";
+    let fileIcon = "📄";
+    let iconBg = "#eff6ff";
+    let iconColor = "#2563eb";
+
+    if (isPdf) {
+        fileIcon = "📄";
+        iconBg = "#eff6ff";
+        iconColor = "#2563eb";
+        subDesc = isViewOnly 
+            ? "✓ Tệp PDF Native • Mở xem tự do, CẤM IN, CẤM COPY"
+            : "✓ Tệp PDF Native Chuẩn Adobe • Nhập Pass để Mở";
+        noteText = `💡 Tệp <strong>${outFileName}</strong> đã được bảo vệ mật khẩu chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Foxit Reader, WPS Office, Samsung PDF hoặc Xiaomi Reader</strong> sẽ tự động yêu cầu nhập đúng mật khẩu để xem toàn bộ nội dung tệp!`;
+    } else {
+        const ext = outFileName.split('.').pop().toLowerCase();
+        if (ext === 'docx' || ext === 'doc') {
+            fileIcon = "📝";
+            iconBg = "#eff6ff";
+            iconColor = "#1d4ed8";
+        } else if (ext === 'xlsx' || ext === 'xls') {
+            fileIcon = "📊";
+            iconBg = "#ecfdf5";
+            iconColor = "#059669";
+        } else if (ext === 'pptx' || ext === 'ppt') {
+            fileIcon = "📽️";
+            iconBg = "#fff7ed";
+            iconColor = "#ea580c";
+        } else {
+            fileIcon = "📦";
+            iconBg = "#f1f5f9";
+            iconColor = "#475569";
+        }
+        subDesc = `✓ Tệp ${ext.toUpperCase()} Bảo Mật Cấp Quân Sự (AES-256)`;
+        noteText = `💡 Tệp <strong>${outFileName}</strong> đã được mã hóa bảo mật toàn vẹn. Để giải mã và mở xem bằng ứng dụng Word/Excel trên máy, vui lòng sử dụng tab <strong>MỞ KHÓA</strong> trên ứng dụng SecureDocShare!`;
+    }
 
     const card = document.getElementById('results-lock');
     const list = document.getElementById('results-list-lock');
 
-    const displaySavedPath = savedPath ? `<div style="font-size:12px; color:#34d399; margin-top:4px; font-weight:600;">✓ Đã tự động lưu vào máy: ${savedPath}</div>` : '';
+    const displaySavedPath = savedPath ? `<div style="font-size:11.5px; color:#059669; margin-top:3px; font-weight:600;">✓ Đã lưu vào: ${savedPath}</div>` : '';
 
     list.innerHTML = `
         <div class="result-card-box">
             <div class="result-file-title">
-                <div class="result-file-icon" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #f87171;">📄</div>
+                <div class="result-file-icon" style="background: ${iconBg}; color: ${iconColor};">${fileIcon}</div>
                 <div class="result-file-meta">
                     <div class="result-file-name">${outFileName}</div>
-                    <div class="result-file-sub" style="color: #60a5fa;">${subDesc}</div>
+                    <div class="result-file-sub" style="color: #2563eb; font-weight: 500;">${subDesc}</div>
                     ${displaySavedPath}
                 </div>
             </div>
             <div class="result-actions-grid">
                 <button type="button" class="btn-result-download" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -437,17 +473,17 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath) {
                     <span>LƯU LẠI VÀO MÁY</span>
                 </button>
                 <button type="button" class="btn-result-share" onclick="shareNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
                         <circle cx="18" cy="19" r="3"></circle>
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                     </svg>
-                    <span>GỬI FILE QUA ZALO</span>
+                    <span>GỬI QUA ZALO</span>
                 </button>
             </div>
-            <p class="result-note">💡 Tệp <strong>${outFileName}</strong> đã được bảo vệ mật khẩu chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Foxit Reader, WPS Office, hoặc Trình đọc PDF mặc định của điện thoại</strong> sẽ tự động yêu cầu nhập đúng mật khẩu để mở xem toàn bộ nội dung tệp gốc!</p>
+            <p class="result-note">${noteText}</p>
         </div>
     `;
 
@@ -473,7 +509,7 @@ function showErrorBanner(msg) {
     if (!banner) {
         banner = document.createElement('div');
         banner.id = 'error-banner-box';
-        banner.style.cssText = "background: rgba(239, 68, 68, 0.12); border: 1.5px solid #ef4444; border-radius: 14px; padding: 16px 18px; margin: 16px 0; color: #fca5a5; font-size: 13.5px; line-height: 1.5; box-shadow: 0 10px 25px rgba(0,0,0,0.5);";
+        banner.style.cssText = "background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 12px 14px; margin: 12px 0; color: #991b1b; font-size: 12.5px; line-height: 1.45; box-shadow: var(--shadow-sm);";
         const dropzone = document.getElementById('dropzone-lock');
         if (dropzone && dropzone.parentNode) {
             dropzone.parentNode.insertBefore(banner, dropzone.nextSibling);
@@ -482,13 +518,13 @@ function showErrorBanner(msg) {
         }
     }
     banner.innerHTML = `
-        <div style="display:flex; align-items:flex-start; gap:12px;">
-            <span style="font-size:22px; line-height:1;">⚠️</span>
+        <div style="display:flex; align-items:flex-start; gap:8px;">
+            <span style="font-size:16px; line-height:1; color:#dc2626;">⚠️</span>
             <div style="flex:1;">
-                <strong style="color:#fff; font-size:14px; display:block; margin-bottom:4px;">Thông Báo Xử Lý:</strong>
+                <strong style="color:#7f1d1d; font-size:12.5px; display:block; margin-bottom:2px;">Thông Báo:</strong>
                 <div>${msg}</div>
             </div>
-            <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none; border:none; color:#fca5a5; font-size:18px; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+            <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none; border:none; color:#b91c1c; font-size:16px; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
         </div>
     `;
     banner.style.display = 'block';
@@ -646,16 +682,16 @@ window.onNativeUnlocked = function(originalName, sizeMb, savedPath, tempPath) {
     list.innerHTML = `
         <div class="result-card-box">
             <div class="result-file-title">
-                <div class="result-file-icon" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #34d399;">🔓</div>
+                <div class="result-file-icon" style="background: #ecfdf5; color: #059669;">🔓</div>
                 <div class="result-file-meta">
                     <div class="result-file-name">${originalName}</div>
-                    <div class="result-file-sub" style="color: #34d399;">✓ Đã giải mã thành công (${sizeMb} MB)</div>
-                    <div style="font-size:12px; color:#60a5fa; margin-top:4px;">✓ Tệp gốc đã lưu tại: ${savedPath}</div>
+                    <div class="result-file-sub" style="color: #059669; font-weight: 500;">✓ Đã mở khóa thành công (${sizeMb} MB)</div>
+                    <div style="font-size:11.5px; color:#2563eb; margin-top:3px; font-weight:600;">✓ Đã lưu tại: ${savedPath}</div>
                 </div>
             </div>
             <div class="result-actions-grid">
                 <button type="button" class="btn-result-download" onclick="reSaveNativePdf('${originalName}', '${tempPath.replace(/\\/g, '\\\\')}')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -663,7 +699,7 @@ window.onNativeUnlocked = function(originalName, sizeMb, savedPath, tempPath) {
                     <span>LƯU LẠI VÀO MÁY</span>
                 </button>
                 <button type="button" class="btn-result-share" onclick="shareNativePdf('${originalName}', '${tempPath.replace(/\\/g, '\\\\')}')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
                         <circle cx="18" cy="19" r="3"></circle>
