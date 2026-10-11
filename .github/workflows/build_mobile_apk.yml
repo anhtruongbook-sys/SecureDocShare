@@ -62,13 +62,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.13
-          name: "SecureDocShare v1.0.13 (Android APK)"
+          tag_name: v1.0.14
+          name: "SecureDocShare v1.0.14 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.13)
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.14)
+            - **Loại Bỏ Hoàn Toàn Cảnh Báo Play Protect**: Tối ưu hóa sạch sẽ `AndroidManifest.xml`, loại bỏ các quyền nhạy cảm thừa (`WRITE_EXTERNAL_STORAGE`, `requestLegacyExternalStorage`, `usesCleartextTraffic`), ký số bảo mật chuẩn v1 + v2.
             - **Mã Hóa Adobe PDF Native 100% (Mở Trực Tiếp Bằng Mật Khẩu)**: Tệp xuất ra `Cvt_Locked.pdf` chứa toàn bộ 100% nội dung bản vẽ gốc. Mở bằng bất kỳ trình đọc PDF nào (Adobe Acrobat, Foxit, WPS, Samsung PDF, Xiaomi PDF) đều tự động bật hộp thoại native yêu cầu nhập mật khẩu để xem toàn bộ tài liệu!
-            - **Thuật Toán Siêu Tốc RC4-128Bit ISO 32000**: Tăng tốc độ mã hóa gấp 30 lần so với AES-256 trên điện thoại, xử lý file lớn 355 MB mượt mà trong ~25-35 giây thay vì bị nghẽn 11 phút.
-            - **Không Có Trang Bìa Trung Gian**: Loại bỏ hoàn toàn trang bìa hướng dẫn, trả về đúng tệp PDF gốc được khóa bảo mật trực tiếp.
+            - **Thuật Toán Siêu Tốc RC4-128Bit ISO 32000**: Tăng tốc độ mã hóa gấp 30 lần so với AES-256 trên điện thoại, xử lý file lớn 355 MB mượt mà trong ~25-35 giây.
             - **Tự Động Lưu Trực Tiếp Vào Máy (Downloads)**: Lưu thẳng vào thư mục `Download` của máy Android.
             - **Khóa Chữ Ký Số Cố Định (Fixed Release Keystore)**: Cài đặt đè mượt mà từ các bản trước.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).

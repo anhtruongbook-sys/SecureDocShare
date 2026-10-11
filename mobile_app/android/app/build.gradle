@@ -55,6 +55,8 @@ android {
             keyPassword 'SecureDocPass2026'
             storeFile file('upload-keystore.jks')
             storePassword 'SecureDocPass2026'
+            v1SigningEnabled true
+            v2SigningEnabled true
         }
     }
 
