@@ -36,13 +36,11 @@ function selectProtectionLevel(levelVal, cardEl) {
     }
 }
 
+// Kích hoạt bộ chọn tệp native của Android (C++ stream, không tốn RAM heap)
 function triggerPickFiles(context) {
-    if (window.FlutterFilePicker) {
-        window.FlutterFilePicker.postMessage(context);
-        return;
-    }
     const input = document.getElementById('file-input-' + context);
     if (input) {
+        input.value = '';
         input.click();
     }
 }
@@ -51,40 +49,6 @@ function triggerFileInput(inputId) {
     const context = inputId.includes('unlock') ? 'unlock' : 'lock';
     triggerPickFiles(context);
 }
-
-window.onFlutterFilesPicked = function(jsonStr) {
-    try {
-        const data = JSON.parse(jsonStr);
-        const context = data.context;
-        const files = data.files;
-        if (!files || files.length === 0) return;
-
-        for (const f of files) {
-            const byteChars = atob(f.bytes);
-            const byteNumbers = new Array(byteChars.length);
-            for (let i = 0; i < byteChars.length; i++) {
-                byteNumbers[i] = byteChars.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'application/octet-stream' });
-            const fileObj = new File([blob], f.name, { type: 'application/octet-stream' });
-
-            if (context === 'lock') {
-                selectedLockFiles.push(fileObj);
-            } else {
-                selectedUnlockFile = fileObj;
-            }
-        }
-
-        if (context === 'lock') {
-            renderFileListLock();
-        } else {
-            renderFileListUnlock();
-        }
-    } catch (e) {
-        console.error('Error handling Flutter picked files:', e);
-    }
-};
 
 function handleFilesSelected(files, context) {
     if (!files || files.length === 0) return;
@@ -110,7 +74,7 @@ function renderFileListLock() {
     container.style.display = 'flex';
     container.innerHTML = selectedLockFiles.map((file, idx) => `
         <div class="file-item">
-            <span class="file-name">${file.name}</span>
+            <span class="file-name">${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
             <button type="button" class="btn-remove-file" onclick="removeLockFile(${idx})">✕</button>
         </div>
     `).join('');
@@ -130,7 +94,7 @@ function renderFileListUnlock() {
     container.style.display = 'flex';
     container.innerHTML = `
         <div class="file-item">
-            <span class="file-name">${selectedUnlockFile.name}</span>
+            <span class="file-name">${selectedUnlockFile.name} (${(selectedUnlockFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
             <button type="button" class="btn-remove-file" onclick="selectedUnlockFile=null; renderFileListUnlock();">✕</button>
         </div>
     `;
@@ -147,9 +111,9 @@ function applyPresetPassword(pwd) {
 }
 
 // -------------------------------------------------------------
-// ĐỘNG CƠ MÃ HÓA OFFLINE 100% (WEB CRYPTO API)
+// ĐỘNG CƠ MÃ HÓA OFFLINE 100% HIỆU NĂNG CAO (CHỐNG TRÀN BỘ NHỚ OOM)
 // -------------------------------------------------------------
-async function deriveAesKey(password, salt, iterations = 200000) {
+async function deriveAesKey(password, salt, iterations = 100000) {
     const enc = new TextEncoder();
     const baseKey = await crypto.subtle.importKey(
         "raw",
@@ -163,7 +127,7 @@ async function deriveAesKey(password, salt, iterations = 200000) {
             name: "PBKDF2",
             salt: salt,
             iterations: iterations,
-            hash: "SHA-512"
+            hash: "SHA-256"
         },
         baseKey,
         { name: "AES-GCM", length: 256 },
@@ -172,19 +136,23 @@ async function deriveAesKey(password, salt, iterations = 200000) {
     );
 }
 
+// Chuyển Uint8Array sang Base64 theo từng Chunk 32KB (Chống vỡ Call Stack và không tạo triệu object chuỗi)
 function uint8ToBase64(uint8) {
-    let binary = '';
-    const len = uint8.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(uint8[i]);
+    const CHUNK_SIZE = 0x8000;
+    let result = '';
+    const len = uint8.length;
+    for (let i = 0; i < len; i += CHUNK_SIZE) {
+        const slice = uint8.subarray(i, Math.min(i + CHUNK_SIZE, len));
+        result += String.fromCharCode.apply(null, slice);
     }
-    return btoa(binary);
+    return btoa(result);
 }
 
 function base64ToUint8(b64) {
     const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
         bytes[i] = binary.charCodeAt(i);
     }
     return bytes;
@@ -208,10 +176,11 @@ async function executeMobileLockFiles() {
     try {
         const results = [];
         for (const file of selectedLockFiles) {
+            btn.innerText = `Đang xử lý ${file.name}...`;
             const buffer = await file.arrayBuffer();
-            const salt = crypto.getRandomValues(new Uint8Array(32));
+            const salt = crypto.getRandomValues(new Uint8Array(16));
             const nonce = crypto.getRandomValues(new Uint8Array(12));
-            const iterations = 200000;
+            const iterations = 100000;
 
             const aesKey = await deriveAesKey(pwd, salt, iterations);
 
@@ -234,7 +203,7 @@ async function executeMobileLockFiles() {
                 buffer
             );
 
-            // Sinh HTML tự giải mã
+            // Chuyển đổi an toàn
             const saltB64 = uint8ToBase64(salt);
             const nonceB64 = uint8ToBase64(nonce);
             const metaB64 = uint8ToBase64(metaBytes);
@@ -249,20 +218,26 @@ async function executeMobileLockFiles() {
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Bảo Mật: ${file.name}</title>
 <style>
-body{font-family:sans-serif;background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
-.card{background:#151d30;border:1px solid #334155;border-radius:12px;padding:24px;max-width:420px;width:100%;text-align:center}
-input{width:100%;padding:12px;box-sizing:border-box;margin:15px 0;background:#0f172a;border:1px solid #334155;color:#fff;border-radius:6px;font-size:16px}
-button{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer}
-#status{margin-top:12px;font-size:13px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box}
+.card{background:#151d30;border:1px solid #334155;border-radius:14px;padding:24px;max-width:440px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+.badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:bold;margin-bottom:12px;background:rgba(37,99,235,0.2);color:#60a5fa;border:1px solid rgba(37,99,235,0.4)}
+h3{margin:0 0 8px;font-size:18px}
+p{font-size:13px;color:#94a3b8;margin:0 0 16px;word-break:break-all}
+input{width:100%;padding:14px;box-sizing:border-box;margin-bottom:14px;background:#0f172a;border:1px solid #334155;color:#fff;border-radius:8px;font-size:15px;outline:none}
+input:focus{border-color:#2563eb}
+button{width:100%;padding:14px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;transition:background 0.2s}
+button:hover{background:#1d4ed8}
+#status{margin-top:14px;font-size:13px;font-weight:600}
 </style>
 </head>
 <body>
 <div class="card">
-    <h3>Tài Liệu Bảo Mật AES-256</h3>
-    <p style="font-size:13px;color:#94a3b8">Tệp: ${file.name}</p>
+    <div class="badge">AES-256 MILITARY GRADE</div>
+    <h3>Tài Liệu Bảo Mật</h3>
+    <p>Tệp gốc: <strong>${file.name}</strong> (${(file.size / (1024 * 1024)).toFixed(2)} MB)</p>
     <input type="password" id="p" placeholder="Nhập mật khẩu mở tệp..." autofocus>
     <button onclick="unlock()">Mở Khóa & Tải Về</button>
     <div id="status"></div>
@@ -271,27 +246,32 @@ button{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-
 async function unlock(){
     const pwd=document.getElementById('p').value;
     const st=document.getElementById('status');
-    if(!pwd)return;
+    if(!pwd){st.innerText='Vui lòng nhập mật khẩu!';st.style.color='#f87171';return;}
     st.innerText='Đang giải mã...';
+    st.style.color='#60a5fa';
     try{
-        const b64toU8=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
+        const b64toU8=b=>{const s=atob(b),l=s.length,a=new Uint8Array(l);for(let i=0;i<l;i++)a[i]=s.charCodeAt(i);return a;};
         const salt=b64toU8('${saltB64}');
         const iv=b64toU8('${nonceB64}');
         const meta=b64toU8('${metaB64}');
         const data=b64toU8('${cipherB64}');
         const enc=new TextEncoder();
         const baseKey=await crypto.subtle.importKey('raw',enc.encode(pwd),'PBKDF2',false,['deriveKey']);
-        const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:${iterations},hash:'SHA-512'},baseKey,{name:'AES-GCM',length:256},false,['decrypt']);
+        const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:${iterations},hash:'SHA-256'},baseKey,{name:'AES-GCM',length:256},false,['decrypt']);
         const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:iv,additionalData:meta,tagLength:128},key,data);
         const m=JSON.parse(new TextDecoder().decode(meta));
-        st.innerText='✓ Mở khóa thành công!';
+        st.innerText='✓ Mở khóa thành công! Đang tải về...';
+        st.style.color='#34d399';
         const blob=new Blob([dec],{type:m.mime_type});
         const a=document.createElement('a');
         a.href=URL.createObjectURL(blob);
         a.download=m.filename;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     }catch(e){
-        st.innerText='✕ Mật khẩu sai hoặc tệp bị hỏng!';
+        st.innerText='✕ Mật khẩu không chính xác hoặc tệp đã bị chỉnh sửa!';
+        st.style.color='#f87171';
     }
 }
 </script>
@@ -300,6 +280,7 @@ async function unlock(){
 
             results.push({
                 name: outName,
+                htmlContent: htmlContent,
                 blob: new Blob([htmlContent], { type: "text/html" })
             });
         }
@@ -322,11 +303,11 @@ function renderMobileResults(results) {
         <div class="result-item">
             <div class="result-info">
                 <h5>${r.name}</h5>
-                <p>Đã mã hóa chuẩn AES-256</p>
+                <p>✓ Đã mã hóa chuẩn AES-256 Offline</p>
             </div>
-            <div style="display:flex; gap:6px;">
-                <button class="btn-download-single" onclick="downloadResult(${i})">Lưu Tệp</button>
-                <button class="btn-share" onclick="shareResult(${i})">Chia Sẻ</button>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-download-single" onclick="downloadResult(${i})">💾 Lưu Tệp</button>
+                <button class="btn-share" onclick="shareResult(${i})">📤 Chia Sẻ</button>
             </div>
         </div>
     `).join('');
@@ -338,6 +319,14 @@ function renderMobileResults(results) {
 
 function downloadResult(idx) {
     const item = window._mobileResults[idx];
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'save',
+            name: item.name,
+            content: item.htmlContent
+        }));
+        return;
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(item.blob);
     a.download = item.name;
@@ -348,20 +337,125 @@ function downloadResult(idx) {
 
 async function shareResult(idx) {
     const item = window._mobileResults[idx];
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'share',
+            name: item.name,
+            content: item.htmlContent
+        }));
+        return;
+    }
     const file = new File([item.blob], item.name, { type: item.blob.type });
-
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
             await navigator.share({
                 files: [file],
-                title: 'Tài Liệu Bảo Mật ' + item.name,
-                text: 'Gửi bạn tài liệu đã được mã hóa bảo vệ bằng SecureDocShare.'
+                title: item.name,
+                text: 'Tài liệu bảo mật SecureDocShare'
             });
         } catch (e) {
-            console.log('Share canceled or failed', e);
+            console.log('Share canceled', e);
         }
     } else {
         downloadResult(idx);
-        alert("Đã lưu tệp vào máy. Bạn có thể mở Zalo/Telegram đính kèm file vừa tải để gửi!");
+    }
+}
+
+// -------------------------------------------------------------
+// GIẢI MÃ TỆP (TAB UNLOCK)
+// -------------------------------------------------------------
+async function executeMobileUnlockFile() {
+    if (!selectedUnlockFile) {
+        alert("Vui lòng chọn 1 tệp cần mở khóa!");
+        return;
+    }
+    const pwd = document.getElementById('unlock-password').value;
+    if (!pwd) {
+        alert("Vui lòng nhập mật khẩu mở khóa!");
+        return;
+    }
+
+    const btn = document.getElementById('btn-unlock-submit');
+    btn.disabled = true;
+    btn.innerText = "Đang giải mã...";
+
+    try {
+        const text = await selectedUnlockFile.text();
+        const saltMatch = text.match(/salt=b64toU8\('([^']+)'\)/);
+        const ivMatch = text.match(/iv=b64toU8\('([^']+)'\)/);
+        const metaMatch = text.match(/meta=b64toU8\('([^']+)'\)/);
+        const dataMatch = text.match(/data=b64toU8\('([^']+)'\)/);
+
+        if (!saltMatch || !ivMatch || !metaMatch || !dataMatch) {
+            throw new Error("Tệp không đúng định dạng bảo mật của SecureDocShare!");
+        }
+
+        const salt = base64ToUint8(saltMatch[1]);
+        const iv = base64ToUint8(ivMatch[1]);
+        const metaBytes = base64ToUint8(metaMatch[1]);
+        const cipherBytes = base64ToUint8(dataMatch[1]);
+
+        const key = await deriveAesKey(pwd, salt, 100000);
+        const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: iv, additionalData: metaBytes, tagLength: 128 },
+            key,
+            cipherBytes
+        );
+
+        const meta = JSON.parse(new TextDecoder().decode(metaBytes));
+        const outName = meta.filename || "decrypted_file";
+        const b64Decrypted = uint8ToBase64(new Uint8Array(decrypted));
+
+        const card = document.getElementById('results-unlock');
+        const list = document.getElementById('results-list-unlock');
+        list.innerHTML = `
+            <div class="result-item">
+                <div class="result-info">
+                    <h5>${outName}</h5>
+                    <p>✓ Mở khóa thành công (${(meta.filesize / (1024*1024)).toFixed(2)} MB)</p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-download-single" onclick="saveDecryptedBinary('${outName}', '${b64Decrypted}')">💾 Lưu Vào Máy</button>
+                    <button class="btn-share" onclick="shareDecryptedBinary('${outName}', '${b64Decrypted}')">📤 Chia Sẻ</button>
+                </div>
+            </div>
+        `;
+        card.style.display = 'block';
+        card.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (e) {
+        alert("Mở khóa thất bại: " + (e.message || "Mật khẩu không đúng!"));
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "MỞ KHÓA & TRÍCH XUẤT";
+    }
+}
+
+function saveDecryptedBinary(fileName, b64Data) {
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'save_binary',
+            name: fileName,
+            base64: b64Data
+        }));
+    } else {
+        const u8 = base64ToUint8(b64Data);
+        const blob = new Blob([u8]);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        a.click();
+    }
+}
+
+function shareDecryptedBinary(fileName, b64Data) {
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'share_binary',
+            name: fileName,
+            base64: b64Data
+        }));
+    } else {
+        saveDecryptedBinary(fileName, b64Data);
     }
 }

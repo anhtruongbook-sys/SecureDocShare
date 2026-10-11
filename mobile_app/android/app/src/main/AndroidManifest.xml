@@ -10,6 +10,8 @@
         android:label="SecureDocShare"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:largeHeap="true"
+        android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
         
         <activity

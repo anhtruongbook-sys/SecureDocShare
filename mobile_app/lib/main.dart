@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,36 +78,94 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
         ),
       )
       ..addJavaScriptChannel(
-        'FlutterFilePicker',
+        'FlutterBridge',
         onMessageReceived: (JavaScriptMessage message) async {
-          final context = message.message; // 'lock' or 'unlock'
-          final allowMultiple = (context == 'lock');
           try {
-            final result = await FilePicker.platform.pickFiles(
-              allowMultiple: allowMultiple,
-              withData: true,
-              type: FileType.any,
-            );
-            if (result != null && result.files.isNotEmpty) {
-              final List<Map<String, dynamic>> fileList = [];
-              for (final f in result.files) {
-                if (f.bytes != null) {
-                  fileList.add({
-                    'name': f.name,
-                    'size': f.size,
-                    'bytes': base64Encode(f.bytes!),
-                  });
+            final data = jsonDecode(message.message) as Map<String, dynamic>;
+            final action = data['action'] as String? ?? 'save';
+            final fileName = data['name'] as String? ?? 'SecureDoc_Protected.html';
+            
+            File savedFile;
+            final tempDir = await getTemporaryDirectory();
+            savedFile = File('${tempDir.path}/$fileName');
+
+            if (data.containsKey('base64')) {
+              final bytes = base64Decode(data['base64'] as String);
+              await savedFile.writeAsBytes(bytes);
+            } else {
+              final content = data['content'] as String? ?? '';
+              await savedFile.writeAsString(content, encoding: utf8);
+            }
+
+            if (action == 'share' || action == 'share_binary') {
+              await Share.shareXFiles(
+                [XFile(savedFile.path)],
+                text: 'Tài liệu bảo mật $fileName (SecureDocShare)',
+              );
+            } else if (action == 'save' || action == 'save_binary') {
+              bool savedPublic = false;
+              String targetPath = savedFile.path;
+
+              // Thử lưu trực tiếp vào thư mục Downloads công khai của Android
+              try {
+                final downloadDir = Directory('/storage/emulated/0/Download');
+                if (await downloadDir.exists()) {
+                  final target = File('${downloadDir.path}/$fileName');
+                  if (data.containsKey('base64')) {
+                    final bytes = base64Decode(data['base64'] as String);
+                    await target.writeAsBytes(bytes);
+                  } else {
+                    final content = data['content'] as String? ?? '';
+                    await target.writeAsString(content, encoding: utf8);
+                  }
+                  savedPublic = true;
+                  targetPath = target.path;
+                }
+              } catch (e) {
+                debugPrint('Direct Downloads write error: $e');
+              }
+
+              if (mounted) {
+                if (savedPublic) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Đã lưu thành công vào mục Tải về (Downloads):\n$fileName',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: const Color(0xFF10B981),
+                      duration: const Duration(seconds: 5),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                } else {
+                  // Mở hộp thoại Share Sheet để người dùng bấm "Lưu vào thiết bị" hoặc gửi Zalo/Drive
+                  await Share.shareXFiles(
+                    [XFile(savedFile.path)],
+                    text: 'Lưu tệp bảo mật $fileName',
+                  );
                 }
               }
-              final payload = jsonEncode({
-                'context': context,
-                'files': fileList,
-              });
-              final escaped = payload.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
-              await _controller.runJavaScript("if (window.onFlutterFilesPicked) { window.onFlutterFilesPicked('$escaped'); }");
             }
           } catch (e) {
-            debugPrint('FilePicker JavaScriptChannel error: $e');
+            debugPrint('FlutterBridge error: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Lỗi xử lý tệp: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
       );

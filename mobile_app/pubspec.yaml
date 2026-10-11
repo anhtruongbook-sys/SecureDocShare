@@ -1,7 +1,7 @@
 name: securedoc_mobile
 description: SecureDocShare Mobile Client - Military-Grade Document Encryption & Protection (Android APK)
 publish_to: 'none'
-version: 1.0.3+4
+version: 1.0.4+5
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -12,6 +12,8 @@ dependencies:
   webview_flutter: ^4.7.0
   webview_flutter_android: ^3.16.0
   file_picker: ^8.0.3
+  share_plus: ^10.0.0
+  path_provider: ^2.1.2
   cupertino_icons: ^1.0.6
 
 dev_dependencies:

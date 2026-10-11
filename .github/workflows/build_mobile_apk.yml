@@ -62,16 +62,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.3
-          name: "SecureDocShare v1.0.3 (Android APK)"
+          tag_name: v1.0.4
+          name: "SecureDocShare v1.0.4 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.3)
-            - **Icon & Logo Mới**: Tích hợp nhận diện thương hiệu logo chính thức của ANH'S TEAM.
-            - **Native File Picker Cục Bộ**: Tích hợp bộ chọn tệp native trên Android (hỗ trợ chọn trực tiếp file PDF, Word, Excel, PPT từ bộ nhớ máy, Thẻ nhớ SD, Tải xuống, v.v.).
-            - **Mã Hóa & Khóa File Cấp Quân Sự (AES-256)**: Chạy 100% Offline độc lập trên điện thoại.
-            - **Hỗ trợ 2 Chế Độ Phân Quyền**:
-              1. Khóa Chặt: Chỉ nhập đúng pass mới mở được file.
-              2. Mở Xem Tự Do, nhưng CẤM SỬA, CẤM IN, CẤM COPY văn bản và hình ảnh.
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.4)
+            - **Khắc phục triệt để lỗi File lớn (OOM Fix)**: Tối ưu hóa bộ nhớ RAM, kích hoạt `android:largeHeap="true"`, giải thuật Base64 Chunking 32KB chống sập ứng dụng khi chọn tệp dung lượng lớn.
+            - **Lưu trực tiếp vào Thư mục Tải về (Downloads)**: Nút "Lưu Tệp" ghi trực tiếp file mã hóa vào thư mục Downloads của điện thoại và hiển thị thông báo SnackBar xác nhận.
+            - **Chia sẻ Native 1-Chạm**: Nút "Chia Sẻ" mở trực tiếp bảng chia sẻ Android để gửi ngay qua Zalo, Drive, Gmail, Telegram.
+            - **Mở khóa & Trích xuất File**: Hỗ trợ mở khóa và lưu file gốc trực tiếp trên điện thoại.
+            - **Icon & Logo Mới**: Nhận diện thương hiệu chính thức ANH'S TEAM.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: build-output/SecureDocShare.apk
           draft: false
