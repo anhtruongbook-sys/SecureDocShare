@@ -225,7 +225,7 @@ class MainActivity: FlutterActivity() {
 
                             POIFSFileSystem(srcFile).use { fs ->
                                 val info = EncryptionInfo(fs)
-                                val decryptor = Decryptor.getInstance(info)
+                                val decryptor = info.decryptor
                                 if (!decryptor.verifyPassword(password)) {
                                     runOnUiThread {
                                         result.error("WRONG_PASSWORD", "Mật khẩu mở tệp Office không chính xác!", null)
