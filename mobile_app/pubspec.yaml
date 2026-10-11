@@ -1,7 +1,7 @@
 name: securedoc_mobile
 description: SecureDocShare Mobile Client - Military-Grade Document Encryption & Protection (Android APK)
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
