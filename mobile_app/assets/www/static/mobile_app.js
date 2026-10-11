@@ -431,21 +431,27 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
             fileIcon = "📝";
             iconBg = "#eff6ff";
             iconColor = "#1d4ed8";
+            subDesc = `✓ Tệp Word Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
+            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft Word hoặc WPS Office</strong> trên điện thoại sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem toàn bộ tài liệu!`;
         } else if (ext === 'xlsx' || ext === 'xls') {
             fileIcon = "📊";
             iconBg = "#ecfdf5";
             iconColor = "#059669";
+            subDesc = `✓ Tệp Excel Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
+            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft Excel hoặc WPS Office</strong> trên điện thoại sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem toàn bộ bảng tính!`;
         } else if (ext === 'pptx' || ext === 'ppt') {
             fileIcon = "📽️";
             iconBg = "#fff7ed";
             iconColor = "#ea580c";
+            subDesc = `✓ Tệp PowerPoint Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
+            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft PowerPoint hoặc WPS Office</strong> sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem slide!`;
         } else {
             fileIcon = "📦";
             iconBg = "#f1f5f9";
             iconColor = "#475569";
+            subDesc = `✓ Tệp ${ext.toUpperCase()} Bảo Mật Cấp Quân Sự (AES-256)`;
+            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được mã hóa bảo mật toàn vẹn. Để giải mã và mở xem, vui lòng sử dụng tab <strong>MỞ KHÓA</strong> trên ứng dụng SecureDocShare!`;
         }
-        subDesc = `✓ Tệp ${ext.toUpperCase()} Bảo Mật Cấp Quân Sự (AES-256)`;
-        noteText = `💡 Tệp <strong>${outFileName}</strong> đã được mã hóa bảo mật toàn vẹn. Để giải mã và mở xem bằng ứng dụng Word/Excel trên máy, vui lòng sử dụng tab <strong>MỞ KHÓA</strong> trên ứng dụng SecureDocShare!`;
     }
 
     const card = document.getElementById('results-lock');

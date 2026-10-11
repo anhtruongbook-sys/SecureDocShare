@@ -6,8 +6,18 @@ import io.flutter.plugin.common.MethodChannel
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.PdfStamper
 import com.itextpdf.text.pdf.PdfWriter
+import org.apache.poi.poifs.crypt.EncryptionInfo
+import org.apache.poi.poifs.crypt.EncryptionMode
+import org.apache.poi.poifs.crypt.Encryptor
+import org.apache.poi.poifs.crypt.Decryptor
+import org.apache.poi.poifs.filesystem.POIFSFileSystem
+import org.apache.poi.openxml4j.opc.OPCPackage
+import org.apache.poi.openxml4j.opc.PackageAccess
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.concurrent.Executors
 
 class MainActivity: FlutterActivity() {
@@ -41,7 +51,6 @@ class MainActivity: FlutterActivity() {
                             }
 
                             PdfReader.unethicalreading = true
-                            // Direct disk random access - 0 RAM heap memory spike!
                             reader = PdfReader(srcPath)
 
                             val outFile = File(destPath)
@@ -59,7 +68,6 @@ class MainActivity: FlutterActivity() {
                                 PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_COPY or PdfWriter.ALLOW_SCREENREADERS or PdfWriter.ALLOW_FILL_IN
                             }
 
-                            // RC4 128-bit ISO 32000 standard (Streamed directly to disk, compatible with all PDF readers)
                             stamper.setEncryption(
                                 userPwd,
                                 ownerPwd,
@@ -135,6 +143,110 @@ class MainActivity: FlutterActivity() {
                             val errMsg = e.message ?: e.toString()
                             runOnUiThread {
                                 result.error("DECRYPTION_ERROR", errMsg, null)
+                            }
+                        }
+                    }
+                }
+                "encryptOffice" -> {
+                    val srcPath = call.argument<String>("srcPath")
+                    val destPath = call.argument<String>("destPath")
+                    val password = call.argument<String>("password") ?: ""
+
+                    if (srcPath == null || destPath == null) {
+                        result.error("INVALID_ARGS", "Missing srcPath or destPath", null)
+                        return@setMethodCallHandler
+                    }
+
+                    executor.execute {
+                        try {
+                            val srcFile = File(srcPath)
+                            if (!srcFile.exists()) {
+                                runOnUiThread { result.error("FILE_NOT_FOUND", "File not found: $srcPath", null) }
+                                return@execute
+                            }
+
+                            val tempOpc = File.createTempFile("opc_", ".tmp", cacheDir)
+                            srcFile.copyTo(tempOpc, overwrite = true)
+
+                            val outFile = File(destPath)
+                            if (outFile.exists()) outFile.delete()
+                            outFile.parentFile?.mkdirs()
+
+                            POIFSFileSystem().use { fs ->
+                                val info = EncryptionInfo(EncryptionMode.agile)
+                                val encryptor = info.encryptor
+                                encryptor.confirmPassword(password)
+
+                                OPCPackage.open(tempOpc, PackageAccess.READ_WRITE).use { opc ->
+                                    encryptor.getDataStream(fs).use { os ->
+                                        opc.save(os)
+                                    }
+                                }
+
+                                FileOutputStream(outFile).use { fos ->
+                                    fs.writeFilesystem(fos)
+                                }
+                            }
+
+                            try { tempOpc.delete() } catch (_: Throwable) {}
+
+                            runOnUiThread {
+                                result.success(destPath)
+                            }
+                        } catch (e: Throwable) {
+                            val errMsg = e.message ?: e.toString()
+                            runOnUiThread {
+                                result.error("OFFICE_ENCRYPT_ERROR", errMsg, null)
+                            }
+                        }
+                    }
+                }
+                "decryptOffice" -> {
+                    val srcPath = call.argument<String>("srcPath")
+                    val destPath = call.argument<String>("destPath")
+                    val password = call.argument<String>("password") ?: ""
+
+                    if (srcPath == null || destPath == null) {
+                        result.error("INVALID_ARGS", "Missing srcPath or destPath", null)
+                        return@setMethodCallHandler
+                    }
+
+                    executor.execute {
+                        try {
+                            val srcFile = File(srcPath)
+                            if (!srcFile.exists()) {
+                                runOnUiThread { result.error("FILE_NOT_FOUND", "File not found: $srcPath", null) }
+                                return@execute
+                            }
+
+                            val outFile = File(destPath)
+                            if (outFile.exists()) outFile.delete()
+                            outFile.parentFile?.mkdirs()
+
+                            POIFSFileSystem(srcFile).use { fs ->
+                                val info = EncryptionInfo(fs)
+                                val decryptor = Decryptor.getInstance(info)
+                                if (!decryptor.verifyPassword(password)) {
+                                    runOnUiThread {
+                                        result.error("WRONG_PASSWORD", "Mật khẩu mở tệp Office không chính xác!", null)
+                                    }
+                                    return@execute
+                                }
+
+                                decryptor.getDataStream(fs).use { inputStream ->
+                                    FileOutputStream(outFile).use { outputStream ->
+                                        inputStream.copyTo(outputStream)
+                                    }
+                                }
+                            }
+
+                            runOnUiThread {
+                                result.success(destPath)
+                            }
+                        } catch (e: Throwable) {
+                            val errMsg = e.message ?: e.toString()
+                            runOnUiThread {
+                                result.error("OFFICE_DECRYPT_ERROR", errMsg, null)
                             }
                         }
                     }

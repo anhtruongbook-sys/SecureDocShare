@@ -62,14 +62,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.16
-          name: "SecureDocShare v1.0.16 (Android APK)"
+          tag_name: v1.0.17
+          name: "SecureDocShare v1.0.17 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.16)
-            - **Thiết Kế Lại Giao Diện Toàn Diện (Sáng Màu, Hiện Đại, Tối Giản)**: Chuyển hoàn toàn sang phong cách Minimalist White sạch sẽ, nền sáng dịu mắt, các nút bấm nhỏ gọn, tinh tế và thanh lịch (phong cách Apple / Linear / Notion).
-            - **Khắc Phục Triệt Để Lỗi File Office Bị Đổi Thành PDF**: Giữ nguyên vẹn 100% phần mở rộng gốc của các tệp Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`), CAD (`.dwg`), ZIP (`.zip`). Không còn tình trạng tệp Office bị ép đuôi `.pdf` gây lỗi.
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.17)
+            - **Mã Hóa Microsoft Office Native 100% ([MS-OFFCRYPTO] Agile Encryption)**: Khóa các tệp Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`) theo chuẩn gốc của Microsoft Office. Khi người nhận mở bằng **Microsoft Word, Excel, PowerPoint hoặc WPS Office** trên điện thoại/máy tính, ứng dụng sẽ **tự động bật hộp thoại nhập mật khẩu để mở xem tài liệu**, hoàn toàn không bị lỗi unreadable content!
             - **Mã Hóa Adobe PDF Native 100% (ISO 32000)**: Tệp PDF xuất ra `Cvt_Locked.pdf` mở trực tiếp bằng mật khẩu trên bất kỳ trình đọc PDF nào.
-            - **Động Cơ Native Streaming iTextG (0 RAM Overhead)**: Xử lý tệp khổng lồ 355 MB+ chỉ trong 2-4 giây, không bị tràn bộ nhớ.
+            - **Hỗ Trợ Mở Khóa Hai Chiều**: Tích hợp giải mã Office Native ngay trong tab MỞ KHÓA của ứng dụng.
+            - **Thiết Kế Lại Giao Diện Toàn Diện (Sáng Màu, Hiện Đại, Tối Giản)**: Chuyển hoàn toàn sang phong cách Minimalist White sạch sẽ, nền sáng dịu mắt, các nút bấm nhỏ gọn, tinh tế và thanh lịch (phong cách Apple / Linear / Notion).
+            - **Động Cơ Native Streaming iTextG & Apache POI (0 RAM Overhead)**: Xử lý tệp lớn mượt mà chỉ trong vài giây.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: build-output/SecureDocShare.apk
           draft: false

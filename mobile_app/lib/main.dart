@@ -390,6 +390,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               }
 
               final isPdf = fileName.toLowerCase().endsWith('.pdf');
+              final isOffice = RegExp(r'\.(docx|xlsx|pptx)$', caseSensitive: false).hasMatch(fileName);
               final baseName = fileName.replaceAll(RegExp(r'\.[^/.]+$'), '');
               final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
               final outFileName = isPdf 
@@ -426,8 +427,33 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                   );
                   await compute(_runAdobePdfLockIsolate, adobeJob);
                 }
+              } else if (isOffice && Platform.isAndroid) {
+                // SỬ DỤNG ĐỘNG CƠ NATIVE MICROSOFT OFFICE AGILE ENCRYPTION (MS-OFFCRYPTO)
+                // KHI MỞ BẰNG MICROSOFT WORD/EXCEL/POWERPOINT HOẶC WPS SẼ TỰ ĐỘNG BẬT HỘP THOẠI HỎI MẬT KHẨU!
+                bool processedOffice = false;
+                try {
+                  await _nativeChannel.invokeMethod('encryptOffice', {
+                    'srcPath': srcPath,
+                    'destPath': outTempPath,
+                    'password': password,
+                  });
+                  processedOffice = true;
+                } catch (officeErr) {
+                  debugPrint('Lỗi Office Native Engine, fallback sang Stream Cipher: $officeErr');
+                }
+
+                if (!processedOffice) {
+                  final streamJob = _StreamLockJob(
+                    srcPath: srcPath,
+                    outTempPath: outTempPath,
+                    fileName: fileName,
+                    password: password,
+                    protectionLevel: protectionLevel,
+                  );
+                  await compute(_runStreamLockIsolate, streamJob);
+                }
               } else {
-                // TỆP KHÁC (WORD, EXCEL, PPT, CAD, ZIP...): MÃ HÓA STREAM CIPHER SIÊU TỐC
+                // TỆP KHÁC (CAD, ZIP...): MÃ HÓA STREAM CIPHER SIÊU TỐC
                 final streamJob = _StreamLockJob(
                   srcPath: srcPath,
                   outTempPath: outTempPath,
@@ -440,7 +466,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
 
               final savedFullPath = await _saveToDownloadsFolder(outTempPath, outFileName);
               final displaySaved = savedFullPath ?? 'Thư mục Downloads của máy';
-              final typeDesc = isPdf ? 'Adobe PDF Native' : 'Bảo Mật AES-256';
+              final typeDesc = isPdf ? 'Adobe PDF Native' : (isOffice ? 'Microsoft Office Native' : 'Bảo Mật AES-256');
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -522,6 +548,38 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                   return;
                 } catch (pdfNativeErr) {
                   debugPrint('Giải mã Native thất bại hoặc tệp dạng Container: $pdfNativeErr');
+                }
+              }
+
+              final isOffice = RegExp(r'\.(docx|xlsx|pptx)$', caseSensitive: false).hasMatch(fileName);
+
+              // NẾU LÀ TỆP OFFICE TRÊN ANDROID, THỬ GIẢI MÃ NATIVE BẰNG POI AGILE DECRYPTOR
+              if (isOffice && Platform.isAndroid) {
+                try {
+                  final base = fileName.replaceAll(RegExp(r'_Locked\.(docx|xlsx|pptx)$', caseSensitive: false), '')
+                                       .replaceAll(RegExp(r'\.(docx|xlsx|pptx)$', caseSensitive: false), '');
+                  final ext = fileName.substring(fileName.lastIndexOf('.'));
+                  final outDecryptedName = '${base}_Unlocked$ext';
+                  final outDecryptedPath = '${tempDir.path}/$outDecryptedName';
+
+                  await _nativeChannel.invokeMethod('decryptOffice', {
+                    'srcPath': srcPath,
+                    'destPath': outDecryptedPath,
+                    'password': password,
+                  });
+
+                  final savedFullPath = await _saveToDownloadsFolder(outDecryptedPath, outDecryptedName);
+                  final displaySaved = savedFullPath ?? 'Thư mục Downloads';
+
+                  final escName = outDecryptedName.replaceAll("'", r"\'");
+                  final escSaved = displaySaved.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+                  final escTemp = outDecryptedPath.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+                  final decFile = File(outDecryptedPath);
+                  final sizeMb = ((await decFile.length()) / (1024 * 1024)).toStringAsFixed(1);
+                  await _controller.runJavaScript("if (window.onNativeUnlocked) { window.onNativeUnlocked('$escName', '$sizeMb', '$escSaved', '$escTemp'); }");
+                  return;
+                } catch (officeNativeErr) {
+                  debugPrint('Giải mã Office Native thất bại hoặc tệp dạng Container: $officeNativeErr');
                 }
               }
 
