@@ -124,7 +124,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                 document.security.algorithm = PdfEncryptionAlgorithm.aesx256BitRevision6;
               }
 
-              final List<int> securedBytes = document.save();
+              final List<int> securedBytes = await document.save();
               document.dispose();
               final Uint8List outBytes = Uint8List.fromList(securedBytes);
 
