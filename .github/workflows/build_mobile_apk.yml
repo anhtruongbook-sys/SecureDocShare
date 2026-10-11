@@ -62,8 +62,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.0
-          name: "SecureDocShare v1.0.0 (Android APK)"
+          tag_name: v1.0.1
+          name: "SecureDocShare v1.0.1 (Android APK)"
           body: |
             ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK)
             - **Mã Hóa & Khóa File Cấp Quân Sự (AES-256)**: Chạy 100% Offline độc lập trên điện thoại.
