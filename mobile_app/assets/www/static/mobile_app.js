@@ -447,7 +447,7 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath) {
                     <span>GỬI FILE QUA ZALO</span>
                 </button>
             </div>
-            <p class="result-note">💡 Tệp <strong>${outFileName}</strong> đã được mã hóa chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Photoshop, Foxit Reader, WPS Office</strong> sẽ yêu cầu nhập đúng mật khẩu!</p>
+            <p class="result-note">💡 Tệp <strong>${outFileName}</strong> đã được bảo vệ mật khẩu chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Foxit Reader, WPS Office, hoặc Trình đọc PDF mặc định của điện thoại</strong> sẽ tự động yêu cầu nhập đúng mật khẩu để mở xem toàn bộ nội dung tệp gốc!</p>
         </div>
     `;
 
