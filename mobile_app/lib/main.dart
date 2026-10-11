@@ -8,6 +8,7 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,7 @@ class SecureDocWebViewScreen extends StatefulWidget {
 class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  final Map<String, String> _cachedFilePaths = {};
 
   @override
   void initState() {
@@ -84,8 +86,129 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
           try {
             final data = jsonDecode(message.message) as Map<String, dynamic>;
             final action = data['action'] as String? ?? 'save';
-            final fileName = data['name'] as String? ?? 'SecureDoc_Protected.html';
+            final fileName = data['name'] as String? ?? 'document';
+            final password = data['password'] as String? ?? '';
+            final protectionLevel = data['protection_level'] as String? ?? 'open_password';
+            final isViewOnly = (protectionLevel == 'view_only_restricted');
 
+            // -----------------------------------------------------------------
+            // CHỨC NĂNG 1: MÃ HÓA PDF NATIVE CHUẨN ADOBE ISO 32000 (R6 AES-256)
+            // -----------------------------------------------------------------
+            if (action == 'lock_pdf_native') {
+              Uint8List pdfBytes;
+              if (_cachedFilePaths.containsKey(fileName)) {
+                final fileOnDisk = File(_cachedFilePaths[fileName]!);
+                if (await fileOnDisk.exists()) {
+                  pdfBytes = await fileOnDisk.readAsBytes();
+                } else if (data.containsKey('base64')) {
+                  pdfBytes = base64Decode(data['base64'] as String);
+                } else {
+                  throw Exception('Không tìm thấy tệp PDF nguồn trên thiết bị');
+                }
+              } else if (data.containsKey('base64')) {
+                pdfBytes = base64Decode(data['base64'] as String);
+              } else {
+                throw Exception('Không tìm thấy dữ liệu tệp PDF nguồn');
+              }
+
+              // Khởi tạo tài liệu và cấu hình mã hóa chuẩn Adobe
+              final PdfDocument document = PdfDocument(inputBytes: pdfBytes);
+              if (isViewOnly) {
+                document.security.ownerPassword = password;
+                document.security.userPassword = '';
+                document.security.algorithm = PdfEncryptionAlgorithm.aesx256BitRevision6;
+                document.security.permissions.clear(); // CẤM IN, CẤM COPY CHỮ
+              } else {
+                document.security.userPassword = password;
+                document.security.ownerPassword = password;
+                document.security.algorithm = PdfEncryptionAlgorithm.aesx256BitRevision6;
+              }
+
+              final List<int> securedBytes = document.save();
+              document.dispose();
+              final Uint8List outBytes = Uint8List.fromList(securedBytes);
+
+              final baseName = fileName.replaceAll(RegExp(r'\.[^/.]+$'), '');
+              final outFileName = isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf';
+
+              final tempDir = await getTemporaryDirectory();
+              final tempFile = File('${tempDir.path}/$outFileName');
+              await tempFile.writeAsBytes(outBytes);
+
+              // Mở hộp thoại chọn thư mục lưu tệp PDF (SAF Native)
+              try {
+                await FilePicker.platform.saveFile(
+                  dialogTitle: 'Chọn nơi lưu tệp PDF bảo mật: $outFileName',
+                  fileName: outFileName,
+                  bytes: outBytes,
+                );
+              } catch (e) {
+                debugPrint('FilePicker.saveFile error: $e');
+              }
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '✓ Đã tạo xong tệp PDF Native chuẩn Adobe:\n$outFileName',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: const Color(0xFF1E293B),
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                    ),
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+              }
+
+              // Thông báo kết quả cho giao diện WebView
+              final escapedName = outFileName.replaceAll("'", r"\'");
+              final escapedTempPath = tempFile.path.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+              await _controller.runJavaScript("if (window.onNativePdfLocked) { window.onNativePdfLocked('$escapedName', '$escapedTempPath'); }");
+              return;
+            }
+
+            // Chia sẻ tệp PDF vừa tạo
+            if (action == 'share_temp_file') {
+              final filePath = data['path'] as String?;
+              if (filePath != null && await File(filePath).exists()) {
+                await Share.shareXFiles(
+                  [XFile(filePath)],
+                  text: 'Tài liệu PDF bảo mật chuẩn Adobe: $fileName',
+                );
+              }
+              return;
+            }
+
+            // Lưu lại tệp
+            if (action == 'save_file_again') {
+              final filePath = data['path'] as String?;
+              if (filePath != null && await File(filePath).exists()) {
+                final bytes = await File(filePath).readAsBytes();
+                await FilePicker.platform.saveFile(
+                  dialogTitle: 'Chọn nơi lưu tệp $fileName',
+                  fileName: fileName,
+                  bytes: bytes,
+                );
+              }
+              return;
+            }
+
+            // -----------------------------------------------------------------
+            // CHỨC NĂNG 2: XỬ LÝ LƯU & CHIA SẺ FILE HTML / BINARY
+            // -----------------------------------------------------------------
             Uint8List bytesToSave;
             if (data.containsKey('base64')) {
               bytesToSave = base64Decode(data['base64'] as String);
@@ -103,10 +226,8 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                 text: 'Tài liệu bảo mật $fileName (SecureDocShare)',
               );
             } else if (action == 'save' || action == 'save_binary') {
-              // 1. Mở hộp thoại chọn thư mục lưu tệp native của Android (Storage Access Framework)
-              String? outputFilePath;
               try {
-                outputFilePath = await FilePicker.platform.saveFile(
+                await FilePicker.platform.saveFile(
                   dialogTitle: 'Chọn nơi lưu tệp $fileName',
                   fileName: fileName,
                   bytes: bytesToSave,
@@ -115,62 +236,15 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                 debugPrint('FilePicker.saveFile error: $e');
               }
 
-              if (outputFilePath != null && outputFilePath.isNotEmpty) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 24),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              '✓ Đã lưu thành công vào điện thoại:\n$fileName',
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                      backgroundColor: const Color(0xFF1E293B),
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-                      ),
-                      duration: const Duration(seconds: 4),
-                    ),
-                  );
-                }
-              } else {
-                // 2. Fallback: Nếu không chọn được từ SAF, tự ghi vào thư mục Downloads hoặc kích hoạt Share Sheet
-                bool wrotePublic = false;
-                try {
-                  final dlDir = Directory('/storage/emulated/0/Download');
-                  if (await dlDir.exists()) {
-                    final target = File('${dlDir.path}/$fileName');
-                    await target.writeAsBytes(bytesToSave);
-                    wrotePublic = true;
-                  }
-                } catch (_) {}
-
-                if (wrotePublic && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('✓ Đã lưu tệp vào mục Tải về (Downloads):\n$fileName'),
-                      backgroundColor: const Color(0xFF10B981),
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  );
-                } else {
-                  // Mở Share Sheet để người dùng bấm "Lưu vào Tệp" hoặc gửi Zalo/Drive
-                  await Share.shareXFiles(
-                    [XFile(tempFile.path)],
-                    text: 'Lưu tệp bảo mật $fileName',
-                  );
-                }
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('✓ Đã xử lý lưu tệp: $fileName'),
+                    backgroundColor: const Color(0xFF10B981),
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
+                  ),
+                );
               }
             }
           } catch (e) {
@@ -198,6 +272,11 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
             type: FileType.any,
           );
           if (result != null && result.files.isNotEmpty) {
+            for (final f in result.files) {
+              if (f.name.isNotEmpty && f.path != null) {
+                _cachedFilePaths[f.name] = f.path!;
+              }
+            }
             return result.files
                 .where((f) => f.path != null)
                 .map((f) => Uri.file(f.path!).toString())

@@ -62,15 +62,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.6
-          name: "SecureDocShare v1.0.6 (Android APK)"
+          tag_name: v1.0.7
+          name: "SecureDocShare v1.0.7 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.6)
-            - **Khóa Chữ Ký Số Cố Định (Fixed Release Keystore)**: Khắc phục triệt để lỗi "package conflicts with an existing package". Từ nay mọi bản cập nhật đều đồng bộ chữ ký số, cho phép cài đè mượt mà.
-            - **Tải & Lưu Tệp 100% Native (SAF)**: Tích hợp hộp thoại chọn thư mục lưu (Storage Access Framework) của Android - người dùng bấm "LƯU VỀ MÁY" để chọn lưu vào Downloads/Tài liệu hoặc bấm "GỬI QUA ZALO" để chia sẻ tức thì.
-            - **Tái Thiết Kế Giao Diện Đẳng Cấp (Cyber-Security Dark UI)**: Nâng cấp toàn diện giao diện sang trọng, nút bấm lớn rộng rãi, loại bỏ hoàn toàn tình trạng chữ bị co kéo hay xuống dòng lệch lạc.
-            - **Khắc phục triệt để lỗi File lớn (OOM Fix)**: Kích hoạt `android:largeHeap="true"` và giải thuật Base64 Chunking 32KB.
-            - **LƯU Ý CÀI ĐẶT BẢN V1.0.6**: Do đổi sang chữ ký số phát hành cố định, vui lòng GỠ CÀI ĐẶT (UNINSTALL) BẢN CŨ trên máy một lần duy nhất trước khi cài bản v1.0.6.
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.7)
+            - **Mã Hóa & Khóa File PDF Native 100% Chuẩn Quốc Tế Adobe ISO 32000**: Chọn file PDF sẽ xuất ra đúng file `.pdf` (`_Locked.pdf` hoặc `_ReadOnly.pdf`).
+            - **Tương thích Adobe Acrobat, Photoshop, Foxit Reader, WPS Office**: Mở file trên điện thoại hoặc máy tính sẽ hiện ngay hộp thoại native của Adobe yêu cầu nhập mật khẩu.
+            - **Hỗ trợ 2 Chế Độ Phân Quyền**:
+              1. Khóa Chặt: Nhập đúng mật khẩu mới mở được PDF.
+              2. Mở Xem Tự Do: Mở xem trực tiếp không cần pass, nhưng CẤM IN, CẤM COPY chữ theo chuẩn Adobe R6.
+            - **Khóa Chữ Ký Số Cố Định (Fixed Release Keystore)**: Giữ nguyên chữ ký số chuẩn phát hành, hỗ trợ cập nhật đè mượt mà.
+            - **Tải & Lưu Tệp Native (SAF)**: Hộp thoại chọn thư mục lưu (Downloads) + Nút gửi trực tiếp qua Zalo.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: build-output/SecureDocShare.apk
           draft: false

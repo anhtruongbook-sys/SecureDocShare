@@ -176,6 +176,21 @@ async function executeMobileLockFiles() {
     try {
         const results = [];
         for (const file of selectedLockFiles) {
+            const isPdf = file.name.toLowerCase().endsWith('.pdf');
+            if (isPdf && window.FlutterBridge) {
+                btn.innerText = `Đang mã hóa PDF chuẩn Adobe: ${file.name}...`;
+                const buffer = await file.arrayBuffer();
+                const b64 = uint8ToBase64(new Uint8Array(buffer));
+                window.FlutterBridge.postMessage(JSON.stringify({
+                    action: 'lock_pdf_native',
+                    name: file.name,
+                    base64: b64,
+                    password: pwd,
+                    protection_level: currentProtectionLevel
+                }));
+                return;
+            }
+
             btn.innerText = `Đang xử lý ${file.name}...`;
             const buffer = await file.arrayBuffer();
             const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -335,6 +350,76 @@ function renderMobileResults(results) {
     window._mobileResults = results;
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth' });
+}
+
+window.onNativePdfLocked = function(outFileName, tempFilePath) {
+    const isViewOnly = (currentProtectionLevel === "view_only_restricted");
+    const subDesc = isViewOnly 
+        ? "✓ Tệp PDF Native • Mở xem tự do, CẤM IN, CẤM COPY (Chuẩn Adobe R6)"
+        : "✓ Tệp PDF Native Khóa Chặt • Nhập Mật Khẩu để Mở (Chuẩn Adobe R6)";
+
+    const card = document.getElementById('results-lock');
+    const list = document.getElementById('results-list-lock');
+
+    list.innerHTML = `
+        <div class="result-card-box">
+            <div class="result-file-title">
+                <div class="result-file-icon" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #f87171;">📄</div>
+                <div class="result-file-meta">
+                    <div class="result-file-name">${outFileName}</div>
+                    <div class="result-file-sub" style="color: #60a5fa;">${subDesc}</div>
+                </div>
+            </div>
+            <div class="result-actions-grid">
+                <button type="button" class="btn-result-download" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>LƯU LẠI VÀO THƯ MỤC KHÁC</span>
+                </button>
+                <button type="button" class="btn-result-share" onclick="shareNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    <span>GỬI FILE PDF QUA ZALO</span>
+                </button>
+            </div>
+            <p class="result-note">💡 Tệp <strong>${outFileName}</strong> đã được mã hóa chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Photoshop, Foxit Reader, WPS Office</strong> sẽ yêu cầu nhập đúng mật khẩu!</p>
+        </div>
+    `;
+
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth' });
+
+    const btn = document.getElementById('btn-lock-submit');
+    btn.disabled = false;
+    btn.innerText = "MÃ HÓA & LƯU TỆP";
+};
+
+function reSaveNativePdf(fileName, filePath) {
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'save_file_again',
+            name: fileName,
+            path: filePath
+        }));
+    }
+}
+
+function shareNativePdf(fileName, filePath) {
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'share_temp_file',
+            name: fileName,
+            path: filePath
+        }));
+    }
 }
 
 function downloadResult(idx) {
