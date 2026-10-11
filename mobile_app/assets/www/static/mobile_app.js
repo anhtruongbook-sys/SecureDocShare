@@ -158,6 +158,22 @@ function base64ToUint8(b64) {
     return bytes;
 }
 
+function showProcessingModal(title, desc) {
+    const modal = document.getElementById('processing-modal');
+    if (modal) {
+        if (title) document.getElementById('proc-title').innerText = title;
+        if (desc) document.getElementById('proc-desc').innerHTML = desc;
+        modal.style.display = 'flex';
+    }
+}
+
+function hideProcessingModal() {
+    const modal = document.getElementById('processing-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 async function executeMobileLockFiles() {
     if (selectedLockFiles.length === 0) {
         alert("Vui lòng chọn ít nhất 1 tệp tin cần mã hóa!");
@@ -171,26 +187,40 @@ async function executeMobileLockFiles() {
 
     const btn = document.getElementById('btn-lock-submit');
     btn.disabled = true;
-    btn.innerText = "Đang mã hóa AES-256 Offline...";
+    btn.innerText = "Đang xử lý...";
 
     try {
         const results = [];
         for (const file of selectedLockFiles) {
             const isPdf = file.name.toLowerCase().endsWith('.pdf');
-            if (isPdf && window.FlutterBridge) {
-                btn.innerText = `Đang mã hóa PDF chuẩn Adobe: ${file.name}...`;
-                const buffer = await file.arrayBuffer();
-                const b64 = uint8ToBase64(new Uint8Array(buffer));
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+
+            // -------------------------------------------------------------
+            // TRÊN APP DI ĐỘNG (FLUTTER BRIDGE):
+            // GỬI DUY NHẤT METADATA NHỎ GỌN (~100 BYTES)
+            // TUYỆT ĐỐI KHÔNG ĐỌC ARRAYBUFFER / BASE64 ĐỂ CHỐNG CRASH RAM 100%
+            // -------------------------------------------------------------
+            if (window.FlutterBridge) {
+                btn.innerText = isPdf 
+                    ? `Đang mã hóa PDF: ${file.name} (${sizeMb} MB)...`
+                    : `Đang xử lý tệp: ${file.name} (${sizeMb} MB)...`;
+
+                showProcessingModal(
+                    isPdf ? 'Đang Mã Hóa PDF Native...' : 'Đang Xử Lý Tệp Lớn...',
+                    `Tệp: <strong>${file.name}</strong> (${sizeMb} MB)<br>Đang chạy mã hóa native hiệu năng cao.<br>Vui lòng giữ ứng dụng mở...`
+                );
+
                 window.FlutterBridge.postMessage(JSON.stringify({
-                    action: 'lock_pdf_native',
+                    action: isPdf ? 'lock_pdf_native' : 'lock_file_native',
                     name: file.name,
-                    base64: b64,
+                    size: file.size,
                     password: pwd,
                     protection_level: currentProtectionLevel
                 }));
                 return;
             }
 
+            // TRÊN TRÌNH DUYỆT WEB THƯỜNG (KHI KHÔNG PHẢI FLUTTER APP)
             btn.innerText = `Đang xử lý ${file.name}...`;
             const buffer = await file.arrayBuffer();
             const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -303,10 +333,13 @@ async function unlock(){
         renderMobileResults(results);
 
     } catch (e) {
+        hideProcessingModal();
         alert("Lỗi mã hóa: " + e.message);
     } finally {
-        btn.disabled = false;
-        btn.innerText = "MÃ HÓA & LƯU VỀ MÁY";
+        if (!window.FlutterBridge) {
+            btn.disabled = false;
+            btn.innerText = "MÃ HÓA & LƯU TỆP";
+        }
     }
 }
 
@@ -352,7 +385,9 @@ function renderMobileResults(results) {
     card.scrollIntoView({ behavior: 'smooth' });
 }
 
-window.onNativePdfLocked = function(outFileName, tempFilePath) {
+window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath) {
+    hideProcessingModal();
+
     const isViewOnly = (currentProtectionLevel === "view_only_restricted");
     const subDesc = isViewOnly 
         ? "✓ Tệp PDF Native • Mở xem tự do, CẤM IN, CẤM COPY (Chuẩn Adobe R6)"
@@ -361,6 +396,8 @@ window.onNativePdfLocked = function(outFileName, tempFilePath) {
     const card = document.getElementById('results-lock');
     const list = document.getElementById('results-list-lock');
 
+    const displaySavedPath = savedPath ? `<div style="font-size:12px; color:#34d399; margin-top:4px; font-weight:600;">✓ Đã tự động lưu vào máy: ${savedPath}</div>` : '';
+
     list.innerHTML = `
         <div class="result-card-box">
             <div class="result-file-title">
@@ -368,6 +405,7 @@ window.onNativePdfLocked = function(outFileName, tempFilePath) {
                 <div class="result-file-meta">
                     <div class="result-file-name">${outFileName}</div>
                     <div class="result-file-sub" style="color: #60a5fa;">${subDesc}</div>
+                    ${displaySavedPath}
                 </div>
             </div>
             <div class="result-actions-grid">
@@ -377,7 +415,7 @@ window.onNativePdfLocked = function(outFileName, tempFilePath) {
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    <span>LƯU LẠI VÀO THƯ MỤC KHÁC</span>
+                    <span>LƯU LẠI VÀO MÁY</span>
                 </button>
                 <button type="button" class="btn-result-share" onclick="shareNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -387,7 +425,7 @@ window.onNativePdfLocked = function(outFileName, tempFilePath) {
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                     </svg>
-                    <span>GỬI FILE PDF QUA ZALO</span>
+                    <span>GỬI FILE QUA ZALO</span>
                 </button>
             </div>
             <p class="result-note">💡 Tệp <strong>${outFileName}</strong> đã được mã hóa chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Photoshop, Foxit Reader, WPS Office</strong> sẽ yêu cầu nhập đúng mật khẩu!</p>
@@ -397,6 +435,14 @@ window.onNativePdfLocked = function(outFileName, tempFilePath) {
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth' });
 
+    const btn = document.getElementById('btn-lock-submit');
+    btn.disabled = false;
+    btn.innerText = "MÃ HÓA & LƯU TỆP";
+};
+
+window.onNativePdfError = function(errMsg) {
+    hideProcessingModal();
+    alert("Lỗi xử lý file: " + (errMsg || "Không thể xử lý tệp"));
     const btn = document.getElementById('btn-lock-submit');
     btn.disabled = false;
     btn.innerText = "MÃ HÓA & LƯU TỆP";
@@ -421,6 +467,7 @@ function shareNativePdf(fileName, filePath) {
         }));
     }
 }
+
 
 function downloadResult(idx) {
     const item = window._mobileResults[idx];

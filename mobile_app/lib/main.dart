@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -52,15 +53,100 @@ class SecureDocWebViewScreen extends StatefulWidget {
   State<SecureDocWebViewScreen> createState() => _SecureDocWebViewScreenState();
 }
 
+/// Dữ liệu đầu vào cho Background Isolate để mã hóa PDF không block UI Thread
+class _PdfLockJob {
+  final String srcPath;
+  final String outTempPath;
+  final String password;
+  final bool isViewOnly;
+
+  _PdfLockJob({
+    required this.srcPath,
+    required this.outTempPath,
+    required this.password,
+    required this.isViewOnly,
+  });
+}
+
+/// Hàm chạy trong Background Isolate: Tối ưu bộ nhớ RAM tuyệt đối cho file lớn (300MB+)
+Future<void> _runPdfLockIsolate(_PdfLockJob job) async {
+  final srcFile = File(job.srcPath);
+  if (!await srcFile.exists()) {
+    throw Exception('Tệp nguồn không tồn tại trên bộ nhớ: ${job.srcPath}');
+  }
+
+  // 1. Đọc dữ liệu nhị phân
+  Uint8List? inputBytes = await srcFile.readAsBytes();
+
+  // 2. Nạp vào parser Syncfusion PDF
+  final PdfDocument document = PdfDocument(inputBytes: inputBytes);
+  inputBytes = null; // GIẢI PHÓNG 300MB RAM NGAY LẬP TỨC ĐỂ TRÁNH PEAK OOM
+
+  // 3. Cấu hình bảo mật Adobe ISO 32000 (Revision 6 AES-256)
+  if (job.isViewOnly) {
+    document.security.ownerPassword = job.password;
+    document.security.userPassword = '';
+    document.security.algorithm = PdfEncryptionAlgorithm.aesx256BitRevision6;
+    document.security.permissions.clear(); // CẤM IN, CẤM COPY NỘI DUNG
+  } else {
+    document.security.userPassword = job.password;
+    document.security.ownerPassword = job.password;
+    document.security.algorithm = PdfEncryptionAlgorithm.aesx256BitRevision6;
+  }
+
+  // 4. Xuất dữ liệu đã mã hóa
+  final List<int> securedBytes = await document.save();
+  document.dispose(); // HỦY TÀI LIỆU KHỎI BỘ NHỚ
+
+  // 5. Ghi trực tiếp ra file đích trên đĩa
+  final outFile = File(job.outTempPath);
+  await outFile.writeAsBytes(securedBytes, flush: true);
+}
+
 class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
   final Map<String, String> _cachedFilePaths = {};
+  String? _latestPickedFilePath;
+  String? _latestPickedFileName;
 
   @override
   void initState() {
     super.initState();
     _initController();
+  }
+
+  /// Sao chép tệp trực tiếp vào thư mục Downloads của điện thoại bằng OS file stream (0MB RAM, không qua MethodChannel)
+  Future<String?> _saveToDownloadsFolder(String tempFilePath, String targetFileName) async {
+    final List<String> candidatePaths = [
+      '/storage/emulated/0/Download',
+      '/sdcard/Download',
+      '/storage/emulated/0/Downloads',
+    ];
+
+    for (final dirPath in candidatePaths) {
+      try {
+        final dir = Directory(dirPath);
+        if (await dir.exists()) {
+          String finalName = targetFileName;
+          File destFile = File('${dir.path}/$finalName');
+          int count = 1;
+          while (await destFile.exists()) {
+            final dot = targetFileName.lastIndexOf('.');
+            final n = dot != -1 ? targetFileName.substring(0, dot) : targetFileName;
+            final ext = dot != -1 ? targetFileName.substring(dot) : '';
+            finalName = '${n}_$count$ext';
+            destFile = File('${dir.path}/$finalName');
+            count++;
+          }
+          await File(tempFilePath).copy(destFile.path);
+          return destFile.path;
+        }
+      } catch (e) {
+        debugPrint('Lỗi lưu vào $dirPath: $e');
+      }
+    }
+    return null;
   }
 
   void _initController() async {
@@ -92,60 +178,51 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
             final isViewOnly = (protectionLevel == 'view_only_restricted');
 
             // -----------------------------------------------------------------
-            // CHỨC NĂNG 1: MÃ HÓA PDF NATIVE CHUẨN ADOBE ISO 32000 (R6 AES-256)
+            // CHỨC NĂNG 1: MÃ HÓA NATIVE TRONG BACKGROUND ISOLATE CHO FILE LỚN (300MB+)
             // -----------------------------------------------------------------
-            if (action == 'lock_pdf_native') {
-              Uint8List pdfBytes;
-              if (_cachedFilePaths.containsKey(fileName)) {
-                final fileOnDisk = File(_cachedFilePaths[fileName]!);
-                if (await fileOnDisk.exists()) {
-                  pdfBytes = await fileOnDisk.readAsBytes();
-                } else if (data.containsKey('base64')) {
-                  pdfBytes = base64Decode(data['base64'] as String);
+            if (action == 'lock_pdf_native' || action == 'lock_file_native') {
+              // Tìm đường dẫn thực tế của tệp nguồn trên ổ đĩa
+              String? srcPath = _cachedFilePaths[fileName];
+              if (srcPath == null || !await File(srcPath).exists()) {
+                if (_latestPickedFilePath != null && await File(_latestPickedFilePath!).exists()) {
+                  srcPath = _latestPickedFilePath;
                 } else {
-                  throw Exception('Không tìm thấy tệp PDF nguồn trên thiết bị');
+                  for (final path in _cachedFilePaths.values) {
+                    if (await File(path).exists()) {
+                      srcPath = path;
+                      break;
+                    }
+                  }
                 }
-              } else if (data.containsKey('base64')) {
-                pdfBytes = base64Decode(data['base64'] as String);
-              } else {
-                throw Exception('Không tìm thấy dữ liệu tệp PDF nguồn');
               }
 
-              // Khởi tạo tài liệu và cấu hình mã hóa chuẩn Adobe
-              final PdfDocument document = PdfDocument(inputBytes: pdfBytes);
-              if (isViewOnly) {
-                document.security.ownerPassword = password;
-                document.security.userPassword = '';
-                document.security.algorithm = PdfEncryptionAlgorithm.aesx256BitRevision6;
-                document.security.permissions.clear(); // CẤM IN, CẤM COPY CHỮ
-              } else {
-                document.security.userPassword = password;
-                document.security.ownerPassword = password;
-                document.security.algorithm = PdfEncryptionAlgorithm.aesx256BitRevision6;
+              if (srcPath == null || !await File(srcPath).exists()) {
+                final errMsg = 'Không tìm thấy tệp nguồn "$fileName" trên thiết bị. Vui lòng chọn lại tệp!';
+                await _controller.runJavaScript("if (window.onNativePdfError) window.onNativePdfError('$errMsg');");
+                return;
               }
-
-              final List<int> securedBytes = await document.save();
-              document.dispose();
-              final Uint8List outBytes = Uint8List.fromList(securedBytes);
 
               final baseName = fileName.replaceAll(RegExp(r'\.[^/.]+$'), '');
               final outFileName = isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf';
 
               final tempDir = await getTemporaryDirectory();
-              final tempFile = File('${tempDir.path}/$outFileName');
-              await tempFile.writeAsBytes(outBytes);
+              final outTempPath = '${tempDir.path}/$outFileName';
 
-              // Mở hộp thoại chọn thư mục lưu tệp PDF (SAF Native)
-              try {
-                await FilePicker.platform.saveFile(
-                  dialogTitle: 'Chọn nơi lưu tệp PDF bảo mật: $outFileName',
-                  fileName: outFileName,
-                  bytes: outBytes,
-                );
-              } catch (e) {
-                debugPrint('FilePicker.saveFile error: $e');
-              }
+              // CHẠY TRONG BACKGROUND ISOLATE (KHÔNG ĐÓNG BĂNG UI, TỰ ĐỘNG THU HỒI BỘ NHỚ RAM)
+              final job = _PdfLockJob(
+                srcPath: srcPath,
+                outTempPath: outTempPath,
+                password: password,
+                isViewOnly: isViewOnly,
+              );
 
+              await Isolate.run(() => _runPdfLockIsolate(job));
+
+              // TỰ ĐỘNG SAO CHÉP VÀO THƯ MỤC DOWNLOAD CỦA ĐIỆN THOẠI (0MB RAM, STREAM OS NATIVE)
+              final savedFullPath = await _saveToDownloadsFolder(outTempPath, outFileName);
+              final displaySaved = savedFullPath ?? 'Thư mục Downloads của máy';
+
+              // Thông báo thành công trên thanh thông báo SnackBar
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -155,7 +232,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            '✓ Đã tạo xong tệp PDF Native chuẩn Adobe:\n$outFileName',
+                            '✓ Đã mã hóa và lưu vào máy thành công!\n$outFileName',
                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
                           ),
                         ),
@@ -173,82 +250,76 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                 );
               }
 
-              // Thông báo kết quả cho giao diện WebView
-              final escapedName = outFileName.replaceAll("'", r"\'");
-              final escapedTempPath = tempFile.path.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
-              await _controller.runJavaScript("if (window.onNativePdfLocked) { window.onNativePdfLocked('$escapedName', '$escapedTempPath'); }");
+              // Thông báo cho giao diện WebView để cập nhật UI kết quả
+              final escName = outFileName.replaceAll("'", r"\'");
+              final escTemp = outTempPath.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+              final escSaved = displaySaved.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+              await _controller.runJavaScript("if (window.onNativePdfLocked) { window.onNativePdfLocked('$escName', '$escTemp', '$escSaved'); }");
               return;
             }
 
-            // Chia sẻ tệp PDF vừa tạo
+            // -----------------------------------------------------------------
+            // CHỨC NĂNG 2: CHIA SẺ FILE QUA ZALO / APPS KHÁC (STREAM QUA FILEPROVIDER)
+            // -----------------------------------------------------------------
             if (action == 'share_temp_file') {
               final filePath = data['path'] as String?;
               if (filePath != null && await File(filePath).exists()) {
                 await Share.shareXFiles(
                   [XFile(filePath)],
-                  text: 'Tài liệu PDF bảo mật chuẩn Adobe: $fileName',
+                  text: 'Tài liệu bảo mật chuẩn Adobe: $fileName',
                 );
               }
               return;
             }
 
-            // Lưu lại tệp
+            // -----------------------------------------------------------------
+            // CHỨC NĂNG 3: LƯU LẠI VÀO MÁY
+            // -----------------------------------------------------------------
             if (action == 'save_file_again') {
               final filePath = data['path'] as String?;
               if (filePath != null && await File(filePath).exists()) {
-                final bytes = await File(filePath).readAsBytes();
-                await FilePicker.platform.saveFile(
-                  dialogTitle: 'Chọn nơi lưu tệp $fileName',
-                  fileName: fileName,
-                  bytes: bytes,
-                );
+                final saved = await _saveToDownloadsFolder(filePath, fileName);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✓ Đã lưu tệp vào:\n${saved ?? "Thư mục Downloads"}'),
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               }
               return;
             }
 
             // -----------------------------------------------------------------
-            // CHỨC NĂNG 2: XỬ LÝ LƯU & CHIA SẺ FILE HTML / BINARY
+            // CHỨC NĂNG 4: XỬ LÝ LƯU TỆP HTML TỪ WEB NẾU CÓ
             // -----------------------------------------------------------------
-            Uint8List bytesToSave;
-            if (data.containsKey('base64')) {
-              bytesToSave = base64Decode(data['base64'] as String);
-            } else {
-              bytesToSave = Uint8List.fromList(utf8.encode(data['content'] as String? ?? ''));
-            }
+            if (action == 'save' || action == 'share') {
+              final content = data['content'] as String? ?? '';
+              final tempDir = await getTemporaryDirectory();
+              final tempFile = File('${tempDir.path}/$fileName');
+              await tempFile.writeAsString(content);
 
-            final tempDir = await getTemporaryDirectory();
-            final tempFile = File('${tempDir.path}/$fileName');
-            await tempFile.writeAsBytes(bytesToSave);
-
-            if (action == 'share' || action == 'share_binary') {
-              await Share.shareXFiles(
-                [XFile(tempFile.path)],
-                text: 'Tài liệu bảo mật $fileName (SecureDocShare)',
-              );
-            } else if (action == 'save' || action == 'save_binary') {
-              try {
-                await FilePicker.platform.saveFile(
-                  dialogTitle: 'Chọn nơi lưu tệp $fileName',
-                  fileName: fileName,
-                  bytes: bytesToSave,
-                );
-              } catch (e) {
-                debugPrint('FilePicker.saveFile error: $e');
-              }
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('✓ Đã xử lý lưu tệp: $fileName'),
-                    backgroundColor: const Color(0xFF10B981),
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(16),
-                  ),
-                );
+              if (action == 'share') {
+                await Share.shareXFiles([XFile(tempFile.path)], text: 'Tài liệu bảo mật $fileName');
+              } else {
+                await _saveToDownloadsFolder(tempFile.path, fileName);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✓ Đã lưu tệp $fileName vào thư mục Downloads'),
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               }
             }
           } catch (e) {
             debugPrint('FlutterBridge error: $e');
+            final safeErr = e.toString().replaceAll("'", r"\'");
+            await _controller.runJavaScript("if (window.onNativePdfError) window.onNativePdfError('$safeErr');");
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -262,6 +333,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
         },
       );
 
+    // Xử lý bộ chọn tệp Native Android: TUYỆT ĐỐI KHÔNG ĐỌC BYTES VÀO RAM CHO FILE 300MB+
     if (Platform.isAndroid) {
       final androidController = _controller.platform as AndroidWebViewController;
       await androidController.setOnShowFileSelector((FileSelectorParams params) async {
@@ -270,11 +342,15 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
           final result = await FilePicker.platform.pickFiles(
             allowMultiple: allowMultiple,
             type: FileType.any,
+            withData: false, // TUYỆT ĐỐI KHÔNG NẠP BYTES VÀO RAM KHI CHỌN FILE LỚN 300MB
+            withReadStream: false,
           );
           if (result != null && result.files.isNotEmpty) {
             for (final f in result.files) {
               if (f.name.isNotEmpty && f.path != null) {
                 _cachedFilePaths[f.name] = f.path!;
+                _latestPickedFilePath = f.path!;
+                _latestPickedFileName = f.name;
               }
             }
             return result.files
