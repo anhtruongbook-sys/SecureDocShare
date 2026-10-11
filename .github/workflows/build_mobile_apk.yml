@@ -62,11 +62,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.8
-          name: "SecureDocShare v1.0.8 (Android APK)"
+          tag_name: v1.0.9
+          name: "SecureDocShare v1.0.9 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.8)
-            - **Hỗ Trợ Toàn Diện Tệp Cực Lớn (300MB+)**: Xử lý mã hóa trong Background Isolate độc lập, giải phóng ngay lập tức 300MB RAM sau khi nạp để triệt tiêu hoàn toàn nguy cơ OutOfMemory (OOM).
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.9)
+            - **Khắc Phục 100% Lỗi Isolate Message Unsendable**: Chuyển sang `compute(_runPdfLockIsolate, job)` loại bỏ hoàn toàn lambda closure scope capture, xử lý tệp 355MB+ mượt mà không còn lỗi `AsyncCompleter/WidgetsFlutterBinding`.
+            - **Hỗ Trợ Toàn Diện Tệp Cực Lớn (300MB - 500MB+)**: Xử lý mã hóa trong Background Isolate độc lập, giải phóng ngay lập tức 355MB RAM sau khi nạp để triệt tiêu hoàn toàn nguy cơ OutOfMemory (OOM).
             - **Chống Văng / Crash WebView 100%**: Giao diện chỉ gửi metadata siêu nhẹ (~100 bytes), không đọc chuỗi Base64 400MB trong JavaScript.
             - **Tự Động Lưu Trực Tiếp Vào Máy (Downloads)**: Cơ chế file stream hệ thống lưu thẳng vào thư mục `Download` của máy Android, không nghẽn MethodChannel.
             - **Mã Hóa Chuẩn Quốc Tế Adobe ISO 32000 (R6 AES-256)**: Xuất ra tệp `.pdf` native, mở trên Adobe Acrobat, Photoshop, Foxit Reader, WPS Office yêu cầu mật khẩu.

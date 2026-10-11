@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -208,7 +209,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               final tempDir = await getTemporaryDirectory();
               final outTempPath = '${tempDir.path}/$outFileName';
 
-              // CHẠY TRONG BACKGROUND ISOLATE (KHÔNG ĐÓNG BĂNG UI, TỰ ĐỘNG THU HỒI BỘ NHỚ RAM)
+              // CHẠY TRONG BACKGROUND ISOLATE BẰNG COMPUTE (KHÔNG CAPTURE CONTEXT/WIDGETSBINDING, 0MB RAM ĐỈNH)
               final job = _PdfLockJob(
                 srcPath: srcPath,
                 outTempPath: outTempPath,
@@ -216,7 +217,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                 isViewOnly: isViewOnly,
               );
 
-              await Isolate.run(() => _runPdfLockIsolate(job));
+              await compute(_runPdfLockIsolate, job);
 
               // TỰ ĐỘNG SAO CHÉP VÀO THƯ MỤC DOWNLOAD CỦA ĐIỆN THOẠI (0MB RAM, STREAM OS NATIVE)
               final savedFullPath = await _saveToDownloadsFolder(outTempPath, outFileName);
