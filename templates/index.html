@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureDocShare - Ứng Dụng Mã Hóa & Khóa Tài Liệu Cấp Quân Sự</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <rect x="9" y="9" width="6" height="6" rx="1"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>SecureDocShare</h1>
+                    <p class="subtitle">Bảo Vệ & Mã Hóa Tài Liệu PDF, Word, Excel, PPT Truyền Qua Mạng - Chuẩn AES-256</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge badge-success">✓ Chống Bẻ Khóa Tuyệt Đối</span>
+                <span class="badge badge-info">AES-256-GCM / PBKDF2</span>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('lock')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>MÃ HÓA & KHÓA FILE</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('unlock')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                </svg>
+                <span>MỞ KHÓA & GIẢI MÃ</span>
+            </button>
+        </div>
+
+        <!-- ==================== TAB 1: LOCK / ENCRYPT ==================== -->
+        <div id="tab-lock" class="tab-content active">
+            <!-- Dropzone -->
+            <div class="card dropzone-card" id="dropzone-lock" onclick="triggerFileInput('file-input-lock')">
+                <input type="file" id="file-input-lock" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.zip" style="display: none;" onchange="handleFilesSelected(this.files, 'lock')">
+                <div class="dropzone-inner">
+                    <div class="upload-icon">
+                        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <h3>Kéo thả các tệp PDF, Word, Excel, PowerPoint vào đây</h3>
+                    <p>Hoặc bấm vào để chọn tệp từ máy tính của bạn (Hỗ trợ chọn nhiều tệp cùng lúc)</p>
+                    <div class="supported-formats">
+                        <span>.PDF</span>
+                        <span>.DOCX / .DOC</span>
+                        <span>.XLSX / .XLS</span>
+                        <span>.PPTX / .PPT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Files List -->
+            <div id="file-list-lock" class="file-list" style="display: none;"></div>
+
+            <!-- Settings Card -->
+            <div class="card settings-card">
+                <h3 class="card-title">Cấu Hình Phân Quyền & Bảo Mật</h3>
+
+                <!-- Protection Level Selection (Hai chức năng chính) -->
+                <div class="form-group">
+                    <label style="font-size: 14px; color: #60a5fa;">BƯỚC 1: LỰA CHỌN CẤP ĐỘ BẢO MẬT & PHÂN QUYỀN:</label>
+                    <div class="level-options">
+                        <label class="level-card active" id="level-card-open" onclick="selectProtectionLevel('open_password', this)">
+                            <input type="radio" name="protection-level" value="open_password" checked style="display: none;">
+                            <div class="level-icon">🔒</div>
+                            <div class="level-content">
+                                <div class="level-badge badge-strict">BẢO MẬT TUYỆT ĐỐI</div>
+                                <h4>CHỈ NHẬP ĐÚNG PASSWORD MỚI MỞ ĐƯỢC FILE</h4>
+                                <p>Tệp được khóa kín. Khi đối tác mở bằng Microsoft Word, Excel, Photoshop, Acrobat thì phần mềm <strong>bắt buộc phải nhập đúng mật khẩu</strong> mới hiển thị nội dung.</p>
+                            </div>
+                        </label>
+
+                        <label class="level-card" id="level-card-view" onclick="selectProtectionLevel('view_only_restricted', this)">
+                            <input type="radio" name="protection-level" value="view_only_restricted" style="display: none;">
+                            <div class="level-icon">👁️🚫</div>
+                            <div class="level-content">
+                                <div class="level-badge badge-viewonly">BẢO VỆ BẢN QUYỀN NỘI DUNG</div>
+                                <h4>CÓ THỂ MỞ XEM TỰ DO, NHƯNG CẤM SỬA, CẤM IN, CẤM COPY</h4>
+                                <p>Đối tác <strong>mở xem trực tiếp không cần mật khẩu</strong> (rất tiện gửi báo giá, dự thảo). Nhưng bị <strong>KHÓA CỨNG</strong>: Không thể In ấn, Không thể Copy chữ, Không thể Chỉnh sửa nội dung!</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Password Input -->
+                <div class="form-row" style="margin-top: 20px;">
+                    <div class="form-group flex-1">
+                        <label for="lock-password" id="password-label">BƯỚC 2: MẬT KHẨU MỞ TỆP (Dùng mã ngắn dễ nhớ: 123456, Vip88, AnTam99) <span class="required">*</span></label>
+                        <div class="input-with-action">
+                            <input type="text" id="lock-password" placeholder="Nhập mã ngắn dễ nhớ (ví dụ: 123456, Vip88, AnTam99)..." oninput="checkPasswordStrength(this.value)">
+                            <button type="button" class="btn-icon" onclick="togglePasswordVisibility('lock-password', this)" title="Ẩn/Hiện mật khẩu">👁️</button>
+                            <button type="button" class="btn-action" onclick="generateShortMemorablePassword()" title="Tạo mã ngắn cực kỳ dễ nhớ">⚡ Tạo Mã Ngắn Dễ Nhớ</button>
+                        </div>
+                        <div class="quick-pass-suggestions">
+                            <span class="sugg-title">Gợi ý mã nhanh:</span>
+                            <button type="button" class="btn-chip" onclick="applyPresetPassword('123456')">123456</button>
+                            <button type="button" class="btn-chip" onclick="applyPresetPassword('888888')">888888</button>
+                            <button type="button" class="btn-chip" onclick="applyPresetPassword('Vip@2026')">Vip@2026</button>
+                            <button type="button" class="btn-chip" onclick="applyPresetPassword('BaoMat#88')">BaoMat#88</button>
+                            <button type="button" class="btn-chip" onclick="applyPresetPassword('AnTam@99')">AnTam@99</button>
+                        </div>
+                        <div class="strength-meter-wrapper">
+                            <div class="strength-bar" id="strength-bar"></div>
+                            <span class="strength-label" id="strength-label">Độ an toàn: Tốt</span>
+                        </div>
+                        <p class="pass-subnote" id="pass-subnote" style="font-size: 12px; color: #94a3b8; margin-top: 6px;">
+                            💡 Đối tác chỉ cần nhập mã này một lần khi mở file bằng Word hoặc Photoshop/Acrobat.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Encryption Mode Selection -->
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>BƯỚC 3: ĐỊNH DẠNG XUẤT BẢO VỆ:</label>
+                    <div class="mode-options">
+                        <label class="mode-card active" onclick="selectMode('native', this)">
+                            <input type="radio" name="enc-mode" value="native" checked style="display: none;">
+                            <div class="mode-header">
+                                <span class="mode-badge recommended">⭐ KHUYÊN DÙNG (CHUẨN WORD, PHOTOSHOP, ACROBAT)</span>
+                                <h4>Mã Hóa Native (Mở Bằng Microsoft Word, Excel, PowerPoint, Adobe Photoshop & Acrobat)</h4>
+                            </div>
+                            <p>File xuất ra giữ nguyên định dạng <strong>.pdf, .docx, .xlsx, .pptx</strong>. Khi đối tác mở bằng Microsoft Word, Excel, PowerPoint hoặc Adobe Photoshop / Acrobat, ứng dụng sẽ <strong>tự động bật hộp thoại gốc yêu cầu nhập mật khẩu</strong>. Nhập mã ngắn là mở ra xem và làm việc bình thường!</p>
+                        </label>
+
+                        <label class="mode-card" onclick="selectMode('html_vault', this)">
+                            <input type="radio" name="enc-mode" value="html_vault" style="display: none;">
+                            <div class="mode-header">
+                                <h4>Tệp HTML Tự Giải Mã (Mở Trên Bất Kỳ Điện Thoại Nào Không Cần Office)</h4>
+                            </div>
+                            <p>Đóng gói tệp vào 1 file .html duy nhất. Người nhận không cần cài Microsoft Office hay Acrobat, chỉ cần mở bằng Safari/Chrome trên điện thoại iPhone/Android để xem.</p>
+                        </label>
+
+                        <label class="mode-card" onclick="selectMode('secvault', this)">
+                            <input type="radio" name="enc-mode" value="secvault" style="display: none;">
+                            <div class="mode-header">
+                                <h4>Gói Nhị Phân Cấp Quân Sự (.secvault)</h4>
+                            </div>
+                            <p>Mã hóa nhị phân thuần túy AES-256-GCM bảo vệ kho lưu trữ dữ liệu tuyệt mật.</p>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Advanced Permissions (For PDF) -->
+                <div class="form-row optional-settings" id="pdf-permissions-row">
+                    <div class="form-group flex-1">
+                        <label for="hint-message">Gợi ý Mật Khẩu (Tùy chọn hiển thị cho người nhận)</label>
+                        <input type="text" id="hint-message" placeholder="Ví dụ: Ngày sinh của Giám đốc hoặc số hợp đồng...">
+                    </div>
+                    <div class="form-group">
+                        <label>Phân Quyền PDF</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="allow-print" checked> Cho phép In</label>
+                            <label><input type="checkbox" id="allow-copy"> Cho phép Sao chép Text</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="button" class="btn-primary" id="btn-lock-submit" onclick="executeLockFiles()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <span>MÃ HÓA & TẢI XUỐNG NGAY</span>
+                </button>
+            </div>
+
+            <!-- Results Card -->
+            <div id="results-lock" class="card results-card" style="display: none;">
+                <h3 class="card-title text-success">✓ Đã Mã Hóa Tài Liệu Thành Công!</h3>
+                <p class="results-desc">Các tệp tin dưới đây đã được mã hóa không thể bẻ khóa, an toàn tuyệt đối khi gửi qua Zalo, Telegram, Google Drive, Email:</p>
+                <div id="results-list-lock" class="results-list"></div>
+                <div class="results-actions">
+                    <button type="button" class="btn-secondary" id="btn-download-all" onclick="downloadAllZip()" style="display: none;">
+                        Tải Về Trọn Gói (.ZIP)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: UNLOCK / DECRYPT ==================== -->
+        <div id="tab-unlock" class="tab-content">
+            <!-- Dropzone -->
+            <div class="card dropzone-card" id="dropzone-unlock" onclick="triggerFileInput('file-input-unlock')">
+                <input type="file" id="file-input-unlock" accept=".secvault,.pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt" style="display: none;" onchange="handleFilesSelected(this.files, 'unlock')">
+                <div class="dropzone-inner">
+                    <div class="upload-icon" style="color: #10b981;">
+                        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                        </svg>
+                    </div>
+                    <h3>Kéo thả tệp đã mã hóa cần mở khóa vào đây</h3>
+                    <p>Hỗ trợ tệp .secvault, hoặc file PDF/Word/Excel/PPT có mật khẩu</p>
+                </div>
+            </div>
+
+            <!-- Selected Files List -->
+            <div id="file-list-unlock" class="file-list" style="display: none;"></div>
+
+            <!-- Unlock Card -->
+            <div class="card settings-card">
+                <h3 class="card-title">Nhập Mật Khẩu Giải Mã</h3>
+                <div class="form-group">
+                    <label for="unlock-password">Mật Khẩu <span class="required">*</span></label>
+                    <div class="input-with-action">
+                        <input type="password" id="unlock-password" placeholder="Nhập đúng mật khẩu đã đặt..." required>
+                        <button type="button" class="btn-icon" onclick="togglePasswordVisibility('unlock-password', this)">👁️</button>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-success" id="btn-unlock-submit" onclick="executeUnlockFile()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                    </svg>
+                    <span>MỞ KHÓA & TRÍCH XUẤT TỆP GỐC</span>
+                </button>
+            </div>
+
+            <!-- Results Card Unlock -->
+            <div id="results-unlock" class="card results-card" style="display: none;">
+                <h3 class="card-title text-success">✓ Đã Mở Khóa Thành Công!</h3>
+                <div id="results-list-unlock" class="results-list"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>SecureDocShare • Hệ thống Mã hóa & Bảo mật Tài liệu Không Thể Bẻ Khóa</p>
+            <p class="footer-sub">Tuân thủ tiêu chuẩn mã hóa NIST SP 800-38D (AES-GCM), OWASP Password Storage & ISO 32000-2</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
