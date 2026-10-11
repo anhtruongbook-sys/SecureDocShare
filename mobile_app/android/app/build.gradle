@@ -49,9 +49,18 @@ android {
         multiDexEnabled true
     }
 
+    signingConfigs {
+        release {
+            keyAlias 'securedoc_key'
+            keyPassword 'SecureDocPass2026'
+            storeFile file('upload-keystore.jks')
+            storePassword 'SecureDocPass2026'
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
