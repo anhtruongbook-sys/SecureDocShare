@@ -36,9 +36,55 @@ function selectProtectionLevel(levelVal, cardEl) {
     }
 }
 
-function triggerFileInput(inputId) {
-    document.getElementById(inputId).click();
+function triggerPickFiles(context) {
+    if (window.FlutterFilePicker) {
+        window.FlutterFilePicker.postMessage(context);
+        return;
+    }
+    const input = document.getElementById('file-input-' + context);
+    if (input) {
+        input.click();
+    }
 }
+
+function triggerFileInput(inputId) {
+    const context = inputId.includes('unlock') ? 'unlock' : 'lock';
+    triggerPickFiles(context);
+}
+
+window.onFlutterFilesPicked = function(jsonStr) {
+    try {
+        const data = JSON.parse(jsonStr);
+        const context = data.context;
+        const files = data.files;
+        if (!files || files.length === 0) return;
+
+        for (const f of files) {
+            const byteChars = atob(f.bytes);
+            const byteNumbers = new Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) {
+                byteNumbers[i] = byteChars.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+            const fileObj = new File([blob], f.name, { type: 'application/octet-stream' });
+
+            if (context === 'lock') {
+                selectedLockFiles.push(fileObj);
+            } else {
+                selectedUnlockFile = fileObj;
+            }
+        }
+
+        if (context === 'lock') {
+            renderFileListLock();
+        } else {
+            renderFileListUnlock();
+        }
+    } catch (e) {
+        console.error('Error handling Flutter picked files:', e);
+    }
+};
 
 function handleFilesSelected(files, context) {
     if (!files || files.length === 0) return;

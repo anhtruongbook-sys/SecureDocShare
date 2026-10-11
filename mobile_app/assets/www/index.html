@@ -32,11 +32,8 @@
         <!-- Header -->
         <header class="header">
             <div class="logo-area">
-                <div class="logo-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                        <rect x="9" y="9" width="6" height="6" rx="1"/>
-                    </svg>
+                <div class="logo-img-wrapper">
+                    <img src="static/logo.png" alt="Logo" class="app-logo-img">
                 </div>
                 <div class="logo-text">
                     <h1>SecureDocShare Mobile</h1>
@@ -70,7 +67,7 @@
         <!-- ==================== TAB 1: LOCK ==================== -->
         <div id="tab-lock" class="tab-content active">
             <!-- Dropzone / File Picker -->
-            <div class="card dropzone-card" id="dropzone-lock" onclick="triggerFileInput('file-input-lock')">
+            <div class="card dropzone-card" id="dropzone-lock" onclick="triggerPickFiles('lock')">
                 <input type="file" id="file-input-lock" multiple accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'lock')">
                 <div class="dropzone-inner">
                     <div class="upload-icon">
@@ -82,6 +79,9 @@
                     </div>
                     <h3>Chạm để chọn tệp PDF, Word, Excel, PPT</h3>
                     <p>Hỗ trợ chọn nhiều tệp tin trực tiếp từ điện thoại</p>
+                    <button type="button" class="btn-choose-file" onclick="event.stopPropagation(); triggerPickFiles('lock')">
+                        📁 Chọn Tệp Từ Điện Thoại
+                    </button>
                 </div>
             </div>
 
@@ -157,7 +157,7 @@
 
         <!-- ==================== TAB 2: UNLOCK ==================== -->
         <div id="tab-unlock" class="tab-content">
-            <div class="card dropzone-card" id="dropzone-unlock" onclick="triggerFileInput('file-input-unlock')">
+            <div class="card dropzone-card" id="dropzone-unlock" onclick="triggerPickFiles('unlock')">
                 <input type="file" id="file-input-unlock" accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'unlock')">
                 <div class="dropzone-inner">
                     <div class="upload-icon" style="color: #10b981;">
@@ -168,6 +168,9 @@
                     </div>
                     <h3>Chạm để chọn tệp đã mã hóa</h3>
                     <p>Hỗ trợ tệp .html tự giải mã hoặc gói bảo mật</p>
+                    <button type="button" class="btn-choose-file" style="background: linear-gradient(135deg, #10b981, #059669); border-color: #34d399;" onclick="event.stopPropagation(); triggerPickFiles('unlock')">
+                        📂 Chọn Tệp Mở Khóa
+                    </button>
                 </div>
             </div>
 

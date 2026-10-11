@@ -35,3 +35,7 @@ mobile_app/android/local.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# APK Releases
+*.apk
+build-output/
