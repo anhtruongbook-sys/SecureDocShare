@@ -300,15 +300,35 @@ function renderMobileResults(results) {
     const list = document.getElementById('results-list-lock');
 
     list.innerHTML = results.map((r, i) => `
-        <div class="result-item">
-            <div class="result-info">
-                <h5>${r.name}</h5>
-                <p>✓ Đã mã hóa chuẩn AES-256 Offline</p>
+        <div class="result-card-box">
+            <div class="result-file-title">
+                <div class="result-file-icon">🛡️</div>
+                <div class="result-file-meta">
+                    <div class="result-file-name">${r.name}</div>
+                    <div class="result-file-sub">✓ Đã Mã Hóa Chuẩn AES-256 Offline</div>
+                </div>
             </div>
-            <div style="display:flex; gap:8px;">
-                <button class="btn-download-single" onclick="downloadResult(${i})">💾 Lưu Tệp</button>
-                <button class="btn-share" onclick="shareResult(${i})">📤 Chia Sẻ</button>
+            <div class="result-actions-grid">
+                <button type="button" class="btn-result-download" onclick="downloadResult(${i})">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>LƯU VỀ MÁY (TẢI XUỐNG)</span>
+                </button>
+                <button type="button" class="btn-result-share" onclick="shareResult(${i})">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    <span>GỬI QUA ZALO / CHIA SẺ</span>
+                </button>
             </div>
+            <p class="result-note">💡 Bấm <strong>"LƯU VỀ MÁY"</strong> để chọn thư mục lưu (Downloads) hoặc <strong>"GỬI QUA ZALO"</strong> để gửi ngay cho đối tác.</p>
         </div>
     `).join('');
 

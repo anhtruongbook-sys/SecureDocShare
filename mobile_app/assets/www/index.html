@@ -5,27 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SecureDocShare Mobile</title>
     <link rel="stylesheet" href="static/style.css">
-    <style>
-        body { padding: 15px 10px; }
-        .app-container { max-width: 100%; gap: 15px; }
-        .logo-text h1 { font-size: 20px; }
-        .subtitle { font-size: 11.5px; }
-        .level-options { grid-template-columns: 1fr; gap: 10px; }
-        .btn-share {
-            background: #10b981;
-            color: #fff;
-            padding: 10px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-share:hover { background: #059669; }
-    </style>
 </head>
 <body>
     <div class="app-container">
@@ -36,27 +15,27 @@
                     <img src="static/logo.png" alt="Logo" class="app-logo-img">
                 </div>
                 <div class="logo-text">
-                    <h1>SecureDocShare Mobile</h1>
-                    <p class="subtitle">Mã Hóa & Khóa Tài Liệu Cấp Quân Sự (Offline 100%)</p>
+                    <h1>SecureDocShare</h1>
+                    <p class="subtitle">Mã Hóa & Khóa File Cấp Quân Sự (Offline 100%)</p>
                 </div>
             </div>
             <div class="header-badges">
-                <span class="badge badge-success">✓ Chạy Offline 100%</span>
+                <span class="badge badge-success">✓ Chạy Offline</span>
                 <span class="badge badge-info">AES-256</span>
             </div>
         </header>
 
         <!-- Navigation Tabs -->
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchTab('lock')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button type="button" class="tab-btn active" onclick="switchTab('lock')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
                 <span>MÃ HÓA & KHÓA</span>
             </button>
-            <button class="tab-btn" onclick="switchTab('unlock')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button type="button" class="tab-btn" onclick="switchTab('unlock')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                 </svg>
@@ -71,14 +50,14 @@
                 <input type="file" id="file-input-lock" multiple accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'lock')">
                 <div class="dropzone-inner">
                     <div class="upload-icon">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2v-4"/>
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                             <polyline points="17 8 12 3 7 8"/>
                             <line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
                     </div>
-                    <h3>Chạm để chọn tệp PDF, Word, Excel, PPT</h3>
-                    <p>Hỗ trợ chọn nhiều tệp tin trực tiếp từ điện thoại</p>
+                    <h3>Chạm để chọn tệp tin cần khóa</h3>
+                    <p>Hỗ trợ PDF, Word, Excel, PowerPoint từ bộ nhớ điện thoại</p>
                     <button type="button" class="btn-choose-file" onclick="event.stopPropagation(); triggerPickFiles('lock')">
                         📁 Chọn Tệp Từ Điện Thoại
                     </button>
@@ -93,7 +72,7 @@
 
                 <!-- 2 Chức năng chính -->
                 <div class="form-group">
-                    <label style="font-size: 13px; color: #60a5fa;">BƯỚC 1: LỰA CHỌN CẤP ĐỘ PHÂN QUYỀN:</label>
+                    <label>BƯỚC 1: LỰA CHỌN CẤP ĐỘ PHÂN QUYỀN:</label>
                     <div class="level-options">
                         <label class="level-card active" id="level-card-open" onclick="selectProtectionLevel('open_password', this)">
                             <input type="radio" name="protection-level" value="open_password" checked style="display: none;">
@@ -111,47 +90,51 @@
                             <div class="level-content">
                                 <div class="level-badge badge-viewonly">BẢO VỆ BẢN QUYỀN</div>
                                 <h4>MỞ XEM TỰ DO, CẤM SỬA / IN / COPY</h4>
-                                <p>Đối tác mở xem trực tiếp không cần pass, nhưng không thể copy chữ, không thể sửa đổi!</p>
+                                <p>Đối tác mở xem trực tiếp không cần pass, nhưng cấm sửa và cấm copy chữ!</p>
                             </div>
                         </label>
                     </div>
                 </div>
 
                 <!-- Password Input -->
-                <div class="form-row" style="margin-top: 15px;">
-                    <div class="form-group flex-1">
-                        <label for="lock-password" id="password-label">BƯỚC 2: MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
-                        <div class="input-with-action">
-                            <input type="text" id="lock-password" placeholder="Nhập mã ngắn (ví dụ: Vip88, 123456)...">
-                            <button type="button" class="btn-action" onclick="generateShortMemorablePassword()">⚡ Mã Nhanh</button>
-                        </div>
-                        <div class="quick-pass-suggestions">
-                            <span class="sugg-title">Gợi ý:</span>
-                            <button type="button" class="btn-chip" onclick="applyPresetPassword('123456')">123456</button>
-                            <button type="button" class="btn-chip" onclick="applyPresetPassword('888888')">888888</button>
-                            <button type="button" class="btn-chip" onclick="applyPresetPassword('Vip@2026')">Vip@2026</button>
-                            <button type="button" class="btn-chip" onclick="applyPresetPassword('AnTam@99')">AnTam@99</button>
-                        </div>
-                        <p class="pass-subnote" id="pass-subnote" style="font-size: 11.5px; color: #94a3b8; margin-top: 5px;">
-                            💡 Người nhận nhập mã này để xem tài liệu.
-                        </p>
+                <div class="form-group" style="margin-top: 14px;">
+                    <label for="lock-password" id="password-label">BƯỚC 2: MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
+                    <div class="input-with-action">
+                        <input type="text" id="lock-password" placeholder="Nhập mật khẩu (ví dụ: Vip88, 123456)...">
+                        <button type="button" class="btn-action" onclick="generateShortMemorablePassword()">⚡ Mã Nhanh</button>
                     </div>
+                    <div class="quick-pass-suggestions">
+                        <span class="sugg-title">Gợi ý:</span>
+                        <button type="button" class="btn-chip" onclick="applyPresetPassword('123456')">123456</button>
+                        <button type="button" class="btn-chip" onclick="applyPresetPassword('888888')">888888</button>
+                        <button type="button" class="btn-chip" onclick="applyPresetPassword('Vip@2026')">Vip@2026</button>
+                        <button type="button" class="btn-chip" onclick="applyPresetPassword('AnTam@99')">AnTam@99</button>
+                    </div>
+                    <p class="pass-subnote" id="pass-subnote" style="font-size: 11.5px; color: #94a3b8; margin-top: 6px;">
+                        💡 Người nhận nhập mã này để xem tài liệu.
+                    </p>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="button" class="btn-primary" id="btn-lock-submit" onclick="executeMobileLockFiles()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
-                    <span>MÃ HÓA & LƯU VỀ MÁY</span>
+                    <span>MÃ HÓA & LƯU TỆP</span>
                 </button>
             </div>
 
             <!-- Results Card -->
             <div id="results-lock" class="card results-card" style="display: none;">
-                <h3 class="card-title text-success">✓ Đã Mã Hóa Thành Công!</h3>
-                <div id="results-list-lock" class="results-list"></div>
+                <div class="results-header">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h3>Đã Mã Hóa Thành Công!</h3>
+                </div>
+                <div id="results-list-lock"></div>
             </div>
         </div>
 
@@ -160,15 +143,15 @@
             <div class="card dropzone-card" id="dropzone-unlock" onclick="triggerPickFiles('unlock')">
                 <input type="file" id="file-input-unlock" accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'unlock')">
                 <div class="dropzone-inner">
-                    <div class="upload-icon" style="color: #10b981;">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <div class="upload-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.12);">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                         </svg>
                     </div>
                     <h3>Chạm để chọn tệp đã mã hóa</h3>
-                    <p>Hỗ trợ tệp .html tự giải mã hoặc gói bảo mật</p>
-                    <button type="button" class="btn-choose-file" style="background: linear-gradient(135deg, #10b981, #059669); border-color: #34d399;" onclick="event.stopPropagation(); triggerPickFiles('unlock')">
+                    <p>Chọn tệp .html đã khóa để giải mã trích xuất</p>
+                    <button type="button" class="btn-choose-file" style="background: var(--success-gradient);" onclick="event.stopPropagation(); triggerPickFiles('unlock')">
                         📂 Chọn Tệp Mở Khóa
                     </button>
                 </div>
@@ -179,12 +162,12 @@
             <div class="card settings-card">
                 <h3 class="card-title">Nhập Mật Khẩu Giải Mã</h3>
                 <div class="form-group">
-                    <label for="unlock-password">Mật Khẩu <span class="required">*</span></label>
+                    <label for="unlock-password">Mật Khẩu Mở Tệp <span class="required">*</span></label>
                     <input type="password" id="unlock-password" placeholder="Nhập đúng mật khẩu đã đặt..." required>
                 </div>
 
                 <button type="button" class="btn-success" id="btn-unlock-submit" onclick="executeMobileUnlockFile()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                     </svg>
@@ -193,13 +176,19 @@
             </div>
 
             <div id="results-unlock" class="card results-card" style="display: none;">
-                <h3 class="card-title text-success">✓ Đã Mở Khóa Thành Công!</h3>
-                <div id="results-list-unlock" class="results-list"></div>
+                <div class="results-header">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h3>Đã Mở Khóa Thành Công!</h3>
+                </div>
+                <div id="results-list-unlock"></div>
             </div>
         </div>
 
         <footer class="footer">
-            <p>SecureDocShare Mobile • Chuẩn Mã Hóa AES-256 Offline</p>
+            <p>SecureDocShare Mobile • Bản Quyền ANH'S TEAM • Mã Hóa AES-256 Offline</p>
         </footer>
     </div>
 

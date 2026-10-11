@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -14,7 +15,7 @@ void main() {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0A0E17),
+      systemNavigationBarColor: Color(0xFF090D16),
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
@@ -31,11 +32,11 @@ class SecureDocApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0A0E17),
+        scaffoldBackgroundColor: const Color(0xFF090D16),
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF2563EB),
+          primary: Color(0xFF3B82F6),
           secondary: Color(0xFF10B981),
-          surface: Color(0xFF131B2E),
+          surface: Color(0xFF111827),
         ),
       ),
       home: const SecureDocWebViewScreen(),
@@ -63,7 +64,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
   void _initController() async {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF0A0E17))
+      ..setBackgroundColor(const Color(0xFF090D16))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -84,73 +85,89 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
             final data = jsonDecode(message.message) as Map<String, dynamic>;
             final action = data['action'] as String? ?? 'save';
             final fileName = data['name'] as String? ?? 'SecureDoc_Protected.html';
-            
-            File savedFile;
-            final tempDir = await getTemporaryDirectory();
-            savedFile = File('${tempDir.path}/$fileName');
 
+            Uint8List bytesToSave;
             if (data.containsKey('base64')) {
-              final bytes = base64Decode(data['base64'] as String);
-              await savedFile.writeAsBytes(bytes);
+              bytesToSave = base64Decode(data['base64'] as String);
             } else {
-              final content = data['content'] as String? ?? '';
-              await savedFile.writeAsString(content, encoding: utf8);
+              bytesToSave = Uint8List.fromList(utf8.encode(data['content'] as String? ?? ''));
             }
+
+            final tempDir = await getTemporaryDirectory();
+            final tempFile = File('${tempDir.path}/$fileName');
+            await tempFile.writeAsBytes(bytesToSave);
 
             if (action == 'share' || action == 'share_binary') {
               await Share.shareXFiles(
-                [XFile(savedFile.path)],
+                [XFile(tempFile.path)],
                 text: 'Tài liệu bảo mật $fileName (SecureDocShare)',
               );
             } else if (action == 'save' || action == 'save_binary') {
-              bool savedPublic = false;
-              String targetPath = savedFile.path;
-
-              // Thử lưu trực tiếp vào thư mục Downloads công khai của Android
+              // 1. Mở hộp thoại chọn thư mục lưu tệp native của Android (Storage Access Framework)
+              String? outputFilePath;
               try {
-                final downloadDir = Directory('/storage/emulated/0/Download');
-                if (await downloadDir.exists()) {
-                  final target = File('${downloadDir.path}/$fileName');
-                  if (data.containsKey('base64')) {
-                    final bytes = base64Decode(data['base64'] as String);
-                    await target.writeAsBytes(bytes);
-                  } else {
-                    final content = data['content'] as String? ?? '';
-                    await target.writeAsString(content, encoding: utf8);
-                  }
-                  savedPublic = true;
-                  targetPath = target.path;
-                }
+                outputFilePath = await FilePicker.platform.saveFile(
+                  dialogTitle: 'Chọn nơi lưu tệp $fileName',
+                  fileName: fileName,
+                  bytes: bytesToSave,
+                );
               } catch (e) {
-                debugPrint('Direct Downloads write error: $e');
+                debugPrint('FilePicker.saveFile error: $e');
               }
 
-              if (mounted) {
-                if (savedPublic) {
+              if (outputFilePath != null && outputFilePath.isNotEmpty) {
+                if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
-                          const Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 10),
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 24),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Đã lưu thành công vào mục Tải về (Downloads):\n$fileName',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              '✓ Đã lưu thành công vào điện thoại:\n$fileName',
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
                             ),
                           ),
                         ],
                       ),
-                      backgroundColor: const Color(0xFF10B981),
-                      duration: const Duration(seconds: 5),
+                      backgroundColor: const Color(0xFF1E293B),
                       behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      margin: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                      ),
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              } else {
+                // 2. Fallback: Nếu không chọn được từ SAF, tự ghi vào thư mục Downloads hoặc kích hoạt Share Sheet
+                bool wrotePublic = false;
+                try {
+                  final dlDir = Directory('/storage/emulated/0/Download');
+                  if (await dlDir.exists()) {
+                    final target = File('${dlDir.path}/$fileName');
+                    await target.writeAsBytes(bytesToSave);
+                    wrotePublic = true;
+                  }
+                } catch (_) {}
+
+                if (wrotePublic && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✓ Đã lưu tệp vào mục Tải về (Downloads):\n$fileName'),
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   );
                 } else {
-                  // Mở hộp thoại Share Sheet để người dùng bấm "Lưu vào thiết bị" hoặc gửi Zalo/Drive
+                  // Mở Share Sheet để người dùng bấm "Lưu vào Tệp" hoặc gửi Zalo/Drive
                   await Share.shareXFiles(
-                    [XFile(savedFile.path)],
+                    [XFile(tempFile.path)],
                     text: 'Lưu tệp bảo mật $fileName',
                   );
                 }
@@ -161,8 +178,9 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Lỗi xử lý tệp: $e'),
-                  backgroundColor: Colors.red,
+                  content: Text('Lỗi: $e'),
+                  backgroundColor: Colors.redAccent,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             }
@@ -213,7 +231,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               if (_isLoading)
                 const Center(
                   child: CircularProgressIndicator(
-                    color: Color(0xFF2563EB),
+                    color: Color(0xFF3B82F6),
                   ),
                 ),
             ],

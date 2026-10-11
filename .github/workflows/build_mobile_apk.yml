@@ -62,15 +62,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.4
-          name: "SecureDocShare v1.0.4 (Android APK)"
+          tag_name: v1.0.5
+          name: "SecureDocShare v1.0.5 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.4)
-            - **Khắc phục triệt để lỗi File lớn (OOM Fix)**: Tối ưu hóa bộ nhớ RAM, kích hoạt `android:largeHeap="true"`, giải thuật Base64 Chunking 32KB chống sập ứng dụng khi chọn tệp dung lượng lớn.
-            - **Lưu trực tiếp vào Thư mục Tải về (Downloads)**: Nút "Lưu Tệp" ghi trực tiếp file mã hóa vào thư mục Downloads của điện thoại và hiển thị thông báo SnackBar xác nhận.
-            - **Chia sẻ Native 1-Chạm**: Nút "Chia Sẻ" mở trực tiếp bảng chia sẻ Android để gửi ngay qua Zalo, Drive, Gmail, Telegram.
-            - **Mở khóa & Trích xuất File**: Hỗ trợ mở khóa và lưu file gốc trực tiếp trên điện thoại.
-            - **Icon & Logo Mới**: Nhận diện thương hiệu chính thức ANH'S TEAM.
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.5)
+            - **Tải & Lưu Tệp 100% Native (SAF)**: Tích hợp hộp thoại chọn thư mục lưu (Storage Access Framework) của Android - người dùng bấm "LƯU VỀ MÁY" để chọn lưu vào Downloads/Tài liệu hoặc bấm "GỬI QUA ZALO" để chia sẻ tức thì.
+            - **Tái Thiết Kế Giao Diện Đẳng Cấp (Cyber-Security Dark UI)**: Nâng cấp toàn diện giao diện sang trọng, nút bấm lớn rộng rãi, loại bỏ hoàn toàn tình trạng chữ bị co kéo hay xuống dòng lệch lạc.
+            - **Khắc phục triệt để lỗi File lớn (OOM Fix)**: Kích hoạt `android:largeHeap="true"` và giải thuật Base64 Chunking 32KB.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: build-output/SecureDocShare.apk
           draft: false
