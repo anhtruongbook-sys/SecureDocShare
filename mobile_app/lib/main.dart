@@ -428,30 +428,13 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                   await compute(_runAdobePdfLockIsolate, adobeJob);
                 }
               } else if (isOffice && Platform.isAndroid) {
-                // SỬ DỤNG ĐỘNG CƠ NATIVE MICROSOFT OFFICE AGILE ENCRYPTION (MS-OFFCRYPTO)
+                // SỬ DỤNG ĐỘNG CƠ NATIVE MICROSOFT OFFICE NATIVE ENCRYPTION (MS-OFFCRYPTO)
                 // KHI MỞ BẰNG MICROSOFT WORD/EXCEL/POWERPOINT HOẶC WPS SẼ TỰ ĐỘNG BẬT HỘP THOẠI HỎI MẬT KHẨU!
-                bool processedOffice = false;
-                try {
-                  await _nativeChannel.invokeMethod('encryptOffice', {
-                    'srcPath': srcPath,
-                    'destPath': outTempPath,
-                    'password': password,
-                  });
-                  processedOffice = true;
-                } catch (officeErr) {
-                  debugPrint('Lỗi Office Native Engine, fallback sang Stream Cipher: $officeErr');
-                }
-
-                if (!processedOffice) {
-                  final streamJob = _StreamLockJob(
-                    srcPath: srcPath,
-                    outTempPath: outTempPath,
-                    fileName: fileName,
-                    password: password,
-                    protectionLevel: protectionLevel,
-                  );
-                  await compute(_runStreamLockIsolate, streamJob);
-                }
+                await _nativeChannel.invokeMethod('encryptOffice', {
+                  'srcPath': srcPath,
+                  'destPath': outTempPath,
+                  'password': password,
+                });
               } else {
                 // TỆP KHÁC (CAD, ZIP...): MÃ HÓA STREAM CIPHER SIÊU TỐC
                 final streamJob = _StreamLockJob(

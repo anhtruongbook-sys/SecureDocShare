@@ -62,10 +62,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.17
-          name: "SecureDocShare v1.0.17 (Android APK)"
+          tag_name: v1.0.18
+          name: "SecureDocShare v1.0.18 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.17)
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.18)
             - **Mã Hóa Microsoft Office Native 100% ([MS-OFFCRYPTO] Agile Encryption)**: Khóa các tệp Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`) theo chuẩn gốc của Microsoft Office. Khi người nhận mở bằng **Microsoft Word, Excel, PowerPoint hoặc WPS Office** trên điện thoại/máy tính, ứng dụng sẽ **tự động bật hộp thoại nhập mật khẩu để mở xem tài liệu**, hoàn toàn không bị lỗi unreadable content!
             - **Mã Hóa Adobe PDF Native 100% (ISO 32000)**: Tệp PDF xuất ra `Cvt_Locked.pdf` mở trực tiếp bằng mật khẩu trên bất kỳ trình đọc PDF nào.
             - **Hỗ Trợ Mở Khóa Hai Chiều**: Tích hợp giải mã Office Native ngay trong tab MỞ KHÓA của ứng dụng.

@@ -11,8 +11,6 @@ import org.apache.poi.poifs.crypt.EncryptionMode
 import org.apache.poi.poifs.crypt.Encryptor
 import org.apache.poi.poifs.crypt.Decryptor
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
-import org.apache.poi.openxml4j.opc.OPCPackage
-import org.apache.poi.openxml4j.opc.PackageAccess
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -165,30 +163,58 @@ class MainActivity: FlutterActivity() {
                                 return@execute
                             }
 
-                            val tempOpc = File.createTempFile("opc_", ".tmp", cacheDir)
-                            srcFile.copyTo(tempOpc, overwrite = true)
-
                             val outFile = File(destPath)
                             if (outFile.exists()) outFile.delete()
                             outFile.parentFile?.mkdirs()
 
-                            POIFSFileSystem().use { fs ->
-                                val info = EncryptionInfo(EncryptionMode.agile)
-                                val encryptor = info.encryptor
-                                encryptor.confirmPassword(password)
+                            // Thực hiện mã hóa Office Native (thử Standard trước: 100% binary, tương thích hoàn hảo Word/Excel Android)
+                            var encryptSuccess = false
+                            var lastError: Throwable? = null
 
-                                OPCPackage.open(tempOpc, PackageAccess.READ_WRITE).use { opc ->
+                            try {
+                                POIFSFileSystem().use { fs ->
+                                    val info = EncryptionInfo(EncryptionMode.standard)
+                                    val encryptor = info.encryptor
+                                    encryptor.confirmPassword(password)
+
                                     encryptor.getDataStream(fs).use { os ->
-                                        opc.save(os)
+                                        FileInputStream(srcFile).use { fis ->
+                                            fis.copyTo(os)
+                                        }
+                                    }
+
+                                    FileOutputStream(outFile).use { fos ->
+                                        fs.writeFilesystem(fos)
                                     }
                                 }
+                                encryptSuccess = true
+                            } catch (eStd: Throwable) {
+                                lastError = eStd
+                                try {
+                                    POIFSFileSystem().use { fs ->
+                                        val info = EncryptionInfo(EncryptionMode.agile)
+                                        val encryptor = info.encryptor
+                                        encryptor.confirmPassword(password)
 
-                                FileOutputStream(outFile).use { fos ->
-                                    fs.writeFilesystem(fos)
+                                        encryptor.getDataStream(fs).use { os ->
+                                            FileInputStream(srcFile).use { fis ->
+                                                fis.copyTo(os)
+                                            }
+                                        }
+
+                                        FileOutputStream(outFile).use { fos ->
+                                            fs.writeFilesystem(fos)
+                                        }
+                                    }
+                                    encryptSuccess = true
+                                } catch (eAgile: Throwable) {
+                                    lastError = eAgile
                                 }
                             }
 
-                            try { tempOpc.delete() } catch (_: Throwable) {}
+                            if (!encryptSuccess) {
+                                throw lastError ?: Exception("Không thể mã hóa Office Native")
+                            }
 
                             runOnUiThread {
                                 result.success(destPath)
