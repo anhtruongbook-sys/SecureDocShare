@@ -158,11 +158,26 @@ function base64ToUint8(b64) {
     return bytes;
 }
 
+let procTimerInterval = null;
+let procStartTime = null;
+
 function showProcessingModal(title, desc) {
     const modal = document.getElementById('processing-modal');
     if (modal) {
         if (title) document.getElementById('proc-title').innerText = title;
         if (desc) document.getElementById('proc-desc').innerHTML = desc;
+
+        procStartTime = Date.now();
+        const timerEl = document.getElementById('proc-timer');
+        if (timerEl) {
+            timerEl.innerText = "⏱️ Đang xử lý: 0s";
+            if (procTimerInterval) clearInterval(procTimerInterval);
+            procTimerInterval = setInterval(() => {
+                const sec = Math.floor((Date.now() - procStartTime) / 1000);
+                timerEl.innerText = `⏱️ Đang xử lý: ${sec}s`;
+            }, 1000);
+        }
+
         modal.style.display = 'flex';
     }
 }
@@ -171,6 +186,10 @@ function hideProcessingModal() {
     const modal = document.getElementById('processing-modal');
     if (modal) {
         modal.style.display = 'none';
+    }
+    if (procTimerInterval) {
+        clearInterval(procTimerInterval);
+        procTimerInterval = null;
     }
 }
 
