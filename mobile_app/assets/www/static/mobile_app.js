@@ -461,11 +461,39 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath) {
 
 window.onNativePdfError = function(errMsg) {
     hideProcessingModal();
-    alert("Lỗi xử lý file: " + (errMsg || "Không thể xử lý tệp"));
+    const cleanMsg = (errMsg || "Không thể xử lý tệp tin").replace(/^Lỗi:\s*/, '');
+    showErrorBanner(cleanMsg);
     const btn = document.getElementById('btn-lock-submit');
     btn.disabled = false;
     btn.innerText = "MÃ HÓA & LƯU TỆP";
 };
+
+function showErrorBanner(msg) {
+    let banner = document.getElementById('error-banner-box');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'error-banner-box';
+        banner.style.cssText = "background: rgba(239, 68, 68, 0.12); border: 1.5px solid #ef4444; border-radius: 14px; padding: 16px 18px; margin: 16px 0; color: #fca5a5; font-size: 13.5px; line-height: 1.5; box-shadow: 0 10px 25px rgba(0,0,0,0.5);";
+        const dropzone = document.getElementById('dropzone-lock');
+        if (dropzone && dropzone.parentNode) {
+            dropzone.parentNode.insertBefore(banner, dropzone.nextSibling);
+        } else {
+            document.body.appendChild(banner);
+        }
+    }
+    banner.innerHTML = `
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+            <span style="font-size:22px; line-height:1;">⚠️</span>
+            <div style="flex:1;">
+                <strong style="color:#fff; font-size:14px; display:block; margin-bottom:4px;">Thông Báo Xử Lý:</strong>
+                <div>${msg}</div>
+            </div>
+            <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none; border:none; color:#fca5a5; font-size:18px; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+        </div>
+    `;
+    banner.style.display = 'block';
+    banner.scrollIntoView({ behavior: 'smooth' });
+}
 
 function reSaveNativePdf(fileName, filePath) {
     if (window.FlutterBridge) {

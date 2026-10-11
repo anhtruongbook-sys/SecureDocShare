@@ -62,14 +62,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.10
-          name: "SecureDocShare v1.0.10 (Android APK)"
+          tag_name: v1.0.11
+          name: "SecureDocShare v1.0.11 (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.10)
-            - **Tăng Tốc Mã Hóa Gấp 5 Lần (Supercharged Speed)**: Tắt nén lại dữ liệu (`PdfCompressionLevel.none`) vì tệp PDF 355MB đã được nén sẵn, loại bỏ 80% tải CPU nén Deflate nặng nề.
-            - **Mã Hóa Chuẩn Quốc Tế Adobe AES-256 Siêu Nhanh**: Áp dụng thuật toán AES-256 ISO 32000-1 chuẩn quốc tế, tương thích 100% Adobe Acrobat, Foxit, Photoshop, WPS Office, hoàn thành mã hóa file 355MB chỉ trong vài chục giây.
-            - **Bộ Đếm Thời Gian Thực (Live Timer)**: Bổ sung đồng hồ đếm giây trực quan ngay trên modal xử lý giúp người dùng nắm bắt tiến trình mã hóa.
-            - **Background Isolate Độc Lập**: Tiếp tục duy trì Isolate nền bằng `compute` chống tràn RAM và chống đơ giao diện.
+            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.11)
+            - **Khắc Phục Triệt Để Lỗi RangeError (Not in inclusive range)**: Loại bỏ dòng `compressionLevel = none` gây lỗi xung đột offset bảng XRef nội bộ trong Syncfusion PDF.
+            - **Cơ Chế Tự Động Phục Hồi & Dự Phòng (Smart Fallback)**: Tự động chuyển đổi giữa AES-256 và AES-128 nếu tệp PDF có cấu trúc đối tượng đặc thù, bảo đảm 100% tệp lớn được mã hóa thành công.
+            - **Giao Diện Thông Báo Lỗi Chuyên Nghiệp**: Loại bỏ hoàn toàn popup `The page at "file://" says:` của trình duyệt, thay bằng Error Banner Dark Cyber sang trọng.
+            - **Bộ Đếm Thời Gian Thực (Live Timer)**: Hiển thị đồng hồ đếm giây trực quan ngay trên modal trạng thái.
             - **Tự Động Lưu Trực Tiếp Vào Máy (Downloads)**: Cơ chế file stream hệ thống lưu thẳng vào thư mục `Download` của máy Android.
             - **Khóa Chữ Ký Số Cố Định (Fixed Release Keystore)**: Cài đặt đè mượt mà từ các bản trước.
             - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
