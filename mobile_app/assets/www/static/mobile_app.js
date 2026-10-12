@@ -47,6 +47,22 @@ initTheme();
 let selectedLockFiles = [];
 let selectedUnlockFile = null;
 let currentProtectionLevel = "open_password";
+let currentPackagingMode = "native";
+
+function selectPackagingMode(mode, el) {
+    currentPackagingMode = mode;
+    document.querySelectorAll('.packaging-card').forEach(c => c.classList.remove('active'));
+    if (el) {
+        el.classList.add('active');
+        const radio = el.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+    }
+    if (mode === 'zip') {
+        showToast('Đã chọn: Nén .ZIP mã hóa mật khẩu AES-256 (Chuẩn WinRAR, 7-Zip, ZArchiver) 📦');
+    } else {
+        showToast('Đã chọn: Định dạng gốc (Word, Excel, PDF giữ nguyên đuôi file) 🔒');
+    }
+}
 
 function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -119,10 +135,22 @@ function handleFilesSelected(files, context) {
     if (!files || files.length === 0) return;
 
     if (context === 'lock') {
+        let hasCadOrArchive = false;
         for (let i = 0; i < files.length; i++) {
             selectedLockFiles.push(files[i]);
+            const ext = getFileExtension(files[i].name);
+            if (['dwg', 'dxf', 'zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+                hasCadOrArchive = true;
+            }
         }
         renderFileListLock();
+        if (hasCadOrArchive || selectedLockFiles.length > 1) {
+            const zipCard = document.getElementById('pkg-card-zip');
+            if (zipCard && currentPackagingMode !== 'zip') {
+                selectPackagingMode('zip', zipCard);
+                showToast('💡 Đã tự động kích hoạt chế độ Nén .ZIP Có Pass để bảo vệ tối ưu! 📦');
+            }
+        }
     } else {
         selectedUnlockFile = files[0];
         renderFileListUnlock();
@@ -137,7 +165,21 @@ function getFileExtension(filename) {
 
 function getFileMetaBadge(filename) {
     const ext = getFileExtension(filename);
-    if (ext === 'docx' || ext === 'doc') {
+    if (ext === 'dwg' || ext === 'dxf') {
+        return {
+            badgeClass: 'file-badge-cad',
+            iconText: 'DWG',
+            label: 'Bản vẽ AutoCAD',
+            protocol: 'Zip4j AES-256 Vault'
+        };
+    } else if (ext === 'zip' || ext === 'rar' || ext === '7z') {
+        return {
+            badgeClass: 'file-badge-zip',
+            iconText: ext.toUpperCase(),
+            label: 'Tệp nén lưu trữ',
+            protocol: 'Zip4j Encrypted Vault'
+        };
+    } else if (ext === 'docx' || ext === 'doc') {
         return {
             badgeClass: 'file-badge-word',
             iconText: 'DOC',
@@ -547,17 +589,17 @@ function applySecurityTemplate(type) {
         }
         applyWatermarkPreset('BẢN MẬT HỢP ĐỒNG');
         showToast('Đã áp dụng mẫu: 🏢 Hợp Đồng (Mã Quân Sự + Dấu Mật)');
-    } else if (type === 'design') {
-        selectProtectionLevel('view_only_restricted', document.getElementById('level-card-view'));
-        document.getElementById('lock-password').value = 'Admin@Design2026';
-        updatePasswordStrengthUI();
+    } else if (type === 'cad' || type === 'design') {
+        const zipCard = document.getElementById('pkg-card-zip');
+        if (zipCard) selectPackagingMode('zip', zipCard);
+        selectProtectionLevel('open_password', document.getElementById('level-card-open'));
+        generateMilitaryPassword();
         const wmCheck = document.getElementById('enable-watermark-checkbox');
-        if (wmCheck && !wmCheck.checked) {
-            wmCheck.checked = true;
+        if (wmCheck && wmCheck.checked) {
+            wmCheck.checked = false;
             toggleWatermarkOption();
         }
-        applyWatermarkPreset('BẢN QUYỀN THIẾT KẾ');
-        showToast('Đã áp dụng mẫu: 📐 Bản Vẽ (Xem tự do, Cấm sao chép + Dấu bản quyền)');
+        showToast('Đã áp dụng mẫu: 📐 Bản Vẽ CAD .DWG (Nén .ZIP Có Pass Quân Sự AES-256) 🛡️');
     } else if (type === 'quotation') {
         selectProtectionLevel('open_password', document.getElementById('level-card-open'));
         applyPresetPassword('BaoGia@88');
@@ -657,6 +699,29 @@ async function executeMobileLockFiles() {
             // TUYỆT ĐỐI KHÔNG ĐỌC ARRAYBUFFER / BASE64 ĐỂ CHỐNG CRASH RAM 100%
             // -------------------------------------------------------------
             if (window.FlutterBridge) {
+                if (currentPackagingMode === 'zip' || selectedLockFiles.length > 1) {
+                    const names = selectedLockFiles.map(f => f.name);
+                    const firstName = selectedLockFiles[0].name;
+                    const totalBytes = selectedLockFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+                    const totalSizeMb = (totalBytes / (1024 * 1024)).toFixed(1);
+
+                    btn.innerText = `Đang nén & đặt pass ZIP (${totalSizeMb} MB)...`;
+                    showProcessingModal(
+                        'Đang Nén & Đặt Pass ZIP...',
+                        `Tổng số: <strong>${selectedLockFiles.length} tệp</strong> (${totalSizeMb} MB)<br>Đang nén và mã hóa mật khẩu AES-256 bằng Zip4j Engine.<br>Vui lòng giữ ứng dụng mở...`
+                    );
+
+                    window.FlutterBridge.postMessage(JSON.stringify({
+                        action: 'lock_zip_native',
+                        name: firstName,
+                        names: names,
+                        password: pwd,
+                        use_zipcrypto: false,
+                        protection_level: currentProtectionLevel
+                    }));
+                    return;
+                }
+
                 btn.innerText = isPdf 
                     ? `Đang mã hóa PDF: ${file.name} (${sizeMb} MB)...`
                     : `Đang xử lý tệp: ${file.name} (${sizeMb} MB)...`;
@@ -888,6 +953,12 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
             iconColor = "#ea580c";
             subDesc = `✓ Tệp PowerPoint Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
             noteText = `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft PowerPoint hoặc WPS Office</strong> sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem slide!`;
+        } else if (ext === 'zip') {
+            fileIcon = "📦";
+            iconBg = "#fef9c3";
+            iconColor = "#ca8a04";
+            subDesc = `✓ Tệp Nén .ZIP Bảo Mật Mật Khẩu AES-256`;
+            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được nén và mã hóa mật khẩu chuẩn quốc tế WinZip AES-256. Người nhận có thể mở và giải nén bằng <strong>WinRAR, 7-Zip, ZArchiver, Xiaomi/Samsung File Manager</strong> hoặc ứng dụng KryptoDoc!`;
         } else {
             fileIcon = "📦";
             iconBg = "#f1f5f9";

@@ -64,23 +64,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.2.0
-          name: "KryptoDoc v2.2.0 - Security Templates, Watermark & Offline QR Vault (Android APK)"
+          tag_name: v2.3.0
+          name: "KryptoDoc v2.3.0 - AutoCAD DWG & Universal Password-Protected ZIP Vault (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.2.0 (Giai Đoạn 3: Đỉnh Cao Bảo Mật & Tiện Ích Độc Quyền)
-            - **Mẫu Cấu Hình Bảo Mật 1-Chạm (Context Security Templates)**:
-              + 🏢 *Hợp Đồng Doanh Nghiệp*: Khóa mật khẩu quân sự + Đóng dấu mờ "BẢN MẬT HỢP ĐỒNG".
-              + 📐 *Bản Vẽ & Bản Quyền Thiết Kế*: Chế độ Chỉ xem (Cấm sao chép / cấm in) + Đóng dấu mờ "BẢN QUYỀN THIẾT KẾ".
-              + 💰 *Báo Giá / Dự Toán*: Mật khẩu nhanh + Tự động nén tối ưu dung lượng gửi Zalo.
-            - **Đóng Dấu Bản Quyền Mờ Chuyên Nghiệp (Watermark Overlay)**:
-              + Tự động khắc dấu chéo 45° mờ tinh tế (18% Opacity) xuyên suốt toàn bộ các trang tài liệu PDF bằng động cơ Native iTextG & Syncfusion PDF.
-              + Cung cấp sẵn các mẫu dấu chuẩn mực: "BẢN MẬT - NỘI BỘ", "CHỈ LƯU HÀNH NỘI BỘ", "BẢN THẢO - TUYỆT MẬT", hoặc nhập tùy biến.
-            - **Nén Tối Ưu Tệp Tự Động (Smart Full-Stream Compression)**: Nén stream tệp PDF giúp giảm kích thước đáng kể, truyền gửi qua Zalo / Email tức thì mà không lo nghẽn mạng.
-            - **Mã QR Chia Sẻ Mật Khẩu Siêu Tốc Offline 100% (Instant Password QR Code)**:
-              + Tự động sinh mã QR độ nét cao ngay trên màn hình kết quả.
-              + Đối tác / đồng nghiệp chỉ cần đưa camera điện thoại hoặc Zalo quét là nhận ngay mật khẩu mà không sợ bị lộ trong tin nhắn chat.
-            - **Thước Đo Độ Mạnh Mật Khẩu & Bộ Sinh Mật Khẩu Quân Sự 16 Ký Tự**: Đảm bảo an toàn cấp quân sự.
-            - **Biểu tượng Cyber Shield Động Tương Tác**: Xoay radar orbital ring, phát quang neon, nảy haptic 3D.
+            ## Ứng dụng Di Động KryptoDoc v2.3.0 (AutoCAD .DWG & Universal Password-Protected ZIP Vault)
+            - **Khóa Mật Khẩu Tệp Nén .ZIP Chuẩn Quốc Tế (Zip4j Engine AES-256)**:
+              + Tự động nén và mã hóa mật khẩu cực mạnh AES-256 cho tệp nén `.zip`.
+              + Mở và giải nén tương thích 100% với mọi phần mềm giải nén hàng đầu thế giới: **WinRAR, 7-Zip, ZArchiver, Xiaomi / Samsung File Manager** hoặc chính KryptoDoc.
+            - **Bảo Vệ Chuyên Nghiệp Bản Vẽ Kỹ Thuật AutoCAD (.DWG / .DXF)**:
+              + Khắc phục hoàn toàn hạn chế của Autodesk AutoCAD (đã lược bỏ tính năng đặt pass nội bộ từ AutoCAD 2016-2026).
+              + Tự động nhận diện bản vẽ `.dwg`, đóng gói vào tệp nén `.zip` bảo vệ mật khẩu cấp quân sự AES-256, an tâm gửi qua Zalo / Telegram / Email.
+            - **Chế Độ Xuất Tệp Linh Hoạt (Dual Packaging Modes)**:
+              + 🔒 *Định Dạng Gốc*: Giữ nguyên đuôi tệp Word, Excel, PowerPoint, PDF mở trực tiếp trên MS Office & Adobe Reader.
+              + 📦 *Nén .ZIP Có Pass*: Đóng gói một hoặc nhiều tệp vào kho bảo mật `.zip` có mật khẩu, tự động kích hoạt khi chọn bản vẽ CAD hoặc nhiều tệp cùng lúc.
+            - **Mẫu Bảo Mật Bổ Sung**: 📐 *Bản Vẽ CAD .DWG* (1-Chạm kích hoạt chế độ nén ZIP mật khẩu quân sự).
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` (hoặc `SecureDocShare.apk`) bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk

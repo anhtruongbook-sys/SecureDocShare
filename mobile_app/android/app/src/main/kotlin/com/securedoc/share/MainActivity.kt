@@ -15,6 +15,12 @@ import org.apache.poi.poifs.crypt.EncryptionMode
 import org.apache.poi.poifs.crypt.Encryptor
 import org.apache.poi.poifs.crypt.Decryptor
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
+import net.lingala.zip4j.ZipFile
+import net.lingala.zip4j.model.ZipParameters
+import net.lingala.zip4j.model.enums.AesKeyStrength
+import net.lingala.zip4j.model.enums.CompressionLevel
+import net.lingala.zip4j.model.enums.CompressionMethod
+import net.lingala.zip4j.model.enums.EncryptionMethod
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -313,6 +319,95 @@ class MainActivity: FlutterActivity() {
                             val errMsg = e.message ?: e.toString()
                             runOnUiThread {
                                 result.error("OFFICE_DECRYPT_ERROR", errMsg, null)
+                            }
+                        }
+                    }
+                }
+                "createEncryptedZip" -> {
+                    val srcPaths = call.argument<List<String>>("srcPaths") ?: emptyList()
+                    val destZipPath = call.argument<String>("destZipPath")
+                    val password = call.argument<String>("password") ?: ""
+                    val useZipCrypto = call.argument<Boolean>("useZipCrypto") ?: false
+
+                    if (srcPaths.isEmpty() || destZipPath == null) {
+                        result.error("INVALID_ARGS", "Missing srcPaths or destZipPath", null)
+                        return@setMethodCallHandler
+                    }
+
+                    executor.execute {
+                        try {
+                            val outZip = File(destZipPath)
+                            if (outZip.exists()) outZip.delete()
+                            outZip.parentFile?.mkdirs()
+
+                            val zipFile = ZipFile(outZip, password.toCharArray())
+                            val zipParameters = ZipParameters().apply {
+                                isEncryptFiles = password.isNotEmpty()
+                                if (password.isNotEmpty()) {
+                                    if (useZipCrypto) {
+                                        encryptionMethod = EncryptionMethod.ZIP_STANDARD
+                                    } else {
+                                        encryptionMethod = EncryptionMethod.AES
+                                        aesKeyStrength = AesKeyStrength.KEY_STRENGTH_256
+                                    }
+                                }
+                                compressionMethod = CompressionMethod.DEFLATE
+                                compressionLevel = CompressionLevel.NORMAL
+                            }
+
+                            for (p in srcPaths) {
+                                val f = File(p)
+                                if (f.exists()) {
+                                    if (f.isDirectory) {
+                                        zipFile.addFolder(f, zipParameters)
+                                    } else {
+                                        zipFile.addFile(f, zipParameters)
+                                    }
+                                }
+                            }
+
+                            runOnUiThread {
+                                result.success(destZipPath)
+                            }
+                        } catch (e: Throwable) {
+                            val errMsg = e.message ?: e.toString()
+                            runOnUiThread {
+                                result.error("ZIP_ENCRYPT_ERROR", errMsg, null)
+                            }
+                        }
+                    }
+                }
+                "extractEncryptedZip" -> {
+                    val zipPath = call.argument<String>("zipPath")
+                    val destDirPath = call.argument<String>("destDirPath")
+                    val password = call.argument<String>("password") ?: ""
+
+                    if (zipPath == null || destDirPath == null) {
+                        result.error("INVALID_ARGS", "Missing zipPath or destDirPath", null)
+                        return@setMethodCallHandler
+                    }
+
+                    executor.execute {
+                        try {
+                            val zipFile = ZipFile(zipPath, password.toCharArray())
+                            if (!zipFile.isValidZipFile) {
+                                runOnUiThread { result.error("INVALID_ZIP", "Tệp không phải định dạng ZIP hợp lệ!", null) }
+                                return@execute
+                            }
+
+                            val outDir = File(destDirPath)
+                            outDir.mkdirs()
+
+                            zipFile.extractAll(destDirPath)
+
+                            val extractedFiles = outDir.listFiles()?.map { it.name } ?: emptyList()
+                            runOnUiThread {
+                                result.success(extractedFiles)
+                            }
+                        } catch (e: Throwable) {
+                            val errMsg = e.message ?: e.toString()
+                            runOnUiThread {
+                                result.error("ZIP_DECRYPT_ERROR", errMsg, null)
                             }
                         }
                     }

@@ -400,6 +400,86 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
             final compress = data['compress'] as bool? ?? true;
 
             // -----------------------------------------------------------------
+            // CHỨC NĂNG 1B: NÉN & ĐẶT MẬT KHẨU FILE .ZIP (CHUẨN WINZIP / 7-ZIP AES-256)
+            // HỖ TRỢ BẢN VẼ .DWG, THƯ MỤC DỰ ÁN VÀ MỌI ĐỊNH DẠNG TỆP TIN
+            // -----------------------------------------------------------------
+            if (action == 'lock_zip_native') {
+              final fileNames = (data['names'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [fileName];
+              final List<String> srcPaths = [];
+              for (final fn in fileNames) {
+                final p = _cachedFilePaths[fn];
+                if (p != null && await File(p).exists()) {
+                  srcPaths.add(p);
+                }
+              }
+              if (srcPaths.isEmpty && _latestPickedFilePath != null && await File(_latestPickedFilePath!).exists()) {
+                srcPaths.add(_latestPickedFilePath!);
+              }
+
+              if (srcPaths.isEmpty) {
+                final errMsg = 'Không tìm thấy tệp nguồn để nén. Vui lòng chọn lại tệp!';
+                await _controller.runJavaScript("if (window.onNativePdfError) window.onNativePdfError('$errMsg');");
+                return;
+              }
+
+              final baseName = fileNames.length == 1 
+                  ? fileNames.first.replaceAll(RegExp(r'\.[^/.]+$'), '')
+                  : 'KryptoArchive_${DateTime.now().millisecondsSinceEpoch ~/ 1000}';
+              final outZipName = '${baseName}_Protected.zip';
+
+              final tempDir = await getTemporaryDirectory();
+              final outTempPath = '${tempDir.path}/$outZipName';
+              final useZipCrypto = data['use_zipcrypto'] as bool? ?? false;
+
+              if (Platform.isAndroid) {
+                await _nativeChannel.invokeMethod('createEncryptedZip', {
+                  'srcPaths': srcPaths,
+                  'destZipPath': outTempPath,
+                  'password': password,
+                  'useZipCrypto': useZipCrypto,
+                });
+              } else {
+                throw Exception('Động cơ Zip4j chỉ hỗ trợ trên Android Native');
+              }
+
+              final savedFullPath = await _saveToDownloadsFolder(outTempPath, outZipName);
+              final displaySaved = savedFullPath ?? 'Thư mục Downloads của máy';
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.archive_rounded, color: Color(0xFF10B981), size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '✓ Đã nén & đặt pass ZIP thành công:\n$outZipName',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFFF8FAFC)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: const Color(0xFF131B2E),
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: const BorderSide(color: Color(0xFF232F48), width: 1),
+                    ),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
+
+              final escName = outZipName.replaceAll("'", r"\'");
+              final escTemp = outTempPath.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+              final escSaved = displaySaved.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+              await _controller.runJavaScript("if (window.onNativePdfLocked) { window.onNativePdfLocked('$escName', '$escTemp', '$escSaved', false); }");
+              return;
+            }
+
+            // -----------------------------------------------------------------
             // CHỨC NĂNG 1: MÃ HÓA TỆP
             // -----------------------------------------------------------------
             if (action == 'lock_pdf_native' || action == 'lock_file_native') {
@@ -541,6 +621,41 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               }
 
               final tempDir = await getTemporaryDirectory();
+
+              // NẾU LÀ TỆP .ZIP CÓ MẬT KHẨU TRÊN ANDROID, GIẢI NÉN BẰNG ZIP4J NATIVE
+              final isZip = fileName.toLowerCase().endsWith('.zip');
+              if (isZip && Platform.isAndroid) {
+                try {
+                  final base = fileName.replaceAll(RegExp(r'_(Protected|Locked)\.zip$', caseSensitive: false), '')
+                                       .replaceAll(RegExp(r'\.zip$', caseSensitive: false), '');
+                  final extractFolder = '${tempDir.path}/${base}_Extracted';
+
+                  final res = await _nativeChannel.invokeMethod('extractEncryptedZip', {
+                    'zipPath': srcPath,
+                    'destDirPath': extractFolder,
+                    'password': password,
+                  });
+
+                  final List<dynamic> fileNames = (res is List) ? res : [];
+                  final firstExtracted = fileNames.isNotEmpty ? fileNames.first.toString() : 'Tệp_Giải_Nén';
+
+                  final outExtractedPath = '$extractFolder/$firstExtracted';
+                  final savedFullPath = await _saveToDownloadsFolder(outExtractedPath, firstExtracted);
+                  final displaySaved = savedFullPath ?? 'Thư mục Downloads';
+
+                  final displayName = fileNames.length > 1 ? '${base}_Extracted (${fileNames.length} tệp)' : firstExtracted;
+                  final escName = displayName.replaceAll("'", r"\'");
+                  final escSaved = displaySaved.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+                  final escTemp = outExtractedPath.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+                  final decFile = File(outExtractedPath);
+                  final sizeMb = decFile.existsSync() ? ((await decFile.length()) / (1024 * 1024)).toStringAsFixed(1) : '1.0';
+                  await _controller.runJavaScript("if (window.onNativeUnlocked) { window.onNativeUnlocked('$escName', '$sizeMb', '$escSaved', '$escTemp'); }");
+                  return;
+                } catch (zipErr) {
+                  debugPrint('Giải mã ZIP thất bại hoặc mật khẩu sai: $zipErr');
+                }
+              }
+
               final isPdf = fileName.toLowerCase().endsWith('.pdf');
 
               // NẾU LÀ TỆP PDF TRÊN ANDROID, THỬ GIẢI MÃ NATIVE BẰNG ITEXTG

@@ -99,7 +99,7 @@
                         </svg>
                     </div>
                     <h3>Chạm để chọn tệp tin cần khóa</h3>
-                    <p>Hỗ trợ PDF, Word, Excel, PowerPoint từ bộ nhớ điện thoại</p>
+                    <p>Hỗ trợ AutoCAD (.DWG), PDF, Word, Excel, PowerPoint, ZIP, RAR...</p>
                     <button type="button" class="btn-choose-file" onclick="event.stopPropagation(); triggerPickFiles('lock')">
                         📁 Chọn Tệp Từ Điện Thoại
                     </button>
@@ -119,12 +119,36 @@
                         <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('enterprise')">
                             🏢 Hợp Đồng
                         </button>
-                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('design')">
-                            📐 Bản Vẽ Bản Quyền
+                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('cad')">
+                            📐 Bản Vẽ CAD .DWG
                         </button>
                         <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('quotation')">
                             💰 Báo Giá Dự Toán
                         </button>
+                    </div>
+                </div>
+
+                <!-- Phương thức đóng gói & xuất tệp -->
+                <div class="form-group" style="margin-top: 4px; margin-bottom: 6px;">
+                    <label>PHƯƠNG THỨC XUẤT TỆP BẢO MẬT:</label>
+                    <div class="packaging-mode-row">
+                        <label class="packaging-card active" id="pkg-card-native" onclick="selectPackagingMode('native', this)">
+                            <input type="radio" name="packaging-mode" value="native" checked style="display: none;">
+                            <div class="pkg-header">
+                                <span class="pkg-icon">🔒</span>
+                                <span class="pkg-title">Định Dạng Gốc</span>
+                            </div>
+                            <p class="pkg-desc">Word/Excel/PDF giữ nguyên đuôi file, mở trên Office & PDF Reader.</p>
+                        </label>
+                        <label class="packaging-card" id="pkg-card-zip" onclick="selectPackagingMode('zip', this)">
+                            <input type="radio" name="packaging-mode" value="zip" style="display: none;">
+                            <div class="pkg-header">
+                                <span class="pkg-icon">📦</span>
+                                <span class="pkg-title">Nén .ZIP Có Pass</span>
+                                <span class="pkg-tag">AutoCAD</span>
+                            </div>
+                            <p class="pkg-desc">Khóa mật khẩu AES-256. Mở bằng WinRAR, 7-Zip, ZArchiver.</p>
+                        </label>
                     </div>
                 </div>
 

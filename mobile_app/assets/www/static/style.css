@@ -1037,6 +1037,8 @@ body {
 .file-badge-excel { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
 .file-badge-powerpoint { background: #7c2d12; color: #fdba74; border: 1px solid #f97316; }
 .file-badge-pdf { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
+.file-badge-cad { background: #581c87; color: #d8b4fe; border: 1px solid #a855f7; }
+.file-badge-zip { background: #3b2d12; color: #fde047; border: 1px solid #eab308; }
 .file-badge-generic { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
 
 .file-info-group {
@@ -1298,4 +1300,70 @@ body {
     font-weight: 800;
     color: #059669;
     letter-spacing: 0.5px;
+}
+
+/* Packaging Mode Cards */
+.packaging-mode-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.packaging-card {
+    border: 1.5px solid var(--border);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    user-select: none;
+}
+
+.packaging-card:hover {
+    border-color: var(--primary-light);
+}
+
+.packaging-card.active {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.08);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.pkg-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pkg-icon {
+    font-size: 14px;
+}
+
+.pkg-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-title);
+    flex: 1;
+}
+
+.pkg-tag {
+    font-size: 9px;
+    font-weight: 800;
+    color: #eab308;
+    background: rgba(234, 179, 8, 0.15);
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    padding: 1px 5px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+}
+
+.pkg-desc {
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.35;
+    margin: 0;
 }
