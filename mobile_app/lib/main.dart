@@ -134,7 +134,7 @@ Future<void> _runAdobePdfLockIsolate(_AdobePdfLockJob job) async {
     document.security.userPassword = '';
     document.security.algorithm = PdfEncryptionAlgorithm.rc4x128Bit;
     document.security.permissions.clear();
-    document.security.permissions.add(PdfPermissions.print);
+    document.security.permissions.add(PdfPermissionsFlags.print);
   } else {
     document.security.userPassword = job.password;
     document.security.ownerPassword = job.password;
