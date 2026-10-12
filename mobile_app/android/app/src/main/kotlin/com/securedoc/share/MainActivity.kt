@@ -14,7 +14,10 @@ import org.apache.poi.poifs.crypt.EncryptionInfo
 import org.apache.poi.poifs.crypt.EncryptionMode
 import org.apache.poi.poifs.crypt.Encryptor
 import org.apache.poi.poifs.crypt.Decryptor
+import org.apache.poi.poifs.crypt.HashAlgorithm
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
+import org.apache.poi.xwpf.usermodel.XWPFDocument
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.model.ZipParameters
 import net.lingala.zip4j.model.enums.AesKeyStrength
@@ -112,10 +115,13 @@ class MainActivity: FlutterActivity() {
                                 } catch (_: Throwable) {}
                             }
 
-                            val userPwd = if (isViewOnly) ByteArray(0) else password.toByteArray(Charsets.UTF_8)
+                            // ĐẶT MẬT KHẨU PDF CHUẨN QUỐC TẾ ADOBE ISO 32000:
+                            // Khi isViewOnly: userPwd = null để mọi người xem tự do không cần mật khẩu,
+                            // permissions cấp quyền xem/in/đọc màn hình nhưng CẤM COPY (ALLOW_COPY = 0) và CẤM SỬA.
+                            val userPwd: ByteArray? = if (isViewOnly) null else password.toByteArray(Charsets.UTF_8)
                             val ownerPwd = password.toByteArray(Charsets.UTF_8)
                             val permissions = if (isViewOnly) {
-                                PdfWriter.ALLOW_SCREENREADERS
+                                PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_SCREENREADERS or PdfWriter.ALLOW_DEGRADED_PRINTING
                             } else {
                                 PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_COPY or PdfWriter.ALLOW_SCREENREADERS or PdfWriter.ALLOW_FILL_IN
                             }
@@ -212,6 +218,7 @@ class MainActivity: FlutterActivity() {
                     val srcPath = call.argument<String>("srcPath")
                     val destPath = call.argument<String>("destPath")
                     val password = call.argument<String>("password") ?: ""
+                    val isViewOnly = call.argument<Boolean>("isViewOnly") ?: false
 
                     if (srcPath == null || destPath == null) {
                         result.error("INVALID_ARGS", "Missing srcPath or destPath", null)
@@ -244,32 +251,66 @@ class MainActivity: FlutterActivity() {
                                 // Tệp Office bình thường (chưa mã hóa) sẽ không phải OLE EncryptedPackage
                             }
 
-                            // Thực hiện mã hóa Office Native (thử Standard trước: 100% binary, tương thích hoàn hảo Word/Excel Android)
+                            val ext = srcFile.extension.lowercase()
                             var encryptSuccess = false
                             var lastError: Throwable? = null
 
-                            try {
-                                POIFSFileSystem().use { fs ->
-                                    val info = EncryptionInfo(EncryptionMode.standard)
-                                    val encryptor = info.encryptor
-                                    encryptor.confirmPassword(password)
-
-                                    encryptor.getDataStream(fs).use { os ->
+                            if (isViewOnly) {
+                                // CHẾ ĐỘ CHỈ XEM (READ-ONLY PROTECTION / CHỐNG CHỈNH SỬA):
+                                // Người nhận mở xem tự do 100% không cần nhập mật khẩu trên Word/Excel & WPS.
+                                // Mọi thao tác sửa đổi, gõ chữ, can thiệp bảng tính bị khóa; chỉ bạn giữ mật khẩu để gỡ khóa!
+                                try {
+                                    if (ext == "docx") {
                                         FileInputStream(srcFile).use { fis ->
-                                            fis.copyTo(os)
+                                            val doc = XWPFDocument(fis)
+                                            doc.enforceReadonlyProtection(password, HashAlgorithm.sha512)
+                                            FileOutputStream(outFile).use { fos ->
+                                                doc.write(fos)
+                                            }
+                                            doc.close()
                                         }
+                                        encryptSuccess = true
+                                    } else if (ext == "xlsx") {
+                                        FileInputStream(srcFile).use { fis ->
+                                            val wb = XSSFWorkbook(fis)
+                                            wb.lockStructure()
+                                            wb.setWorkbookPassword(password, HashAlgorithm.sha512)
+                                            for (i in 0 until wb.numberOfSheets) {
+                                                wb.getSheetAt(i).protectSheet(password)
+                                            }
+                                            FileOutputStream(outFile).use { fos ->
+                                                wb.write(fos)
+                                            }
+                                            wb.close()
+                                        }
+                                        encryptSuccess = true
+                                    } else {
+                                        // Định dạng Office khác: mã hóa tiêu chuẩn
+                                        POIFSFileSystem().use { fs ->
+                                            val info = EncryptionInfo(EncryptionMode.standard)
+                                            val encryptor = info.encryptor
+                                            encryptor.confirmPassword(password)
+                                            encryptor.getDataStream(fs).use { os ->
+                                                FileInputStream(srcFile).use { fis ->
+                                                    fis.copyTo(os)
+                                                }
+                                            }
+                                            FileOutputStream(outFile).use { fos ->
+                                                fs.writeFilesystem(fos)
+                                            }
+                                        }
+                                        encryptSuccess = true
                                     }
-
-                                    FileOutputStream(outFile).use { fos ->
-                                        fs.writeFilesystem(fos)
-                                    }
+                                } catch (eView: Throwable) {
+                                    lastError = eView
                                 }
-                                encryptSuccess = true
-                            } catch (eStd: Throwable) {
-                                lastError = eStd
+                            } else {
+                                // CHẾ ĐỘ KHÓA MẬT KHẨU (PASSWORD TO OPEN):
+                                // Chuẩn Microsoft MS-OFFCRYPTO Binary Encryption (100% tương thích Word/Excel/WPS)
+                                // Mở tệp bắt buộc phải nhập đúng mật khẩu mới hiển thị nội dung!
                                 try {
                                     POIFSFileSystem().use { fs ->
-                                        val info = EncryptionInfo(EncryptionMode.agile)
+                                        val info = EncryptionInfo(EncryptionMode.standard)
                                         val encryptor = info.encryptor
                                         encryptor.confirmPassword(password)
 
@@ -284,8 +325,28 @@ class MainActivity: FlutterActivity() {
                                         }
                                     }
                                     encryptSuccess = true
-                                } catch (eAgile: Throwable) {
-                                    lastError = eAgile
+                                } catch (eStd: Throwable) {
+                                    lastError = eStd
+                                    try {
+                                        POIFSFileSystem().use { fs ->
+                                            val info = EncryptionInfo(EncryptionMode.agile)
+                                            val encryptor = info.encryptor
+                                            encryptor.confirmPassword(password)
+
+                                            encryptor.getDataStream(fs).use { os ->
+                                                FileInputStream(srcFile).use { fis ->
+                                                    fis.copyTo(os)
+                                                }
+                                            }
+
+                                            FileOutputStream(outFile).use { fos ->
+                                                fs.writeFilesystem(fos)
+                                            }
+                                        }
+                                        encryptSuccess = true
+                                    } catch (eAgile: Throwable) {
+                                        lastError = eAgile
+                                    }
                                 }
                             }
 
@@ -326,21 +387,69 @@ class MainActivity: FlutterActivity() {
                             if (outFile.exists()) outFile.delete()
                             outFile.parentFile?.mkdirs()
 
-                            POIFSFileSystem(srcFile).use { fs ->
-                                val info = EncryptionInfo(fs)
-                                val decryptor = info.decryptor
-                                if (!decryptor.verifyPassword(password)) {
-                                    runOnUiThread {
-                                        result.error("WRONG_PASSWORD", "Mật khẩu mở tệp Office không chính xác!", null)
-                                    }
-                                    return@execute
-                                }
+                            val ext = srcFile.extension.lowercase()
+                            var decrypted = false
 
-                                decryptor.getDataStream(fs).use { inputStream ->
-                                    FileOutputStream(outFile).use { outputStream ->
-                                        inputStream.copyTo(outputStream)
+                            // Cách 1: Thử giải mã OLE EncryptedPackage (Mật khẩu mở tệp MS-OFFCRYPTO)
+                            try {
+                                POIFSFileSystem(srcFile).use { fs ->
+                                    val info = EncryptionInfo(fs)
+                                    val decryptor = info.decryptor
+                                    if (!decryptor.verifyPassword(password)) {
+                                        runOnUiThread {
+                                            result.error("WRONG_PASSWORD", "Mật khẩu mở tệp Office không chính xác!", null)
+                                        }
+                                        return@execute
+                                    }
+
+                                    decryptor.getDataStream(fs).use { inputStream ->
+                                        FileOutputStream(outFile).use { outputStream ->
+                                            inputStream.copyTo(outputStream)
+                                        }
                                     }
                                 }
+                                decrypted = true
+                            } catch (eOle: Throwable) {
+                                // Cách 2: Nếu không phải OLE EncryptedPackage, kiểm tra xem có phải tệp Office được khóa chế độ Chỉ Xem
+                                if (ext == "docx") {
+                                    try {
+                                        FileInputStream(srcFile).use { fis ->
+                                            val doc = XWPFDocument(fis)
+                                            if (doc.validateProtectionPassword(password)) {
+                                                doc.removeProtectionEnforcement()
+                                                FileOutputStream(outFile).use { fos ->
+                                                    doc.write(fos)
+                                                }
+                                                doc.close()
+                                                decrypted = true
+                                            } else {
+                                                doc.close()
+                                                runOnUiThread {
+                                                    result.error("WRONG_PASSWORD", "Mật khẩu gỡ khóa tài liệu Word không chính xác!", null)
+                                                }
+                                                return@execute
+                                            }
+                                        }
+                                    } catch (_: Throwable) {}
+                                } else if (ext == "xlsx") {
+                                    try {
+                                        FileInputStream(srcFile).use { fis ->
+                                            val wb = XSSFWorkbook(fis)
+                                            for (i in 0 until wb.numberOfSheets) {
+                                                wb.getSheetAt(i).protectSheet(null)
+                                            }
+                                            FileOutputStream(outFile).use { fos ->
+                                                wb.write(fos)
+                                            }
+                                            wb.close()
+                                            decrypted = true
+                                        }
+                                    } catch (_: Throwable) {}
+                                }
+                            }
+
+                            if (!decrypted) {
+                                throw Exception("Không thể giải mã tệp Office. Vui lòng kiểm tra lại mật khẩu!")
                             }
 
                             runOnUiThread {

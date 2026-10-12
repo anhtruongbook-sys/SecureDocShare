@@ -1153,21 +1153,31 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
         subDesc = isViewOnly 
             ? "✓ Tệp PDF Native • Mở xem tự do, CẤM IN, CẤM COPY"
             : "✓ Tệp PDF Native Chuẩn Adobe • Nhập Pass để Mở";
-        noteText = `💡 Tệp <strong>${outFileName}</strong> đã được bảo vệ mật khẩu chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Foxit Reader, WPS Office, Samsung PDF hoặc Xiaomi Reader</strong> sẽ tự động yêu cầu nhập đúng mật khẩu để xem toàn bộ nội dung tệp!`;
+        noteText = isViewOnly
+            ? `💡 Tệp <strong>${outFileName}</strong> đã được thiết lập chế độ <strong>Chỉ Xem (Cấm Copy)</strong> chuẩn Adobe ISO 32000. Người nhận có thể <strong>mở xem trực tiếp không cần mật khẩu</strong> trên mọi ứng dụng (Acrobat, Foxit, WPS, Trình duyệt), nhưng bị chặn toàn bộ quyền sao chép văn bản (copy) và chỉnh sửa!`
+            : `💡 Tệp <strong>${outFileName}</strong> đã được bảo vệ mật khẩu chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Foxit Reader, WPS Office, Samsung PDF hoặc Xiaomi Reader</strong> sẽ tự động yêu cầu nhập đúng mật khẩu để xem toàn bộ nội dung tệp!`;
     } else {
         const ext = outFileName.split('.').pop().toLowerCase();
         if (ext === 'docx' || ext === 'doc') {
             fileIcon = "📝";
             iconBg = "#eff6ff";
             iconColor = "#1d4ed8";
-            subDesc = `✓ Tệp Word Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
-            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft Word hoặc WPS Office</strong> trên điện thoại sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem toàn bộ tài liệu!`;
+            subDesc = isViewOnly
+                ? `✓ Tệp Word Native • Mở xem tự do, CẤM CHỈNH SỬA`
+                : `✓ Tệp Word Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
+            noteText = isViewOnly
+                ? `💡 Tệp <strong>${outFileName}</strong> đã được thiết lập chế độ <strong>Chỉ Xem (Chống Sửa)</strong> chuẩn Microsoft Word. Người nhận có thể <strong>mở xem trực tiếp không cần mật khẩu</strong> trên Word và WPS, toàn bộ nội dung được khóa chống chỉnh sửa!`
+                : `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft Word hoặc WPS Office</strong> trên điện thoại sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem toàn bộ tài liệu!`;
         } else if (ext === 'xlsx' || ext === 'xls') {
             fileIcon = "📊";
             iconBg = "#ecfdf5";
             iconColor = "#059669";
-            subDesc = `✓ Tệp Excel Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
-            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft Excel hoặc WPS Office</strong> trên điện thoại sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem toàn bộ bảng tính!`;
+            subDesc = isViewOnly
+                ? `✓ Tệp Excel Native • Mở xem tự do, CẤM CHỈNH SỬA`
+                : `✓ Tệp Excel Native (Chuẩn Microsoft MS-OFFCRYPTO)`;
+            noteText = isViewOnly
+                ? `💡 Bảng tính <strong>${outFileName}</strong> đã được thiết lập chế độ <strong>Chỉ Xem (Chống Sửa)</strong> chuẩn Microsoft Excel. Người nhận có thể <strong>mở xem dữ liệu và biểu đồ trực tiếp không cần mật khẩu</strong> trên Excel và WPS, toàn bộ ô tính và công thức được khóa chống sửa!`
+                : `💡 Tệp <strong>${outFileName}</strong> đã được khóa chuẩn Microsoft Office Native. Mở bằng <strong>Microsoft Excel hoặc WPS Office</strong> trên điện thoại sẽ tự động bật hộp thoại yêu cầu mật khẩu để xem toàn bộ bảng tính!`;
         } else if (ext === 'pptx' || ext === 'ppt') {
             fileIcon = "📽️";
             iconBg = "#fff7ed";

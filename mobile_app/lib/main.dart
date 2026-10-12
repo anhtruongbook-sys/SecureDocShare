@@ -133,7 +133,8 @@ Future<void> _runAdobePdfLockIsolate(_AdobePdfLockJob job) async {
     document.security.ownerPassword = job.password;
     document.security.userPassword = '';
     document.security.algorithm = PdfEncryptionAlgorithm.rc4x128Bit;
-    document.security.permissions.clear(); // CẤM IN, CẤM COPY CHỮ
+    document.security.permissions.clear();
+    document.security.permissions.add(PdfPermissions.print);
   } else {
     document.security.userPassword = job.password;
     document.security.ownerPassword = job.password;
@@ -528,7 +529,9 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
               final outFileName = isPdf 
                   ? (isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf')
-                  : (isOffice ? '${baseName}_Locked$ext' : '${baseName}_Protected.zip');
+                  : (isOffice 
+                      ? (isViewOnly ? '${baseName}_ReadOnly$ext' : '${baseName}_Locked$ext')
+                      : '${baseName}_Protected.zip');
 
               final tempDir = await getTemporaryDirectory();
               final outTempPath = '${tempDir.path}/$outFileName';
@@ -570,13 +573,15 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                   await compute(_runAdobePdfLockIsolate, adobeJob);
                 }
               } else if (isOffice && Platform.isAndroid) {
-                // SỬ DỤNG ĐỘNG CƠ NATIVE MICROSOFT OFFICE NATIVE ENCRYPTION (MS-OFFCRYPTO)
-                // KHI MỞ BẰNG MICROSOFT WORD/EXCEL/POWERPOINT HOẶC WPS SẼ TỰ ĐỘNG BẬT HỘP THOẠI HỎI MẬT KHẨU!
+                // SỬ DỤNG ĐỘNG CƠ NATIVE MICROSOFT OFFICE NATIVE ENCRYPTION (MS-OFFCRYPTO / DOCUMENT PROTECTION)
+                // Chế độ Khóa Mật Khẩu: Bắt buộc nhập pass để mở tệp.
+                // Chế độ Chỉ Xem: Xem tự do không cần pass, khóa chống chỉnh sửa nội dung.
                 try {
                   await _nativeChannel.invokeMethod('encryptOffice', {
                     'srcPath': srcPath,
                     'destPath': outTempPath,
                     'password': password,
+                    'isViewOnly': isViewOnly,
                   });
                 } on PlatformException catch (pErr) {
                   if (pErr.code == 'ALREADY_ENCRYPTED') {
