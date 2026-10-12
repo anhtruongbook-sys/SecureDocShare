@@ -14,10 +14,7 @@ import org.apache.poi.poifs.crypt.EncryptionInfo
 import org.apache.poi.poifs.crypt.EncryptionMode
 import org.apache.poi.poifs.crypt.Encryptor
 import org.apache.poi.poifs.crypt.Decryptor
-import org.apache.poi.poifs.crypt.HashAlgorithm
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
-import org.apache.poi.xwpf.usermodel.XWPFDocument
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.model.ZipParameters
 import net.lingala.zip4j.model.enums.AesKeyStrength
@@ -30,6 +27,14 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.Executors
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.zip.ZipFile as JZipFile
+import java.util.zip.ZipOutputStream as JZipOutputStream
+import java.util.zip.ZipEntry as JZipEntry
+import android.util.Base64
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.securedoc.share/native_engine"
@@ -260,32 +265,15 @@ class MainActivity: FlutterActivity() {
                                 // Người nhận mở xem tự do 100% không cần nhập mật khẩu trên Word/Excel & WPS.
                                 // Mọi thao tác sửa đổi, gõ chữ, can thiệp bảng tính bị khóa; chỉ bạn giữ mật khẩu để gỡ khóa!
                                 try {
-                                    if (ext == "docx") {
-                                        FileInputStream(srcFile).use { fis ->
-                                            val doc = XWPFDocument(fis)
-                                            doc.enforceReadonlyProtection(password, HashAlgorithm.sha512)
-                                            FileOutputStream(outFile).use { fos ->
-                                                doc.write(fos)
-                                            }
-                                            doc.close()
-                                        }
-                                        encryptSuccess = true
-                                    } else if (ext == "xlsx") {
-                                        FileInputStream(srcFile).use { fis ->
-                                            val wb = XSSFWorkbook(fis)
-                                            wb.lockStructure()
-                                            wb.setWorkbookPassword(password, HashAlgorithm.sha512)
-                                            for (i in 0 until wb.numberOfSheets) {
-                                                wb.getSheetAt(i).protectSheet(password)
-                                            }
-                                            FileOutputStream(outFile).use { fos ->
-                                                wb.write(fos)
-                                            }
-                                            wb.close()
+                                    if (isZipFile(srcFile)) {
+                                        if (ext == "xlsx" || ext == "xls") {
+                                            protectXlsxReadOnly(srcFile, outFile, password)
+                                        } else {
+                                            protectDocxReadOnly(srcFile, outFile, password)
                                         }
                                         encryptSuccess = true
                                     } else {
-                                        // Định dạng Office khác: mã hóa tiêu chuẩn
+                                        // Tệp nhị phân legacy OLE (.doc cũ, .xls cũ): mã hóa standard MS-OFFCRYPTO
                                         POIFSFileSystem().use { fs ->
                                             val info = EncryptionInfo(EncryptionMode.standard)
                                             val encryptor = info.encryptor
@@ -351,7 +339,7 @@ class MainActivity: FlutterActivity() {
                             }
 
                             if (!encryptSuccess) {
-                                throw lastError ?: Exception("Không thể mã hóa Office Native")
+                                throw lastError ?: Exception("Không thể mã hóa Office Native: ${lastError?.message}")
                             }
 
                             runOnUiThread {
@@ -387,7 +375,6 @@ class MainActivity: FlutterActivity() {
                             if (outFile.exists()) outFile.delete()
                             outFile.parentFile?.mkdirs()
 
-                            val ext = srcFile.extension.lowercase()
                             var decrypted = false
 
                             // Cách 1: Thử giải mã OLE EncryptedPackage (Mật khẩu mở tệp MS-OFFCRYPTO)
@@ -410,41 +397,76 @@ class MainActivity: FlutterActivity() {
                                 }
                                 decrypted = true
                             } catch (eOle: Throwable) {
-                                // Cách 2: Nếu không phải OLE EncryptedPackage, kiểm tra xem có phải tệp Office được khóa chế độ Chỉ Xem
-                                if (ext == "docx") {
-                                    try {
-                                        FileInputStream(srcFile).use { fis ->
-                                            val doc = XWPFDocument(fis)
-                                            if (doc.validateProtectionPassword(password)) {
-                                                doc.removeProtectionEnforcement()
-                                                FileOutputStream(outFile).use { fos ->
-                                                    doc.write(fos)
+                                // Cách 2: Nếu không phải OLE EncryptedPackage, kiểm tra tệp ZIP bảo vệ Read-Only
+                                if (isZipFile(srcFile)) {
+                                    var isWordProtected = false
+                                    var isExcelProtected = false
+                                    var wordVerified = false
+                                    var excelVerified = false
+
+                                    JZipFile(srcFile).use { zipIn ->
+                                        val settingsEntry = zipIn.getEntry("word/settings.xml")
+                                        if (settingsEntry != null) {
+                                            val content = zipIn.getInputStream(settingsEntry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                                            if (content.contains("<w:documentProtection")) {
+                                                isWordProtected = true
+                                                val saltMatch = Regex("w:salt=\"([^\"]+)\"").find(content)
+                                                val hashMatch = Regex("w:hash=\"([^\"]+)\"").find(content)
+                                                if (saltMatch != null && hashMatch != null) {
+                                                    val sB64 = saltMatch.groupValues[1]
+                                                    val hB64 = hashMatch.groupValues[1]
+                                                    val saltBytes = Base64.decode(sB64, Base64.NO_WRAP)
+                                                    val computed = computeOfficeSha512Hash(password, saltBytes, 100000)
+                                                    if (computed.trim() == hB64.trim()) {
+                                                        wordVerified = true
+                                                    }
+                                                } else {
+                                                    wordVerified = true
                                                 }
-                                                doc.close()
-                                                decrypted = true
-                                            } else {
-                                                doc.close()
-                                                runOnUiThread {
-                                                    result.error("WRONG_PASSWORD", "Mật khẩu gỡ khóa tài liệu Word không chính xác!", null)
-                                                }
-                                                return@execute
                                             }
                                         }
-                                    } catch (_: Throwable) {}
-                                } else if (ext == "xlsx") {
-                                    try {
-                                        FileInputStream(srcFile).use { fis ->
-                                            val wb = XSSFWorkbook(fis)
-                                            for (i in 0 until wb.numberOfSheets) {
-                                                wb.getSheetAt(i).protectSheet(null)
+
+                                        val wbEntry = zipIn.getEntry("xl/workbook.xml")
+                                        if (wbEntry != null) {
+                                            val content = zipIn.getInputStream(wbEntry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                                            if (content.contains("<workbookProtection") || content.contains("<fileSharing")) {
+                                                isExcelProtected = true
+                                                val saltMatch = Regex("workbookSaltValue=\"([^\"]+)\"").find(content)
+                                                val hashMatch = Regex("workbookHashValue=\"([^\"]+)\"").find(content)
+                                                if (saltMatch != null && hashMatch != null) {
+                                                    val sB64 = saltMatch.groupValues[1]
+                                                    val hB64 = hashMatch.groupValues[1]
+                                                    val saltBytes = Base64.decode(sB64, Base64.NO_WRAP)
+                                                    val computed = computeOfficeSha512Hash(password, saltBytes, 100000)
+                                                    if (computed.trim() == hB64.trim()) {
+                                                        excelVerified = true
+                                                    }
+                                                } else {
+                                                    excelVerified = true
+                                                }
                                             }
-                                            FileOutputStream(outFile).use { fos ->
-                                                wb.write(fos)
-                                            }
-                                            wb.close()
-                                            decrypted = true
                                         }
-                                    } catch (_: Throwable) {}
+                                    }
+
+                                    if (isWordProtected) {
+                                        if (!wordVerified) {
+                                            runOnUiThread {
+                                                result.error("WRONG_PASSWORD", "Mật khẩu gỡ khóa tài liệu Word không chính xác!", null)
+                                            }
+                                            return@execute
+                                        }
+                                        unprotectDocx(srcFile, outFile)
+                                        decrypted = true
+                                    } else if (isExcelProtected) {
+                                        if (!excelVerified) {
+                                            runOnUiThread {
+                                                result.error("WRONG_PASSWORD", "Mật khẩu gỡ khóa bảng tính Excel không chính xác!", null)
+                                            }
+                                            return@execute
+                                        }
+                                        unprotectXlsx(srcFile, outFile)
+                                        decrypted = true
+                                    }
                                 }
                             }
 
@@ -568,6 +590,173 @@ class MainActivity: FlutterActivity() {
                     }
                 }
                 else -> result.notImplemented()
+            }
+        }
+    }
+
+    private fun isZipFile(file: File): Boolean {
+        if (!file.exists() || file.length() < 4) return false
+        return try {
+            FileInputStream(file).use { fis ->
+                val header = ByteArray(4)
+                fis.read(header)
+                header[0] == 0x50.toByte() && header[1] == 0x4B.toByte() && header[2] == 0x03.toByte() && header[3] == 0x04.toByte()
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun computeOfficeSha512Hash(password: String, salt: ByteArray, spinCount: Int = 100000): String {
+        val md = MessageDigest.getInstance("SHA-512")
+        val pwdBytes = password.toByteArray(Charsets.UTF_16LE)
+        md.update(salt)
+        md.update(pwdBytes)
+        var hash = md.digest()
+
+        val intBuf = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+        for (i in 0 until spinCount) {
+            intBuf.clear()
+            intBuf.putInt(i)
+            md.reset()
+            md.update(hash)
+            md.update(intBuf.array())
+            hash = md.digest()
+        }
+        return Base64.encodeToString(hash, Base64.NO_WRAP)
+    }
+
+    private fun protectDocxReadOnly(srcFile: File, outFile: File, password: String) {
+        val salt = ByteArray(16)
+        SecureRandom().nextBytes(salt)
+        val saltB64 = Base64.encodeToString(salt, Base64.NO_WRAP)
+        val spinCount = 100000
+        val hashB64 = computeOfficeSha512Hash(password, salt, spinCount)
+
+        val protTag = "<w:documentProtection w:edit=\"readOnly\" w:enforcement=\"1\" w:cryptProviderType=\"rsaAES\" w:cryptAlgorithmClass=\"hash\" w:cryptAlgorithmType=\"typeAny\" w:cryptAlgorithmSid=\"14\" w:cryptSpinCount=\"$spinCount\" w:salt=\"$saltB64\" w:hash=\"$hashB64\"/>"
+
+        JZipFile(srcFile).use { zipIn ->
+            JZipOutputStream(FileOutputStream(outFile)).use { zipOut ->
+                val entries = zipIn.entries()
+                var hasSettings = false
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.name == "word/settings.xml") {
+                        hasSettings = true
+                        val content = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                        val newContent = if (content.contains("<w:documentProtection")) {
+                            content.replace(Regex("<w:documentProtection[^>]*/>"), protTag)
+                        } else if (content.contains("</w:settings>")) {
+                            content.replace("</w:settings>", "$protTag</w:settings>")
+                        } else {
+                            content
+                        }
+                        val newEntry = JZipEntry("word/settings.xml")
+                        zipOut.putNextEntry(newEntry)
+                        zipOut.write(newContent.toByteArray(Charsets.UTF_8))
+                        zipOut.closeEntry()
+                    } else {
+                        val newEntry = JZipEntry(entry.name)
+                        zipOut.putNextEntry(newEntry)
+                        zipIn.getInputStream(entry).use { it.copyTo(zipOut) }
+                        zipOut.closeEntry()
+                    }
+                }
+                if (!hasSettings) {
+                    val simpleSettings = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:settings xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">$protTag</w:settings>"
+                    val newEntry = JZipEntry("word/settings.xml")
+                    zipOut.putNextEntry(newEntry)
+                    zipOut.write(simpleSettings.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
+            }
+        }
+    }
+
+    private fun protectXlsxReadOnly(srcFile: File, outFile: File, password: String) {
+        val salt = ByteArray(16)
+        SecureRandom().nextBytes(salt)
+        val saltB64 = Base64.encodeToString(salt, Base64.NO_WRAP)
+        val spinCount = 100000
+        val hashB64 = computeOfficeSha512Hash(password, salt, spinCount)
+
+        val wbProt = "<workbookProtection workbookAlgorithmName=\"SHA-512\" workbookHashValue=\"$hashB64\" workbookSaltValue=\"$saltB64\" workbookSpinCount=\"$spinCount\" lockStructure=\"1\"/>"
+        val fileSharing = "<fileSharing readOnlyRecommended=\"1\"/>"
+
+        JZipFile(srcFile).use { zipIn ->
+            JZipOutputStream(FileOutputStream(outFile)).use { zipOut ->
+                val entries = zipIn.entries()
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.name == "xl/workbook.xml") {
+                        var content = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                        if (content.contains("<fileSharing")) {
+                            content = content.replace(Regex("<fileSharing[^>]*/>"), fileSharing)
+                        } else if (content.contains("<workbookProtection")) {
+                            content = content.replace(Regex("<workbookProtection[^>]*/>"), "$fileSharing$wbProt")
+                        } else if (content.contains("</workbook>")) {
+                            content = content.replace("</workbook>", "$fileSharing$wbProt</workbook>")
+                        }
+                        val newEntry = JZipEntry("xl/workbook.xml")
+                        zipOut.putNextEntry(newEntry)
+                        zipOut.write(content.toByteArray(Charsets.UTF_8))
+                        zipOut.closeEntry()
+                    } else {
+                        val newEntry = JZipEntry(entry.name)
+                        zipOut.putNextEntry(newEntry)
+                        zipIn.getInputStream(entry).use { it.copyTo(zipOut) }
+                        zipOut.closeEntry()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun unprotectDocx(srcFile: File, outFile: File) {
+        JZipFile(srcFile).use { zipIn ->
+            JZipOutputStream(FileOutputStream(outFile)).use { zipOut ->
+                val entries = zipIn.entries()
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.name == "word/settings.xml") {
+                        val content = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                        val cleanedContent = content.replace(Regex("<w:documentProtection[^>]*/>"), "")
+                        val newEntry = JZipEntry("word/settings.xml")
+                        zipOut.putNextEntry(newEntry)
+                        zipOut.write(cleanedContent.toByteArray(Charsets.UTF_8))
+                        zipOut.closeEntry()
+                    } else {
+                        val newEntry = JZipEntry(entry.name)
+                        zipOut.putNextEntry(newEntry)
+                        zipIn.getInputStream(entry).use { it.copyTo(zipOut) }
+                        zipOut.closeEntry()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun unprotectXlsx(srcFile: File, outFile: File) {
+        JZipFile(srcFile).use { zipIn ->
+            JZipOutputStream(FileOutputStream(outFile)).use { zipOut ->
+                val entries = zipIn.entries()
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.name == "xl/workbook.xml") {
+                        var content = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                        content = content.replace(Regex("<workbookProtection[^>]*/>"), "")
+                        content = content.replace(Regex("<fileSharing[^>]*/>"), "")
+                        val newEntry = JZipEntry("xl/workbook.xml")
+                        zipOut.putNextEntry(newEntry)
+                        zipOut.write(content.toByteArray(Charsets.UTF_8))
+                        zipOut.closeEntry()
+                    } else {
+                        val newEntry = JZipEntry(entry.name)
+                        zipOut.putNextEntry(newEntry)
+                        zipIn.getInputStream(entry).use { it.copyTo(zipOut) }
+                        zipOut.closeEntry()
+                    }
+                }
             }
         }
     }

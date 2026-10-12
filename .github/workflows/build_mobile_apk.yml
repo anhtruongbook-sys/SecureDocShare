@@ -64,21 +64,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.3.5
-          name: "KryptoDoc v2.3.5 - True View-Only Read-Only Protection for PDF & Office (Android APK)"
+          tag_name: v2.3.6
+          name: "KryptoDoc v2.3.6 - Pure Native ZIP Streaming Document Protection (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.3.5 (Chuẩn Hóa Chế Độ Chỉ Xem Không Cần Mật Khẩu Mở Cho PDF & Office)
-            - **Chế Độ Chỉ Xem Chuẩn Quốc Tế Cho Tệp PDF (Adobe ISO 32000)**:
-              + Người nhận mở xem tự do 100% không bị yêu cầu nhập bất kỳ mật khẩu nào trên mọi ứng dụng (Adobe Acrobat, Foxit Reader, WPS Office, Samsung PDF, Xiaomi Reader, Trình duyệt Web).
-              + Khóa chặt quyền sao chép văn bản (ALLOW_COPY = 0), cấm chỉnh sửa nội dung, cấm trích xuất dữ liệu.
-              + Chỉ người tạo tệp giữ mật khẩu để gỡ bỏ bảo vệ.
+            ## Ứng dụng Di Động KryptoDoc v2.3.6 (Loại Bỏ Hoàn Toàn Lỗi XMLStreamReader & Chuẩn Hóa Chế Độ Chỉ Xem Office)
+            - **Khắc Phục Triệt Để Lỗi `Failed resolution of: Ljavax/xml/stream/XMLStreamReader`**:
+              + Thay thế toàn bộ thư viện `poi-ooxml` nặng nề bằng Động Cơ Pure Native ZIP Streaming trực tiếp.
+              + Tính toán băm SHA-512 chuẩn ISO/IEC 29500 (MS-OFFCRYPTO) bằng thư viện chuẩn của Java/Android (`java.security.MessageDigest`).
+              + Không phụ thuộc StAX, không tốn RAM heap, chạy mượt mà 100% trên mọi dòng máy Android.
             - **Chế Độ Chỉ Xem Chuẩn Microsoft Office Native (Word .docx & Excel .xlsx)**:
-              + Áp dụng chuẩn bảo vệ tài liệu nguyên bản Microsoft OOXML Document Protection (SHA-512).
-              + Mở xem tự do 100% trên Microsoft Word, Excel và WPS Office mà KHÔNG bắt nhập mật khẩu mở tệp!
+              + Người nhận mở xem tự do 100% không bắt nhập mật khẩu mở tệp trên Word, Excel, WPS Office.
               + Khóa cứng nội dung văn bản và bảng tính chống chỉnh sửa, chống sửa ô, chống thay đổi cấu trúc sheet.
               + Mật khẩu do người tạo lưu giữ để mở khóa chỉnh sửa (Unprotect Document / Sheet).
-            - **Chế Độ Khóa Mật Khẩu (Password to Open)**:
-              + Tiếp tục duy trì chuẩn mã hóa cấp quân sự MS-OFFCRYPTO Binary Encryption (Word/Excel) và Adobe AES/RC4-128bit (PDF), bắt buộc nhập đúng mật khẩu mới mở được nội dung tệp.
+            - **Chế Độ Chỉ Xem Chuẩn Quốc Tế Cho Tệp PDF (Adobe ISO 32000)**:
+              + Người nhận mở xem tự do 100% không bị yêu cầu nhập bất kỳ mật khẩu nào trên mọi ứng dụng (Adobe Acrobat, Foxit Reader, WPS Office, Samsung PDF, Xiaomi Reader, Trình duyệt Web).
+              + Khóa chặt quyền sao chép văn bản (ALLOW_COPY = 0), cấm chỉnh sửa nội dung.
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk

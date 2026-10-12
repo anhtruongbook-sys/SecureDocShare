@@ -92,6 +92,5 @@ dependencies {
     implementation "androidx.appcompat:appcompat:1.6.1"
     implementation "com.itextpdf:itextg:5.5.10"
     implementation "org.apache.poi:poi:4.1.2"
-    implementation "org.apache.poi:poi-ooxml:4.1.2"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 }
