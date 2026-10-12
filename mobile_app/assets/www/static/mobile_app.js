@@ -49,7 +49,22 @@ let selectedUnlockFile = null;
 let currentProtectionLevel = "open_password";
 let currentPackagingMode = "native";
 
-function selectPackagingMode(mode, el) {
+function isNativePasswordSupported(filename) {
+    if (!filename) return false;
+    const parts = filename.split('.');
+    const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
+    return ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'].includes(ext);
+}
+
+function selectPackagingMode(mode, el, silent = false) {
+    if (mode === 'native') {
+        const nonNative = selectedLockFiles.filter(f => !isNativePasswordSupported(f.name));
+        if (nonNative.length > 0) {
+            const ext = getFileExtension(nonNative[0].name).toUpperCase() || 'này';
+            showToast(`⚠️ Tệp (${ext}) không có chuẩn pass gốc. Đã giữ chế độ Nén .ZIP để không làm hỏng file! 📦`);
+            return;
+        }
+    }
     currentPackagingMode = mode;
     document.querySelectorAll('.packaging-card').forEach(c => c.classList.remove('active'));
     if (el) {
@@ -57,12 +72,15 @@ function selectPackagingMode(mode, el) {
         const radio = el.querySelector('input[type="radio"]');
         if (radio) radio.checked = true;
     }
-    if (mode === 'zip') {
-        showToast('Đã chọn: Nén .ZIP mã hóa mật khẩu AES-256 (Chuẩn WinRAR, 7-Zip, ZArchiver) 📦');
-    } else {
-        showToast('Đã chọn: Định dạng gốc (Word, Excel, PDF giữ nguyên đuôi file) 🔒');
+    if (!silent) {
+        if (mode === 'zip') {
+            showToast('Đã chọn: Nén .ZIP mã hóa mật khẩu AES-256 (Chuẩn WinRAR, 7-Zip, ZArchiver) 📦');
+        } else {
+            showToast('Đã chọn: Định dạng gốc (Word, Excel, PDF giữ nguyên đuôi file) 🔒');
+        }
     }
 }
+
 
 function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -139,20 +157,26 @@ function handleFilesSelected(files, context) {
     if (!files || files.length === 0) return;
 
     if (context === 'lock') {
-        let hasCadOrArchive = false;
+        let hasNonNative = false;
+        let nonNativeExts = [];
         for (let i = 0; i < files.length; i++) {
             selectedLockFiles.push(files[i]);
-            const ext = getFileExtension(files[i].name);
-            if (['dwg', 'dxf', 'zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-                hasCadOrArchive = true;
+            if (!isNativePasswordSupported(files[i].name)) {
+                hasNonNative = true;
+                const ext = getFileExtension(files[i].name).toUpperCase();
+                if (ext && !nonNativeExts.includes(ext)) nonNativeExts.push(ext);
             }
         }
         renderFileListLock();
-        if (hasCadOrArchive || selectedLockFiles.length > 1) {
+        if (hasNonNative || selectedLockFiles.length > 1) {
             const zipCard = document.getElementById('pkg-card-zip');
             if (zipCard && currentPackagingMode !== 'zip') {
-                selectPackagingMode('zip', zipCard);
-                showToast('💡 Đã tự động kích hoạt chế độ Nén .ZIP Có Pass để bảo vệ tối ưu! 📦');
+                selectPackagingMode('zip', zipCard, true);
+                if (hasNonNative) {
+                    showToast(`💡 Tệp (${nonNativeExts.join(', ')}) không có chuẩn pass gốc. KryptoDoc tự động nén .ZIP và đặt pass AES-256! 📦`);
+                } else {
+                    showToast('💡 Đã tự động kích hoạt chế độ Nén .ZIP Có Pass khi chọn nhiều tệp! 📦');
+                }
             }
         }
     } else {
@@ -169,7 +193,15 @@ function getFileExtension(filename) {
 
 function getFileMetaBadge(filename) {
     const ext = getFileExtension(filename);
-    if (ext === 'dwg' || ext === 'dxf') {
+    const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'heic', 'tiff'];
+    if (imageExts.includes(ext)) {
+        return {
+            badgeClass: 'file-badge-image',
+            iconText: (ext || 'IMG').toUpperCase().substring(0, 4),
+            label: 'Hình ảnh ' + (ext || '').toUpperCase(),
+            protocol: 'Zip4j AES-256 Vault'
+        };
+    } else if (ext === 'dwg' || ext === 'dxf') {
         return {
             badgeClass: 'file-badge-cad',
             iconText: 'DWG',
@@ -216,7 +248,7 @@ function getFileMetaBadge(filename) {
             badgeClass: 'file-badge-generic',
             iconText: (ext || 'FILE').toUpperCase().substring(0, 4),
             label: 'Tệp tin số',
-            protocol: 'KryptoDoc Vault AES'
+            protocol: 'Zip4j AES-256 Vault'
         };
     }
 }
@@ -722,7 +754,8 @@ async function executeMobileLockFiles() {
             // TUYỆT ĐỐI KHÔNG ĐỌC ARRAYBUFFER / BASE64 ĐỂ CHỐNG CRASH RAM 100%
             // -------------------------------------------------------------
             if (window.FlutterBridge) {
-                if (currentPackagingMode === 'zip' || selectedLockFiles.length > 1) {
+                const hasNonNative = selectedLockFiles.some(f => !isNativePasswordSupported(f.name));
+                if (hasNonNative || currentPackagingMode === 'zip' || selectedLockFiles.length > 1) {
                     const names = selectedLockFiles.map(f => f.name);
                     const firstName = selectedLockFiles[0].name;
                     const totalBytes = selectedLockFiles.reduce((acc, f) => acc + (f.size || 0), 0);

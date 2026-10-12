@@ -504,12 +504,12 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               }
 
               final isPdf = fileName.toLowerCase().endsWith('.pdf');
-              final isOffice = RegExp(r'\.(docx|xlsx|pptx)$', caseSensitive: false).hasMatch(fileName);
+              final isOffice = RegExp(r'\.(docx|doc|xlsx|xls|pptx|ppt)$', caseSensitive: false).hasMatch(fileName);
               final baseName = fileName.replaceAll(RegExp(r'\.[^/.]+$'), '');
               final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
               final outFileName = isPdf 
                   ? (isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf')
-                  : '${baseName}_Locked$ext';
+                  : (isOffice ? '${baseName}_Locked$ext' : '${baseName}_Protected.zip');
 
               final tempDir = await getTemporaryDirectory();
               final outTempPath = '${tempDir.path}/$outFileName';
@@ -554,20 +554,31 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                   'password': password,
                 });
               } else {
-                // TỆP KHÁC (CAD, ZIP...): MÃ HÓA STREAM CIPHER SIÊU TỐC
-                final streamJob = _StreamLockJob(
-                  srcPath: srcPath,
-                  outTempPath: outTempPath,
-                  fileName: fileName,
-                  password: password,
-                  protectionLevel: protectionLevel,
-                );
-                await compute(_runStreamLockIsolate, streamJob);
+                // TỆP KHÔNG HỖ TRỢ PASS NATIVE (ẢNH, CAD, VIDEO, TEXT, BINARY...):
+                // BẮT BUỘC ĐÓNG GÓI VÀO KHO NÉN .ZIP VÀ ĐẶT MẬT KHẨU AES-256 BẰNG ZIP4J NATIVE!
+                // TRÁNH TUYỆT ĐỐI TẠO RA TỆP .PNG/.JPG BỊ LỖI ĐỊNH DẠNG.
+                if (Platform.isAndroid) {
+                  await _nativeChannel.invokeMethod('createEncryptedZip', {
+                    'srcPaths': [srcPath],
+                    'destZipPath': outTempPath,
+                    'password': password,
+                    'useZipCrypto': false,
+                  });
+                } else {
+                  final streamJob = _StreamLockJob(
+                    srcPath: srcPath,
+                    outTempPath: outTempPath,
+                    fileName: fileName,
+                    password: password,
+                    protectionLevel: protectionLevel,
+                  );
+                  await compute(_runStreamLockIsolate, streamJob);
+                }
               }
 
               final savedFullPath = await _saveToDownloadsFolder(outTempPath, outFileName);
               final displaySaved = savedFullPath ?? 'Thư mục Downloads của máy';
-              final typeDesc = isPdf ? 'Adobe PDF Native' : (isOffice ? 'Microsoft Office Native' : 'Bảo Mật AES-256');
+              final typeDesc = isPdf ? 'Adobe PDF Native' : (isOffice ? 'Microsoft Office Native' : 'Kho Nén .ZIP AES-256');
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

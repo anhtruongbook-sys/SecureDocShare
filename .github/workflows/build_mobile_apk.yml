@@ -64,28 +64,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.3.1
-          name: "KryptoDoc v2.3.1 - Ultra-Compact Mobile UI & Clean Zero-Waste Design (Android APK)"
+          tag_name: v2.3.2
+          name: "KryptoDoc v2.3.2 - Auto-Packaging Encrypted ZIP Vault for Images & CAD (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.3.1 (Tối Ưu Hóa Toàn Diện Giao Diện - Không Ô Thừa, Siêu Gọn Gàng)
-            - **Sửa Lỗi Ẩn Hiện Tab (Tab Isolation Invariant)**:
-              + Khắc phục hoàn toàn lỗi Tab Mở Khóa bị hiển thị thừa dồn xuống dưới Tab Mã Hóa.
-              + Hai Tab hoạt động độc lập, cắt giảm hơn 50% chiều dài trang cuộn.
-            - **Khu Vực Chọn Tệp Tinh Gọn (Sleek Horizontal Dropzone)**:
-              + Thiết kế dạng thanh ngang siêu mỏng (58px thay vì 120px), loại bỏ nút bấm thừa trùng lặp.
-              + Chạm trực tiếp vào toàn bộ khung để mở bộ chọn file native Android.
-            - **Bộ Chuyển Đổi Segmented Control Siêu Hiện Đại**:
-              + Thay thế 4 ô cấu hình khổng lồ chiếm diện tích bằng 2 thanh điều khiển dạng viên thuốc (Segmented Control Pills) chuẩn iOS/Android cao cấp.
-              + Cấp độ phân quyền: `🔒 Khóa Mật Khẩu` vs `👁️ Chỉ Xem (Cấm Copy)`.
-              + Định dạng xuất: `📄 Định Dạng Gốc` vs `📦 Nén .ZIP Có Pass`.
-            - **Ô Nhập Mật Khẩu Hợp Nhất & Thước Đo Micro-Entropy**:
-              + Tích hợp trực tiếp các nút công cụ: `[⚡ Mã Quân Sự 16-bit]` và `[📋 Copy]` ngay trong khung nhập.
-              + Thước đo entropy 3px siêu mảnh gắn sát đáy ô nhập, loại bỏ các dòng ghi chú thừa rườm rà.
-            - **Accordion Tùy Chọn Nâng Cao Thu Gọn (Collapsible Advanced Options)**:
-              + Nhóm gọn tùy chọn Đóng dấu mờ (Watermark) và Nén Stream vào thanh menu thu gọn, chỉ mở khi cần.
-            - **Bảng Kết Quả Tinh Tế & Hướng Dẫn Mở Tệp Thông Minh**:
-              + Thu gọn đường dẫn lưu file dài dòng, hiển thị trạng thái `📁 Đã lưu vào Thư mục Downloads của máy`.
-              + Tích hợp hộp mẹo hướng dẫn mở tệp dạng chạm để mở (Collapsible Accordion).
+            ## Ứng dụng Di Động KryptoDoc v2.3.2 (Tự Động Nén .ZIP Mã Hóa AES-256 Cho Ảnh & CAD)
+            - **Khắc Phục Triệt Để Lỗi "Tệp Lỗi Định Dạng" (Corrupted File Fix)**:
+              + Định dạng ảnh (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`) và CAD (`.dwg`, `.dxf`) không có tiêu chuẩn mật khẩu nội tại như PDF/Office.
+              + Trước đây hệ thống ghi luồng cipher trực tiếp giữ đuôi ảnh gây lỗi không xem được trong Thư viện ảnh Android.
+              + Phiên bản v2.3.2 tự động đóng gói nguyên vẹn tệp ảnh vào kho nén tiêu chuẩn `${baseName}_Protected.zip` bằng động cơ Zip4j AES-256.
+            - **Cơ Chế Tự Động Nhận Diện & Khóa Chế Độ Thông Minh (Smart Format Auto-Switch)**:
+              + Ngay khi người dùng chọn tệp ảnh hoặc bản vẽ kỹ thuật, ứng dụng tự động kích hoạt thẻ `📦 Nén .ZIP Có Pass` kèm thông báo hướng dẫn.
+              + Khóa ngăn người dùng chọn nhầm chế độ `Định Dạng Gốc` đối với các tệp không hỗ trợ mật khẩu gốc, bảo vệ an toàn 100% cấu trúc dữ liệu.
+            - **Khả Năng Giải Nén Tương Thích Toàn Cầu**:
+              + Tệp `.zip` xuất ra đạt chuẩn bảo mật AES-256 quốc tế, mở và giải nén lập tức bằng mật khẩu trên: WinRAR, 7-Zip, ZArchiver, Quản lý tệp Samsung/Xiaomi, hoặc Tab MỞ KHÓA của KryptoDoc.
+            - **Cập Nhật Thẻ Định Dạng & Nhãn Trực Quan**:
+              + Bổ sung huy hiệu màu Cyan hiện đại `IMG` cho các định dạng ảnh cùng nhãn giao thức `Zip4j AES-256 Vault`.
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk

@@ -592,6 +592,17 @@ body {
     margin-left: 2px;
 }
 
+.pkg-tag-sub {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #93c5fd;
+    background: rgba(37, 99, 235, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-left: 2px;
+}
+
 /* Unified Password Input */
 .label-with-action {
     display: flex;
@@ -1092,6 +1103,7 @@ body {
 .file-badge-pdf { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
 .file-badge-cad { background: #581c87; color: #d8b4fe; border: 1px solid #a855f7; }
 .file-badge-zip { background: #3b2d12; color: #fde047; border: 1px solid #eab308; }
+.file-badge-image { background: #0e7490; color: #a5f3fc; border: 1px solid #06b6d4; }
 .file-badge-generic { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
 
 .file-info-group {
