@@ -1201,3 +1201,101 @@ body {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+/* ============================================================
+   PHASE 3: TEMPLATES, WATERMARK & QR CODE STYLES
+   ============================================================ */
+.template-chips-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 3px;
+}
+
+.btn-template-chip {
+    flex: 1;
+    min-width: 95px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--text-title);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-template-chip:hover, .btn-template-chip:active {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.card-feature-toggle-box {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.feature-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.feature-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feature-toggle-left input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.feature-toggle-tag {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+/* QR Code Display Box */
+.qr-modal-box {
+    background: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+}
+
+.qr-caption-text {
+    font-size: 11px;
+    color: #1e293b;
+    font-weight: 600;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.qr-pwd-highlight {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #059669;
+    letter-spacing: 0.5px;
+}

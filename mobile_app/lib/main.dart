@@ -65,12 +65,16 @@ class _AdobePdfLockJob {
   final String outTempPath;
   final String password;
   final bool isViewOnly;
+  final String watermark;
+  final bool compress;
 
   _AdobePdfLockJob({
     required this.srcPath,
     required this.outTempPath,
     required this.password,
     required this.isViewOnly,
+    this.watermark = '',
+    this.compress = true,
   });
 }
 
@@ -83,6 +87,34 @@ Future<void> _runAdobePdfLockIsolate(_AdobePdfLockJob job) async {
   Uint8List? inputBytes = await srcFile.readAsBytes();
   final PdfDocument document = PdfDocument(inputBytes: inputBytes);
   inputBytes = null; // GIẢI PHÓNG 355MB RAM NGAY LẬP TỨC
+
+  if (job.compress) {
+    document.compressionLevel = PdfCompressionLevel.best;
+  }
+
+  if (job.watermark.trim().isNotEmpty) {
+    try {
+      final String wText = job.watermark.trim();
+      final PdfFont font = PdfStandardFont(PdfFontFamily.helvetica, 34, style: PdfFontStyle.bold);
+      final PdfBrush brush = PdfSolidBrush(PdfColor(170, 170, 170, 50));
+      final PdfStringFormat format = PdfStringFormat(
+        alignment: PdfTextAlignment.center,
+        lineAlignment: PdfVerticalAlignment.middle,
+      );
+
+      for (int i = 0; i < document.pages.count; i++) {
+        final PdfPage page = document.pages[i];
+        final Size pageSize = page.getClientSize();
+        final PdfGraphics graphics = page.graphics;
+        final PdfGraphicsState state = graphics.save();
+
+        graphics.translateTransform(pageSize.width / 2, pageSize.height / 2);
+        graphics.rotateTransform(-45);
+        graphics.drawString(wText, font, brush: brush, bounds: Rect.fromLTWH(-pageSize.width, -50, pageSize.width * 2, 100), format: format);
+        graphics.restore(state);
+      }
+    } catch (_) {}
+  }
 
   // THUẬT TOÁN RC4-128BIT CHUẨN QUỐC TẾ ADOBE ISO 32000 (ADOBE ACROBAT / FOXIT / WPS / SAMSUNG / XIAOMI):
   // Tốc độ nhanh gấp 30 lần so với AES-256 trên CPU di động, không bị GC Livelock!
@@ -364,6 +396,8 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
             final password = data['password'] as String? ?? '';
             final protectionLevel = data['protection_level'] as String? ?? 'open_password';
             final isViewOnly = (protectionLevel == 'view_only_restricted');
+            final watermark = data['watermark'] as String? ?? '';
+            final compress = data['compress'] as bool? ?? true;
 
             // -----------------------------------------------------------------
             // CHỨC NĂNG 1: MÃ HÓA TỆP
@@ -411,6 +445,8 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                       'destPath': outTempPath,
                       'password': password,
                       'isViewOnly': isViewOnly,
+                      'watermark': watermark,
+                      'compress': compress,
                     });
                     processedNatively = true;
                   } catch (nativeErr) {
@@ -424,6 +460,8 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                     outTempPath: outTempPath,
                     password: password,
                     isViewOnly: isViewOnly,
+                    watermark: watermark,
+                    compress: compress,
                   );
                   await compute(_runAdobePdfLockIsolate, adobeJob);
                 }

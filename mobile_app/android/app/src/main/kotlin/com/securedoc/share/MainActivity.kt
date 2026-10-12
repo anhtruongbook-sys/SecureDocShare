@@ -3,6 +3,10 @@ package com.securedoc.share
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import com.itextpdf.text.BaseColor
+import com.itextpdf.text.Element
+import com.itextpdf.text.pdf.BaseFont
+import com.itextpdf.text.pdf.PdfGState
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.PdfStamper
 import com.itextpdf.text.pdf.PdfWriter
@@ -31,6 +35,8 @@ class MainActivity: FlutterActivity() {
                     val destPath = call.argument<String>("destPath")
                     val password = call.argument<String>("password") ?: ""
                     val isViewOnly = call.argument<Boolean>("isViewOnly") ?: false
+                    val watermark = call.argument<String>("watermark") ?: ""
+                    val compress = call.argument<Boolean>("compress") ?: true
 
                     if (srcPath == null || destPath == null) {
                         result.error("INVALID_ARGS", "Missing srcPath or destPath", null)
@@ -57,6 +63,40 @@ class MainActivity: FlutterActivity() {
                             fos = FileOutputStream(outFile)
 
                             stamper = PdfStamper(reader, fos)
+
+                            if (compress) {
+                                try {
+                                    stamper.setFullCompression()
+                                } catch (_: Throwable) {}
+                            }
+
+                            if (watermark.isNotBlank()) {
+                                try {
+                                    val baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
+                                    val gState = PdfGState()
+                                    gState.setFillOpacity(0.18f)
+
+                                    val totalPages = reader.numberOfPages
+                                    for (p in 1..totalPages) {
+                                        val over = stamper.getOverContent(p)
+                                        val rect = reader.getPageSizeWithRotation(p)
+                                        over.saveState()
+                                        over.setGState(gState)
+                                        over.beginText()
+                                        over.setFontAndSize(baseFont, 38f)
+                                        over.setColorFill(BaseColor(160, 160, 160))
+                                        over.showTextAligned(
+                                            Element.ALIGN_CENTER,
+                                            watermark,
+                                            rect.width / 2f,
+                                            rect.height / 2f,
+                                            45f
+                                        )
+                                        over.endText()
+                                        over.restoreState()
+                                    }
+                                } catch (_: Throwable) {}
+                            }
 
                             val userPwd = if (isViewOnly) ByteArray(0) else password.toByteArray(Charsets.UTF_8)
                             val ownerPwd = password.toByteArray(Charsets.UTF_8)

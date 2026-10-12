@@ -533,6 +533,103 @@ function hideProcessingModal() {
     }
 }
 
+// =============================================================
+// PHASE 3: MẪU BẢO MẬT BỐI CẢNH, WATERMARK & QR CODE
+// =============================================================
+function applySecurityTemplate(type) {
+    if (type === 'enterprise') {
+        selectProtectionLevel('open_password', document.getElementById('level-card-open'));
+        generateMilitaryPassword();
+        const wmCheck = document.getElementById('enable-watermark-checkbox');
+        if (wmCheck && !wmCheck.checked) {
+            wmCheck.checked = true;
+            toggleWatermarkOption();
+        }
+        applyWatermarkPreset('BẢN MẬT HỢP ĐỒNG');
+        showToast('Đã áp dụng mẫu: 🏢 Hợp Đồng (Mã Quân Sự + Dấu Mật)');
+    } else if (type === 'design') {
+        selectProtectionLevel('view_only_restricted', document.getElementById('level-card-view'));
+        document.getElementById('lock-password').value = 'Admin@Design2026';
+        updatePasswordStrengthUI();
+        const wmCheck = document.getElementById('enable-watermark-checkbox');
+        if (wmCheck && !wmCheck.checked) {
+            wmCheck.checked = true;
+            toggleWatermarkOption();
+        }
+        applyWatermarkPreset('BẢN QUYỀN THIẾT KẾ');
+        showToast('Đã áp dụng mẫu: 📐 Bản Vẽ (Xem tự do, Cấm sao chép + Dấu bản quyền)');
+    } else if (type === 'quotation') {
+        selectProtectionLevel('open_password', document.getElementById('level-card-open'));
+        applyPresetPassword('BaoGia@88');
+        const wmCheck = document.getElementById('enable-watermark-checkbox');
+        if (wmCheck && wmCheck.checked) {
+            wmCheck.checked = false;
+            toggleWatermarkOption();
+        }
+        const comp = document.getElementById('compress-pdf-checkbox');
+        if (comp) comp.checked = true;
+        showToast('Đã áp dụng mẫu: 💰 Báo Giá / Dự Toán (Mã nhanh + Nén gửi Zalo)');
+    }
+}
+
+function toggleWatermarkOption() {
+    const check = document.getElementById('enable-watermark-checkbox');
+    const panel = document.getElementById('watermark-detail-panel');
+    const tag = document.getElementById('watermark-tag');
+    if (!check || !panel) return;
+    if (check.checked) {
+        panel.style.display = 'block';
+        if (tag) {
+            tag.textContent = 'Đang bật';
+            tag.style.color = '#10b981';
+            tag.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        }
+    } else {
+        panel.style.display = 'none';
+        if (tag) {
+            tag.textContent = 'Tùy chọn';
+            tag.style.color = 'var(--text-muted)';
+            tag.style.borderColor = 'var(--border)';
+        }
+    }
+}
+
+function applyWatermarkPreset(text) {
+    const input = document.getElementById('watermark-input');
+    if (input) {
+        input.value = text;
+        showToast(`Đã chọn dấu mờ: "${text}"`);
+    }
+}
+
+let currentQrCodeInstance = null;
+function toggleQrCodeModal() {
+    const box = document.getElementById('qr-modal-container');
+    const pwdEl = document.getElementById('qr-pwd-display');
+    const target = document.getElementById('qr-code-target');
+    const pwd = document.getElementById('lock-password').value;
+    if (!box || !target) return;
+
+    if (box.style.display === 'none' || box.style.display === '') {
+        box.style.display = 'flex';
+        if (pwdEl) pwdEl.textContent = pwd || '(Mật khẩu trống)';
+        target.innerHTML = '';
+        if (typeof QRCode !== 'undefined') {
+            currentQrCodeInstance = new QRCode(target, {
+                text: pwd,
+                width: 140,
+                height: 140,
+                colorDark: "#0b0f19",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+        showToast('Đã tạo mã QR mật khẩu! 📱');
+    } else {
+        box.style.display = 'none';
+    }
+}
+
 async function executeMobileLockFiles() {
     if (selectedLockFiles.length === 0) {
         alert("Vui lòng chọn ít nhất 1 tệp tin cần mã hóa!");
@@ -569,12 +666,18 @@ async function executeMobileLockFiles() {
                     `Tệp: <strong>${file.name}</strong> (${sizeMb} MB)<br>Đang chạy mã hóa native hiệu năng cao.<br>Vui lòng giữ ứng dụng mở...`
                 );
 
+                const enableWatermark = document.getElementById('enable-watermark-checkbox')?.checked || false;
+                const watermarkText = enableWatermark ? (document.getElementById('watermark-input')?.value || '') : '';
+                const compressPdf = document.getElementById('compress-pdf-checkbox')?.checked !== false;
+
                 window.FlutterBridge.postMessage(JSON.stringify({
                     action: isPdf ? 'lock_pdf_native' : 'lock_file_native',
                     name: file.name,
                     size: file.size,
                     password: pwd,
-                    protection_level: currentProtectionLevel
+                    protection_level: currentProtectionLevel,
+                    watermark: watermarkText,
+                    compress: compressPdf
                 }));
                 return;
             }
@@ -825,18 +928,28 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                     </svg>
                     <span>GỬI QUA ZALO / CHIA SẺ TỆP</span>
                 </button>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 6px;">
                     <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span>Lưu thêm bản sao</span>
+                        <span>Lưu bản sao</span>
                     </button>
                     <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="copyCurrentPassword()">
                         <span>📋 Sao chép Pass</span>
                     </button>
+                    <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="toggleQrCodeModal()">
+                        <span>📱 Mã QR</span>
+                    </button>
+                </div>
+            </div>
+            <div id="qr-modal-container" class="qr-modal-box" style="display: none;">
+                <div id="qr-code-target" style="padding: 6px; background: #ffffff; border-radius: 6px;"></div>
+                <div class="qr-caption-text">
+                    Quét camera để đọc mật khẩu trực tiếp:<br>
+                    <span class="qr-pwd-highlight" id="qr-pwd-display"></span>
                 </div>
             </div>
             <p class="result-note">${noteText}</p>

@@ -64,18 +64,22 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.1.0
-          name: "KryptoDoc v2.1.0 - Military Password Entropy & Rich Vault (Android APK)"
+          tag_name: v2.2.0
+          name: "KryptoDoc v2.2.0 - Security Templates, Watermark & Offline QR Vault (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.1.0 (Giai Đoạn 2: Trải Nghiệm & Đột Phá Tính Năng)
-            - **Thước Đo Độ Mạnh Mật Khẩu (Password Entropy Meter)**: Phân tích thời gian thực độ an toàn mật khẩu theo 4 cấp độ trực quan: Yếu, Trung Bình, Mạnh, và Chuẩn Cấp Quân Sự 256-bit 🛡️.
-            - **Bộ Sinh Mật Khẩu Quân Sự 1-Chạm (Military Password Generator)**: Tự động sinh mật khẩu ngẫu nhiên 16 ký tự mã hóa cao cấp (bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt) kết hợp sao chép tự động vào bộ nhớ tạm.
-            - **Thẻ Xem Trước Tệp Chi Tiết & Nhận Diện Giao Thức (Rich File Preview Cards)**:
-              + Phân loại biểu tượng chuyên nghiệp theo từng định dạng: Word (`DOC`), Excel (`XLS`), PowerPoint (`PPT`), PDF (`PDF`).
-              + Hiển thị dung lượng định dạng chuẩn (`KB`, `MB`).
-              + Tự động gán nhãn giao thức bảo mật tương ứng: `[MS-OFFCRYPTO 256-bit]` cho Office và `[Adobe ISO 32000]` cho PDF.
-            - **Nhật Ký Phiên Làm Việc Cục Bộ (Zero-Knowledge Session History)**: Quản lý lịch sử các tệp đã mã hóa / mở khóa trong phiên ngay tại thiết bị, bảo mật 100% offline, có nút xóa nhanh một chạm.
-            - **Nút Sao Chép Mật Khẩu Tại Kết Quả**: Giúp người dùng sao chép nhanh mật khẩu đã đặt để gửi kèm qua Zalo / email cùng file mã hóa.
+            ## Ứng dụng Di Động KryptoDoc v2.2.0 (Giai Đoạn 3: Đỉnh Cao Bảo Mật & Tiện Ích Độc Quyền)
+            - **Mẫu Cấu Hình Bảo Mật 1-Chạm (Context Security Templates)**:
+              + 🏢 *Hợp Đồng Doanh Nghiệp*: Khóa mật khẩu quân sự + Đóng dấu mờ "BẢN MẬT HỢP ĐỒNG".
+              + 📐 *Bản Vẽ & Bản Quyền Thiết Kế*: Chế độ Chỉ xem (Cấm sao chép / cấm in) + Đóng dấu mờ "BẢN QUYỀN THIẾT KẾ".
+              + 💰 *Báo Giá / Dự Toán*: Mật khẩu nhanh + Tự động nén tối ưu dung lượng gửi Zalo.
+            - **Đóng Dấu Bản Quyền Mờ Chuyên Nghiệp (Watermark Overlay)**:
+              + Tự động khắc dấu chéo 45° mờ tinh tế (18% Opacity) xuyên suốt toàn bộ các trang tài liệu PDF bằng động cơ Native iTextG & Syncfusion PDF.
+              + Cung cấp sẵn các mẫu dấu chuẩn mực: "BẢN MẬT - NỘI BỘ", "CHỈ LƯU HÀNH NỘI BỘ", "BẢN THẢO - TUYỆT MẬT", hoặc nhập tùy biến.
+            - **Nén Tối Ưu Tệp Tự Động (Smart Full-Stream Compression)**: Nén stream tệp PDF giúp giảm kích thước đáng kể, truyền gửi qua Zalo / Email tức thì mà không lo nghẽn mạng.
+            - **Mã QR Chia Sẻ Mật Khẩu Siêu Tốc Offline 100% (Instant Password QR Code)**:
+              + Tự động sinh mã QR độ nét cao ngay trên màn hình kết quả.
+              + Đối tác / đồng nghiệp chỉ cần đưa camera điện thoại hoặc Zalo quét là nhận ngay mật khẩu mà không sợ bị lộ trong tin nhắn chat.
+            - **Thước Đo Độ Mạnh Mật Khẩu & Bộ Sinh Mật Khẩu Quân Sự 16 Ký Tự**: Đảm bảo an toàn cấp quân sự.
             - **Biểu tượng Cyber Shield Động Tương Tác**: Xoay radar orbital ring, phát quang neon, nảy haptic 3D.
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` (hoặc `SecureDocShare.apk`) bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |

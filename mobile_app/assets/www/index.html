@@ -112,6 +112,22 @@
             <div class="card settings-card">
                 <h3 class="card-title">Cấu Hình Bảo Mật</h3>
 
+                <!-- Mẫu cấu hình nhanh 1-chạm -->
+                <div class="form-group" style="margin-bottom: 2px;">
+                    <label>MẪU CẤU HÌNH NHANH (1-CHẠM):</label>
+                    <div class="template-chips-row">
+                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('enterprise')">
+                            🏢 Hợp Đồng
+                        </button>
+                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('design')">
+                            📐 Bản Vẽ Bản Quyền
+                        </button>
+                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('quotation')">
+                            💰 Báo Giá Dự Toán
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 2 Chức năng chính -->
                 <div class="form-group">
                     <label>BƯỚC 1: LỰA CHỌN CẤP ĐỘ PHÂN QUYỀN:</label>
@@ -172,6 +188,36 @@
                     <p class="pass-subnote" id="pass-subnote" style="font-size: 11.5px; color: #94a3b8; margin-top: 6px;">
                         💡 Người nhận nhập mã này để xem tài liệu.
                     </p>
+                </div>
+
+                <!-- BƯỚC 3: TÙY CHỌN DẤU BẢN QUYỀN MỜ & NÉN -->
+                <div class="card-feature-toggle-box">
+                    <div class="feature-toggle-row" onclick="toggleWatermarkOption()">
+                        <div class="feature-toggle-left">
+                            <input type="checkbox" id="enable-watermark-checkbox" onclick="event.stopPropagation(); toggleWatermarkOption()">
+                            <label for="enable-watermark-checkbox" style="cursor: pointer; margin: 0; font-size: 11.5px; font-weight: 600; color: var(--text-title);">
+                                🏷️ Đóng Dấu Bản Quyền Mờ (Watermark)
+                            </label>
+                        </div>
+                        <span class="feature-toggle-tag" id="watermark-tag">Tùy chọn</span>
+                    </div>
+                    <div id="watermark-detail-panel" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
+                        <input type="text" id="watermark-input" placeholder="Nội dung dấu mờ (ví dụ: BẢN MẬT, NỘI BỘ)..." style="margin-bottom: 6px; font-size: 12px; padding: 7px 10px;">
+                        <div class="quick-pass-suggestions" style="margin-top: 2px;">
+                            <span class="sugg-title">Mẫu dấu:</span>
+                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('BẢN MẬT - NỘI BỘ')">BẢN MẬT</button>
+                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('CHỈ LƯU HÀNH NỘI BỘ')">NỘI BỘ</button>
+                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('BẢN THẢO - TUYỆT MẬT')">TUYỆT MẬT</button>
+                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('BẢN QUYỀN THIẾT KẾ')">BẢN QUYỀN</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="compress-toggle-row" style="margin-top: -2px; margin-bottom: 6px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: var(--text-muted); margin: 0;">
+                        <input type="checkbox" id="compress-pdf-checkbox" checked style="width: auto; margin: 0; cursor: pointer;">
+                        <span>⚡ Nén tối ưu dung lượng tệp (Gửi Zalo nhanh & nhẹ)</span>
+                    </label>
                 </div>
 
                 <!-- Submit Button -->
@@ -290,6 +336,7 @@
         </div>
     </div>
 
+    <script src="static/qrcode.min.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>
