@@ -64,20 +64,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.3.3
-          name: "KryptoDoc v2.3.3 - Smart Pre-Flight Detection & Double-Lock Prevention (Android APK)"
+          tag_name: v2.3.4
+          name: "KryptoDoc v2.3.4 - Auto-Redirect & Clean Locked State UI (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.3.3 (Nhận Diện Thông Minh & Chống Khóa Chồng Gây Lỗi)
-            - **Nhận Diện Tệp Đã Khóa Ngay Khi Chọn (Smart Pre-Flight Detection)**:
-              + Kiểm tra nhị phân (Deep Binary Inspection): Quét cấu trúc nhị phân của tệp để phát hiện `/Encrypt` (PDF Adobe ISO 32000), `EncryptedPackage` (Microsoft Office OLE), cờ mã hóa ZipCrypto/AES (ZIP) và Header KryptoDoc Vault.
-              + Kiểm tra hậu tố tên tệp: Tự động nhận diện các tệp `_Locked`, `_ReadOnly`, `_Protected`, `_Encrypted`.
-            - **Giao Diện Cảnh Báo Trực Quan & Điều Hướng 1-Chạm (1-Tap Auto-Redirect)**:
-              + Hiển thị huy hiệu màu cam nổi bật: `🔒 ĐÃ CÓ MẬT KHẨU`.
-              + Xuất hiện Banner cảnh báo thông minh kèm nút bấm: `[🔓 Chuyển sang Tab MỞ KHÓA ngay]`.
-              + Khi chạm vào, hệ thống tự động chuyển Tab và nạp sẵn tệp vào ô Mở Khóa, người dùng chỉ việc nhập mật khẩu để mở hoặc đổi pass.
-            - **Khóa Chặn Lỗi Ở Cả Frontend & Động Cơ Native (Double-Lock Prevention Guard)**:
-              + Khi người dùng bấm nút Khóa: App lập tức bật hộp thoại cảnh báo chống khóa đè.
-              + Động cơ Native (iTextG / POI / Zip4j / Syncfusion): Tự động phát hiện trạng thái đã mã hóa và trả về thông báo tiếng Việt chuẩn xác thay vì ném lỗi crash.
+            ## Ứng dụng Di Động KryptoDoc v2.3.4 (Tự Động Chuyển Tab Mở Khóa & Tối Ưu Hóa Giao Diện Tinh Gọn)
+            - **Tự Động Chuyển Thẳng Sang Tab MỞ KHÓA (Zero-Tap Auto-Redirect)**:
+              + Ngay khi người dùng chọn 1 tệp đã có mật khẩu bảo vệ ở Tab Khóa: Ứng dụng lập tức chuyển sang Tab MỞ KHÓA, nạp sẵn tệp và tự động đặt con trỏ vào ô nhập mật khẩu.
+              + Không làm mất thời gian người dùng, không cần phải bấm nút chuyển hướng thủ công.
+            - **Khắc Phục Hoàn Toàn Lỗi Giao Diện Thừa & Mâu Thuẫn Logic (Clean Zero-Waste UI)**:
+              + Khi tệp đã khóa được nạp vào Tab Khóa: Hệ thống TỰ ĐỘNG ẨN 100% Khối cài đặt khóa (Mẫu, Phân quyền, Định dạng xuất, Ô nhập mật khẩu mới và Nút bấm xanh "MÃ HÓA & LƯU TỆP").
+              + Loại bỏ hoàn toàn sự xung đột gây bối rối giữa nút "Chuyển sang mở khóa" và nút "Mã hóa & lưu tệp".
+            - **Thẻ Trạng Thái Hợp Nhất Chuyên Biệt (Dedicated Locked Card)**:
+              + Hợp nhất 2 hộp rời rạc trước đây thành duy nhất 1 thẻ hiển thị sang trọng, viền vàng cam tinh tế.
+              + Cung cấp 2 lựa chọn rõ ràng: `[ 🔓 MỞ KHÓA TỆP NÀY NGAY ]` (Chuyển sang giải mã) và `[ ✕ Bỏ chọn tệp ]` (Chọn tệp khác cần khóa).
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk

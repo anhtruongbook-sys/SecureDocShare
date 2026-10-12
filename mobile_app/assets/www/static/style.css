@@ -1123,71 +1123,131 @@ body {
     letter-spacing: 0.2px;
 }
 
-.already-locked-alert-card {
-    background: rgba(245, 158, 11, 0.09);
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-top: 6px;
+/* Dedicated Locked File Card (Clean, Modern, Zero Waste) */
+.locked-dedicated-card {
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.05));
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 12px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    animation: fadeInSlide 0.2s ease-out;
+    gap: 12px;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
+    animation: fadeInSlide 0.25s ease-out;
 }
 
-.alert-top-row {
+.locked-card-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    gap: 12px;
+}
+
+.locked-badge-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #78350f;
+    border: 1px solid #f59e0b;
+    color: #fef3c7;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+
+.locked-info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow: hidden;
+}
+
+.locked-file-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-title);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.locked-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.locked-badge-pill {
+    font-size: 9px;
+    font-weight: 800;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+}
+
+.locked-card-notice {
+    font-size: 11.5px;
+    color: #cbd5e1;
+    line-height: 1.4;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 3px solid #f59e0b;
+}
+
+.locked-card-buttons {
+    display: flex;
+    align-items: center;
     gap: 10px;
 }
 
-.alert-icon-big {
-    font-size: 18px;
-    line-height: 1.2;
-    flex-shrink: 0;
-}
-
-.alert-text-body {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.alert-title {
-    font-size: 11.5px;
-    font-weight: 800;
-    color: #fbbf24;
-}
-
-.alert-subtitle {
-    font-size: 10px;
-    color: var(--text-muted);
-    line-height: 1.35;
-}
-
-.alert-action-btn-row {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn-redirect-unlock-action {
+.btn-goto-unlock-main {
+    flex: 1;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #ffffff;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 7px 12px;
+    padding: 10px 14px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35);
+    transition: transform 0.15s ease, background 0.2s ease;
 }
 
-.btn-redirect-unlock-action:active {
-    transform: scale(0.97);
+.btn-goto-unlock-main:active {
+    transform: scale(0.98);
+    background: #1e40af;
+}
+
+.btn-cancel-locked-choice {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-cancel-locked-choice:active {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: #ef4444;
 }
 
 .file-info-group {

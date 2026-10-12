@@ -240,7 +240,23 @@ async function handleFilesSelected(files, context) {
         renderFileListLock();
 
         if (hasAlreadyLocked) {
-            showToast('⚠️ Phát hiện tệp đã được khóa bảo mật! Đã hiển thị tùy chọn chuyển sang Tab MỞ KHÓA.');
+            // Nếu người dùng chọn đúng 1 file và file đó đã có mật khẩu:
+            // TỰ ĐỘNG CHUYỂN NGAY LẬP TỨC SANG TAB MỞ KHÓA!
+            if (selectedLockFiles.length === 1 && selectedLockFiles[0]._isAlreadyLocked) {
+                const lockedFile = selectedLockFiles[0];
+                selectedUnlockFile = lockedFile;
+                selectedLockFiles = [];
+                renderFileListLock();
+                switchTab('unlock');
+                renderFileListUnlock();
+                showToast(`💡 Phát hiện tệp đã có mật khẩu. Đã tự động chuyển sang Tab MỞ KHÓA! 🔓`);
+                setTimeout(() => {
+                    const pwdInput = document.getElementById('unlock-password');
+                    if (pwdInput) pwdInput.focus();
+                }, 300);
+                return;
+            }
+            showToast('💡 Phát hiện tệp đã có mật khẩu bảo vệ!');
             return;
         }
 
@@ -339,29 +355,64 @@ function formatBytes(bytes) {
 
 function renderFileListLock() {
     const container = document.getElementById('file-list-lock');
+    const settingsCard = document.getElementById('settings-card-lock');
     if (selectedLockFiles.length === 0) {
         container.style.display = 'none';
         container.innerHTML = '';
+        if (settingsCard) settingsCard.style.display = 'block';
         return;
     }
     container.style.display = 'flex';
-    let html = selectedLockFiles.map((file, idx) => {
-        const meta = getFileMetaBadge(file.name);
-        const isLocked = file._isAlreadyLocked;
-        return `
-            <div class="file-card-rich ${isLocked ? 'file-card-warning' : ''}">
-                <div class="file-meta-col">
-                    <div class="file-type-icon-badge ${isLocked ? 'file-badge-locked-warn' : meta.badgeClass}">
-                        ${isLocked ? '🔒' : meta.iconText}
+
+    const allLocked = selectedLockFiles.every(f => f._isAlreadyLocked);
+    if (allLocked && selectedLockFiles.length > 0) {
+        if (settingsCard) settingsCard.style.display = 'none';
+        container.innerHTML = selectedLockFiles.map((file, idx) => `
+            <div class="locked-dedicated-card">
+                <div class="locked-card-top">
+                    <div class="locked-badge-box">🔒</div>
+                    <div class="locked-info-group">
+                        <span class="locked-file-name" title="${file.name}">${file.name}</span>
+                        <div class="locked-meta-row">
+                            <span>${formatBytes(file.size)}</span>
+                            <span>•</span>
+                            <span class="locked-badge-pill">ĐÃ CÓ MẬT KHẨU</span>
+                        </div>
                     </div>
+                </div>
+                <div class="locked-card-notice">
+                    💡 Tệp này đã được đặt mật khẩu bảo vệ trước đó. Bạn hãy mở khóa để xem nội dung hoặc thay đổi mật khẩu.
+                </div>
+                <div class="locked-card-buttons">
+                    <button type="button" class="btn-goto-unlock-main" onclick="redirectToUnlockWithSelectedFile(${idx})">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                        </svg>
+                        <span>MỞ KHÓA TỆP NÀY NGAY</span>
+                    </button>
+                    <button type="button" class="btn-cancel-locked-choice" onclick="removeLockFile(${idx})">
+                        ✕ Bỏ chọn tệp
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        return;
+    }
+
+    if (settingsCard) settingsCard.style.display = 'block';
+    container.innerHTML = selectedLockFiles.map((file, idx) => {
+        const meta = getFileMetaBadge(file.name);
+        return `
+            <div class="file-card-rich">
+                <div class="file-meta-col">
+                    <div class="file-type-icon-badge ${meta.badgeClass}">${meta.iconText}</div>
                     <div class="file-info-group">
                         <span class="file-title-text" title="${file.name}">${file.name}</span>
                         <div class="file-subdetail-row">
                             <span>${formatBytes(file.size)}</span>
                             <span>•</span>
-                            ${isLocked 
-                                ? `<span class="already-locked-tag">⚠️ ĐÃ CÓ MẬT KHẨU</span>` 
-                                : `<span class="file-protocol-tag">${meta.protocol}</span>`}
+                            <span class="file-protocol-tag">${meta.protocol}</span>
                         </div>
                     </div>
                 </div>
@@ -369,29 +420,6 @@ function renderFileListLock() {
             </div>
         `;
     }).join('');
-
-    const firstLocked = selectedLockFiles.find(f => f._isAlreadyLocked);
-    if (firstLocked) {
-        html += `
-            <div class="already-locked-alert-card">
-                <div class="alert-top-row">
-                    <span class="alert-icon-big">⚠️</span>
-                    <div class="alert-text-body">
-                        <div class="alert-title">Phát hiện tệp đã được đặt mật khẩu!</div>
-                        <div class="alert-subtitle">${firstLocked._lockedReason || 'Khóa đè lần 2 sẽ làm hỏng tệp hoặc tạo 2 tầng mật khẩu khiến người nhận không mở được.'}</div>
-                    </div>
-                </div>
-                <div class="alert-action-btn-row">
-                    <button type="button" class="btn-redirect-unlock-action" onclick="redirectToUnlockWithSelectedFile()">
-                        <span class="btn-icon">🔓</span>
-                        <span>Chuyển sang Tab MỞ KHÓA ngay</span>
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    container.innerHTML = html;
 }
 
 function redirectToUnlockWithSelectedFile(idx) {
