@@ -19,9 +19,9 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xFFF8FAFC),
-      systemNavigationBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF0B0F19),
+      systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
   runApp(const SecureDocApp());
@@ -33,15 +33,15 @@ class SecureDocApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SecureDocShare',
+      title: 'KryptoDoc',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF2563EB),
-          secondary: Color(0xFF059669),
-          surface: Color(0xFFFFFFFF),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0B0F19),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF10B981),
+          secondary: Color(0xFF06B6D4),
+          surface: Color(0xFF131B2E),
         ),
       ),
       home: const SecureDocWebViewScreen(),

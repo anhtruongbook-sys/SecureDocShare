@@ -49,13 +49,34 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
+    const badge = document.getElementById('krypto-logo-badge');
     if (tabName === 'lock') {
         document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
         document.getElementById('tab-lock').classList.add('active');
+        if (badge) {
+            badge.classList.remove('state-unlocked');
+            badge.classList.add('state-locked');
+        }
     } else {
         document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
         document.getElementById('tab-unlock').classList.add('active');
+        if (badge) {
+            badge.classList.remove('state-locked');
+            badge.classList.add('state-unlocked');
+        }
     }
+}
+
+function triggerLogoHaptic() {
+    const badge = document.getElementById('krypto-logo-badge');
+    if (!badge) return;
+    badge.style.transform = 'scale(0.88)';
+    setTimeout(() => {
+        badge.style.transform = 'scale(1.12)';
+        setTimeout(() => {
+            badge.style.transform = '';
+        }, 180);
+    }, 120);
 }
 
 function selectProtectionLevel(levelVal, cardEl) {
@@ -203,6 +224,9 @@ let procTimerInterval = null;
 let procStartTime = null;
 
 function showProcessingModal(title, desc) {
+    const badge = document.getElementById('krypto-logo-badge');
+    if (badge) badge.classList.add('state-processing');
+
     const modal = document.getElementById('processing-modal');
     if (modal) {
         if (title) document.getElementById('proc-title').innerText = title;
@@ -224,6 +248,9 @@ function showProcessingModal(title, desc) {
 }
 
 function hideProcessingModal() {
+    const badge = document.getElementById('krypto-logo-badge');
+    if (badge) badge.classList.remove('state-processing');
+
     const modal = document.getElementById('processing-modal');
     if (modal) {
         modal.style.display = 'none';

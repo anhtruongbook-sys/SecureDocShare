@@ -45,16 +45,18 @@ jobs:
         run: |
           mkdir -p build-output
           if [ -f mobile_app/build/app/outputs/flutter-apk/app-release.apk ]; then
+            cp mobile_app/build/app/outputs/flutter-apk/app-release.apk build-output/KryptoDoc.apk
             cp mobile_app/build/app/outputs/flutter-apk/app-release.apk build-output/SecureDocShare.apk
           else
+            cp mobile_app/build/app/outputs/flutter-apk/*.apk build-output/KryptoDoc.apk
             cp mobile_app/build/app/outputs/flutter-apk/*.apk build-output/SecureDocShare.apk
           fi
 
       - name: Upload Release APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: SecureDocShare-mobile-release-apk
-          path: build-output/SecureDocShare.apk
+          name: KryptoDoc-mobile-release-apk
+          path: build-output/KryptoDoc.apk
           retention-days: 30
           if-no-files-found: error
 
@@ -62,15 +64,23 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.19
-          name: "SecureDocShare v1.0.19 (Android APK)"
+          tag_name: v2.0.0
+          name: "KryptoDoc v2.0.0 - Military-Grade Document Vault (Android APK)"
           body: |
-            ## Ứng dụng Di Động SecureDocShare Cài Đặt Trực Tiếp (Android APK v1.0.19)
-            - **Giao Diện Nền Tối Hiện Đại (Dark Mode Mặc Định)**: Nền Obsidian Dark `#0b0f19` kết hợp thẻ Slate Navy `#131b2e` chống mỏi mắt và tiết kiệm pin tối đa cho màn hình OLED. Bổ sung nút chuyển đổi Sáng / Tối tiện lợi trên thanh tiêu đề.
-            - **Khắc Phục Nhầm Lẫn Nút Bấm Lưu Tệp**: Bổ sung hộp thông báo trạng thái rõ ràng `✅ ĐÃ TỰ ĐỘNG LƯU VÀO MÁY`. Chuyển nút hành động chính thành `🚀 GỬI QUA ZALO / CHIA SẺ TỆP` và nút phụ `💾 Lưu thêm 1 bản sao khác`, chấm dứt hoàn toàn tình trạng bấm nhầm lưu trùng lặp 2 lần.
-            - **Mã Hóa Microsoft Office Native 100% (ECMA-376 Standard Encryption)**: Khóa file Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`) chuẩn gốc Microsoft Office, mở trực tiếp trên điện thoại bằng Microsoft Word/Excel hoặc WPS Office với hộp thoại hỏi mật khẩu bản quyền.
-            - **Mã Hóa Adobe PDF Native (ISO 32000)**: Mở bằng mọi trình đọc PDF trên toàn cầu.
-            - **Tải tệp APK**: Tải file `SecureDocShare.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
-          files: build-output/SecureDocShare.apk
+            ## Ứng dụng Di Động KryptoDoc v2.0.0 (Android APK - Military-Grade Document Vault)
+            - **Đổi tên thương hiệu thành KryptoDoc**: Tên gọi ngắn gọn, định vị đẳng cấp két bảo mật tài liệu doanh nghiệp cấp quân sự (Military-Grade Vault).
+            - **Biểu tượng Cyber Shield Động Tương Tác (Interactive Animated Logo)**:
+              + Vòng radar quét đa tầng xoay tròn mượt mà (Radar Orbital Ring).
+              + Lõi khiên số phát sáng hào quang Cyber Neon (Breathing Ambient Aura).
+              + Ổ khóa thông minh phản ứng theo ngữ cảnh: Xanh Emerald khi ở chế độ Khóa, Vàng Hổ Phách kiêm bật càng khóa khi ở chế độ Mở Khóa, và tăng tốc xoay siêu tốc khi đang xử lý tệp.
+              + Hiệu ứng phản hồi chạm nảy (Spring Haptic Touch).
+            - **Giao Diện Nền Tối Hiện Đại Obsidian Dark**: Nền `#0b0f19` kết hợp thẻ `#131b2e` siêu sang trọng, chống mỏi mắt và tiết kiệm pin OLED.
+            - **Bảo Vệ Đúp Chống Bấm Nhầm Lưu Tệp**: Hộp trạng thái `✅ ĐÃ TỰ ĐỘNG LƯU VÀO MÁY`, nút chính `🚀 GỬI QUA ZALO / CHIA SẺ TỆP`.
+            - **Mã Hóa Microsoft Office Native 100% (ECMA-376 Standard Encryption)**: Khóa file Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`) chuẩn gốc Microsoft Office, mở trực tiếp trên điện thoại bằng Microsoft Word/Excel hoặc WPS Office.
+            - **Mã Hóa Adobe PDF Native (ISO 32000)**: Tương thích 100% trình đọc PDF toàn cầu.
+            - **Tải tệp APK**: Tải file `KryptoDoc.apk` (hoặc `SecureDocShare.apk`) bên dưới về điện thoại Android và chọn Cài đặt (Install).
+          files: |
+            build-output/KryptoDoc.apk
+            build-output/SecureDocShare.apk
           draft: false
           prerelease: false

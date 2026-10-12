@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SecureDocShare Mobile</title>
+    <title>KryptoDoc • Military-Grade Document Vault</title>
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body class="dark-mode">
@@ -11,12 +11,51 @@
         <!-- Header -->
         <header class="header">
             <div class="logo-area">
-                <div class="logo-img-wrapper">
-                    <img src="static/logo.png" alt="Logo" class="app-logo-img">
+                <div class="krypto-logo-badge state-locked" id="krypto-logo-badge" onclick="triggerLogoHaptic()" title="KryptoDoc Security Engine">
+                    <div class="logo-aura-glow"></div>
+                    <svg class="logo-orbit-ring" viewBox="0 0 48 48" fill="none">
+                        <circle cx="24" cy="24" r="21.5" stroke="url(#orbit-grad)" stroke-width="2" stroke-dasharray="28 16" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="orbit-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#10b981"/>
+                                <stop offset="50%" stop-color="#06b6d4"/>
+                                <stop offset="100%" stop-color="#3b82f6"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="logo-shield-container">
+                        <svg class="logo-shield-svg" viewBox="0 0 32 36" fill="none">
+                            <path class="shield-outline" d="M16 2L3 7V16C3 24.5 8.5 32 16 34C23.5 32 29 24.5 29 16V7L16 2Z" 
+                                  fill="url(#shield-fill)" stroke="url(#shield-border)" stroke-width="1.8"/>
+                            <path class="shield-circuit" d="M16 6V12M11 10.5L16 12.5L21 10.5" stroke="#06b6d4" stroke-width="1.2" stroke-linecap="round" opacity="0.75"/>
+                            <rect class="lock-body" x="10.5" y="16.5" width="11" height="9.5" rx="2" fill="url(#lock-grad)"/>
+                            <path class="lock-shackle" d="M13 16.5V13C13 11.3 14.3 10 16 10C17.7 10 19 11.3 19 13V16.5" 
+                                  stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+                            <circle class="lock-core" cx="16" cy="21" r="1.3" fill="#0b0f19"/>
+                            <defs>
+                                <linearGradient id="shield-fill" x1="16" y1="2" x2="16" y2="34" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#1e293b"/>
+                                    <stop offset="100%" stop-color="#0b1120"/>
+                                </linearGradient>
+                                <linearGradient id="shield-border" x1="3" y1="2" x2="29" y2="34" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#10b981"/>
+                                    <stop offset="50%" stop-color="#06b6d4"/>
+                                    <stop offset="100%" stop-color="#3b82f6"/>
+                                </linearGradient>
+                                <linearGradient id="lock-grad" x1="10.5" y1="16.5" x2="21.5" y2="26" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#10b981"/>
+                                    <stop offset="100%" stop-color="#059669"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
                 <div class="logo-text">
-                    <h1>SecureDocShare</h1>
-                    <p class="subtitle">Mã Hóa & Khóa File Cấp Quân Sự (Offline 100%)</p>
+                    <div class="brand-title-row">
+                        <h1>KryptoDoc</h1>
+                        <span class="vault-version-tag">PRO v2.0</span>
+                    </div>
+                    <p class="subtitle">Két Khóa & Mã Hóa Cấp Quân Sự (Offline 100%)</p>
                 </div>
             </div>
             <div class="header-badges">
@@ -191,7 +230,7 @@
         </div>
 
         <footer class="footer">
-            <p>SecureDocShare Mobile • Bản Quyền ANH'S TEAM • Mã Hóa Offline 100%</p>
+            <p>KryptoDoc Enterprise Vault • Bản Quyền ANH'S TEAM • Mã Hóa Offline 100%</p>
         </footer>
     </div>
 
