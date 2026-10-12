@@ -64,20 +64,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.0.0
-          name: "KryptoDoc v2.0.0 - Military-Grade Document Vault (Android APK)"
+          tag_name: v2.1.0
+          name: "KryptoDoc v2.1.0 - Military Password Entropy & Rich Vault (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.0.0 (Android APK - Military-Grade Document Vault)
-            - **Đổi tên thương hiệu thành KryptoDoc**: Tên gọi ngắn gọn, định vị đẳng cấp két bảo mật tài liệu doanh nghiệp cấp quân sự (Military-Grade Vault).
-            - **Biểu tượng Cyber Shield Động Tương Tác (Interactive Animated Logo)**:
-              + Vòng radar quét đa tầng xoay tròn mượt mà (Radar Orbital Ring).
-              + Lõi khiên số phát sáng hào quang Cyber Neon (Breathing Ambient Aura).
-              + Ổ khóa thông minh phản ứng theo ngữ cảnh: Xanh Emerald khi ở chế độ Khóa, Vàng Hổ Phách kiêm bật càng khóa khi ở chế độ Mở Khóa, và tăng tốc xoay siêu tốc khi đang xử lý tệp.
-              + Hiệu ứng phản hồi chạm nảy (Spring Haptic Touch).
-            - **Giao Diện Nền Tối Hiện Đại Obsidian Dark**: Nền `#0b0f19` kết hợp thẻ `#131b2e` siêu sang trọng, chống mỏi mắt và tiết kiệm pin OLED.
-            - **Bảo Vệ Đúp Chống Bấm Nhầm Lưu Tệp**: Hộp trạng thái `✅ ĐÃ TỰ ĐỘNG LƯU VÀO MÁY`, nút chính `🚀 GỬI QUA ZALO / CHIA SẺ TỆP`.
-            - **Mã Hóa Microsoft Office Native 100% (ECMA-376 Standard Encryption)**: Khóa file Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`) chuẩn gốc Microsoft Office, mở trực tiếp trên điện thoại bằng Microsoft Word/Excel hoặc WPS Office.
-            - **Mã Hóa Adobe PDF Native (ISO 32000)**: Tương thích 100% trình đọc PDF toàn cầu.
+            ## Ứng dụng Di Động KryptoDoc v2.1.0 (Giai Đoạn 2: Trải Nghiệm & Đột Phá Tính Năng)
+            - **Thước Đo Độ Mạnh Mật Khẩu (Password Entropy Meter)**: Phân tích thời gian thực độ an toàn mật khẩu theo 4 cấp độ trực quan: Yếu, Trung Bình, Mạnh, và Chuẩn Cấp Quân Sự 256-bit 🛡️.
+            - **Bộ Sinh Mật Khẩu Quân Sự 1-Chạm (Military Password Generator)**: Tự động sinh mật khẩu ngẫu nhiên 16 ký tự mã hóa cao cấp (bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt) kết hợp sao chép tự động vào bộ nhớ tạm.
+            - **Thẻ Xem Trước Tệp Chi Tiết & Nhận Diện Giao Thức (Rich File Preview Cards)**:
+              + Phân loại biểu tượng chuyên nghiệp theo từng định dạng: Word (`DOC`), Excel (`XLS`), PowerPoint (`PPT`), PDF (`PDF`).
+              + Hiển thị dung lượng định dạng chuẩn (`KB`, `MB`).
+              + Tự động gán nhãn giao thức bảo mật tương ứng: `[MS-OFFCRYPTO 256-bit]` cho Office và `[Adobe ISO 32000]` cho PDF.
+            - **Nhật Ký Phiên Làm Việc Cục Bộ (Zero-Knowledge Session History)**: Quản lý lịch sử các tệp đã mã hóa / mở khóa trong phiên ngay tại thiết bị, bảo mật 100% offline, có nút xóa nhanh một chạm.
+            - **Nút Sao Chép Mật Khẩu Tại Kết Quả**: Giúp người dùng sao chép nhanh mật khẩu đã đặt để gửi kèm qua Zalo / email cùng file mã hóa.
+            - **Biểu tượng Cyber Shield Động Tương Tác**: Xoay radar orbital ring, phát quang neon, nảy haptic 3D.
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` (hoặc `SecureDocShare.apk`) bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk

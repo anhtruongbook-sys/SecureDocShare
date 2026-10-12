@@ -922,3 +922,282 @@ body {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* ============================================================
+   PHASE 2: PASSWORD ENTROPY METER & GENERATOR
+   ============================================================ */
+.btn-military-gen {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15));
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #10b981;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-military-gen:hover, .btn-military-gen:active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 182, 212, 0.3));
+    border-color: #10b981;
+    color: #34d399;
+}
+
+.password-entropy-container {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.entropy-bar-track {
+    height: 4px;
+    background: var(--bg-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+}
+
+.entropy-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+}
+
+.entropy-bar-fill.meter-none { width: 0%; background: transparent; }
+.entropy-bar-fill.meter-weak { width: 25%; background: #ef4444; }
+.entropy-bar-fill.meter-medium { width: 60%; background: #f59e0b; }
+.entropy-bar-fill.meter-strong { width: 85%; background: #3b82f6; }
+.entropy-bar-fill.meter-military { 
+    width: 100%; 
+    background: linear-gradient(90deg, #10b981, #06b6d4);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.entropy-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+}
+
+.entropy-label {
+    color: var(--text-muted);
+}
+
+.entropy-badge {
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+.entropy-badge.meter-none { color: var(--text-muted); }
+.entropy-badge.meter-weak { color: #ef4444; }
+.entropy-badge.meter-medium { color: #f59e0b; }
+.entropy-badge.meter-strong { color: #3b82f6; }
+.entropy-badge.meter-military { color: #10b981; font-weight: 700; text-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+
+/* ============================================================
+   PHASE 2: RICH FILE PREVIEW CARDS
+   ============================================================ */
+.file-card-rich {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 9px 11px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s ease, transform 0.15s ease;
+}
+.file-card-rich:hover {
+    border-color: var(--border-hover);
+}
+.file-meta-col {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    overflow: hidden;
+    flex: 1;
+}
+.file-type-icon-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11.5px;
+    font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.file-badge-word { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
+.file-badge-excel { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
+.file-badge-powerpoint { background: #7c2d12; color: #fdba74; border: 1px solid #f97316; }
+.file-badge-pdf { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
+.file-badge-generic { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
+
+.file-info-group {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    gap: 2px;
+}
+.file-title-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-title);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.file-subdetail-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    color: var(--text-muted);
+}
+.file-protocol-tag {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--primary);
+    white-space: nowrap;
+}
+
+/* ============================================================
+   PHASE 2: SESSION HISTORY CARD
+   ============================================================ */
+.history-card {
+    margin-top: 14px;
+    padding: 0;
+    overflow: hidden;
+}
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    background: var(--bg-subtle);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+.history-header:hover {
+    background: var(--border-hover);
+}
+.history-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-title);
+}
+.history-count-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid var(--border-active);
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+.history-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-history-clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.btn-history-clear:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+.history-toggle-arrow {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+.history-body {
+    padding: 10px 14px 14px;
+    border-top: 1px solid var(--border);
+}
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    padding: 6px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.history-item-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+.history-item-name {
+    color: var(--text-title);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 170px;
+}
+.history-item-time {
+    color: var(--text-subtle);
+    font-size: 10px;
+}
+.history-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    padding: 10px 0;
+    margin: 0;
+}
+
+/* Krypto Toast */
+.krypto-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(50px);
+    background: rgba(19, 27, 46, 0.95);
+    border: 1px solid var(--primary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    color: var(--text-title);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    backdrop-filter: blur(8px);
+}
+.krypto-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}

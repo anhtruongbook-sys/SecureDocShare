@@ -38,7 +38,10 @@ function toggleTheme() {
     } catch (_) {}
 }
 
-document.addEventListener('DOMContentLoaded', initTheme);
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    renderSessionHistory();
+});
 initTheme();
 
 let selectedLockFiles = [];
@@ -126,6 +129,60 @@ function handleFilesSelected(files, context) {
     }
 }
 
+function getFileExtension(filename) {
+    if (!filename) return '';
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts.pop().toLowerCase() : '';
+}
+
+function getFileMetaBadge(filename) {
+    const ext = getFileExtension(filename);
+    if (ext === 'docx' || ext === 'doc') {
+        return {
+            badgeClass: 'file-badge-word',
+            iconText: 'DOC',
+            label: 'Văn bản Word',
+            protocol: 'MS-OFFCRYPTO 256-bit'
+        };
+    } else if (ext === 'xlsx' || ext === 'xls') {
+        return {
+            badgeClass: 'file-badge-excel',
+            iconText: 'XLS',
+            label: 'Bảng tính Excel',
+            protocol: 'MS-OFFCRYPTO 256-bit'
+        };
+    } else if (ext === 'pptx' || ext === 'ppt') {
+        return {
+            badgeClass: 'file-badge-powerpoint',
+            iconText: 'PPT',
+            label: 'Bản chiếu PowerPoint',
+            protocol: 'MS-OFFCRYPTO 256-bit'
+        };
+    } else if (ext === 'pdf') {
+        return {
+            badgeClass: 'file-badge-pdf',
+            iconText: 'PDF',
+            label: 'Tài liệu Adobe PDF',
+            protocol: 'Adobe ISO 32000'
+        };
+    } else {
+        return {
+            badgeClass: 'file-badge-generic',
+            iconText: (ext || 'FILE').toUpperCase().substring(0, 4),
+            label: 'Tệp tin số',
+            protocol: 'KryptoDoc Vault AES'
+        };
+    }
+}
+
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 2) + ' ' + sizes[i];
+}
+
 function renderFileListLock() {
     const container = document.getElementById('file-list-lock');
     if (selectedLockFiles.length === 0) {
@@ -134,12 +191,25 @@ function renderFileListLock() {
         return;
     }
     container.style.display = 'flex';
-    container.innerHTML = selectedLockFiles.map((file, idx) => `
-        <div class="file-item">
-            <span class="file-name">${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
-            <button type="button" class="btn-remove-file" onclick="removeLockFile(${idx})">✕</button>
-        </div>
-    `).join('');
+    container.innerHTML = selectedLockFiles.map((file, idx) => {
+        const meta = getFileMetaBadge(file.name);
+        return `
+            <div class="file-card-rich">
+                <div class="file-meta-col">
+                    <div class="file-type-icon-badge ${meta.badgeClass}">${meta.iconText}</div>
+                    <div class="file-info-group">
+                        <span class="file-title-text" title="${file.name}">${file.name}</span>
+                        <div class="file-subdetail-row">
+                            <span>${formatBytes(file.size)}</span>
+                            <span>•</span>
+                            <span class="file-protocol-tag">${meta.protocol}</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-remove-file" onclick="removeLockFile(${idx})" title="Bỏ chọn tệp">✕</button>
+            </div>
+        `;
+    }).join('');
 }
 
 function removeLockFile(idx) {
@@ -151,25 +221,227 @@ function renderFileListUnlock() {
     const container = document.getElementById('file-list-unlock');
     if (!selectedUnlockFile) {
         container.style.display = 'none';
+        container.innerHTML = '';
         return;
     }
     container.style.display = 'flex';
+    const meta = getFileMetaBadge(selectedUnlockFile.name);
     container.innerHTML = `
-        <div class="file-item">
-            <span class="file-name">${selectedUnlockFile.name} (${(selectedUnlockFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
-            <button type="button" class="btn-remove-file" onclick="selectedUnlockFile=null; renderFileListUnlock();">✕</button>
+        <div class="file-card-rich">
+            <div class="file-meta-col">
+                <div class="file-type-icon-badge ${meta.badgeClass}">${meta.iconText}</div>
+                <div class="file-info-group">
+                    <span class="file-title-text" title="${selectedUnlockFile.name}">${selectedUnlockFile.name}</span>
+                    <div class="file-subdetail-row">
+                        <span>${formatBytes(selectedUnlockFile.size)}</span>
+                        <span>•</span>
+                        <span class="file-protocol-tag">${meta.protocol}</span>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn-remove-file" onclick="selectedUnlockFile=null; renderFileListUnlock();" title="Bỏ chọn tệp">✕</button>
         </div>
     `;
+}
+
+// -------------------------------------------------------------
+// THƯỚC ĐO ĐỘ MẠNH MẬT KHẨU & SINH MẬT KHẨU QUÂN SỰ
+// -------------------------------------------------------------
+function evaluatePasswordStrength(pwd) {
+    if (!pwd || pwd.length === 0) {
+        return { text: 'Chưa nhập mật khẩu', class: 'meter-none' };
+    }
+    let score = 0;
+    if (pwd.length >= 6) score += 1;
+    if (pwd.length >= 8) score += 1;
+    if (pwd.length >= 12) score += 1;
+    if (/[A-Z]/.test(pwd)) score += 1;
+    if (/[0-9]/.test(pwd)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+
+    if (pwd.length < 6) {
+        return { text: 'Quá ngắn (< 6 ký tự)', class: 'meter-weak' };
+    }
+    if (score <= 2) {
+        return { text: 'Yếu • Nên thêm chữ & số', class: 'meter-weak' };
+    } else if (score <= 4) {
+        return { text: 'Trung bình • Khá an toàn', class: 'meter-medium' };
+    } else if (score === 5) {
+        return { text: 'Mạnh • Bảo vệ tối ưu', class: 'meter-strong' };
+    } else {
+        return { text: 'Chuẩn Cấp Quân Sự 256-bit 🛡️', class: 'meter-military' };
+    }
+}
+
+function updatePasswordStrengthUI() {
+    const input = document.getElementById('lock-password');
+    const fill = document.getElementById('entropy-bar-fill');
+    const badge = document.getElementById('entropy-badge');
+    if (!input || !fill || !badge) return;
+
+    const result = evaluatePasswordStrength(input.value);
+    fill.className = 'entropy-bar-fill ' + result.class;
+    badge.className = 'entropy-badge ' + result.class;
+    badge.textContent = result.text;
+}
+
+function generateMilitaryPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()_+';
+    const array = new Uint8Array(16);
+    window.crypto.getRandomValues(array);
+    let pwd = '';
+    for (let i = 0; i < 16; i++) {
+        pwd += chars[array[i] % chars.length];
+    }
+    const input = document.getElementById('lock-password');
+    if (input) {
+        input.value = pwd;
+        updatePasswordStrengthUI();
+        copyToClipboard(pwd, 'Đã tạo mã Quân Sự (16 ký tự) và sao chép vào bộ nhớ tạm! 📋');
+    }
+}
+
+function copyPasswordFromInput(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input || !input.value) {
+        showToast('Vui lòng nhập mật khẩu trước khi sao chép! ⚠️');
+        return;
+    }
+    copyToClipboard(input.value, 'Đã sao chép mật khẩu vào bộ nhớ tạm! 📋');
+}
+
+function togglePasswordVisibility(inputId, btnEl) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        btnEl.textContent = '🔒 Ẩn';
+    } else {
+        input.type = 'password';
+        btnEl.textContent = '👁️ Xem';
+    }
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('krypto-toast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(window.__kryptoToastTimeout);
+    window.__kryptoToastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2800);
+}
+
+function copyToClipboard(text, successToast) {
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(successToast || 'Đã sao chép vào bộ nhớ tạm! 📋');
+        }).catch(() => fallbackCopy(text, successToast));
+    } else {
+        fallbackCopy(text, successToast);
+    }
+}
+
+function fallbackCopy(text, successToast) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.position = 'fixed';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    el.select();
+    try {
+        document.execCommand('copy');
+        showToast(successToast || 'Đã sao chép vào bộ nhớ tạm! 📋');
+    } catch(e) {}
+    document.body.removeChild(el);
+}
+
+// -------------------------------------------------------------
+// QUẢN TRỊ NHẬT KÝ PHIÊN LÀM VIỆC (OFFLINE ZERO-KNOWLEDGE)
+// -------------------------------------------------------------
+function toggleHistoryDrawer() {
+    const body = document.getElementById('history-body');
+    const arrow = document.getElementById('history-arrow');
+    if (!body) return;
+    if (body.style.display === 'none' || body.style.display === '') {
+        body.style.display = 'block';
+        if (arrow) arrow.textContent = '▴';
+    } else {
+        body.style.display = 'none';
+        if (arrow) arrow.textContent = '▾';
+    }
+}
+
+function getSessionHistory() {
+    try {
+        const raw = sessionStorage.getItem('krypto_session_history');
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function addSessionHistory(filename, action, mode) {
+    try {
+        const history = getSessionHistory();
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        history.unshift({
+            name: filename,
+            action: action, // 'lock' | 'unlock'
+            mode: mode || 'AES-256',
+            time: timeStr
+        });
+        if (history.length > 20) history.pop();
+        sessionStorage.setItem('krypto_session_history', JSON.stringify(history));
+        renderSessionHistory();
+    } catch (e) {}
+}
+
+function renderSessionHistory() {
+    const listEl = document.getElementById('history-list');
+    const countBadge = document.getElementById('history-count');
+    if (!listEl) return;
+    const history = getSessionHistory();
+    if (countBadge) countBadge.textContent = history.length;
+
+    if (history.length === 0) {
+        listEl.innerHTML = '<p class="history-empty">Chưa có tệp nào được xử lý trong phiên làm việc này.</p>';
+        return;
+    }
+
+    listEl.innerHTML = history.map(item => `
+        <div class="history-item">
+            <div class="history-item-left">
+                <span>${item.action === 'lock' ? '🔒' : '🔓'}</span>
+                <span class="history-item-name" title="${item.name}">${item.name}</span>
+                <span class="file-protocol-tag">${item.mode}</span>
+            </div>
+            <span class="history-item-time">${item.time}</span>
+        </div>
+    `).join('');
+}
+
+function clearSessionHistory() {
+    try {
+        sessionStorage.removeItem('krypto_session_history');
+        renderSessionHistory();
+        showToast('Đã xóa sạch nhật ký phiên làm việc! 🧹');
+    } catch (e) {}
 }
 
 function generateShortMemorablePassword() {
     const list = ["Vip88", "Vip@2026", "AnTam99", "BaoMat88", "Pccc@68", "KimMoc79", "123456", "888888"];
     const pwd = list[Math.floor(Math.random() * list.length)];
     document.getElementById('lock-password').value = pwd;
+    updatePasswordStrengthUI();
 }
 
 function applyPresetPassword(pwd) {
     document.getElementById('lock-password').value = pwd;
+    updatePasswordStrengthUI();
 }
 
 // -------------------------------------------------------------
@@ -553,14 +825,19 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                     </svg>
                     <span>GỬI QUA ZALO / CHIA SẺ TỆP</span>
                 </button>
-                <button type="button" class="btn-result-extra-copy" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>Lưu thêm 1 bản sao khác</span>
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Lưu thêm bản sao</span>
+                    </button>
+                    <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="copyCurrentPassword()">
+                        <span>📋 Sao chép Pass</span>
+                    </button>
+                </div>
             </div>
             <p class="result-note">${noteText}</p>
         </div>
@@ -568,6 +845,11 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
 
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth' });
+
+    try {
+        const modeTag = subDesc.includes('PDF') ? 'Adobe PDF' : (subDesc.includes('Word') ? 'Word Native' : (subDesc.includes('Excel') ? 'Excel Native' : (subDesc.includes('PowerPoint') ? 'PPT Native' : 'AES-256')));
+        addSessionHistory(outFileName, 'lock', modeTag);
+    } catch (e) {}
 
     const btn = document.getElementById('btn-lock-submit');
     btn.disabled = false;
@@ -800,6 +1082,10 @@ window.onNativeUnlocked = function(originalName, sizeMb, savedPath, tempPath) {
     `;
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth' });
+
+    try {
+        addSessionHistory(originalName, 'unlock', 'Đã mở khóa');
+    } catch (e) {}
 
     const btn = document.getElementById('btn-unlock-submit');
     btn.disabled = false;
