@@ -1687,3 +1687,185 @@ body {
 .tip-collapsible.open .tip-arrow {
     transform: rotate(180deg);
 }
+
+/* ============================================================ */
+/* CYBER MODAL DIALOG (THAY THẾ HOÀN TOÀN WINDOW.ALERT MẶC ĐỊNH) */
+/* ============================================================ */
+.cyber-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 7, 13, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cyber-dialog-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.cyber-dialog-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-hover);
+    border-radius: 18px;
+    padding: 24px 20px 20px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    position: relative;
+    transform: scale(0.92) translateY(8px);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+.cyber-dialog-overlay.active .cyber-dialog-card {
+    transform: scale(1) translateY(0);
+}
+
+.cyber-dialog-glow {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 130px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+    transition: background 0.3s ease;
+}
+
+.cyber-dialog-card.type-warning .cyber-dialog-glow {
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.28) 0%, transparent 70%);
+}
+
+.cyber-dialog-card.type-error .cyber-dialog-glow {
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.28) 0%, transparent 70%);
+}
+
+.cyber-dialog-card.type-success .cyber-dialog-glow {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.28) 0%, transparent 70%);
+}
+
+.cyber-dialog-icon-container {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    z-index: 1;
+}
+
+.cyber-dialog-card.type-warning .cyber-dialog-icon-container {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.cyber-dialog-card.type-error .cyber-dialog-icon-container {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+.cyber-dialog-card.type-success .cyber-dialog-icon-container {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.cyber-dialog-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-title);
+    letter-spacing: -0.2px;
+}
+
+.cyber-dialog-message {
+    margin: 0 0 20px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.cyber-dialog-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-cyber-dialog-primary {
+    flex: 1;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.btn-cyber-dialog-primary:active {
+    transform: scale(0.97);
+    filter: brightness(0.9);
+}
+
+.btn-cyber-dialog-secondary {
+    flex: 1;
+    padding: 12px 16px;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-cyber-dialog-secondary:active {
+    transform: scale(0.97);
+    filter: brightness(0.9);
+}
+
+.cyber-dialog-card.type-warning .btn-cyber-dialog-primary {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.cyber-dialog-card.type-error .btn-cyber-dialog-primary {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.cyber-dialog-card.type-success .btn-cyber-dialog-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+@keyframes inputAttentionShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
+
+.input-attention-pulse {
+    animation: inputAttentionShake 0.4s ease-in-out;
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+}

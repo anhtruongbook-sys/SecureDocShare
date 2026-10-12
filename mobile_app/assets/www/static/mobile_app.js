@@ -44,6 +44,105 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 initTheme();
 
+// =============================================================
+// CYBER MODAL DIALOG (Thay thế hoàn toàn window.alert mặc định)
+// =============================================================
+let cyberDialogCallback = null;
+let cyberDialogCancelCallback = null;
+
+function showCyberDialog({
+    type = 'warning', // 'warning' | 'error' | 'info' | 'success'
+    icon = null,
+    title = 'Thông Báo',
+    message = '',
+    actionText = 'Đã Hiểu',
+    cancelText = null,
+    onAction = null,
+    onCancel = null
+} = {}) {
+    const overlay = document.getElementById('cyber-dialog-overlay');
+    const card = document.getElementById('cyber-dialog-card');
+    const iconEl = document.getElementById('cyber-dialog-icon');
+    const titleEl = document.getElementById('cyber-dialog-title');
+    const msgEl = document.getElementById('cyber-dialog-message');
+    const btnAction = document.getElementById('cyber-dialog-btn-action');
+    const btnActionText = document.getElementById('cyber-dialog-btn-text');
+    const btnCancel = document.getElementById('cyber-dialog-btn-cancel');
+    const btnCancelText = document.getElementById('cyber-dialog-btn-cancel-text');
+
+    if (!overlay || !card) {
+        console.warn("Cyber dialog overlay not found:", message);
+        return;
+    }
+
+    card.classList.remove('type-warning', 'type-error', 'type-info', 'type-success');
+    card.classList.add('type-' + type);
+
+    const defaultIcons = {
+        warning: '⚠️',
+        error: '❌',
+        info: 'ℹ️',
+        success: '✅'
+    };
+    if (iconEl) iconEl.textContent = icon || defaultIcons[type] || '🔔';
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.textContent = message;
+    if (btnActionText) btnActionText.textContent = actionText;
+
+    cyberDialogCallback = onAction;
+    cyberDialogCancelCallback = onCancel;
+
+    if (btnCancel) {
+        if (cancelText) {
+            btnCancel.style.display = 'inline-block';
+            if (btnCancelText) btnCancelText.textContent = cancelText;
+        } else {
+            btnCancel.style.display = 'none';
+        }
+    }
+
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => {
+        overlay.classList.add('show');
+    });
+}
+
+function closeCyberDialog(triggerAction = false) {
+    const overlay = document.getElementById('cyber-dialog-overlay');
+    if (!overlay) return;
+
+    overlay.classList.remove('show');
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        if (triggerAction && typeof cyberDialogCallback === 'function') {
+            const cb = cyberDialogCallback;
+            cyberDialogCallback = null;
+            cb();
+        } else if (!triggerAction && typeof cyberDialogCancelCallback === 'function') {
+            const cbc = cyberDialogCancelCallback;
+            cyberDialogCancelCallback = null;
+            cbc();
+        }
+    }, 180);
+}
+
+function handleCyberDialogOverlayClick(event) {
+    if (event && event.target && event.target.id === 'cyber-dialog-overlay') {
+        closeCyberDialog(false);
+    }
+}
+
+// Ghi đè toàn cục window.alert để loại bỏ hoàn toàn hộp thoại mặc định Android WebView
+window.alert = function(msg) {
+    showCyberDialog({
+        type: 'warning',
+        title: 'Thông Báo',
+        message: String(msg),
+        actionText: 'Đã Hiểu'
+    });
+};
+
+
 let selectedLockFiles = [];
 let selectedUnlockFile = null;
 let currentProtectionLevel = "open_password";
@@ -882,24 +981,52 @@ function toggleQrCodeModal() {
 
 async function executeMobileLockFiles() {
     if (selectedLockFiles.length === 0) {
-        alert("Vui lòng chọn ít nhất 1 tệp tin cần mã hóa!");
+        showCyberDialog({
+            type: 'warning',
+            title: 'Chưa Chọn Tệp Tin',
+            message: 'Vui lòng chọn ít nhất 1 tài liệu (PDF, Word, Excel, ZIP...) để mã hóa!',
+            actionText: 'Chọn Tệp Ngay',
+            onAction: () => {
+                const fileInput = document.getElementById('lock-files-input');
+                if (fileInput) fileInput.click();
+            }
+        });
         return;
     }
     const pwd = document.getElementById('lock-password').value;
     if (!pwd) {
-        alert("Vui lòng nhập mật khẩu!");
+        showCyberDialog({
+            type: 'warning',
+            title: 'Chưa Nhập Mật Khẩu',
+            message: 'Vui lòng thiết lập mật khẩu bảo vệ trước khi tiến hành mã hóa tệp!',
+            actionText: 'Nhập Mật Khẩu Ngay',
+            onAction: () => {
+                const pwdInput = document.getElementById('lock-password');
+                if (pwdInput) {
+                    pwdInput.focus();
+                    pwdInput.classList.remove('input-attention-pulse');
+                    void pwdInput.offsetWidth;
+                    pwdInput.classList.add('input-attention-pulse');
+                    pwdInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
         return;
     }
 
     const lockedFiles = selectedLockFiles.filter(f => f._isAlreadyLocked);
     if (lockedFiles.length > 0) {
         const first = lockedFiles[0];
-        const confirmSwitch = confirm(
-            `⚠️ CẢNH BÁO TỆP ĐÃ ĐẶT MẬT KHẨU:\n\nTệp "${first.name}" đã được khóa bảo mật trước đó.\n\nKhóa đè lần 2 sẽ làm hỏng cấu trúc tệp hoặc tạo 2 tầng mật khẩu khiến người nhận không mở được.\n\nBạn có muốn chuyển sang Tab MỞ KHÓA ngay bây giờ không?`
-        );
-        if (confirmSwitch) {
-            redirectToUnlockWithSelectedFile();
-        }
+        showCyberDialog({
+            type: 'warning',
+            title: 'Cảnh Báo Tệp Đã Khóa',
+            message: `Tệp "${first.name}" đã được khóa bảo mật trước đó. Khóa đè lần 2 sẽ làm hỏng cấu trúc tệp hoặc tạo 2 tầng mật khẩu. Bạn có muốn chuyển sang Tab MỞ KHÓA ngay bây giờ không?`,
+            actionText: 'Chuyển Sang Mở Khóa',
+            cancelText: 'Ở Lại',
+            onAction: () => {
+                redirectToUnlockWithSelectedFile();
+            }
+        });
         return;
     }
 
@@ -1082,7 +1209,12 @@ async function unlock(){
 
     } catch (e) {
         hideProcessingModal();
-        alert("Lỗi mã hóa: " + e.message);
+        showCyberDialog({
+            type: 'error',
+            title: 'Lỗi Mã Hóa',
+            message: e.message || 'Đã xảy ra sự cố trong quá trình mã hóa tài liệu.',
+            actionText: 'Đã Hiểu'
+        });
     } finally {
         if (!window.FlutterBridge) {
             btn.disabled = false;
@@ -1383,12 +1515,36 @@ async function shareResult(idx) {
 // -------------------------------------------------------------
 async function executeMobileUnlockFile() {
     if (!selectedUnlockFile) {
-        alert("Vui lòng chọn 1 tệp cần mở khóa!");
+        showCyberDialog({
+            type: 'warning',
+            title: 'Chưa Chọn Tệp Tin',
+            message: 'Vui lòng chọn 1 tệp tin cần mở khóa!',
+            actionText: 'Chọn Tệp Ngay',
+            onAction: () => {
+                const fileInput = document.getElementById('unlock-file-input');
+                if (fileInput) fileInput.click();
+            }
+        });
         return;
     }
     const pwd = document.getElementById('unlock-password').value;
     if (!pwd) {
-        alert("Vui lòng nhập mật khẩu mở khóa!");
+        showCyberDialog({
+            type: 'warning',
+            title: 'Chưa Nhập Mật Khẩu',
+            message: 'Vui lòng nhập mật khẩu để mở khóa và giải mã tệp tin!',
+            actionText: 'Nhập Mật Khẩu Ngay',
+            onAction: () => {
+                const pwdInput = document.getElementById('unlock-password');
+                if (pwdInput) {
+                    pwdInput.focus();
+                    pwdInput.classList.remove('input-attention-pulse');
+                    void pwdInput.offsetWidth;
+                    pwdInput.classList.add('input-attention-pulse');
+                    pwdInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
         return;
     }
 
@@ -1451,7 +1607,19 @@ async function executeMobileUnlockFile() {
         card.scrollIntoView({ behavior: 'smooth' });
 
     } catch (e) {
-        alert("Mở khóa thất bại: " + (e.message || "Mật khẩu không đúng!"));
+        showCyberDialog({
+            type: 'error',
+            title: 'Mở Khóa Thất Bại',
+            message: e.message || 'Mật khẩu không chính xác hoặc tệp tin bị lỗi cấu trúc!',
+            actionText: 'Thử Lại',
+            onAction: () => {
+                const pwdInput = document.getElementById('unlock-password');
+                if (pwdInput) {
+                    pwdInput.focus();
+                    pwdInput.select();
+                }
+            }
+        });
     } finally {
         btn.disabled = false;
         btn.innerText = "MỞ KHÓA & TRÍCH XUẤT";
@@ -1514,7 +1682,19 @@ window.onNativeUnlocked = function(originalName, sizeMb, savedPath, tempPath) {
 };
 
 window.onNativeUnlockError = function(errMsg) {
-    alert("Mở khóa thất bại: " + (errMsg || "Mật khẩu không chính xác!"));
+    showCyberDialog({
+        type: 'error',
+        title: 'Mở Khóa Thất Bại',
+        message: errMsg || 'Mật khẩu không chính xác hoặc tệp tin đã bị thay đổi!',
+        actionText: 'Thử Lại',
+        onAction: () => {
+            const pwdInput = document.getElementById('unlock-password');
+            if (pwdInput) {
+                pwdInput.focus();
+                pwdInput.select();
+            }
+        }
+    });
     const btn = document.getElementById('btn-unlock-submit');
     btn.disabled = false;
     btn.innerText = "MỞ KHÓA & TRÍCH XUẤT";

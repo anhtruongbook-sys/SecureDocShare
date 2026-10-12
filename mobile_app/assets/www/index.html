@@ -328,6 +328,26 @@
     <!-- Krypto Toast Notification -->
     <div id="krypto-toast" class="krypto-toast"></div>
 
+    <!-- Cyber Modal Dialog (Thay thế hoàn toàn window.alert mặc định) -->
+    <div id="cyber-dialog-overlay" class="cyber-dialog-overlay" style="display: none;" onclick="handleCyberDialogOverlayClick(event)">
+        <div class="cyber-dialog-card" id="cyber-dialog-card">
+            <div class="cyber-dialog-glow" id="cyber-dialog-glow"></div>
+            <div class="cyber-dialog-icon-container" id="cyber-dialog-icon-container">
+                <span class="cyber-dialog-icon" id="cyber-dialog-icon">⚠️</span>
+            </div>
+            <h3 class="cyber-dialog-title" id="cyber-dialog-title">Yêu Cầu Mật Khẩu</h3>
+            <p class="cyber-dialog-message" id="cyber-dialog-message">Vui lòng nhập mật khẩu để bảo vệ tệp tin!</p>
+            <div class="cyber-dialog-actions" id="cyber-dialog-actions">
+                <button type="button" class="btn-cyber-dialog-secondary" id="cyber-dialog-btn-cancel" style="display: none;" onclick="closeCyberDialog(false)">
+                    <span id="cyber-dialog-btn-cancel-text">Bỏ Qua</span>
+                </button>
+                <button type="button" class="btn-cyber-dialog-primary" id="cyber-dialog-btn-action" onclick="closeCyberDialog(true)">
+                    <span id="cyber-dialog-btn-text">Nhập Mật Khẩu Ngay</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal trạng thái xử lý file lớn -->
     <div id="processing-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; padding: 20px; text-align: center;">
         <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 22px 18px; max-width: 320px; width: 100%; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; align-items: center;">
