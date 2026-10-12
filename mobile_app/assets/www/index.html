@@ -2,31 +2,22 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KryptoDoc • Military-Grade Document Vault</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KryptoDoc Mobile - Két Khóa & Mã Hóa Cấp Quân Sự</title>
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body class="dark-mode">
-    <div class="app-container">
-        <!-- Header -->
+    <div class="container">
+        <!-- Compact Modern Header -->
         <header class="header">
-            <div class="logo-area">
-                <div class="krypto-logo-badge state-locked" id="krypto-logo-badge" onclick="triggerLogoHaptic()" title="KryptoDoc Security Engine">
+            <div class="logo-container">
+                <div class="krypto-logo-badge state-locked" id="krypto-logo-badge" onclick="triggerLogoHaptic()">
                     <div class="logo-aura-glow"></div>
-                    <svg class="logo-orbit-ring" viewBox="0 0 48 48" fill="none">
-                        <circle cx="24" cy="24" r="21.5" stroke="url(#orbit-grad)" stroke-width="2" stroke-dasharray="28 16" stroke-linecap="round"/>
-                        <defs>
-                            <linearGradient id="orbit-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#10b981"/>
-                                <stop offset="50%" stop-color="#06b6d4"/>
-                                <stop offset="100%" stop-color="#3b82f6"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="logo-shield-container">
-                        <svg class="logo-shield-svg" viewBox="0 0 32 36" fill="none">
+                    <div class="logo-orbit-ring"></div>
+                    <div class="logo-cyber-shield">
+                        <svg viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path class="shield-outline" d="M16 2L3 7V16C3 24.5 8.5 32 16 34C23.5 32 29 24.5 29 16V7L16 2Z" 
-                                  fill="url(#shield-fill)" stroke="url(#shield-border)" stroke-width="1.8"/>
+                                  stroke="url(#shield-border)" stroke-width="2.2" stroke-linejoin="round" fill="url(#shield-fill)"/>
                             <path class="shield-circuit" d="M16 6V12M11 10.5L16 12.5L21 10.5" stroke="#06b6d4" stroke-width="1.2" stroke-linecap="round" opacity="0.75"/>
                             <rect class="lock-body" x="10.5" y="16.5" width="11" height="9.5" rx="2" fill="url(#lock-grad)"/>
                             <path class="lock-shackle" d="M13 16.5V13C13 11.3 14.3 10 16 10C17.7 10 19 11.3 19 13V16.5" 
@@ -53,9 +44,9 @@
                 <div class="logo-text">
                     <div class="brand-title-row">
                         <h1>KryptoDoc</h1>
-                        <span class="vault-version-tag">PRO v2.0</span>
+                        <span class="vault-version-tag">PRO v2.3</span>
                     </div>
-                    <p class="subtitle">Két Khóa & Mã Hóa Cấp Quân Sự (Offline 100%)</p>
+                    <p class="subtitle">Két Khóa & Mã Hóa Offline 100%</p>
                 </div>
             </div>
             <div class="header-badges">
@@ -67,17 +58,17 @@
             </div>
         </header>
 
-        <!-- Navigation Tabs -->
+        <!-- Navigation Tabs: Segmented Control -->
         <div class="tab-nav">
             <button type="button" class="tab-btn active" onclick="switchTab('lock')">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
                 <span>MÃ HÓA & KHÓA</span>
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('unlock')">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                 </svg>
@@ -87,166 +78,152 @@
 
         <!-- ==================== TAB 1: LOCK ==================== -->
         <div id="tab-lock" class="tab-content active">
-            <!-- Dropzone / File Picker -->
-            <div class="card dropzone-card" id="dropzone-lock" onclick="triggerPickFiles('lock')">
+            <!-- Sleek Horizontal Dropzone Card -->
+            <div class="dropzone-card" id="dropzone-lock" onclick="triggerPickFiles('lock')">
                 <input type="file" id="file-input-lock" multiple accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'lock')">
                 <div class="dropzone-inner">
                     <div class="upload-icon">
-                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                             <polyline points="17 8 12 3 7 8"/>
                             <line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
                     </div>
-                    <h3>Chạm để chọn tệp tin cần khóa</h3>
-                    <p>Hỗ trợ AutoCAD (.DWG), PDF, Word, Excel, PowerPoint, ZIP, RAR...</p>
-                    <button type="button" class="btn-choose-file" onclick="event.stopPropagation(); triggerPickFiles('lock')">
-                        📁 Chọn Tệp Từ Điện Thoại
-                    </button>
+                    <div class="dropzone-text-group">
+                        <h3>Chạm để chọn tệp tin cần khóa</h3>
+                        <p>AutoCAD (.DWG), PDF, Word, Excel, PowerPoint, ZIP...</p>
+                    </div>
                 </div>
             </div>
 
             <div id="file-list-lock" class="file-list" style="display: none;"></div>
 
-            <!-- Settings Card -->
+            <!-- Settings Card: Ultra-compact, Zero Wasted Space -->
             <div class="card settings-card">
-                <h3 class="card-title">Cấu Hình Bảo Mật</h3>
-
                 <!-- Mẫu cấu hình nhanh 1-chạm -->
-                <div class="form-group" style="margin-bottom: 2px;">
-                    <label>MẪU CẤU HÌNH NHANH (1-CHẠM):</label>
-                    <div class="template-chips-row">
-                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('enterprise')">
-                            🏢 Hợp Đồng
-                        </button>
-                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('cad')">
-                            📐 Bản Vẽ CAD .DWG
-                        </button>
-                        <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('quotation')">
-                            💰 Báo Giá Dự Toán
-                        </button>
-                    </div>
+                <div class="template-chips-row">
+                    <span class="chips-label">MẪU:</span>
+                    <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('enterprise')">
+                        🏢 Hợp Đồng
+                    </button>
+                    <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('cad')">
+                        📐 Bản Vẽ CAD
+                    </button>
+                    <button type="button" class="btn-template-chip" onclick="applySecurityTemplate('quotation')">
+                        💰 Báo Giá
+                    </button>
                 </div>
 
-                <!-- Phương thức đóng gói & xuất tệp -->
-                <div class="form-group" style="margin-top: 4px; margin-bottom: 6px;">
-                    <label>PHƯƠNG THỨC XUẤT TỆP BẢO MẬT:</label>
-                    <div class="packaging-mode-row">
-                        <label class="packaging-card active" id="pkg-card-native" onclick="selectPackagingMode('native', this)">
-                            <input type="radio" name="packaging-mode" value="native" checked style="display: none;">
-                            <div class="pkg-header">
-                                <span class="pkg-icon">🔒</span>
-                                <span class="pkg-title">Định Dạng Gốc</span>
-                            </div>
-                            <p class="pkg-desc">Word/Excel/PDF giữ nguyên đuôi file, mở trên Office & PDF Reader.</p>
-                        </label>
-                        <label class="packaging-card" id="pkg-card-zip" onclick="selectPackagingMode('zip', this)">
-                            <input type="radio" name="packaging-mode" value="zip" style="display: none;">
-                            <div class="pkg-header">
-                                <span class="pkg-icon">📦</span>
-                                <span class="pkg-title">Nén .ZIP Có Pass</span>
-                                <span class="pkg-tag">AutoCAD</span>
-                            </div>
-                            <p class="pkg-desc">Khóa mật khẩu AES-256. Mở bằng WinRAR, 7-Zip, ZArchiver.</p>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- 2 Chức năng chính -->
-                <div class="form-group">
-                    <label>BƯỚC 1: LỰA CHỌN CẤP ĐỘ PHÂN QUYỀN:</label>
-                    <div class="level-options">
-                        <label class="level-card active" id="level-card-open" onclick="selectProtectionLevel('open_password', this)">
+                <!-- Phân quyền mở tệp: Segmented Control -->
+                <div class="form-group-compact">
+                    <label class="compact-label">CẤP ĐỘ PHÂN QUYỀN:</label>
+                    <div class="segmented-control">
+                        <label class="level-card segment-card active" id="level-card-open" onclick="selectProtectionLevel('open_password', this)">
                             <input type="radio" name="protection-level" value="open_password" checked style="display: none;">
-                            <div class="level-icon">🔒</div>
-                            <div class="level-content">
-                                <div class="level-badge badge-strict">BẢO MẬT TUYỆT ĐỐI</div>
-                                <h4>CHỈ NHẬP ĐÚNG PASS MỚI MỞ ĐƯỢC</h4>
-                                <p>Tệp được khóa kín. Bắt buộc nhập mật khẩu mới xem được.</p>
-                            </div>
+                            <span class="segment-icon">🔒</span>
+                            <span class="segment-text">Khóa Mật Khẩu</span>
                         </label>
-
-                        <label class="level-card" id="level-card-view" onclick="selectProtectionLevel('view_only_restricted', this)">
+                        <label class="level-card segment-card" id="level-card-view" onclick="selectProtectionLevel('view_only_restricted', this)">
                             <input type="radio" name="protection-level" value="view_only_restricted" style="display: none;">
-                            <div class="level-icon">👁️🚫</div>
-                            <div class="level-content">
-                                <div class="level-badge badge-viewonly">BẢO VỆ BẢN QUYỀN</div>
-                                <h4>MỞ XEM TỰ DO, CẤM SỬA / IN / COPY</h4>
-                                <p>Đối tác mở xem trực tiếp không cần pass, nhưng cấm sửa và cấm copy chữ!</p>
-                            </div>
+                            <span class="segment-icon">👁️</span>
+                            <span class="segment-text">Chỉ Xem (Cấm Copy)</span>
                         </label>
                     </div>
                 </div>
 
-                <!-- Password Input -->
-                <div class="form-group" style="margin-top: 14px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <label for="lock-password" id="password-label" style="margin-bottom: 0;">BƯỚC 2: MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
-                        <button type="button" class="btn-military-gen" onclick="generateMilitaryPassword()" title="Sinh mật khẩu ngẫu nhiên cấp quân sự 16 ký tự">
-                            🎲 Mã Quân Sự (16 ký tự)
+                <!-- Phương thức đóng gói & xuất tệp: Segmented Control -->
+                <div class="form-group-compact">
+                    <label class="compact-label">ĐỊNH DẠNG XUẤT TỆP:</label>
+                    <div class="segmented-control">
+                        <label class="packaging-card segment-card active" id="pkg-card-native" onclick="selectPackagingMode('native', this)">
+                            <input type="radio" name="packaging-mode" value="native" checked style="display: none;">
+                            <span class="segment-icon">📄</span>
+                            <span class="segment-text">Định Dạng Gốc</span>
+                        </label>
+                        <label class="packaging-card segment-card" id="pkg-card-zip" onclick="selectPackagingMode('zip', this)">
+                            <input type="radio" name="packaging-mode" value="zip" style="display: none;">
+                            <span class="segment-icon">📦</span>
+                            <span class="segment-text">Nén .ZIP Có Pass <span class="pkg-tag">CAD</span></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Unified Password Input Section -->
+                <div class="form-group-compact">
+                    <div class="label-with-action">
+                        <label for="lock-password" id="password-label">MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
+                        <button type="button" class="btn-micro-gen" onclick="generateMilitaryPassword()" title="Sinh mã quân sự 16 ký tự">
+                            ⚡ Mã Quân Sự (16-bit)
                         </button>
                     </div>
-                    <div class="input-with-action">
+                    <div class="input-with-actions-unified">
                         <input type="text" id="lock-password" placeholder="Nhập mật khẩu (ví dụ: Vip88, 123456)..." oninput="updatePasswordStrengthUI()">
-                        <button type="button" class="btn-action" onclick="copyPasswordFromInput('lock-password')" title="Sao chép mật khẩu">📋 Copy</button>
+                        <div class="inline-input-btns">
+                            <button type="button" class="btn-input-tool" onclick="copyPasswordFromInput('lock-password')" title="Sao chép mật khẩu">📋</button>
+                        </div>
                     </div>
 
-                    <!-- Password Entropy & Strength Meter -->
+                    <!-- Micro Entropy Bar -->
                     <div class="password-entropy-container" id="password-entropy-container">
                         <div class="entropy-bar-track">
                             <div class="entropy-bar-fill meter-none" id="entropy-bar-fill"></div>
                         </div>
                         <div class="entropy-status-row">
                             <span class="entropy-label">Độ an toàn:</span>
-                            <span class="entropy-badge meter-none" id="entropy-badge">Chưa nhập mật khẩu</span>
+                            <span class="entropy-badge meter-none" id="entropy-badge">Chưa nhập</span>
                         </div>
                     </div>
 
-                    <div class="quick-pass-suggestions">
-                        <span class="sugg-title">Gợi ý nhanh:</span>
-                        <button type="button" class="btn-chip" onclick="applyPresetPassword('123456')">123456</button>
-                        <button type="button" class="btn-chip" onclick="applyPresetPassword('888888')">888888</button>
-                        <button type="button" class="btn-chip" onclick="applyPresetPassword('Vip@2026')">Vip@2026</button>
-                        <button type="button" class="btn-chip" onclick="applyPresetPassword('AnTam@99')">AnTam@99</button>
+                    <!-- Quick Suggestions Compact Row -->
+                    <div class="quick-pass-suggestions-compact">
+                        <span class="sugg-title">Gợi ý:</span>
+                        <button type="button" class="btn-chip-micro" onclick="applyPresetPassword('123456')">123456</button>
+                        <button type="button" class="btn-chip-micro" onclick="applyPresetPassword('888888')">888888</button>
+                        <button type="button" class="btn-chip-micro" onclick="applyPresetPassword('Vip@2026')">Vip@2026</button>
+                        <button type="button" class="btn-chip-micro" onclick="applyPresetPassword('AnTam@99')">AnTam@99</button>
                     </div>
-                    <p class="pass-subnote" id="pass-subnote" style="font-size: 11.5px; color: #94a3b8; margin-top: 6px;">
-                        💡 Người nhận nhập mã này để xem tài liệu.
-                    </p>
+                    <p class="pass-subnote" id="pass-subnote" style="display: none; font-size: 11px; margin-top: 4px;"></p>
                 </div>
 
-                <!-- BƯỚC 3: TÙY CHỌN DẤU BẢN QUYỀN MỜ & NÉN -->
-                <div class="card-feature-toggle-box">
-                    <div class="feature-toggle-row" onclick="toggleWatermarkOption()">
-                        <div class="feature-toggle-left">
-                            <input type="checkbox" id="enable-watermark-checkbox" onclick="event.stopPropagation(); toggleWatermarkOption()">
-                            <label for="enable-watermark-checkbox" style="cursor: pointer; margin: 0; font-size: 11.5px; font-weight: 600; color: var(--text-title);">
-                                🏷️ Đóng Dấu Bản Quyền Mờ (Watermark)
+                <!-- Tùy Chọn Nâng Cao: Compact Collapsible Accordion -->
+                <div class="advanced-options-accordion">
+                    <div class="advanced-options-header" onclick="toggleAdvancedOptions()">
+                        <span class="adv-title">⚙️ Tùy Chọn Nâng Cao (Đóng Dấu Mờ, Nén Tệp)</span>
+                        <span class="adv-arrow" id="adv-arrow">▾</span>
+                    </div>
+                    <div class="advanced-options-body" id="adv-body" style="display: none;">
+                        <div class="feature-toggle-row" onclick="toggleWatermarkOption()">
+                            <div class="feature-toggle-left">
+                                <input type="checkbox" id="enable-watermark-checkbox" onclick="event.stopPropagation(); toggleWatermarkOption()">
+                                <label for="enable-watermark-checkbox" style="cursor: pointer; margin: 0; font-size: 11px; font-weight: 600; color: var(--text-title);">
+                                    🏷️ Đóng Dấu Bản Quyền Mờ (Watermark)
+                                </label>
+                            </div>
+                            <span class="feature-toggle-tag" id="watermark-tag">Tùy chọn</span>
+                        </div>
+                        <div id="watermark-detail-panel" style="display: none; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
+                            <input type="text" id="watermark-input" placeholder="Nội dung dấu mờ (BẢN MẬT, NỘI BỘ)..." style="font-size: 11.5px; padding: 6px 8px; margin-bottom: 4px;">
+                            <div class="quick-pass-suggestions" style="margin-top: 2px;">
+                                <span class="sugg-title">Mẫu:</span>
+                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN MẬT - NỘI BỘ')">BẢN MẬT</button>
+                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('CHỈ LƯU HÀNH NỘI BỘ')">NỘI BỘ</button>
+                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN THẢO - TUYỆT MẬT')">TUYỆT MẬT</button>
+                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN QUYỀN THIẾT KẾ')">BẢN QUYỀN</button>
+                            </div>
+                        </div>
+
+                        <div class="compress-toggle-row" style="margin-top: 6px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: var(--text-muted); margin: 0;">
+                                <input type="checkbox" id="compress-pdf-checkbox" checked style="width: auto; margin: 0; cursor: pointer;">
+                                <span>⚡ Nén tối ưu dung lượng tệp (Gửi Zalo nhanh & nhẹ)</span>
                             </label>
                         </div>
-                        <span class="feature-toggle-tag" id="watermark-tag">Tùy chọn</span>
                     </div>
-                    <div id="watermark-detail-panel" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
-                        <input type="text" id="watermark-input" placeholder="Nội dung dấu mờ (ví dụ: BẢN MẬT, NỘI BỘ)..." style="margin-bottom: 6px; font-size: 12px; padding: 7px 10px;">
-                        <div class="quick-pass-suggestions" style="margin-top: 2px;">
-                            <span class="sugg-title">Mẫu dấu:</span>
-                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('BẢN MẬT - NỘI BỘ')">BẢN MẬT</button>
-                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('CHỈ LƯU HÀNH NỘI BỘ')">NỘI BỘ</button>
-                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('BẢN THẢO - TUYỆT MẬT')">TUYỆT MẬT</button>
-                            <button type="button" class="btn-chip" onclick="applyWatermarkPreset('BẢN QUYỀN THIẾT KẾ')">BẢN QUYỀN</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="compress-toggle-row" style="margin-top: -2px; margin-bottom: 6px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: var(--text-muted); margin: 0;">
-                        <input type="checkbox" id="compress-pdf-checkbox" checked style="width: auto; margin: 0; cursor: pointer;">
-                        <span>⚡ Nén tối ưu dung lượng tệp (Gửi Zalo nhanh & nhẹ)</span>
-                    </label>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="button" class="btn-primary" id="btn-lock-submit" onclick="executeMobileLockFiles()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <button type="button" class="btn-primary btn-submit-modern" id="btn-lock-submit" onclick="executeMobileLockFiles()">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
@@ -257,7 +234,7 @@
             <!-- Results Card -->
             <div id="results-lock" class="card results-card" style="display: none;">
                 <div class="results-header">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
@@ -269,37 +246,38 @@
 
         <!-- ==================== TAB 2: UNLOCK ==================== -->
         <div id="tab-unlock" class="tab-content">
-            <div class="card dropzone-card" id="dropzone-unlock" onclick="triggerPickFiles('unlock')">
+            <!-- Sleek Horizontal Dropzone Card -->
+            <div class="dropzone-card" id="dropzone-unlock" onclick="triggerPickFiles('unlock')">
                 <input type="file" id="file-input-unlock" accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'unlock')">
                 <div class="dropzone-inner">
-                    <div class="upload-icon" style="color: #059669; background: #ecfdf5;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.0">
+                    <div class="upload-icon" style="color: #059669; background: rgba(16, 185, 129, 0.15);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                         </svg>
                     </div>
-                    <h3>Chạm để chọn tệp cần mở khóa</h3>
-                    <p>Hỗ trợ tệp PDF Native, Word, Excel, PowerPoint đã bảo mật</p>
-                    <button type="button" class="btn-choose-file" onclick="event.stopPropagation(); triggerPickFiles('unlock')">
-                        📂 Chọn Tệp Mở Khóa
-                    </button>
+                    <div class="dropzone-text-group">
+                        <h3>Chạm để chọn tệp cần mở khóa</h3>
+                        <p>Hỗ trợ tệp PDF Native, Word, Excel, PowerPoint, ZIP đã bảo mật</p>
+                    </div>
                 </div>
             </div>
 
             <div id="file-list-unlock" class="file-list" style="display: none;"></div>
 
             <div class="card settings-card">
-                <h3 class="card-title">Nhập Mật Khẩu Giải Mã</h3>
-                <div class="form-group">
-                    <label for="unlock-password">Mật Khẩu Mở Tệp <span class="required">*</span></label>
-                    <div class="input-with-action">
+                <div class="form-group-compact">
+                    <label for="unlock-password" class="compact-label">MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
+                    <div class="input-with-actions-unified">
                         <input type="password" id="unlock-password" placeholder="Nhập đúng mật khẩu đã đặt..." required>
-                        <button type="button" class="btn-action" onclick="togglePasswordVisibility('unlock-password', this)" title="Hiện/ẩn mật khẩu">👁️ Xem</button>
+                        <div class="inline-input-btns">
+                            <button type="button" class="btn-input-tool" onclick="togglePasswordVisibility('unlock-password', this)" title="Hiện/ẩn mật khẩu">👁️</button>
+                        </div>
                     </div>
                 </div>
 
-                <button type="button" class="btn-success" id="btn-unlock-submit" onclick="executeMobileUnlockFile()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <button type="button" class="btn-success btn-submit-modern" id="btn-unlock-submit" onclick="executeMobileUnlockFile()">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                     </svg>
@@ -323,7 +301,7 @@
         <div class="card history-card" id="history-card">
             <div class="history-header" onclick="toggleHistoryDrawer()">
                 <div class="history-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
@@ -351,12 +329,12 @@
     <div id="krypto-toast" class="krypto-toast"></div>
 
     <!-- Modal trạng thái xử lý file lớn -->
-    <div id="processing-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; padding: 20px; text-align: center;">
-        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 26px 20px; max-width: 320px; width: 100%; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; align-items: center;">
-            <div style="width: 38px; height: 38px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 14px;"></div>
-            <h4 id="proc-title" style="margin: 0 0 6px; font-size: 15px; color: var(--text-title); font-weight: 700;">Đang Xử Lý Tệp...</h4>
-            <div id="proc-timer" style="font-size: 11.5px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px solid var(--border-active); border-radius: 16px; padding: 3px 12px; margin-bottom: 10px;">⏱️ Đang xử lý: 0s</div>
-            <p id="proc-desc" style="margin: 0; font-size: 11.5px; color: var(--text-muted); line-height: 1.45;">Hệ thống đang xử lý trực tiếp an toàn.<br>Vui lòng giữ ứng dụng mở...</p>
+    <div id="processing-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; padding: 20px; text-align: center;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 22px 18px; max-width: 320px; width: 100%; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;"></div>
+            <h4 id="proc-title" style="margin: 0 0 6px; font-size: 14.5px; color: var(--text-title); font-weight: 700;">Đang Xử Lý Tệp...</h4>
+            <div id="proc-timer" style="font-size: 11px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px solid var(--border-active); border-radius: 16px; padding: 3px 12px; margin-bottom: 8px;">⏱️ Đang xử lý: 0s</div>
+            <p id="proc-desc" style="margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.45;">Hệ thống đang xử lý trực tiếp an toàn.<br>Vui lòng giữ ứng dụng mở...</p>
         </div>
     </div>
 

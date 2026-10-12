@@ -64,21 +64,29 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.3.0
-          name: "KryptoDoc v2.3.0 - AutoCAD DWG & Universal Password-Protected ZIP Vault (Android APK)"
+          tag_name: v2.3.1
+          name: "KryptoDoc v2.3.1 - Ultra-Compact Mobile UI & Clean Zero-Waste Design (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.3.0 (AutoCAD .DWG & Universal Password-Protected ZIP Vault)
-            - **Khóa Mật Khẩu Tệp Nén .ZIP Chuẩn Quốc Tế (Zip4j Engine AES-256)**:
-              + Tự động nén và mã hóa mật khẩu cực mạnh AES-256 cho tệp nén `.zip`.
-              + Mở và giải nén tương thích 100% với mọi phần mềm giải nén hàng đầu thế giới: **WinRAR, 7-Zip, ZArchiver, Xiaomi / Samsung File Manager** hoặc chính KryptoDoc.
-            - **Bảo Vệ Chuyên Nghiệp Bản Vẽ Kỹ Thuật AutoCAD (.DWG / .DXF)**:
-              + Khắc phục hoàn toàn hạn chế của Autodesk AutoCAD (đã lược bỏ tính năng đặt pass nội bộ từ AutoCAD 2016-2026).
-              + Tự động nhận diện bản vẽ `.dwg`, đóng gói vào tệp nén `.zip` bảo vệ mật khẩu cấp quân sự AES-256, an tâm gửi qua Zalo / Telegram / Email.
-            - **Chế Độ Xuất Tệp Linh Hoạt (Dual Packaging Modes)**:
-              + 🔒 *Định Dạng Gốc*: Giữ nguyên đuôi tệp Word, Excel, PowerPoint, PDF mở trực tiếp trên MS Office & Adobe Reader.
-              + 📦 *Nén .ZIP Có Pass*: Đóng gói một hoặc nhiều tệp vào kho bảo mật `.zip` có mật khẩu, tự động kích hoạt khi chọn bản vẽ CAD hoặc nhiều tệp cùng lúc.
-            - **Mẫu Bảo Mật Bổ Sung**: 📐 *Bản Vẽ CAD .DWG* (1-Chạm kích hoạt chế độ nén ZIP mật khẩu quân sự).
-            - **Tải tệp APK**: Tải file `KryptoDoc.apk` (hoặc `SecureDocShare.apk`) bên dưới về điện thoại Android và chọn Cài đặt (Install).
+            ## Ứng dụng Di Động KryptoDoc v2.3.1 (Tối Ưu Hóa Toàn Diện Giao Diện - Không Ô Thừa, Siêu Gọn Gàng)
+            - **Sửa Lỗi Ẩn Hiện Tab (Tab Isolation Invariant)**:
+              + Khắc phục hoàn toàn lỗi Tab Mở Khóa bị hiển thị thừa dồn xuống dưới Tab Mã Hóa.
+              + Hai Tab hoạt động độc lập, cắt giảm hơn 50% chiều dài trang cuộn.
+            - **Khu Vực Chọn Tệp Tinh Gọn (Sleek Horizontal Dropzone)**:
+              + Thiết kế dạng thanh ngang siêu mỏng (58px thay vì 120px), loại bỏ nút bấm thừa trùng lặp.
+              + Chạm trực tiếp vào toàn bộ khung để mở bộ chọn file native Android.
+            - **Bộ Chuyển Đổi Segmented Control Siêu Hiện Đại**:
+              + Thay thế 4 ô cấu hình khổng lồ chiếm diện tích bằng 2 thanh điều khiển dạng viên thuốc (Segmented Control Pills) chuẩn iOS/Android cao cấp.
+              + Cấp độ phân quyền: `🔒 Khóa Mật Khẩu` vs `👁️ Chỉ Xem (Cấm Copy)`.
+              + Định dạng xuất: `📄 Định Dạng Gốc` vs `📦 Nén .ZIP Có Pass`.
+            - **Ô Nhập Mật Khẩu Hợp Nhất & Thước Đo Micro-Entropy**:
+              + Tích hợp trực tiếp các nút công cụ: `[⚡ Mã Quân Sự 16-bit]` và `[📋 Copy]` ngay trong khung nhập.
+              + Thước đo entropy 3px siêu mảnh gắn sát đáy ô nhập, loại bỏ các dòng ghi chú thừa rườm rà.
+            - **Accordion Tùy Chọn Nâng Cao Thu Gọn (Collapsible Advanced Options)**:
+              + Nhóm gọn tùy chọn Đóng dấu mờ (Watermark) và Nén Stream vào thanh menu thu gọn, chỉ mở khi cần.
+            - **Bảng Kết Quả Tinh Tế & Hướng Dẫn Mở Tệp Thông Minh**:
+              + Thu gọn đường dẫn lưu file dài dòng, hiển thị trạng thái `📁 Đã lưu vào Thư mục Downloads của máy`.
+              + Tích hợp hộp mẹo hướng dẫn mở tệp dạng chạm để mở (Collapsible Accordion).
+            - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk
             build-output/SecureDocShare.apk

@@ -86,18 +86,18 @@ body {
     background-color: var(--bg-main);
     color: var(--text-body);
     min-height: 100vh;
-    padding: 12px 14px 28px;
+    padding: 8px 10px 20px;
     display: flex;
     justify-content: center;
     -webkit-font-smoothing: antialiased;
 }
 
-.app-container {
+.container, .app-container {
     width: 100%;
     max-width: 480px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 /* Header */
@@ -344,87 +344,85 @@ body {
     border: 1px solid var(--border);
 }
 
+/* Tab Content Switching */
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+
 /* Cards */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 16px;
+    border-radius: var(--radius-lg);
+    padding: 12px;
     box-shadow: var(--shadow-sm);
 }
 
-/* Dropzone: Minimalist, clean */
+/* Dropzone: Horizontal, Compact, Zero Wasted Space */
 .dropzone-card {
-    padding: 18px 16px;
+    padding: 10px 12px;
     cursor: pointer;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
     border: 1.5px dashed var(--border-hover);
     background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    transition: all 0.15s ease;
+    margin-bottom: 6px;
 }
 
 .dropzone-card:active {
     background: var(--primary-light);
     border-color: var(--primary);
+    transform: scale(0.99);
 }
 
 .dropzone-inner {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    text-align: center;
-    gap: 6px;
+    gap: 10px;
+    text-align: left;
 }
 
 .upload-icon {
     width: 36px;
     height: 36px;
-    border-radius: 50%;
+    border-radius: 9px;
     background: var(--primary-light);
     color: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2px;
+    flex-shrink: 0;
 }
 
-.upload-icon svg {
-    width: 18px;
-    height: 18px;
+.dropzone-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+    flex: 1;
 }
 
-.dropzone-inner h3 {
-    font-size: 13.5px;
-    font-weight: 600;
+.dropzone-text-group h3 {
+    font-size: 12.5px;
+    font-weight: 700;
     color: var(--text-title);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.dropzone-inner p {
-    font-size: 11.5px;
+.dropzone-text-group p {
+    font-size: 10px;
     color: var(--text-muted);
-    max-width: 300px;
-    line-height: 1.4;
-}
-
-/* Compact Refined Button */
-.btn-choose-file {
-    margin-top: 4px;
-    padding: 6px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: var(--radius-md);
-    background: var(--bg-subtle);
-    color: var(--text-title);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background-color 0.12s ease;
-}
-
-.btn-choose-file:active {
-    background: var(--border-hover);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* File list */
@@ -475,179 +473,234 @@ body {
 .settings-card {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+    padding: 12px;
 }
 
-.card-title {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--text-title);
-    letter-spacing: -0.1px;
-}
-
-.form-group {
+.form-group-compact {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
 }
 
-.form-group label {
-    font-size: 11.5px;
-    font-weight: 600;
+.compact-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
     color: var(--text-muted);
-    text-transform: uppercase;
     letter-spacing: 0.3px;
+    text-transform: uppercase;
 }
 
 .required {
     color: var(--danger);
 }
 
-/* Level Options */
-.level-options {
+/* Template Chips Row */
+.template-chips-row {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    gap: 5px;
 }
 
-.level-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: var(--radius-lg);
-    border: 1.5px solid var(--border);
-    background: var(--bg-card);
+.chips-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+}
+
+.btn-template-chip {
+    flex: 1;
+    padding: 4px 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    border-radius: 6px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--text-title);
+    white-space: nowrap;
+    text-align: center;
     cursor: pointer;
     transition: all 0.12s ease;
 }
 
-.level-card.active {
-    border-color: var(--primary);
+.btn-template-chip:active {
     background: var(--primary-light);
-    box-shadow: 0 0 0 1px var(--primary), var(--shadow-sm);
+    border-color: var(--primary);
+    transform: scale(0.96);
 }
 
-.level-icon {
-    font-size: 18px;
-    line-height: 1;
-    margin-top: 2px;
-}
-
-.level-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.level-badge {
-    align-self: flex-start;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-}
-
-.badge-strict {
-    background: var(--danger-light);
-    color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.4);
-}
-
-.badge-viewonly {
-    background: var(--success-light);
-    color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.4);
-}
-
-.level-content h4 {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-title);
-    margin-top: 2px;
-}
-
-.level-content p {
-    font-size: 11px;
-    color: var(--text-muted);
-    line-height: 1.35;
-}
-
-/* Password Input */
-.input-with-action {
-    display: flex;
+/* Segmented Control Switcher */
+.segmented-control {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
 }
 
-.input-with-action input,
-.form-group input[type="text"],
-.form-group input[type="password"] {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 12.5px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: var(--bg-input);
-    color: var(--text-title);
-    outline: none;
-    transition: border-color 0.12s ease, box-shadow 0.12s ease;
-}
-
-.input-with-action input:focus,
-.form-group input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-light);
-}
-
-.btn-action {
-    padding: 7px 11px;
-    font-size: 11.5px;
-    font-weight: 600;
-    border-radius: var(--radius-md);
-    background: var(--bg-subtle);
-    color: var(--text-body);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background-color 0.12s ease;
-}
-
-.btn-action:active {
-    background: var(--border-hover);
-}
-
-.quick-pass-suggestions {
+.segment-card {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
-    flex-wrap: wrap;
-    margin-top: 2px;
+    padding: 7px 6px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-subtle);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    text-align: center;
 }
 
-.sugg-title {
-    font-size: 11px;
-    color: var(--text-subtle);
-    font-weight: 500;
+.segment-card:active {
+    transform: scale(0.98);
 }
 
-.btn-chip {
-    padding: 3px 8px;
-    font-size: 11px;
-    font-weight: 500;
+.segment-card.active {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.12);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.segment-icon {
+    font-size: 13px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.segment-text {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-title);
+    white-space: nowrap;
+}
+
+.segment-card.active .segment-text {
+    color: #60a5fa;
+}
+
+.pkg-tag {
+    font-size: 8.5px;
+    font-weight: 800;
+    color: #eab308;
+    background: rgba(234, 179, 8, 0.2);
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-left: 2px;
+}
+
+/* Unified Password Input */
+.label-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.label-with-action label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.btn-micro-gen {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.btn-micro-gen:active {
+    transform: scale(0.95);
+    background: rgba(16, 185, 129, 0.25);
+}
+
+.input-with-actions-unified {
+    display: flex;
+    align-items: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+
+.input-with-actions-unified:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.input-with-actions-unified input {
+    flex: 1;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-title);
+}
+
+.inline-input-btns {
+    display: flex;
+    align-items: center;
+    padding-right: 4px;
+    gap: 2px;
+}
+
+.btn-input-tool {
+    padding: 3px 6px;
+    font-size: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.12s ease;
+}
+
+.btn-input-tool:active {
+    color: var(--text-title);
+    background: var(--bg-subtle);
+}
+
+/* Quick suggestions compact */
+.quick-pass-suggestions-compact {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 3px;
+    overflow-x: auto;
+    padding-bottom: 1px;
+}
+
+.btn-chip-micro {
+    padding: 2px 6px;
+    font-size: 9.5px;
+    font-weight: 600;
     border-radius: 4px;
     background: var(--bg-subtle);
-    color: var(--text-muted);
     border: 1px solid var(--border);
+    color: var(--text-title);
     cursor: pointer;
-    transition: all 0.1s ease;
+    white-space: nowrap;
+    transition: all 0.12s ease;
 }
 
-.btn-chip:active {
+.btn-chip-micro:active {
     background: var(--primary-light);
-    color: var(--primary);
     border-color: var(--primary);
+    transform: scale(0.95);
 }
 
 /* Submit Buttons (Tinh tế, vừa vặn, không thô) */
@@ -1366,4 +1419,115 @@ body {
     color: var(--text-muted);
     line-height: 1.35;
     margin: 0;
+}
+
+/* ============================================================
+   ULTRA-COMPACT MOBILE REFINEMENTS
+   ============================================================ */
+.btn-submit-modern {
+    margin-top: 4px;
+    padding: 9px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.advanced-options-accordion {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-subtle);
+    overflow: hidden;
+}
+
+.advanced-options-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: background 0.12s ease;
+}
+
+.advanced-options-header:active {
+    background: var(--bg-card);
+}
+
+.advanced-options-body {
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+}
+
+.saved-status-compact {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 6px;
+    padding: 5px 10px;
+    margin-top: 2px;
+}
+
+.saved-status-compact strong {
+    color: #6ee7b7;
+}
+
+.result-extra-buttons-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.result-extra-buttons-row .btn-result-extra-copy {
+    flex: 1;
+    align-self: stretch;
+}
+
+.tip-collapsible {
+    margin-top: 8px;
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    background: rgba(234, 179, 8, 0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.tip-collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #eab308;
+}
+
+.tip-collapsible-content {
+    display: none;
+    padding: 6px 8px;
+    margin: 0;
+    font-size: 10px;
+    color: #fde047;
+    line-height: 1.35;
+    border-top: 1px dashed rgba(234, 179, 8, 0.2);
+}
+
+.tip-collapsible.open .tip-collapsible-content {
+    display: block;
+}
+
+.tip-collapsible.open .tip-arrow {
+    transform: rotate(180deg);
 }

@@ -101,19 +101,23 @@ function triggerLogoHaptic() {
 function selectProtectionLevel(levelVal, cardEl) {
     currentProtectionLevel = levelVal;
     document.querySelectorAll('.level-card').forEach(c => c.classList.remove('active'));
-    cardEl.classList.add('active');
+    if (cardEl) cardEl.classList.add('active');
 
     const pwdLabel = document.getElementById('password-label');
     const passSubnote = document.getElementById('pass-subnote');
 
     if (levelVal === 'view_only_restricted') {
-        pwdLabel.innerHTML = `BƯỚC 2: MẬT KHẨU QUẢN TRỊ / GỠ KHÓA <span class="required">*</span>`;
-        passSubnote.innerHTML = `💡 <strong>Người nhận mở xem trực tiếp không cần mật khẩu</strong>. Mật khẩu này chỉ bạn giữ để gỡ khóa khi cần.`;
-        passSubnote.style.color = '#34d399';
+        if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU GỠ KHÓA <span class="required">*</span>`;
+        if (passSubnote) {
+            passSubnote.innerHTML = `💡 <strong>Người nhận xem tự do không cần mật khẩu</strong> (chỉ bạn giữ mã này để gỡ khóa).`;
+            passSubnote.style.color = '#34d399';
+            passSubnote.style.display = 'block';
+        }
     } else {
-        pwdLabel.innerHTML = `BƯỚC 2: MẬT KHẨU MỞ TỆP <span class="required">*</span>`;
-        passSubnote.innerHTML = `💡 Người nhận <strong>bắt buộc phải nhập đúng mật khẩu này</strong> mới mở được file.`;
-        passSubnote.style.color = '#94a3b8';
+        if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU MỞ TỆP <span class="required">*</span>`;
+        if (passSubnote) {
+            passSubnote.style.display = 'none';
+        }
     }
 }
 
@@ -575,6 +579,19 @@ function hideProcessingModal() {
     }
 }
 
+function toggleAdvancedOptions() {
+    const body = document.getElementById('adv-body');
+    const arrow = document.getElementById('adv-arrow');
+    if (!body) return;
+    if (body.style.display === 'none' || body.style.display === '') {
+        body.style.display = 'block';
+        if (arrow) arrow.textContent = '▴';
+    } else {
+        body.style.display = 'none';
+        if (arrow) arrow.textContent = '▾';
+    }
+}
+
 // =============================================================
 // PHASE 3: MẪU BẢO MẬT BỐI CẢNH, WATERMARK & QR CODE
 // =============================================================
@@ -587,7 +604,13 @@ function applySecurityTemplate(type) {
             wmCheck.checked = true;
             toggleWatermarkOption();
         }
-        applyWatermarkPreset('BẢN MẬT HỢP ĐỒNG');
+        applyWatermarkPreset('BẢN MẬT - NỘI BỘ');
+        const advBody = document.getElementById('adv-body');
+        const advArrow = document.getElementById('adv-arrow');
+        if (advBody && advBody.style.display === 'none') {
+            advBody.style.display = 'block';
+            if (advArrow) advArrow.textContent = '▴';
+        }
         showToast('Đã áp dụng mẫu: 🏢 Hợp Đồng (Mã Quân Sự + Dấu Mật)');
     } else if (type === 'cad' || type === 'design') {
         const zipCard = document.getElementById('pkg-card-zip');
@@ -599,7 +622,7 @@ function applySecurityTemplate(type) {
             wmCheck.checked = false;
             toggleWatermarkOption();
         }
-        showToast('Đã áp dụng mẫu: 📐 Bản Vẽ CAD .DWG (Nén .ZIP Có Pass Quân Sự AES-256) 🛡️');
+        showToast('Đã áp dụng mẫu: 📐 Bản Vẽ CAD (Nén .ZIP Có Pass Quân Sự AES-256) 🛡️');
     } else if (type === 'quotation') {
         selectProtectionLevel('open_password', document.getElementById('level-card-open'));
         applyPresetPassword('BaoGia@88');
@@ -610,7 +633,7 @@ function applySecurityTemplate(type) {
         }
         const comp = document.getElementById('compress-pdf-checkbox');
         if (comp) comp.checked = true;
-        showToast('Đã áp dụng mẫu: 💰 Báo Giá / Dự Toán (Mã nhanh + Nén gửi Zalo)');
+        showToast('Đã áp dụng mẫu: 💰 Báo Giá (Mã nhanh + Nén gửi Zalo)');
     }
 }
 
@@ -972,9 +995,9 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
     const list = document.getElementById('results-list-lock');
 
     const displaySavedPath = savedPath ? `
-        <div class="saved-status-box">
-            <div class="saved-status-badge">✅ ĐÃ TỰ ĐỘNG LƯU VÀO MÁY</div>
-            <div class="saved-status-path">${savedPath}</div>
+        <div class="saved-status-compact">
+            <span class="saved-status-icon">✅</span>
+            <span class="saved-status-text">Đã lưu: <strong>Thư mục Downloads của máy</strong></span>
         </div>
     ` : '';
 
@@ -984,7 +1007,7 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                 <div class="result-file-icon" style="background: ${iconBg}; color: ${iconColor};">${fileIcon}</div>
                 <div class="result-file-meta">
                     <div class="result-file-name">${outFileName}</div>
-                    <div class="result-file-sub" style="color: var(--primary); font-weight: 500;">${subDesc}</div>
+                    <div class="result-file-sub" style="color: var(--primary); font-weight: 600;">${subDesc}</div>
                 </div>
             </div>
             ${displaySavedPath}
@@ -999,19 +1022,19 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                     </svg>
                     <span>GỬI QUA ZALO / CHIA SẺ TỆP</span>
                 </button>
-                <div style="display: flex; gap: 6px;">
-                    <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="result-extra-buttons-row">
+                    <button type="button" class="btn-result-extra-copy" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span>Lưu bản sao</span>
+                        <span>Lưu lại</span>
                     </button>
-                    <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="copyCurrentPassword()">
+                    <button type="button" class="btn-result-extra-copy" onclick="copyCurrentPassword()">
                         <span>📋 Sao chép Pass</span>
                     </button>
-                    <button type="button" class="btn-result-extra-copy" style="flex: 1;" onclick="toggleQrCodeModal()">
+                    <button type="button" class="btn-result-extra-copy" onclick="toggleQrCodeModal()">
                         <span>📱 Mã QR</span>
                     </button>
                 </div>
@@ -1023,7 +1046,13 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                     <span class="qr-pwd-highlight" id="qr-pwd-display"></span>
                 </div>
             </div>
-            <p class="result-note">${noteText}</p>
+            <div class="tip-collapsible" onclick="this.classList.toggle('open')">
+                <div class="tip-collapsible-header">
+                    <span>💡 Hướng dẫn người nhận mở tệp</span>
+                    <span class="tip-arrow">▾</span>
+                </div>
+                <p class="tip-collapsible-content">${noteText}</p>
+            </div>
         </div>
     `;
 
