@@ -64,21 +64,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.3.2
-          name: "KryptoDoc v2.3.2 - Auto-Packaging Encrypted ZIP Vault for Images & CAD (Android APK)"
+          tag_name: v2.3.3
+          name: "KryptoDoc v2.3.3 - Smart Pre-Flight Detection & Double-Lock Prevention (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.3.2 (Tự Động Nén .ZIP Mã Hóa AES-256 Cho Ảnh & CAD)
-            - **Khắc Phục Triệt Để Lỗi "Tệp Lỗi Định Dạng" (Corrupted File Fix)**:
-              + Định dạng ảnh (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`) và CAD (`.dwg`, `.dxf`) không có tiêu chuẩn mật khẩu nội tại như PDF/Office.
-              + Trước đây hệ thống ghi luồng cipher trực tiếp giữ đuôi ảnh gây lỗi không xem được trong Thư viện ảnh Android.
-              + Phiên bản v2.3.2 tự động đóng gói nguyên vẹn tệp ảnh vào kho nén tiêu chuẩn `${baseName}_Protected.zip` bằng động cơ Zip4j AES-256.
-            - **Cơ Chế Tự Động Nhận Diện & Khóa Chế Độ Thông Minh (Smart Format Auto-Switch)**:
-              + Ngay khi người dùng chọn tệp ảnh hoặc bản vẽ kỹ thuật, ứng dụng tự động kích hoạt thẻ `📦 Nén .ZIP Có Pass` kèm thông báo hướng dẫn.
-              + Khóa ngăn người dùng chọn nhầm chế độ `Định Dạng Gốc` đối với các tệp không hỗ trợ mật khẩu gốc, bảo vệ an toàn 100% cấu trúc dữ liệu.
-            - **Khả Năng Giải Nén Tương Thích Toàn Cầu**:
-              + Tệp `.zip` xuất ra đạt chuẩn bảo mật AES-256 quốc tế, mở và giải nén lập tức bằng mật khẩu trên: WinRAR, 7-Zip, ZArchiver, Quản lý tệp Samsung/Xiaomi, hoặc Tab MỞ KHÓA của KryptoDoc.
-            - **Cập Nhật Thẻ Định Dạng & Nhãn Trực Quan**:
-              + Bổ sung huy hiệu màu Cyan hiện đại `IMG` cho các định dạng ảnh cùng nhãn giao thức `Zip4j AES-256 Vault`.
+            ## Ứng dụng Di Động KryptoDoc v2.3.3 (Nhận Diện Thông Minh & Chống Khóa Chồng Gây Lỗi)
+            - **Nhận Diện Tệp Đã Khóa Ngay Khi Chọn (Smart Pre-Flight Detection)**:
+              + Kiểm tra nhị phân (Deep Binary Inspection): Quét cấu trúc nhị phân của tệp để phát hiện `/Encrypt` (PDF Adobe ISO 32000), `EncryptedPackage` (Microsoft Office OLE), cờ mã hóa ZipCrypto/AES (ZIP) và Header KryptoDoc Vault.
+              + Kiểm tra hậu tố tên tệp: Tự động nhận diện các tệp `_Locked`, `_ReadOnly`, `_Protected`, `_Encrypted`.
+            - **Giao Diện Cảnh Báo Trực Quan & Điều Hướng 1-Chạm (1-Tap Auto-Redirect)**:
+              + Hiển thị huy hiệu màu cam nổi bật: `🔒 ĐÃ CÓ MẬT KHẨU`.
+              + Xuất hiện Banner cảnh báo thông minh kèm nút bấm: `[🔓 Chuyển sang Tab MỞ KHÓA ngay]`.
+              + Khi chạm vào, hệ thống tự động chuyển Tab và nạp sẵn tệp vào ô Mở Khóa, người dùng chỉ việc nhập mật khẩu để mở hoặc đổi pass.
+            - **Khóa Chặn Lỗi Ở Cả Frontend & Động Cơ Native (Double-Lock Prevention Guard)**:
+              + Khi người dùng bấm nút Khóa: App lập tức bật hộp thoại cảnh báo chống khóa đè.
+              + Động cơ Native (iTextG / POI / Zip4j / Syncfusion): Tự động phát hiện trạng thái đã mã hóa và trả về thông báo tiếng Việt chuẩn xác thay vì ném lỗi crash.
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk

@@ -62,6 +62,14 @@ class MainActivity: FlutterActivity() {
 
                             PdfReader.unethicalreading = true
                             reader = PdfReader(srcPath)
+                            if (reader.isEncrypted) {
+                                try { reader.close() } catch (_: Throwable) {}
+                                reader = null
+                                runOnUiThread {
+                                    result.error("ALREADY_ENCRYPTED", "Tệp PDF này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!", null)
+                                }
+                                return@execute
+                            }
 
                             val outFile = File(destPath)
                             if (outFile.exists()) outFile.delete()
@@ -133,6 +141,15 @@ class MainActivity: FlutterActivity() {
                             try { stamper?.close() } catch (_: Throwable) {}
                             try { fos?.close() } catch (_: Throwable) {}
                             try { reader?.close() } catch (_: Throwable) {}
+                            val isBadPass = e is com.itextpdf.text.exceptions.BadPasswordException || 
+                                            (e.message?.contains("Bad password", ignoreCase = true) == true) ||
+                                            (e.message?.contains("password", ignoreCase = true) == true && e.message?.contains("protected", ignoreCase = true) == true)
+                            if (isBadPass) {
+                                runOnUiThread {
+                                    result.error("ALREADY_ENCRYPTED", "Tệp PDF này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!", null)
+                                }
+                                return@execute
+                            }
                             val errMsg = e.message ?: e.toString()
                             runOnUiThread {
                                 result.error("ENCRYPTION_ERROR", errMsg, null)
@@ -212,6 +229,20 @@ class MainActivity: FlutterActivity() {
                             val outFile = File(destPath)
                             if (outFile.exists()) outFile.delete()
                             outFile.parentFile?.mkdirs()
+
+                            // Kiểm tra trước: Tệp Office đã được mã hóa bảo vệ chưa?
+                            try {
+                                POIFSFileSystem(srcFile).use { checkFs ->
+                                    if (checkFs.root.hasEntry("EncryptedPackage") || checkFs.root.hasEntry("EncryptionInfo")) {
+                                        runOnUiThread {
+                                            result.error("ALREADY_ENCRYPTED", "Tệp Office này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!", null)
+                                        }
+                                        return@execute
+                                    }
+                                }
+                            } catch (_: Throwable) {
+                                // Tệp Office bình thường (chưa mã hóa) sẽ không phải OLE EncryptedPackage
+                            }
 
                             // Thực hiện mã hóa Office Native (thử Standard trước: 100% binary, tương thích hoàn hảo Word/Excel Android)
                             var encryptSuccess = false
@@ -336,6 +367,21 @@ class MainActivity: FlutterActivity() {
 
                     executor.execute {
                         try {
+                            if (srcPaths.size == 1) {
+                                val singleFile = File(srcPaths[0])
+                                if (singleFile.name.endsWith(".zip", ignoreCase = true)) {
+                                    try {
+                                        val checkZip = ZipFile(singleFile)
+                                        if (checkZip.isEncrypted) {
+                                            runOnUiThread {
+                                                result.error("ALREADY_ENCRYPTED", "Kho nén .ZIP này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!", null)
+                                            }
+                                            return@execute
+                                        }
+                                    } catch (_: Throwable) {}
+                                }
+                            }
+
                             val outZip = File(destZipPath)
                             if (outZip.exists()) outZip.delete()
                             outZip.parentFile?.mkdirs()

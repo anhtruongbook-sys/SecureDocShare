@@ -85,7 +85,17 @@ Future<void> _runAdobePdfLockIsolate(_AdobePdfLockJob job) async {
   }
 
   Uint8List? inputBytes = await srcFile.readAsBytes();
-  final PdfDocument document = PdfDocument(inputBytes: inputBytes);
+  PdfDocument document;
+  try {
+    document = PdfDocument(inputBytes: inputBytes);
+  } catch (pdfOpenErr) {
+    inputBytes = null;
+    final errStr = pdfOpenErr.toString().toLowerCase();
+    if (errStr.contains('password') || errStr.contains('encrypted') || errStr.contains('argumentexception')) {
+      throw Exception('Tệp PDF này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!');
+    }
+    rethrow;
+  }
   inputBytes = null; // GIẢI PHÓNG 355MB RAM NGAY LẬP TỨC
 
   if (job.compress) {
@@ -432,12 +442,21 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               final useZipCrypto = data['use_zipcrypto'] as bool? ?? false;
 
               if (Platform.isAndroid) {
-                await _nativeChannel.invokeMethod('createEncryptedZip', {
-                  'srcPaths': srcPaths,
-                  'destZipPath': outTempPath,
-                  'password': password,
-                  'useZipCrypto': useZipCrypto,
-                });
+                try {
+                  await _nativeChannel.invokeMethod('createEncryptedZip', {
+                    'srcPaths': srcPaths,
+                    'destZipPath': outTempPath,
+                    'password': password,
+                    'useZipCrypto': useZipCrypto,
+                  });
+                } on PlatformException catch (pErr) {
+                  if (pErr.code == 'ALREADY_ENCRYPTED') {
+                    final msg = pErr.message ?? 'Kho nén này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!';
+                    await _controller.runJavaScript("if (window.onNativePdfError) window.onNativePdfError('$msg');");
+                    return;
+                  }
+                  rethrow;
+                }
               } else {
                 throw Exception('Động cơ Zip4j chỉ hỗ trợ trên Android Native');
               }
@@ -530,7 +549,12 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                     });
                     processedNatively = true;
                   } catch (nativeErr) {
-                    debugPrint('Lỗi Native Android Engine, chuyển sang Isolate: $nativeErr');
+                    debugPrint('Lỗi Native Android Engine: $nativeErr');
+                    if (nativeErr is PlatformException && nativeErr.code == 'ALREADY_ENCRYPTED') {
+                      final msg = nativeErr.message ?? 'Tệp này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!';
+                      await _controller.runJavaScript("if (window.onNativePdfError) window.onNativePdfError('$msg');");
+                      return;
+                    }
                   }
                 }
 
@@ -548,22 +572,40 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               } else if (isOffice && Platform.isAndroid) {
                 // SỬ DỤNG ĐỘNG CƠ NATIVE MICROSOFT OFFICE NATIVE ENCRYPTION (MS-OFFCRYPTO)
                 // KHI MỞ BẰNG MICROSOFT WORD/EXCEL/POWERPOINT HOẶC WPS SẼ TỰ ĐỘNG BẬT HỘP THOẠI HỎI MẬT KHẨU!
-                await _nativeChannel.invokeMethod('encryptOffice', {
-                  'srcPath': srcPath,
-                  'destPath': outTempPath,
-                  'password': password,
-                });
+                try {
+                  await _nativeChannel.invokeMethod('encryptOffice', {
+                    'srcPath': srcPath,
+                    'destPath': outTempPath,
+                    'password': password,
+                  });
+                } on PlatformException catch (pErr) {
+                  if (pErr.code == 'ALREADY_ENCRYPTED') {
+                    final msg = pErr.message ?? 'Tệp Office này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!';
+                    await _controller.runJavaScript("if (window.onNativePdfError) window.onNativePdfError('$msg');");
+                    return;
+                  }
+                  rethrow;
+                }
               } else {
                 // TỆP KHÔNG HỖ TRỢ PASS NATIVE (ẢNH, CAD, VIDEO, TEXT, BINARY...):
                 // BẮT BUỘC ĐÓNG GÓI VÀO KHO NÉN .ZIP VÀ ĐẶT MẬT KHẨU AES-256 BẰNG ZIP4J NATIVE!
                 // TRÁNH TUYỆT ĐỐI TẠO RA TỆP .PNG/.JPG BỊ LỖI ĐỊNH DẠNG.
                 if (Platform.isAndroid) {
-                  await _nativeChannel.invokeMethod('createEncryptedZip', {
-                    'srcPaths': [srcPath],
-                    'destZipPath': outTempPath,
-                    'password': password,
-                    'useZipCrypto': false,
-                  });
+                  try {
+                    await _nativeChannel.invokeMethod('createEncryptedZip', {
+                      'srcPaths': [srcPath],
+                      'destZipPath': outTempPath,
+                      'password': password,
+                      'useZipCrypto': false,
+                    });
+                  } on PlatformException catch (pErr) {
+                    if (pErr.code == 'ALREADY_ENCRYPTED') {
+                      final msg = pErr.message ?? 'Tệp này đã được đặt mật khẩu bảo vệ trước đó. Vui lòng chuyển sang Tab MỞ KHÓA!';
+                      await _controller.runJavaScript("if (window.onNativePdfError) window.onNativePdfError('$msg');");
+                      return;
+                    }
+                    rethrow;
+                  }
                 } else {
                   final streamJob = _StreamLockJob(
                     srcPath: srcPath,

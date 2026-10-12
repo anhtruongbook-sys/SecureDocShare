@@ -1105,6 +1105,90 @@ body {
 .file-badge-zip { background: #3b2d12; color: #fde047; border: 1px solid #eab308; }
 .file-badge-image { background: #0e7490; color: #a5f3fc; border: 1px solid #06b6d4; }
 .file-badge-generic { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
+.file-badge-locked-warn { background: #78350f !important; color: #fef3c7 !important; border: 1px solid #f59e0b !important; box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important; }
+
+.file-card-warning {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+}
+
+.already-locked-tag {
+    font-size: 8.5px;
+    font-weight: 800;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.2px;
+}
+
+.already-locked-alert-card {
+    background: rgba(245, 158, 11, 0.09);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeInSlide 0.2s ease-out;
+}
+
+.alert-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.alert-icon-big {
+    font-size: 18px;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.alert-text-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.alert-title {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+.alert-subtitle {
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.alert-action-btn-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-redirect-unlock-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-redirect-unlock-action:active {
+    transform: scale(0.97);
+}
 
 .file-info-group {
     display: flex;

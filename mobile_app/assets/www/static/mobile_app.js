@@ -153,21 +153,97 @@ function triggerFileInput(inputId) {
     triggerPickFiles(context);
 }
 
-function handleFilesSelected(files, context) {
+async function inspectFileLockState(file) {
+    if (!file) return { isLocked: false };
+    
+    const nameLower = file.name.toLowerCase();
+    const isNamedLocked = /(_locked|_readonly|_protected|_encrypted)(\.[a-z0-9]+)$/i.test(nameLower);
+    
+    try {
+        const sliceSize = Math.min(file.size || 8192, 8192);
+        const headerBlob = file.slice(0, sliceSize);
+        const buffer = await headerBlob.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        const text = new TextDecoder('latin1').decode(bytes);
+        
+        // 1. PDF: Kiểm tra thẻ /Encrypt theo chuẩn Adobe ISO 32000
+        if (nameLower.endsWith('.pdf')) {
+            if (text.includes('/Encrypt')) {
+                return { isLocked: true, reason: 'Tệp PDF đã được mã hóa bảo vệ (phát hiện cấu trúc /Encrypt chuẩn Adobe ISO 32000).' };
+            }
+            if (file.size > 8192) {
+                const tailBlob = file.slice(Math.max(0, file.size - 4096), file.size);
+                const tailBuf = await tailBlob.arrayBuffer();
+                const tailText = new TextDecoder('latin1').decode(new Uint8Array(tailBuf));
+                if (tailText.includes('/Encrypt')) {
+                    return { isLocked: true, reason: 'Tệp PDF đã được mã hóa bảo vệ (phát hiện cấu trúc /Encrypt chuẩn Adobe ISO 32000).' };
+                }
+            }
+        }
+        
+        // 2. Office (DOCX, XLSX, PPTX): OLE Header (0xD0CF11E0) + EncryptedPackage
+        if (/\.(docx|doc|xlsx|xls|pptx|ppt)$/i.test(nameLower)) {
+            const isOle = bytes.length >= 4 && bytes[0] === 0xD0 && bytes[1] === 0xCF && bytes[2] === 0x11 && bytes[3] === 0xE0;
+            if (isOle && (text.includes('EncryptedPackage') || text.includes('EncryptionInfo'))) {
+                return { isLocked: true, reason: 'Tệp Office đã được đặt mật khẩu bảo vệ (phát hiện vùng chứa mã hóa MS-OFFCRYPTO).' };
+            }
+        }
+        
+        // 3. ZIP: Kiểm tra bit cờ mã hóa (General Purpose Bit Flag: bit 0 = 1)
+        if (nameLower.endsWith('.zip')) {
+            if (bytes.length >= 8 && bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04) {
+                const flag = bytes[6] | (bytes[7] << 8);
+                if ((flag & 1) !== 0) {
+                    return { isLocked: true, reason: 'Kho nén .ZIP đã được cài mật khẩu bảo vệ (cờ mã hóa AES/ZipCrypto).' };
+                }
+            }
+        }
+        
+        // 4. KryptoDoc Vault Container
+        if (text.startsWith('KRYPTODOC_') || text.includes('KRYPTODOC_VAULT')) {
+            return { isLocked: true, reason: 'Tệp đã được khóa bảo vệ bởi KryptoDoc Vault.' };
+        }
+    } catch (e) {
+        console.warn('Lỗi kiểm tra header tệp:', e);
+    }
+    
+    if (isNamedLocked) {
+        return { isLocked: true, reason: 'Tệp có hậu tố bảo vệ (_Locked / _ReadOnly / _Protected).' };
+    }
+    
+    return { isLocked: false };
+}
+
+async function handleFilesSelected(files, context) {
     if (!files || files.length === 0) return;
 
     if (context === 'lock') {
         let hasNonNative = false;
         let nonNativeExts = [];
+        let hasAlreadyLocked = false;
+
         for (let i = 0; i < files.length; i++) {
-            selectedLockFiles.push(files[i]);
-            if (!isNativePasswordSupported(files[i].name)) {
+            const f = files[i];
+            const check = await inspectFileLockState(f);
+            if (check.isLocked) {
+                f._isAlreadyLocked = true;
+                f._lockedReason = check.reason;
+                hasAlreadyLocked = true;
+            }
+            selectedLockFiles.push(f);
+            if (!isNativePasswordSupported(f.name)) {
                 hasNonNative = true;
-                const ext = getFileExtension(files[i].name).toUpperCase();
+                const ext = getFileExtension(f.name).toUpperCase();
                 if (ext && !nonNativeExts.includes(ext)) nonNativeExts.push(ext);
             }
         }
         renderFileListLock();
+
+        if (hasAlreadyLocked) {
+            showToast('⚠️ Phát hiện tệp đã được khóa bảo mật! Đã hiển thị tùy chọn chuyển sang Tab MỞ KHÓA.');
+            return;
+        }
+
         if (hasNonNative || selectedLockFiles.length > 1) {
             const zipCard = document.getElementById('pkg-card-zip');
             if (zipCard && currentPackagingMode !== 'zip') {
@@ -269,18 +345,23 @@ function renderFileListLock() {
         return;
     }
     container.style.display = 'flex';
-    container.innerHTML = selectedLockFiles.map((file, idx) => {
+    let html = selectedLockFiles.map((file, idx) => {
         const meta = getFileMetaBadge(file.name);
+        const isLocked = file._isAlreadyLocked;
         return `
-            <div class="file-card-rich">
+            <div class="file-card-rich ${isLocked ? 'file-card-warning' : ''}">
                 <div class="file-meta-col">
-                    <div class="file-type-icon-badge ${meta.badgeClass}">${meta.iconText}</div>
+                    <div class="file-type-icon-badge ${isLocked ? 'file-badge-locked-warn' : meta.badgeClass}">
+                        ${isLocked ? '🔒' : meta.iconText}
+                    </div>
                     <div class="file-info-group">
                         <span class="file-title-text" title="${file.name}">${file.name}</span>
                         <div class="file-subdetail-row">
                             <span>${formatBytes(file.size)}</span>
                             <span>•</span>
-                            <span class="file-protocol-tag">${meta.protocol}</span>
+                            ${isLocked 
+                                ? `<span class="already-locked-tag">⚠️ ĐÃ CÓ MẬT KHẨU</span>` 
+                                : `<span class="file-protocol-tag">${meta.protocol}</span>`}
                         </div>
                     </div>
                 </div>
@@ -288,6 +369,50 @@ function renderFileListLock() {
             </div>
         `;
     }).join('');
+
+    const firstLocked = selectedLockFiles.find(f => f._isAlreadyLocked);
+    if (firstLocked) {
+        html += `
+            <div class="already-locked-alert-card">
+                <div class="alert-top-row">
+                    <span class="alert-icon-big">⚠️</span>
+                    <div class="alert-text-body">
+                        <div class="alert-title">Phát hiện tệp đã được đặt mật khẩu!</div>
+                        <div class="alert-subtitle">${firstLocked._lockedReason || 'Khóa đè lần 2 sẽ làm hỏng tệp hoặc tạo 2 tầng mật khẩu khiến người nhận không mở được.'}</div>
+                    </div>
+                </div>
+                <div class="alert-action-btn-row">
+                    <button type="button" class="btn-redirect-unlock-action" onclick="redirectToUnlockWithSelectedFile()">
+                        <span class="btn-icon">🔓</span>
+                        <span>Chuyển sang Tab MỞ KHÓA ngay</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+function redirectToUnlockWithSelectedFile(idx) {
+    if (idx === undefined || idx < 0 || idx >= selectedLockFiles.length) {
+        idx = selectedLockFiles.findIndex(f => f._isAlreadyLocked);
+    }
+    if (idx === -1 && selectedLockFiles.length > 0) {
+        idx = 0;
+    }
+    if (idx === -1) return;
+    const file = selectedLockFiles[idx];
+    selectedUnlockFile = file;
+    selectedLockFiles.splice(idx, 1);
+    renderFileListLock();
+    switchTab('unlock');
+    renderFileListUnlock();
+    showToast(`Đã chuyển tệp "${file.name}" sang Tab MỞ KHÓA! 🔓`);
+    const pwdInput = document.getElementById('unlock-password');
+    if (pwdInput) {
+        pwdInput.focus();
+    }
 }
 
 function removeLockFile(idx) {
@@ -735,6 +860,18 @@ async function executeMobileLockFiles() {
     const pwd = document.getElementById('lock-password').value;
     if (!pwd) {
         alert("Vui lòng nhập mật khẩu!");
+        return;
+    }
+
+    const lockedFiles = selectedLockFiles.filter(f => f._isAlreadyLocked);
+    if (lockedFiles.length > 0) {
+        const first = lockedFiles[0];
+        const confirmSwitch = confirm(
+            `⚠️ CẢNH BÁO TỆP ĐÃ ĐẶT MẬT KHẨU:\n\nTệp "${first.name}" đã được khóa bảo mật trước đó.\n\nKhóa đè lần 2 sẽ làm hỏng cấu trúc tệp hoặc tạo 2 tầng mật khẩu khiến người nhận không mở được.\n\nBạn có muốn chuyển sang Tab MỞ KHÓA ngay bây giờ không?`
+        );
+        if (confirmSwitch) {
+            redirectToUnlockWithSelectedFile();
+        }
         return;
     }
 
