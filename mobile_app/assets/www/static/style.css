@@ -3168,4 +3168,19 @@ body.dark-mode .drawer-info-card {
     transform: scale(0.97);
 }
 
+.drawer-vault-locked-badge {
+    width: 100%;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
 

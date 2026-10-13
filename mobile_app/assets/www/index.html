@@ -617,7 +617,7 @@
                 <span class="drawer-menu-icon">⚙️</span>
                 <div class="drawer-menu-text">
                     <div class="drawer-menu-name">Cài Đặt Két Sắt & Quản Trị</div>
-                    <div class="drawer-menu-desc">Đổi PIN nhanh, Master Password, Vân tay</div>
+                    <div class="drawer-menu-desc" id="drawer-vault-desc">Đổi PIN nhanh, Master Password, Vân tay</div>
                 </div>
                 <span class="drawer-menu-arrow">›</span>
             </div>
@@ -659,14 +659,15 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong>v2.6.8 Mobile Pro</strong>
+                    <strong id="drawer-app-version">v2.7.2 Mobile Pro</strong>
                 </div>
             </div>
 
-            <div style="margin-top: 24px;">
-                <button type="button" class="btn-drawer-lock-now" onclick="closeAppDrawer(); lockVaultSession()">
-                    🔒 Khóa Két & Đóng Lại Ngay
-                </button>
+            <div id="drawer-vault-action-container" style="margin-top: 24px;">
+                <div class="drawer-vault-locked-badge">
+                    <span>🛡️</span>
+                    <span>Két Sắt Đang Khóa An Toàn</span>
+                </div>
             </div>
         </div>
     </div>

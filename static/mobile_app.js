@@ -77,6 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     renderSessionHistory();
     checkAppLockOnStartup();
+    if (typeof updateDrawerVaultStatus === 'function') {
+        updateDrawerVaultStatus();
+    }
 });
 initTheme();
 
@@ -264,19 +267,11 @@ function switchTab(tabName) {
         if (altText) altText.innerText = '🔑 Nhập Mật Khẩu Két Thay Vì PIN';
         closeCyberDialog(false);
         checkVaultAccess();
-
-        const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
-        if (bioEnabled && !isVaultSessionUnlocked && window.FlutterBridge) {
-            setTimeout(() => {
-                const tabVault = document.getElementById('tab-vault');
-                if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked) {
-                    triggerDeviceBiometricAuth();
-                }
-            }, 250);
-        }
+        // Không tự động quét sinh trắc học để đảm bảo người dùng luôn thấy rõ Két đang khóa.
+        // Người dùng chạm phím số PIN hoặc chạm biểu tượng [👆] trên bàn phím khi muốn xác thực.
     } else {
         // ========================================================
-        // BẤT BIẾN AN NINH: KHI CHUYỂN SANG CHỨC NĂNG KHÁC, KHÓA VÀ ĐÓNG KÉT NGAY LẬP TỨC!
+        // BẤT BIẾN AN NINH: KHI CHUYỂN SANG BẤT KỲ CHỨC NĂNG NÀO KHÁC, KHÓA VÀ ĐÓNG KÉT NGAY LẬP TỨC!
         // ========================================================
         isVaultSessionUnlocked = false;
         currentVaultPinInput = '';
@@ -289,6 +284,10 @@ function switchTab(tabName) {
             lockedView.style.display = 'block';
             updateVaultPinDots();
         }
+    }
+
+    if (typeof updateDrawerVaultStatus === 'function') {
+        updateDrawerVaultStatus();
     }
 }
 
@@ -2442,6 +2441,7 @@ function unlockVaultSuccess(method) {
         unlockedView.style.display = 'block';
         loadVaultConfigInputs();
     }
+    updateDrawerVaultStatus();
     const methodText = method ? ` qua ${method}` : '';
     showToast(`🔓 Đã xác thực${methodText} & mở Két thành công! 🛡️`);
 }
@@ -2458,6 +2458,7 @@ function lockVaultSession() {
     if (altText) altText.innerText = '🔑 Nhập Mật Khẩu Két Thay Vì PIN';
     closeCyberDialog(false);
     checkVaultAccess();
+    updateDrawerVaultStatus();
     
     // TẮT LUÔN / ĐÓNG KÉT VÀ CHUYỂN VỀ TRANG CHỦ THEO YÊU CẦU CỦA NGƯỜI DÙNG:
     switchTab('lock');
@@ -2467,8 +2468,35 @@ function lockVaultSession() {
 // ==========================================
 // APP DRAWER (SETTINGS & MENU SLIDE-OUT)
 // ==========================================
+function updateDrawerVaultStatus() {
+    const actionContainer = document.getElementById('drawer-vault-action-container');
+    const vaultDesc = document.getElementById('drawer-vault-desc');
+    const versionEl = document.getElementById('drawer-app-version');
+    if (versionEl) versionEl.textContent = 'v2.7.2 Mobile Pro';
+
+    if (actionContainer) {
+        if (isVaultSessionUnlocked) {
+            actionContainer.innerHTML = `
+                <button type="button" class="btn-drawer-lock-now" onclick="closeAppDrawer(); lockVaultSession()">
+                    🔒 Khóa Két & Đóng Lại Ngay
+                </button>
+            `;
+            if (vaultDesc) vaultDesc.innerHTML = '<span style="color: #ef4444; font-weight: 600;">● Két đang mở</span> • Đổi PIN, Master Password, Vân tay';
+        } else {
+            actionContainer.innerHTML = `
+                <div class="drawer-vault-locked-badge">
+                    <span>🛡️</span>
+                    <span>Két Sắt Đang Khóa An Toàn</span>
+                </div>
+            `;
+            if (vaultDesc) vaultDesc.innerHTML = 'Đổi PIN nhanh, Master Password, Vân tay';
+        }
+    }
+}
+
 function openAppDrawer() {
     updateDrawerThemeUI();
+    updateDrawerVaultStatus();
     const drawer = document.getElementById('app-drawer');
     const overlay = document.getElementById('app-drawer-overlay');
     if (drawer) drawer.classList.add('active');
@@ -2485,7 +2513,9 @@ function closeAppDrawer() {
 function openVaultSettingsFromMenu() {
     closeAppDrawer();
     switchTab('vault');
-    showToast('⚙️ Cài đặt Két Sắt & Mật Khẩu Quản Trị');
+    if (!isVaultSessionUnlocked) {
+        showToast('🔒 Vui lòng nhập PIN hoặc chạm Vân tay để mở Két!');
+    }
 }
 
 function openHistoryModalFromMenu() {
@@ -2802,13 +2832,6 @@ window.onAppResumed = function() {
     const tabVault = document.getElementById('tab-vault');
     if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked) {
         checkVaultAccess();
-        if (bioEnabled && window.FlutterBridge && !vaultBiometricDismissedInSession) {
-            setTimeout(() => {
-                if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked && !vaultBiometricDismissedInSession) {
-                    triggerDeviceBiometricAuth();
-                }
-            }, 350);
-        }
     }
 };
 

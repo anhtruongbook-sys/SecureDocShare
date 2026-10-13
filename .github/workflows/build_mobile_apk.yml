@@ -64,17 +64,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.1
-          name: "KryptoDoc Enterprise Vault v2.7.1 - Clean UI (Removed AI Assistant Floating Bot)"
+          tag_name: v2.7.2
+          name: "KryptoDoc Enterprise Vault v2.7.2 - Strict Vault Lock & Drawer Realtime Status Badge"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.1 (Clean UI - Removed AI Assistant Bot)
-            - **Loại Bỏ Hoàn Toàn Nút Trợ Lý AI Nổi (Floating Assistant Bot)**:
-              + Gỡ bỏ nút biểu tượng robot tròn nổi ở góc dưới bên phải màn hình theo yêu cầu của người dùng, giải phóng hoàn toàn không gian hiển thị.
-              + Loại bỏ thông báo popup "Trợ Lý KryptoDoc AI", giúp giao diện ứng dụng tối giản, tinh gọn và chuyên nghiệp.
-            - **Bất Biến An Ninh & Trải Nghiệm Hoàn Chỉnh Kế Thừa**:
-              + Tự động khóa Két sắt khi rời tab sang chức năng khác (`isVaultSessionUnlocked = false`).
-              + Kích hoạt đầy đủ chức năng Nhật ký phiên làm việc và Chuyển đổi giao diện sáng/tối trong Menu 3 gạch ngang (App Drawer).
-              + Xác thực sinh trắc học vân tay / khuôn mặt phần cứng Android và phục hồi qua Master Key 100% Offline.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.2 (Strict Vault Auto-Lock & Drawer Status)
+            - **Bất Biến Tự Động Khóa Két Sắt Khi Rời Tab**:
+              + Khi chuyển sang bất kỳ chức năng nào khác (Trang chủ, Mở khóa, Pháp y), Két sắt lập tức khóa lại 100%.
+              + Khi quay trở lại Két sắt: Luôn hiển thị màn hình Khóa và bàn phím số (không tự động kích hoạt sinh trắc học ngầm gây hiểu lầm là chưa khóa). Người dùng chủ động nhập PIN hoặc chạm biểu tượng [👆] trên bàn phím để quét vân tay.
+            - **Cập Nhật Trạng Thái Két Động Trong Menu 3 Gạch (App Drawer)**:
+              + Khi Két đã khóa: Hiển thị huy hiệu an toàn xanh `🛡️ Két Sắt Đang Khóa An Toàn` (không còn nút đỏ "Khóa Két & Đóng Lại Ngay" gây hoang mang khi Két đã đóng).
+              + Khi Két đang mở: Mới hiển thị nút đỏ `🔒 Khóa Két & Đóng Lại Ngay`.
+              + Cập nhật nhãn phiên bản chính xác: `v2.7.2 Mobile Pro`.
+            - **Kế thừa toàn diện**: Đã gỡ bỏ hoàn toàn Trợ lý AI và các nút thừa trùng lặp.
             - **Kích Hoạt Hoàn Hảo 2 Chức Năng Trong Menu 3 Gạch Ngang (App Drawer)**:
               + **Nhật Ký Phiên Làm Việc**: Chạm vào mở ngay Hộp thoại Modal Nhật Ký hiển thị danh sách các tệp tin đã xử lý trực quan, có nút xóa lịch sử và đóng nhanh.
               + **Chế Độ Giao Diện (Sáng / Tối)**: Hiển thị trạng thái giao diện hiện tại (`Sáng Phẳng` hoặc `Chế Độ Tối`) ngay trên menu, chạm vào chuyển đổi mượt mà và cập nhật tức thì.
