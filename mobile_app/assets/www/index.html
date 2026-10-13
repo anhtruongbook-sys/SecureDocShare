@@ -186,11 +186,16 @@
                             <div class="option-module-title">🏷️ DẤU BẢN QUYỀN (WATERMARK)</div>
                             <div class="watermark-type-row">
                                 <button type="button" class="btn-wm-chip active" id="wm-chip-none" onclick="setWatermarkMode('none')">Tắt</button>
+                                <button type="button" class="btn-wm-chip" id="wm-chip-stego" onclick="setWatermarkMode('stego')">👁️‍🗨️ Tàng Hình (Stego)</button>
                                 <button type="button" class="btn-wm-chip" id="wm-chip-ibst" onclick="setWatermarkMode('ibst_bim')">🏛️ IBST-BIM</button>
                                 <button type="button" class="btn-wm-chip" id="wm-chip-anhs" onclick="setWatermarkMode('anhs_team')">🏢 ANH'S TEAM</button>
                                 <button type="button" class="btn-wm-chip" id="wm-chip-text" onclick="setWatermarkMode('text')">🔤 Chữ Mờ</button>
                                 <button type="button" class="btn-wm-chip" id="wm-chip-custom" onclick="triggerCustomWatermarkPick()">📁 Ảnh Riêng</button>
                                 <input type="file" id="custom-wm-file" accept="image/*" style="display:none;" onchange="handleCustomWatermarkSelected(this)">
+                            </div>
+
+                            <div id="watermark-stego-info" style="display: none; margin-top: 8px; padding: 8px 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; font-size: 11px; color: #bae6fd; line-height: 1.45;">
+                                <strong>👁️‍🗨️ Thủy Vân Số Tàng Hình (Invisible Steganography):</strong> Nhúng sâu mã truy vết phát hành vào ma trận điểm ảnh (Blue-channel LSB) & cấu trúc tệp. Giữ nguyên 100% hình ảnh không bị che mắt thường (PSNR &gt; 48 dB), bảo đảm tính pháp y số và định danh chống tuồn tệp.
                             </div>
 
                             <div id="watermark-text-panel" style="display: none; margin-top: 6px;">

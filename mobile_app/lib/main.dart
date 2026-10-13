@@ -472,9 +472,10 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
               final outTempPath = '${tempDir.path}/$outZipName';
               final useZipCrypto = data['use_zipcrypto'] as bool? ?? false;
 
-              // Xử lý chèn watermark nếu có cho hình ảnh trước khi nén ZIP
+              // Xử lý chèn watermark & thủy vân số tàng hình nếu có cho hình ảnh trước khi nén ZIP
               List<String> finalSrcPaths = [];
-              if (watermarkMode != 'none' && Platform.isAndroid) {
+              final hasStegoGlobal = enableManifest || recipientName.isNotEmpty || releaseCode.isNotEmpty || watermarkMode == 'stego';
+              if ((watermarkMode != 'none' || hasStegoGlobal) && Platform.isAndroid) {
                 for (final p in srcPaths) {
                   final fn = p.split(Platform.pathSeparator).last;
                   final isImg = RegExp(r'\.(png|jpe?g|webp|bmp)$', caseSensitive: false).hasMatch(fn);
@@ -487,6 +488,12 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                         'watermark': watermark,
                         'watermarkImageBase64': watermarkImageB64,
                         'watermarkOpacity': watermarkOpacity,
+                        'recipientName': recipientName,
+                        'releaseCode': releaseCode,
+                        'enableManifest': enableManifest,
+                        'originalName': fn,
+                        'enableStego': hasStegoGlobal,
+                        'watermarkMode': watermarkMode,
                       });
                       finalSrcPaths.add(wmImgTemp);
                     } catch (_) {
@@ -680,10 +687,11 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                   rethrow;
                 }
               } else if (isImage && Platform.isAndroid) {
-                // CHÈN WATERMARK NATIVE CHO HÌNH ẢNH (PNG, JPG, WEBP, BMP)
+                // CHÈN WATERMARK & THỦY VÂN SỐ TÀNG HÌNH CHO HÌNH ẢNH (PNG, JPG, WEBP, BMP)
                 try {
                   String imageToPackage = srcPath;
-                  if (watermarkMode != 'none') {
+                  final hasStego = enableManifest || recipientName.isNotEmpty || releaseCode.isNotEmpty || watermarkMode == 'stego';
+                  if (watermarkMode != 'none' || hasStego) {
                     final wmImgTemp = '${tempDir.path}/${baseName}_wm$ext';
                     await _nativeChannel.invokeMethod('watermarkImage', {
                       'srcPath': srcPath,
@@ -691,6 +699,12 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                       'watermark': watermark,
                       'watermarkImageBase64': watermarkImageB64,
                       'watermarkOpacity': watermarkOpacity,
+                      'recipientName': recipientName,
+                      'releaseCode': releaseCode,
+                      'enableManifest': enableManifest,
+                      'originalName': fileName,
+                      'enableStego': hasStego,
+                      'watermarkMode': watermarkMode,
                     });
                     imageToPackage = wmImgTemp;
                   }

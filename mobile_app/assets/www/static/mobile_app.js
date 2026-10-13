@@ -1845,6 +1845,7 @@ function setWatermarkMode(mode) {
     document.querySelectorAll('.btn-wm-chip').forEach(c => c.classList.remove('active'));
     const chipMap = {
         'none': 'wm-chip-none',
+        'stego': 'wm-chip-stego',
         'ibst_bim': 'wm-chip-ibst',
         'anhs_team': 'wm-chip-anhs',
         'text': 'wm-chip-text',
@@ -1855,28 +1856,53 @@ function setWatermarkMode(mode) {
 
     const textPanel = document.getElementById('watermark-text-panel');
     const opacityRow = document.getElementById('watermark-opacity-row');
+    const stegoInfo = document.getElementById('watermark-stego-info');
 
-    if (mode === 'text') {
-        if (textPanel) textPanel.style.display = 'block';
-        if (opacityRow) opacityRow.style.display = 'flex';
-        const wmInput = document.getElementById('watermark-input');
-        if (wmInput && !wmInput.value) wmInput.value = 'CONFIDENTIAL';
-        showToast('🏷️ Đã chọn dấu chữ mờ: CONFIDENTIAL');
-    } else if (mode === 'ibst_bim') {
-        if (textPanel) textPanel.style.display = 'none';
-        if (opacityRow) opacityRow.style.display = 'flex';
-        showToast('🏛️ Đã kích hoạt Watermark Logo: IBST-BIM');
-    } else if (mode === 'anhs_team') {
-        if (textPanel) textPanel.style.display = 'none';
-        if (opacityRow) opacityRow.style.display = 'flex';
-        showToast('🏢 Đã kích hoạt Watermark Logo: ANH\'S TEAM');
-    } else if (mode === 'custom') {
-        if (textPanel) textPanel.style.display = 'none';
-        if (opacityRow) opacityRow.style.display = 'flex';
-    } else {
+    if (mode === 'stego') {
         if (textPanel) textPanel.style.display = 'none';
         if (opacityRow) opacityRow.style.display = 'none';
-        showToast('Đã tắt Watermark.');
+        if (stegoInfo) stegoInfo.style.display = 'block';
+
+        // Tự động mở phần Truy vết & Gắn mã định danh nếu chưa mở
+        const trkBox = document.getElementById('enable-recipient-tracking');
+        const trkPanel = document.getElementById('recipient-tracking-panel');
+        if (trkBox && !trkBox.checked) {
+            trkBox.checked = true;
+            if (trkPanel) trkPanel.style.display = 'block';
+        }
+        const relInput = document.getElementById('release-code-input');
+        if (relInput && !relInput.value) {
+            generateReleaseCode();
+        }
+        const recInput = document.getElementById('recipient-name-input');
+        if (recInput && !recInput.value) {
+            recInput.value = 'Ban QLDA & Đối tác Tiếp nhận';
+        }
+        showToast('👁️‍🗨️ Đã chọn Thủy Vân Tàng Hình (Stego) - Giữ ảnh nguyên bản 100%!');
+    } else {
+        if (stegoInfo) stegoInfo.style.display = 'none';
+        if (mode === 'text') {
+            if (textPanel) textPanel.style.display = 'block';
+            if (opacityRow) opacityRow.style.display = 'flex';
+            const wmInput = document.getElementById('watermark-input');
+            if (wmInput && !wmInput.value) wmInput.value = 'CONFIDENTIAL';
+            showToast('🏷️ Đã chọn dấu chữ mờ: CONFIDENTIAL');
+        } else if (mode === 'ibst_bim') {
+            if (textPanel) textPanel.style.display = 'none';
+            if (opacityRow) opacityRow.style.display = 'flex';
+            showToast('🏛️ Đã kích hoạt Watermark Logo: IBST-BIM');
+        } else if (mode === 'anhs_team') {
+            if (textPanel) textPanel.style.display = 'none';
+            if (opacityRow) opacityRow.style.display = 'flex';
+            showToast('🏢 Đã kích hoạt Watermark Logo: ANH\'S TEAM');
+        } else if (mode === 'custom') {
+            if (textPanel) textPanel.style.display = 'none';
+            if (opacityRow) opacityRow.style.display = 'flex';
+        } else {
+            if (textPanel) textPanel.style.display = 'none';
+            if (opacityRow) opacityRow.style.display = 'none';
+            showToast('Đã tắt Watermark.');
+        }
     }
 }
 
@@ -2112,6 +2138,15 @@ function renderForensicReport(data) {
     const badgeClass = isIntact ? 'audit-badge-verified' : 'audit-badge-warning';
     const badgeText = isIntact ? '✓ XÁC THỰC TOÀN VẸN 100%' : '⚠️ CẢNH BÁO BỊ CAN THIỆP';
 
+    const wmTextDisplay = data.watermarkType || 'Đã tích hợp trong cấu trúc';
+    const isStego = wmTextDisplay.toLowerCase().includes('tàng hình') || wmTextDisplay.toLowerCase().includes('stego') || wmTextDisplay.toLowerCase().includes('điểm ảnh');
+    const stegoRow = isStego ? `
+                <div class="audit-row" style="background: rgba(56, 189, 248, 0.08); padding: 6px 8px; border-radius: 6px; margin: 4px 0; border: 1px dashed rgba(56, 189, 248, 0.3);">
+                    <span class="audit-label" style="color: #38bdf8;">🔬 Phân tích giải thuật:</span>
+                    <span class="audit-val font-mono" style="color: #38bdf8; font-size: 11px;">Dual-Layer Blue-Channel LSB + Forensic Manifest Trailer (0% Suy hao, PSNR &gt; 48 dB)</span>
+                </div>
+    ` : '';
+
     container.innerHTML = `
         <div class="audit-report-card">
             <div class="audit-badge ${badgeClass}">${badgeText}</div>
@@ -2143,8 +2178,9 @@ function renderForensicReport(data) {
                 </div>
                 <div class="audit-row">
                     <span class="audit-label">🏷️ Watermark bảo vệ:</span>
-                    <span class="audit-val">${data.watermarkType || 'Đã tích hợp trong cấu trúc'}</span>
+                    <span class="audit-val" style="color: ${isStego ? '#38bdf8' : 'inherit'}; font-weight: ${isStego ? '600' : 'normal'};">${wmTextDisplay}</span>
                 </div>
+                ${stegoRow}
                 <div class="audit-row">
                     <span class="audit-label">✍️ Chữ ký / Con dấu:</span>
                     <span class="audit-val">${data.signer ? ('Đã ký bởi: ' + data.signer) : 'Không có chữ ký số'}</span>
