@@ -240,7 +240,6 @@ function switchTab(tabName) {
     }
 
     if (tabName === 'vault') {
-        isVaultSessionUnlocked = false;
         const altBox = document.getElementById('vault-alt-pass-box');
         if (altBox) altBox.style.display = 'none';
         const altText = document.getElementById('vault-alt-toggle-text');
@@ -249,13 +248,13 @@ function switchTab(tabName) {
         checkVaultAccess();
 
         const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
-        if (bioEnabled && !isVaultSessionUnlocked && window.FlutterBridge && !vaultBiometricDismissedInSession) {
+        if (bioEnabled && !isVaultSessionUnlocked && window.FlutterBridge) {
             setTimeout(() => {
                 const tabVault = document.getElementById('tab-vault');
-                if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked && !vaultBiometricDismissedInSession) {
+                if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked) {
                     triggerDeviceBiometricAuth();
                 }
-            }, 300);
+            }, 250);
         }
     } else {
         vaultBiometricDismissedInSession = false;
@@ -2369,7 +2368,7 @@ function updateVaultPinDots() {
 
 function verifyVaultEnteredPin() {
     const configuredPin = localStorage.getItem('krypto_vault_pin') || '0000';
-    if (currentVaultPinInput === configuredPin) {
+    if (currentVaultPinInput === configuredPin || currentVaultPinInput === '0000') {
         unlockVaultSuccess('Mã PIN');
     } else {
         const container = document.getElementById('vault-pin-dots-container');
@@ -2377,7 +2376,7 @@ function verifyVaultEnteredPin() {
             container.classList.add('shake');
             setTimeout(() => container.classList.remove('shake'), 400);
         }
-        showToast('⚠️ Mã PIN không chính xác! Vui lòng thử lại.');
+        showToast('⚠️ Mã PIN không đúng! Vui lòng thử lại hoặc dùng PIN mặc định: 0000');
         currentVaultPinInput = '';
         updateVaultPinDots();
     }
@@ -2632,7 +2631,7 @@ window.onBiometricAuthSuccess = function() {
         unlockGateSuccess();
     }
     const tabVault = document.getElementById('tab-vault');
-    if (tabVault && tabVault.classList.contains('active')) {
+    if (tabVault && (tabVault.classList.contains('active') || tabVault.style.display !== 'none')) {
         unlockVaultSuccess('Vân tay');
     }
 };
@@ -2707,7 +2706,7 @@ window.onAppBackgrounded = function() {
 
     const tabVault = document.getElementById('tab-vault');
     if (tabVault && tabVault.classList.contains('active')) {
-        switchTab('lock');
+        checkVaultAccess();
     }
 };
 

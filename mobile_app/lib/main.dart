@@ -338,6 +338,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
   static const MethodChannel _nativeChannel = MethodChannel('com.securedoc.share/native_engine');
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _isBiometricInProgress = false;
   final Map<String, String> _cachedFilePaths = {};
   String? _latestPickedFilePath;
   String? _latestPickedFileName;
@@ -358,7 +359,12 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.hidden) {
+    if (_isBiometricInProgress) {
+      // Đang hiển thị hộp thoại sinh trắc học vân tay: Không kích hoạt background lock
+      return;
+    }
+    // Chỉ kích hoạt onAppBackgrounded khi app THỰC SỰ bị thu nhỏ sang paused/hidden
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       _controller.runJavaScript("if (window.onAppBackgrounded) window.onAppBackgrounded();");
     } else if (state == AppLifecycleState.resumed) {
       _controller.runJavaScript("if (window.onAppResumed) window.onAppResumed();");
@@ -1027,19 +1033,23 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
             // CHỨC NĂNG 7: XÁC THỰC SINH TRẮC HỌC PHẦN CỨNG (VÂN TAY / FACE UNLOCK)
             // -----------------------------------------------------------------
             if (action == 'authenticate_biometrics') {
+              _isBiometricInProgress = true;
               if (Platform.isAndroid) {
                 try {
                   final bool success = await _nativeChannel.invokeMethod('authenticateBiometrics') ?? false;
+                  _isBiometricInProgress = false;
                   if (success) {
                     await _controller.runJavaScript("if (window.onBiometricAuthSuccess) window.onBiometricAuthSuccess();");
                   } else {
                     await _controller.runJavaScript("if (window.onBiometricAuthFailed) window.onBiometricAuthFailed('Xác thực bị hủy bỏ');");
                   }
                 } catch (bioErr) {
+                  _isBiometricInProgress = false;
                   final errMsg = bioErr.toString().replaceAll("'", r"\'");
                   await _controller.runJavaScript("if (window.onBiometricAuthFailed) window.onBiometricAuthFailed('$errMsg');");
                 }
               } else {
+                _isBiometricInProgress = false;
                 await _controller.runJavaScript("if (window.onBiometricAuthSuccess) window.onBiometricAuthSuccess();");
               }
               return;

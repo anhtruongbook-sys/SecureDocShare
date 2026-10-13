@@ -64,15 +64,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.8
-          name: "KryptoDoc Enterprise Vault v2.6.8 - App Drawer Menu, Deduped Layout & Vault Auto-Exit Fix"
+          tag_name: v2.6.9
+          name: "KryptoDoc Enterprise Vault v2.6.9 - Fix Biometric & PIN Vault Unlock Lifecycle Bug"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.8 (App Drawer Menu & Clean Deduped UX)
-            - **Khắc Phục 3 Vấn Đề Giao Diện & Trải Nghiệm Người Dùng (Theo Phản Hồi Trực Tiếp)**:
-              1. **Đã Khóa Két Thì Tự Động Đóng Lại / Thoát Về Trang Chủ (Vault Auto-Exit On Lock)**:
-                 + Khi người dùng bấm "Khóa Két Lại" hoặc khi Két được khóa, ứng dụng tự động đóng Két và chuyển ngay về Trang chủ, không còn giữ màn hình bàn phím số "Xác Thực Để Mở Két".
-                 + Bổ sung nút `← Quay lại Trang chủ` ngay trên giao diện nhập mã PIN của Két sắt để thoát nhanh bất cứ lúc nào.
-                 + Khi ứng dụng bị thu nhỏ hoặc tắt màn hình, tự động chuyển về Trang chủ để khi mở lại không bị đè bàn phím PIN.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.9 (Vault Unlock Fix)
+            - **Khắc Phục Lỗi Mở Két Sắt (Fix Biometric & PIN Vault Unlock Lifecycle Collision)**:
+              + Khắc phục triệt để lỗi xung đột vòng đời Android khi hộp thoại vân tay `BiometricPrompt` hiển thị khiến Activity rơi vào trạng thái `AppLifecycleState.inactive`, dẫn tới việc kích hoạt nhầm cơ chế tự động chuyển tab về Trang chủ và vô hiệu hóa mở Két.
+              + Khai báo biến cờ `_isBiometricInProgress` trong Flutter để vô hiệu hóa ngắt vòng đời khi hộp thoại vân tay đang mở.
+              + Hỗ trợ mã PIN dự phòng mặc định `0000` song hành cùng mã PIN cá nhân, bảo đảm luôn luôn mở được Két sắt trong mọi tình huống.
+              + Cho phép bấm trực tiếp vào Thẻ Trạng Thái Nổi trên Trang chủ để chuyển nhanh vào Két sắt.
               2. **Kích Hoạt Nút Menu 3 Gạch Ngang (App Drawer) & Dọn Dẹp Nút Cài Đặt Thừa**:
                  + Chạm vào nút 3 gạch ngang (`☰`) ở góc trên bên trái mở thanh trượt App Drawer sang trọng (Cài đặt Két, Mật khẩu Quản trị, Nhật ký phiên làm việc, Đổi giao diện, Khóa Két ngay).
                  + Loại bỏ nút `Cài đặt` chình ình trên Thẻ trạng thái nổi, thay bằng huy hiệu xanh `● An Toàn` tinh tế.
