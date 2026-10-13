@@ -50,6 +50,9 @@
                 </div>
             </div>
             <div class="header-badges">
+                <button type="button" class="btn-theme-toggle" id="vault-settings-btn" onclick="openVaultSettingsModal()" title="Cài đặt Két Bảo Mật & Master Key">
+                    <span>⚙️</span>
+                </button>
                 <button type="button" class="btn-theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Đổi chế độ Sáng / Tối">
                     <span id="theme-icon">🌙</span>
                 </button>
@@ -58,21 +61,28 @@
             </div>
         </header>
 
-        <!-- Navigation Tabs: Segmented Control -->
-        <div class="tab-nav">
-            <button type="button" class="tab-btn active" onclick="switchTab('lock')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <!-- Navigation Tabs: Segmented Control 3 Tabs -->
+        <div class="tab-nav tab-nav-trio">
+            <button type="button" class="tab-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
-                <span>MÃ HÓA & KHÓA</span>
+                <span>MÃ HÓA</span>
             </button>
-            <button type="button" class="tab-btn" onclick="switchTab('unlock')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <button type="button" class="tab-btn" id="tab-btn-unlock" onclick="switchTab('unlock')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                 </svg>
                 <span>MỞ KHÓA</span>
+            </button>
+            <button type="button" class="tab-btn" id="tab-btn-audit" onclick="switchTab('audit')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <span>TRUY VẾT</span>
             </button>
         </div>
 
@@ -127,6 +137,13 @@
                             <input type="radio" name="protection-level" value="view_only_restricted" style="display: none;">
                             <span class="segment-icon">👁️</span>
                             <span class="segment-text">Chỉ Xem (Cấm Copy)</span>
+                        </label>
+                    </div>
+                    <!-- Phân quyền in ấn khi chọn Chỉ xem -->
+                    <div class="allow-print-box" id="allow-print-box" style="display: none; margin-top: 6px; padding: 6px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; margin: 0; color: var(--text-title); font-weight: 500;">
+                            <input type="checkbox" id="allow-print-checkbox" checked style="width: 15px; height: 15px; cursor: pointer;">
+                            <span>🖨️ Cho phép in ấn (Bỏ chọn nếu muốn CẤM IN tuyệt đối)</span>
                         </label>
                     </div>
                 </div>
@@ -185,33 +202,117 @@
                     <p class="pass-subnote" id="pass-subnote" style="display: none; font-size: 11px; margin-top: 4px;"></p>
                 </div>
 
-                <!-- Tùy Chọn Nâng Cao: Compact Collapsible Accordion -->
+                <!-- Tùy Chọn Nâng Cao: Modular Suite Accordion -->
                 <div class="advanced-options-accordion">
                     <div class="advanced-options-header" onclick="toggleAdvancedOptions()">
-                        <span class="adv-title">⚙️ Tùy Chọn Nâng Cao (Đóng Dấu Mờ, Nén Tệp)</span>
+                        <span class="adv-title">⚙️ Tùy Chọn Bảo Mật Nâng Cao (Watermark, Ký Số, Truy Vết)</span>
                         <span class="adv-arrow" id="adv-arrow">▾</span>
                     </div>
                     <div class="advanced-options-body" id="adv-body" style="display: none;">
-                        <div class="feature-toggle-row" onclick="toggleWatermarkOption()">
-                            <div class="feature-toggle-left">
-                                <input type="checkbox" id="enable-watermark-checkbox" onclick="event.stopPropagation(); toggleWatermarkOption()">
-                                <label for="enable-watermark-checkbox" style="cursor: pointer; margin: 0; font-size: 11px; font-weight: 600; color: var(--text-title);">
-                                    🏷️ Đóng Dấu Bản Quyền Mờ (Watermark)
-                                </label>
+                        
+                        <!-- MODULE A: WATERMARK & LOGO BẢN QUYỀN -->
+                        <div class="option-module-box">
+                            <div class="option-module-title">🏷️ DẤU BẢN QUYỀN (WATERMARK)</div>
+                            <div class="watermark-type-row">
+                                <button type="button" class="btn-wm-chip active" id="wm-chip-none" onclick="setWatermarkMode('none')">Tắt</button>
+                                <button type="button" class="btn-wm-chip" id="wm-chip-ibst" onclick="setWatermarkMode('ibst_bim')">🏛️ IBST-BIM</button>
+                                <button type="button" class="btn-wm-chip" id="wm-chip-anhs" onclick="setWatermarkMode('anhs_team')">🏢 ANH'S TEAM</button>
+                                <button type="button" class="btn-wm-chip" id="wm-chip-text" onclick="setWatermarkMode('text')">🔤 Chữ Mờ</button>
+                                <button type="button" class="btn-wm-chip" id="wm-chip-custom" onclick="triggerCustomWatermarkPick()">📁 Ảnh Riêng</button>
+                                <input type="file" id="custom-wm-file" accept="image/*" style="display:none;" onchange="handleCustomWatermarkSelected(this)">
                             </div>
-                            <span class="feature-toggle-tag" id="watermark-tag">Tùy chọn</span>
-                        </div>
-                        <div id="watermark-detail-panel" style="display: none; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
-                            <input type="text" id="watermark-input" placeholder="Nội dung dấu mờ (BẢN MẬT, NỘI BỘ)..." style="font-size: 11.5px; padding: 6px 8px; margin-bottom: 4px;">
-                            <div class="quick-pass-suggestions" style="margin-top: 2px;">
-                                <span class="sugg-title">Mẫu:</span>
-                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN MẬT - NỘI BỘ')">BẢN MẬT</button>
-                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('CHỈ LƯU HÀNH NỘI BỘ')">NỘI BỘ</button>
-                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN THẢO - TUYỆT MẬT')">TUYỆT MẬT</button>
-                                <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN QUYỀN THIẾT KẾ')">BẢN QUYỀN</button>
+
+                            <div id="watermark-text-panel" style="display: none; margin-top: 6px;">
+                                <input type="text" id="watermark-input" placeholder="Nội dung chữ mờ (CONFIDENTIAL, BẢN MẬT)..." style="font-size: 11.5px; padding: 6px 8px;">
+                                <div class="quick-pass-suggestions" style="margin-top: 3px;">
+                                    <span class="sugg-title">Mẫu:</span>
+                                    <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('CONFIDENTIAL')">CONFIDENTIAL</button>
+                                    <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN MẬT - NỘI BỘ')">BẢN MẬT</button>
+                                    <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('BẢN DỰ THẢO')">DỰ THẢO</button>
+                                    <button type="button" class="btn-chip-micro" onclick="applyWatermarkPreset('CHỈ LƯU HÀNH NỘI BỘ')">NỘI BỘ</button>
+                                </div>
+                            </div>
+
+                            <div id="watermark-opacity-row" class="watermark-opacity-row" style="display: none; margin-top: 6px;">
+                                <span class="micro-label">Độ mờ:</span>
+                                <div class="opacity-chips">
+                                    <button type="button" class="btn-op-chip active" id="op-15" onclick="setWatermarkOpacity(0.15)">15% (Mờ nhẹ)</button>
+                                    <button type="button" class="btn-op-chip" id="op-25" onclick="setWatermarkOpacity(0.25)">25% (Chuẩn)</button>
+                                    <button type="button" class="btn-op-chip" id="op-35" onclick="setWatermarkOpacity(0.35)">35% (Rõ)</button>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- MODULE B: TRUY VẾT PHÁT HÀNH & CHỐNG XÓA PROPERTIES -->
+                        <div class="option-module-box">
+                            <div class="feature-toggle-row" onclick="toggleRecipientTracking()">
+                                <div class="feature-toggle-left">
+                                    <input type="checkbox" id="enable-recipient-tracking" onclick="event.stopPropagation(); toggleRecipientTracking()">
+                                    <label for="enable-recipient-tracking" style="cursor: pointer; margin: 0; font-size: 11px; font-weight: 600; color: var(--text-title);">
+                                        🎯 Gắn Mã Định Danh & Truy Vết Người Nhận
+                                    </label>
+                                </div>
+                                <span class="feature-toggle-tag">Chống tuồn file</span>
+                            </div>
+                            <div id="recipient-tracking-panel" style="display: none; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
+                                <div class="dual-inputs-row">
+                                    <div class="input-col">
+                                        <label class="micro-label">Tên đối tượng tiếp nhận:</label>
+                                        <input type="text" id="recipient-name-input" placeholder="VD: Ban QLDA ABC, Nhà thầu X...">
+                                    </div>
+                                    <div class="input-col">
+                                        <div class="label-with-mini-btn">
+                                            <label class="micro-label">Mã phát hành:</label>
+                                            <button type="button" class="btn-mini-gen" onclick="generateReleaseCode()">⚡ Tạo mã</button>
+                                        </div>
+                                        <input type="text" id="release-code-input" placeholder="KD-2026-X89A">
+                                    </div>
+                                </div>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 10.5px; color: var(--text-muted); margin-top: 5px;">
+                                    <input type="checkbox" id="enable-tamper-manifest" checked style="width: 14px; height: 14px; margin: 0;">
+                                    <span>🛡️ Nhúng dấu vết ẩn chống xóa Properties & chống đổi tên</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- MODULE C: CHỮ KÝ SỐ & CON DẤU ĐIỆN TỬ -->
+                        <div class="option-module-box">
+                            <div class="feature-toggle-row" onclick="toggleDigitalSignatureOption()">
+                                <div class="feature-toggle-left">
+                                    <input type="checkbox" id="enable-digital-signature" onclick="event.stopPropagation(); toggleDigitalSignatureOption()">
+                                    <label for="enable-digital-signature" style="cursor: pointer; margin: 0; font-size: 11px; font-weight: 600; color: var(--text-title);">
+                                        ✍️ Chèn Chữ Ký Số & Con Dấu Điện Tử
+                                    </label>
+                                </div>
+                                <span class="feature-toggle-tag">PAdES</span>
+                            </div>
+                            <div id="digital-signature-panel" style="display: none; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
+                                <div class="sig-mode-chips">
+                                    <button type="button" class="btn-sig-chip active" id="sig-mode-vault" onclick="setSignatureMode('vault')">🛡️ Mộc Két KryptoDoc</button>
+                                    <button type="button" class="btn-sig-chip" id="sig-mode-custom-img" onclick="triggerPickSignatureImage()">🖼️ Tải Ảnh Con Dấu/Chữ Ký</button>
+                                    <button type="button" class="btn-sig-chip" id="sig-mode-p12" onclick="triggerPickCertFile()">🔑 Chứng Thư .P12/.PFX</button>
+                                    <input type="file" id="sig-image-file" accept="image/*" style="display:none;" onchange="handleSignatureImageSelected(this)">
+                                    <input type="file" id="sig-cert-file" accept=".p12,.pfx" style="display:none;" onchange="handleCertFileSelected(this)">
+                                </div>
+                                <div class="dual-inputs-row" style="margin-top: 5px;">
+                                    <div class="input-col">
+                                        <label class="micro-label">Người ký / Đơn vị:</label>
+                                        <input type="text" id="signer-name-input" placeholder="VD: KS. Nguyễn Văn A">
+                                    </div>
+                                    <div class="input-col">
+                                        <label class="micro-label">Lý do ký:</label>
+                                        <input type="text" id="signing-reason-input" placeholder="Phê duyệt phát hành">
+                                    </div>
+                                </div>
+                                <div class="sig-position-row" style="margin-top: 5px;">
+                                    <span class="micro-label">Vị trí đóng dấu:</span>
+                                    <label class="radio-label-micro"><input type="radio" name="sig-pos" value="last_page" checked> Trang cuối</label>
+                                    <label class="radio-label-micro"><input type="radio" name="sig-pos" value="all_pages"> Tất cả các trang</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MODULE D: NÉN TỐI ƯU DUNG LƯỢNG -->
                         <div class="compress-toggle-row" style="margin-top: 6px;">
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: var(--text-muted); margin: 0;">
                                 <input type="checkbox" id="compress-pdf-checkbox" checked style="width: auto; margin: 0; cursor: pointer;">
@@ -297,6 +398,50 @@
             </div>
         </div>
 
+        <!-- ==================== TAB 3: TRUY VẾT & KIỂM ĐỊNH PHÁP Y ==================== -->
+        <div id="tab-audit" class="tab-content" style="display: none;">
+            <div class="dropzone-card" id="dropzone-audit" onclick="triggerPickFiles('audit')">
+                <input type="file" id="file-input-audit" accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'audit')">
+                <div class="dropzone-inner">
+                    <div class="upload-icon" style="color: #3b82f6; background: rgba(59, 130, 246, 0.15);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <div class="dropzone-text-group">
+                        <h3>Chạm để chọn tệp cần kiểm định</h3>
+                        <p>Kể cả tệp đã bị đổi tên hoặc xóa sạch thuộc tính (Properties)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="file-list-audit" class="file-list" style="display: none;"></div>
+
+            <div class="card settings-card" id="settings-card-audit">
+                <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px; line-height: 1.45;">
+                    💡 Động cơ Pháp y số sẽ quét sâu cấu trúc tệp (PDF Catalog, OpenXML Manifest) để khôi phục mã định danh phát hành, tên người nhận và tính toàn vẹn nội dung.
+                </p>
+                <button type="button" class="btn-primary btn-submit-modern" id="btn-audit-submit" onclick="executeMobileForensicAudit()" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span>QUÉT DẤU VẾT & TRUY VẾT NGUỒN GỐC</span>
+                </button>
+            </div>
+
+            <div id="results-audit" class="card results-card" style="display: none;">
+                <div class="results-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <h3>Báo Cáo Kiểm Định Pháp Y</h3>
+                </div>
+                <div id="results-content-audit" class="audit-report-container"></div>
+            </div>
+        </div>
+
         <!-- ==================== SESSION HISTORY CARD ==================== -->
         <div class="card history-card" id="history-card">
             <div class="history-header" onclick="toggleHistoryDrawer()">
@@ -358,7 +503,112 @@
         </div>
     </div>
 
+    <!-- Vault Settings Modal (Cài đặt két bảo mật, Master Pass & PIN) -->
+    <div id="vault-settings-modal" class="cyber-dialog-overlay" style="display: none;" onclick="handleVaultSettingsOverlayClick(event)">
+        <div class="cyber-dialog-card vault-settings-card" id="vault-settings-card">
+            <div class="cyber-dialog-glow"></div>
+            <div class="vault-modal-header">
+                <h3>⚙️ Cài Đặt Két & Master Key</h3>
+                <button type="button" class="btn-modal-close" onclick="closeVaultSettingsModal()">✕</button>
+            </div>
+            <div class="vault-modal-body">
+                <!-- App Lock Master Password -->
+                <div class="vault-setting-group">
+                    <label class="micro-label">MẬT KHẨU KÉT / MASTER PASS:</label>
+                    <input type="password" id="setting-master-password" placeholder="Mật khẩu vạn năng quản trị viên...">
+                    <span class="setting-subtext">Dùng để mở khóa ứng dụng và cứu hộ tất cả các tệp khi cần.</span>
+                </div>
+
+                <!-- 4-Digit Quick PIN -->
+                <div class="vault-setting-group" style="margin-top: 10px;">
+                    <label class="micro-label">MÃ PIN NHANH (4 - 6 SỐ):</label>
+                    <input type="number" id="setting-quick-pin" placeholder="Ví dụ: 1234 hoặc 888888" maxlength="6">
+                    <span class="setting-subtext">Mở két 1 chạm nhanh trên điện thoại không cần gõ dài.</span>
+                </div>
+
+                <!-- Hardware Biometric Toggle -->
+                <div class="vault-setting-group" style="margin-top: 10px;">
+                    <label class="setting-toggle-row">
+                        <div class="toggle-info">
+                            <span class="toggle-name">👆 Sinh Trắc Học Phần Cứng</span>
+                            <span class="toggle-desc">Sử dụng Cảm biến vân tay hoặc Nhận diện khuôn mặt</span>
+                        </div>
+                        <input type="checkbox" id="setting-biometric-toggle" checked style="width: 18px; height: 18px; cursor: pointer;">
+                    </label>
+                </div>
+
+                <!-- Auto Lock on Exit -->
+                <div class="vault-setting-group" style="margin-top: 8px;">
+                    <label class="setting-toggle-row">
+                        <div class="toggle-info">
+                            <span class="toggle-name">🔒 Tự Động Khóa Két Khi Thoát App</span>
+                            <span class="toggle-desc">Yêu cầu xác thực lại ngay khi mở lại ứng dụng</span>
+                        </div>
+                        <input type="checkbox" id="setting-autolock-toggle" checked style="width: 18px; height: 18px; cursor: pointer;">
+                    </label>
+                </div>
+            </div>
+            <div class="vault-modal-footer">
+                <button type="button" class="btn-cyber-dialog-primary" onclick="saveVaultSettings()">
+                    <span>Lưu Cấu Hình Két Bảo Mật</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cyber Lock Screen Gate (Màn hình khóa bảo vệ ứng dụng khi mở app) -->
+    <div id="cyber-lock-gate" class="cyber-lock-gate" style="display: none;">
+        <div class="lock-gate-inner">
+            <div class="lock-gate-badge">
+                <div class="lock-aura-glow"></div>
+                <div class="lock-icon-shield">🛡️</div>
+            </div>
+            <h2 class="lock-gate-title">KryptoDoc Vault</h2>
+            <p class="lock-gate-subtitle" id="lock-gate-subtitle">Xác thực vân tay, khuôn mặt hoặc nhập mã PIN</p>
+
+            <!-- PIN Display Dots -->
+            <div class="pin-dots-container" id="pin-dots-container">
+                <div class="pin-dot" id="dot-0"></div>
+                <div class="pin-dot" id="dot-1"></div>
+                <div class="pin-dot" id="dot-2"></div>
+                <div class="pin-dot" id="dot-3"></div>
+            </div>
+
+            <!-- Numeric Keypad -->
+            <div class="cyber-pin-pad">
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('1')">1</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('2')">2</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('3')">3</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('4')">4</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('5')">5</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('6')">6</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('7')">7</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('8')">8</button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('9')">9</button>
+                <button type="button" class="btn-pin-key btn-pin-biometric" onclick="triggerDeviceBiometricAuth()" title="Xác thực vân tay / khuôn mặt">
+                    <span>👆</span>
+                </button>
+                <button type="button" class="btn-pin-key" onclick="pressPinDigit('0')">0</button>
+                <button type="button" class="btn-pin-key btn-pin-del" onclick="deletePinDigit()" title="Xóa">
+                    <span>⌫</span>
+                </button>
+            </div>
+
+            <!-- Alternative unlock by password -->
+            <button type="button" class="btn-unlock-by-pass" onclick="togglePassUnlockAlternative()">
+                <span id="alt-unlock-text">Sử dụng Mật khẩu thay vì PIN</span>
+            </button>
+            <div id="alt-pass-box" style="display: none; margin-top: 10px; width: 100%; max-width: 260px;">
+                <input type="password" id="gate-alt-password" placeholder="Nhập mật khẩu két..." style="width: 100%; text-align: center;">
+                <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 6px; width: 100%;" onclick="submitGatePassword()">
+                    <span>Mở Khóa Bằng Mật Khẩu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="static/qrcode.min.js"></script>
+    <script src="static/watermark_presets.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>

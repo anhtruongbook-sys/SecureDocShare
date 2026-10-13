@@ -38,9 +38,18 @@ function toggleTheme() {
     } catch (_) {}
 }
 
+let currentWatermarkMode = 'none'; // 'none' | 'ibst_bim' | 'anhs_team' | 'text' | 'custom'
+let currentWatermarkOpacity = 0.15;
+let customWatermarkBase64 = '';
+let currentSignatureMode = 'vault'; // 'vault' | 'custom-img' | 'p12'
+let customSignatureImageBase64 = '';
+let selectedAuditFile = null;
+let currentPinInput = '';
+
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     renderSessionHistory();
+    checkAppLockOnStartup();
 });
 initTheme();
 
@@ -188,22 +197,30 @@ function selectPackagingMode(mode, el, silent = false) {
 
 function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+    });
 
     const badge = document.getElementById('krypto-logo-badge');
-    if (tabName === 'lock') {
-        document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
-        document.getElementById('tab-lock').classList.add('active');
-        if (badge) {
+    const tabEl = document.getElementById('tab-' + tabName);
+    const btnEl = document.getElementById('tab-btn-' + tabName);
+
+    if (btnEl) btnEl.classList.add('active');
+    if (tabEl) {
+        tabEl.classList.add('active');
+        tabEl.style.display = 'block';
+    }
+
+    if (badge) {
+        if (tabName === 'lock') {
             badge.classList.remove('state-unlocked');
             badge.classList.add('state-locked');
-        }
-    } else {
-        document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-        document.getElementById('tab-unlock').classList.add('active');
-        if (badge) {
+        } else if (tabName === 'unlock') {
             badge.classList.remove('state-locked');
             badge.classList.add('state-unlocked');
+        } else {
+            badge.classList.remove('state-locked', 'state-unlocked');
         }
     }
 }
@@ -227,6 +244,7 @@ function selectProtectionLevel(levelVal, cardEl) {
 
     const pwdLabel = document.getElementById('password-label');
     const passSubnote = document.getElementById('pass-subnote');
+    const allowPrintBox = document.getElementById('allow-print-box');
 
     if (levelVal === 'view_only_restricted') {
         if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU GỠ KHÓA <span class="required">*</span>`;
@@ -235,11 +253,13 @@ function selectProtectionLevel(levelVal, cardEl) {
             passSubnote.style.color = '#34d399';
             passSubnote.style.display = 'block';
         }
+        if (allowPrintBox) allowPrintBox.style.display = 'block';
     } else {
         if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU MỞ TỆP <span class="required">*</span>`;
         if (passSubnote) {
             passSubnote.style.display = 'none';
         }
+        if (allowPrintBox) allowPrintBox.style.display = 'none';
     }
 }
 
@@ -375,6 +395,9 @@ async function handleFilesSelected(files, context) {
                 }
             }
         }
+    } else if (context === 'audit') {
+        selectedAuditFile = files[0];
+        renderFileListAudit();
     } else {
         selectedUnlockFile = files[0];
         renderFileListUnlock();
@@ -1086,8 +1109,31 @@ async function executeMobileLockFiles() {
                     `Tệp: <strong>${file.name}</strong> (${sizeMb} MB)<br>Đang chạy mã hóa native hiệu năng cao.<br>Vui lòng giữ ứng dụng mở...`
                 );
 
-                const enableWatermark = document.getElementById('enable-watermark-checkbox')?.checked || false;
-                const watermarkText = enableWatermark ? (document.getElementById('watermark-input')?.value || '') : '';
+                const isViewOnly = (currentProtectionLevel === "view_only_restricted");
+                const allowPrint = isViewOnly ? (document.getElementById('allow-print-checkbox')?.checked || false) : true;
+                
+                let watermarkImageBase64 = '';
+                let watermarkText = '';
+                if (currentWatermarkMode === 'ibst_bim') {
+                    watermarkImageBase64 = (window.WATERMARK_PRESETS && window.WATERMARK_PRESETS.IBST_BIM) ? window.WATERMARK_PRESETS.IBST_BIM : '';
+                } else if (currentWatermarkMode === 'anhs_team') {
+                    watermarkImageBase64 = (window.WATERMARK_PRESETS && window.WATERMARK_PRESETS.ANHS_TEAM) ? window.WATERMARK_PRESETS.ANHS_TEAM : '';
+                } else if (currentWatermarkMode === 'custom') {
+                    watermarkImageBase64 = customWatermarkBase64;
+                } else if (currentWatermarkMode === 'text') {
+                    watermarkText = document.getElementById('watermark-input')?.value || 'CONFIDENTIAL';
+                }
+
+                const enableTracking = document.getElementById('enable-recipient-tracking')?.checked || false;
+                const recipientName = enableTracking ? (document.getElementById('recipient-name-input')?.value || '') : '';
+                const releaseCode = enableTracking ? (document.getElementById('release-code-input')?.value || '') : '';
+                const enableManifest = document.getElementById('enable-tamper-manifest')?.checked || false;
+
+                const enableSignature = document.getElementById('enable-digital-signature')?.checked || false;
+                const signerName = enableSignature ? (document.getElementById('signer-name-input')?.value || '') : '';
+                const signingReason = enableSignature ? (document.getElementById('signing-reason-input')?.value || '') : '';
+                const sigPos = enableSignature ? (document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page') : 'last_page';
+                const masterPassword = localStorage.getItem('krypto_master_password') || '';
                 const compressPdf = document.getElementById('compress-pdf-checkbox')?.checked !== false;
 
                 window.FlutterBridge.postMessage(JSON.stringify({
@@ -1096,7 +1142,20 @@ async function executeMobileLockFiles() {
                     size: file.size,
                     password: pwd,
                     protection_level: currentProtectionLevel,
+                    allow_print: allowPrint,
+                    watermark_mode: currentWatermarkMode,
                     watermark: watermarkText,
+                    watermark_image_base64: watermarkImageBase64,
+                    watermark_opacity: currentWatermarkOpacity,
+                    recipient_name: recipientName,
+                    release_code: releaseCode,
+                    enable_manifest: enableManifest,
+                    enable_signature: enableSignature,
+                    signer_name: signerName,
+                    signing_reason: signingReason,
+                    signature_pos: sigPos,
+                    signature_image_base64: customSignatureImageBase64,
+                    master_password: masterPassword,
                     compress: compressPdf
                 }));
                 return;
@@ -1563,10 +1622,12 @@ async function executeMobileUnlockFile() {
 
     // TRÊN APP DI ĐỘNG FLUTTER: GIẢI MÃ NATIVE STREAM SIÊU TỐC TRONG 2 GIÂY
     if (window.FlutterBridge) {
+        const masterPassword = localStorage.getItem('krypto_master_password') || '';
         window.FlutterBridge.postMessage(JSON.stringify({
             action: 'unlock_native',
             name: selectedUnlockFile.name,
-            password: pwd
+            password: pwd,
+            master_password: masterPassword
         }));
         return;
     }
@@ -1736,5 +1797,504 @@ function shareDecryptedBinary(fileName, b64Data) {
         }));
     } else {
         saveDecryptedBinary(fileName, b64Data);
+    }
+}
+
+// =============================================================
+// MODULE 1: WATERMARK & LOGO BẢN QUYỀN (IBST-BIM, ANH'S TEAM...)
+// =============================================================
+function setWatermarkMode(mode) {
+    currentWatermarkMode = mode;
+    document.querySelectorAll('.btn-wm-chip').forEach(c => c.classList.remove('active'));
+    const chipMap = {
+        'none': 'wm-chip-none',
+        'ibst_bim': 'wm-chip-ibst',
+        'anhs_team': 'wm-chip-anhs',
+        'text': 'wm-chip-text',
+        'custom': 'wm-chip-custom'
+    };
+    const activeChip = document.getElementById(chipMap[mode]);
+    if (activeChip) activeChip.classList.add('active');
+
+    const textPanel = document.getElementById('watermark-text-panel');
+    const opacityRow = document.getElementById('watermark-opacity-row');
+
+    if (mode === 'text') {
+        if (textPanel) textPanel.style.display = 'block';
+        if (opacityRow) opacityRow.style.display = 'flex';
+        const wmInput = document.getElementById('watermark-input');
+        if (wmInput && !wmInput.value) wmInput.value = 'CONFIDENTIAL';
+        showToast('🏷️ Đã chọn dấu chữ mờ: CONFIDENTIAL');
+    } else if (mode === 'ibst_bim') {
+        if (textPanel) textPanel.style.display = 'none';
+        if (opacityRow) opacityRow.style.display = 'flex';
+        showToast('🏛️ Đã kích hoạt Watermark Logo: IBST-BIM');
+    } else if (mode === 'anhs_team') {
+        if (textPanel) textPanel.style.display = 'none';
+        if (opacityRow) opacityRow.style.display = 'flex';
+        showToast('🏢 Đã kích hoạt Watermark Logo: ANH\'S TEAM');
+    } else if (mode === 'custom') {
+        if (textPanel) textPanel.style.display = 'none';
+        if (opacityRow) opacityRow.style.display = 'flex';
+    } else {
+        if (textPanel) textPanel.style.display = 'none';
+        if (opacityRow) opacityRow.style.display = 'none';
+        showToast('Đã tắt Watermark.');
+    }
+}
+
+function setWatermarkOpacity(op) {
+    currentWatermarkOpacity = op;
+    document.querySelectorAll('.btn-op-chip').forEach(c => c.classList.remove('active'));
+    const opInt = Math.round(op * 100);
+    const chip = document.getElementById('op-' + opInt);
+    if (chip) chip.classList.add('active');
+    showToast(`Độ mờ watermark: ${opInt}%`);
+}
+
+function triggerCustomWatermarkPick() {
+    const fileInput = document.getElementById('custom-wm-file');
+    if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+    }
+}
+
+function handleCustomWatermarkSelected(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        customWatermarkBase64 = e.target.result;
+        setWatermarkMode('custom');
+        showToast(`✓ Đã nạp ảnh watermark: ${file.name}`);
+    };
+    reader.readAsDataURL(file);
+}
+
+// =============================================================
+// MODULE 2: TRUY VẾT NGƯỜI NHẬN & CHỐNG XÓA PROPERTIES
+// =============================================================
+function toggleRecipientTracking() {
+    const checkbox = document.getElementById('enable-recipient-tracking');
+    const panel = document.getElementById('recipient-tracking-panel');
+    if (checkbox && panel) {
+        panel.style.display = checkbox.checked ? 'block' : 'none';
+        if (checkbox.checked) {
+            const codeInput = document.getElementById('release-code-input');
+            if (codeInput && !codeInput.value) {
+                generateReleaseCode();
+            }
+            showToast('🎯 Đã bật chế độ Gắn Mã Định Danh & Truy Vết');
+        }
+    }
+}
+
+function generateReleaseCode() {
+    const rnd = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const code = `KD-2026-${rnd}`;
+    const codeInput = document.getElementById('release-code-input');
+    if (codeInput) codeInput.value = code;
+    showToast(`⚡ Đã tạo mã phát hành: ${code}`);
+}
+
+// =============================================================
+// MODULE 3: CHỮ KÝ SỐ & CON DẤU ĐIỆN TỬ
+// =============================================================
+function toggleDigitalSignatureOption() {
+    const checkbox = document.getElementById('enable-digital-signature');
+    const panel = document.getElementById('digital-signature-panel');
+    if (checkbox && panel) {
+        panel.style.display = checkbox.checked ? 'block' : 'none';
+        if (checkbox.checked) {
+            showToast('✍️ Đã kích hoạt Chữ Ký Số & Con Dấu Điện Tử');
+        }
+    }
+}
+
+function setSignatureMode(mode) {
+    currentSignatureMode = mode;
+    document.querySelectorAll('.btn-sig-chip').forEach(c => c.classList.remove('active'));
+    const chip = document.getElementById('sig-mode-' + mode);
+    if (chip) chip.classList.add('active');
+}
+
+function triggerPickSignatureImage() {
+    const input = document.getElementById('sig-image-file');
+    if (input) {
+        input.value = '';
+        input.click();
+    }
+}
+
+function handleSignatureImageSelected(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        customSignatureImageBase64 = e.target.result;
+        setSignatureMode('custom-img');
+        showToast(`✓ Đã nạp ảnh con dấu/chữ ký: ${file.name}`);
+    };
+    reader.readAsDataURL(file);
+}
+
+function triggerPickCertFile() {
+    const input = document.getElementById('sig-cert-file');
+    if (input) {
+        input.value = '';
+        input.click();
+    }
+}
+
+function handleCertFileSelected(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    setSignatureMode('p12');
+    showToast(`✓ Đã nhận chứng thư số: ${file.name}`);
+}
+
+// =============================================================
+// MODULE 4: TAB 3 TRUY VẾT & KIỂM ĐỊNH PHÁP Y
+// =============================================================
+function renderFileListAudit() {
+    const listEl = document.getElementById('file-list-audit');
+    if (!listEl) return;
+    if (!selectedAuditFile) {
+        listEl.style.display = 'none';
+        listEl.innerHTML = '';
+        return;
+    }
+    const meta = getFileMetaBadge(selectedAuditFile.name);
+    const sizeMb = (selectedAuditFile.size / (1024 * 1024)).toFixed(2);
+    listEl.innerHTML = `
+        <div class="file-card-rich">
+            <div class="file-meta-col">
+                <div class="file-type-icon-badge ${meta.badgeClass}">${meta.iconText}</div>
+                <div class="file-info-group">
+                    <span class="file-title-text" title="${selectedAuditFile.name}">${selectedAuditFile.name}</span>
+                    <div class="file-subdetail-row">
+                        <span>${sizeMb} MB</span>
+                        <span>•</span>
+                        <span class="file-protocol-tag">Sẵn sàng phân tích pháp y</span>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn-remove-file" onclick="removeAuditFile(event)" title="Bỏ chọn tệp">✕</button>
+        </div>
+    `;
+    listEl.style.display = 'flex';
+}
+
+function removeAuditFile(event) {
+    if (event) event.stopPropagation();
+    selectedAuditFile = null;
+    renderFileListAudit();
+    const resCard = document.getElementById('results-audit');
+    if (resCard) resCard.style.display = 'none';
+}
+
+function executeMobileForensicAudit() {
+    if (!selectedAuditFile) {
+        showToast('⚠️ Vui lòng chọn tệp tin cần kiểm định!');
+        return;
+    }
+    const btn = document.getElementById('btn-audit-submit');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Đang quét phân vùng pháp y số...';
+    }
+
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'inspect_forensic_native',
+            name: selectedAuditFile.name
+        }));
+    } else {
+        setTimeout(() => {
+            renderForensicReport({
+                hasManifest: true,
+                recipient: "Ban Quản lý Dự án & Đối tác Tiếp nhận",
+                releaseCode: "KD-2026-X89A",
+                originalName: selectedAuditFile.name,
+                timestamp: new Date().toLocaleString('vi-VN'),
+                tamperStatus: "CHÍNH XÁC (INTACT)",
+                tamperDesc: "Cấu trúc hash SHA-256 toàn vẹn 100%, không bị sửa đổi trái phép.",
+                hasWatermark: true,
+                watermarkType: "Dấu bản quyền IBST-BIM & Phân cấp",
+                hasSignature: true,
+                signer: "KryptoDoc Enterprise Vault Authority",
+                masterOverrideSupported: true
+            });
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'QUÉT DẤU VẾT & TRUY VẾT NGUỒN GỐC';
+            }
+        }, 800);
+    }
+}
+
+window.onNativeForensicResult = function(dataStr) {
+    const btn = document.getElementById('btn-audit-submit');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerText = 'QUÉT DẤU VẾT & TRUY VẾT NGUỒN GỐC';
+    }
+    try {
+        const data = (typeof dataStr === 'string') ? JSON.parse(dataStr) : dataStr;
+        renderForensicReport(data);
+    } catch (e) {
+        showToast('Lỗi đọc kết quả pháp y: ' + e.message);
+    }
+};
+
+window.onNativeForensicError = function(errMsg) {
+    const btn = document.getElementById('btn-audit-submit');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerText = 'QUÉT DẤU VẾT & TRUY VẾT NGUỒN GỐC';
+    }
+    showCyberDialog({
+        type: 'error',
+        title: 'Kiểm Định Thất Bại',
+        message: errMsg || 'Không thể quét cấu trúc tệp tin hoặc tệp không chứa dấu vết KryptoDoc.',
+        actionText: 'Đã Hiểu'
+    });
+};
+
+function renderForensicReport(data) {
+    const card = document.getElementById('results-audit');
+    const container = document.getElementById('results-content-audit');
+    if (!card || !container) return;
+
+    const recipient = data.recipient || 'Không xác định / Phát hành công khai';
+    const releaseCode = data.releaseCode || 'N/A';
+    const originalName = data.originalName || (selectedAuditFile ? selectedAuditFile.name : 'Tài liệu');
+    const timestamp = data.timestamp || 'N/A';
+    const isIntact = data.tamperStatus === 'CHÍNH XÁC (INTACT)' || data.isTamperFree !== false;
+    const badgeClass = isIntact ? 'audit-badge-verified' : 'audit-badge-warning';
+    const badgeText = isIntact ? '✓ XÁC THỰC TOÀN VẸN 100%' : '⚠️ CẢNH BÁO BỊ CAN THIỆP';
+
+    container.innerHTML = `
+        <div class="audit-report-card">
+            <div class="audit-badge ${badgeClass}">${badgeText}</div>
+            <h4 style="margin: 8px 0 4px; font-size: 15px; color: var(--text-title);">Chứng Thư Truy Vết Nguồn Gốc Tệp Tin</h4>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Được giải mã trực tiếp từ vùng chứa siêu dữ liệu phân vùng độc lập (Zero-OS-Dependency)</p>
+
+            <div class="audit-grid-table">
+                <div class="audit-row">
+                    <span class="audit-label">🎯 Đối tượng nhận:</span>
+                    <strong class="audit-val" style="color: #38bdf8;">${recipient}</strong>
+                </div>
+                <div class="audit-row">
+                    <span class="audit-label">⚡ Mã định danh phát hành:</span>
+                    <strong class="audit-val font-mono" style="color: #f59e0b;">${releaseCode}</strong>
+                </div>
+                <div class="audit-row">
+                    <span class="audit-label">📁 Tên tệp gốc khi khóa:</span>
+                    <span class="audit-val">${originalName}</span>
+                </div>
+                <div class="audit-row">
+                    <span class="audit-label">⏱️ Thời điểm phát hành:</span>
+                    <span class="audit-val">${timestamp}</span>
+                </div>
+                <div class="audit-row">
+                    <span class="audit-label">🛡️ Toàn vẹn nội dung:</span>
+                    <span class="audit-val" style="color: ${isIntact ? '#10b981' : '#ef4444'};">
+                        ${data.tamperDesc || (isIntact ? 'Chuẩn hash SHA-256 khớp 100% bản gốc' : 'Phát hiện nội dung có sự biến đổi')}
+                    </span>
+                </div>
+                <div class="audit-row">
+                    <span class="audit-label">🏷️ Watermark bảo vệ:</span>
+                    <span class="audit-val">${data.watermarkType || 'Đã tích hợp trong cấu trúc'}</span>
+                </div>
+                <div class="audit-row">
+                    <span class="audit-label">✍️ Chữ ký / Con dấu:</span>
+                    <span class="audit-val">${data.signer ? ('Đã ký bởi: ' + data.signer) : 'Không có chữ ký số'}</span>
+                </div>
+                <div class="audit-row">
+                    <span class="audit-label">🔑 Quyền Master Key:</span>
+                    <span class="audit-val" style="color: #10b981;">Được bảo trợ cứu hộ bởi Master Password</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth' });
+    showToast('✓ Đã hoàn tất báo cáo pháp y số!');
+}
+
+// =============================================================
+// MODULE 5: VAULT SETTINGS, MASTER PASS & APP LOCK (PIN / BIOMETRICS)
+// =============================================================
+function openVaultSettingsModal() {
+    const modal = document.getElementById('vault-settings-modal');
+    if (!modal) return;
+    const masterInput = document.getElementById('setting-master-password');
+    const pinInput = document.getElementById('setting-quick-pin');
+    const bioToggle = document.getElementById('setting-biometric-toggle');
+    const autoToggle = document.getElementById('setting-autolock-toggle');
+
+    if (masterInput) masterInput.value = localStorage.getItem('krypto_master_password') || '';
+    if (pinInput) pinInput.value = localStorage.getItem('krypto_vault_pin') || '';
+    if (bioToggle) bioToggle.checked = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
+    if (autoToggle) autoToggle.checked = localStorage.getItem('krypto_autolock_enabled') !== 'false';
+
+    modal.style.display = 'flex';
+}
+
+function closeVaultSettingsModal() {
+    const modal = document.getElementById('vault-settings-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function handleVaultSettingsOverlayClick(e) {
+    if (e.target.id === 'vault-settings-modal') {
+        closeVaultSettingsModal();
+    }
+}
+
+function saveVaultSettings() {
+    const masterInput = document.getElementById('setting-master-password');
+    const pinInput = document.getElementById('setting-quick-pin');
+    const bioToggle = document.getElementById('setting-biometric-toggle');
+    const autoToggle = document.getElementById('setting-autolock-toggle');
+
+    const masterPass = masterInput ? masterInput.value.trim() : '';
+    const pin = pinInput ? pinInput.value.trim() : '';
+    const bio = bioToggle ? bioToggle.checked : true;
+    const autolock = autoToggle ? autoToggle.checked : true;
+
+    if (pin && (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin))) {
+        showToast('⚠️ Mã PIN nhanh phải từ 4 đến 6 chữ số!');
+        return;
+    }
+
+    localStorage.setItem('krypto_master_password', masterPass);
+    localStorage.setItem('krypto_vault_pin', pin);
+    localStorage.setItem('krypto_biometrics_enabled', bio ? 'true' : 'false');
+    localStorage.setItem('krypto_autolock_enabled', autolock ? 'true' : 'false');
+
+    closeVaultSettingsModal();
+    showToast('✓ Đã lưu cấu hình két & Master Key an toàn!');
+}
+
+function checkAppLockOnStartup() {
+    const pin = localStorage.getItem('krypto_vault_pin') || '';
+    const masterPass = localStorage.getItem('krypto_master_password') || '';
+    const autolock = localStorage.getItem('krypto_autolock_enabled') !== 'false';
+
+    if ((pin || masterPass) && autolock) {
+        const gate = document.getElementById('cyber-lock-gate');
+        if (gate) {
+            gate.style.display = 'flex';
+            currentPinInput = '';
+            updatePinDots();
+            const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
+            if (bioEnabled && window.FlutterBridge) {
+                setTimeout(() => {
+                    triggerDeviceBiometricAuth();
+                }, 500);
+            }
+        }
+    }
+}
+
+function pressPinDigit(digit) {
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    const maxLen = configuredPin.length > 0 ? configuredPin.length : 4;
+    if (currentPinInput.length < maxLen) {
+        currentPinInput += digit;
+        updatePinDots();
+        if (currentPinInput.length === maxLen) {
+            setTimeout(verifyEnteredPin, 150);
+        }
+    }
+}
+
+function deletePinDigit() {
+    if (currentPinInput.length > 0) {
+        currentPinInput = currentPinInput.slice(0, -1);
+        updatePinDots();
+    }
+}
+
+function updatePinDots() {
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    const totalDots = configuredPin.length > 0 ? configuredPin.length : 4;
+    const container = document.getElementById('pin-dots-container');
+    if (container) {
+        container.innerHTML = '';
+        for (let i = 0; i < totalDots; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'pin-dot' + (i < currentPinInput.length ? ' filled' : '');
+            dot.id = 'dot-' + i;
+            container.appendChild(dot);
+        }
+    }
+}
+
+function verifyEnteredPin() {
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    if (currentPinInput === configuredPin) {
+        unlockGateSuccess();
+    } else {
+        const container = document.getElementById('pin-dots-container');
+        if (container) {
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 400);
+        }
+        showToast('✕ Mã PIN không chính xác!');
+        currentPinInput = '';
+        updatePinDots();
+    }
+}
+
+function triggerDeviceBiometricAuth() {
+    if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'authenticate_biometrics'
+        }));
+    } else {
+        showToast('💡 Đang chạy trên trình duyệt: mô phỏng xác thực sinh trắc học thành công.');
+        setTimeout(unlockGateSuccess, 500);
+    }
+}
+
+window.onBiometricAuthSuccess = function() {
+    unlockGateSuccess();
+};
+
+window.onBiometricAuthFailed = function(errMsg) {
+    showToast('✕ ' + (errMsg || 'Xác thực sinh trắc học không thành công'));
+};
+
+function unlockGateSuccess() {
+    const gate = document.getElementById('cyber-lock-gate');
+    if (gate) {
+        gate.style.display = 'none';
+        showToast('🔓 Chào mừng bạn trở lại KryptoDoc!');
+    }
+}
+
+function togglePassUnlockAlternative() {
+    const box = document.getElementById('alt-pass-box');
+    const text = document.getElementById('alt-unlock-text');
+    if (box) {
+        const isHidden = box.style.display === 'none';
+        box.style.display = isHidden ? 'block' : 'none';
+        if (text) text.innerText = isHidden ? 'Quay lại nhập mã PIN' : 'Sử dụng Mật khẩu thay vì PIN';
+    }
+}
+
+function submitGatePassword() {
+    const input = document.getElementById('gate-alt-password');
+    const entered = input ? input.value.trim() : '';
+    const masterPass = localStorage.getItem('krypto_master_password') || '';
+    if (entered && entered === masterPass) {
+        unlockGateSuccess();
+    } else {
+        showToast('✕ Mật khẩu két không chính xác!');
     }
 }

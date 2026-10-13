@@ -1873,3 +1873,413 @@ body {
     border-color: #f59e0b !important;
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
 }
+
+/* ============================================================ */
+/* KRYPTODOC PRO v2.4.0 - ADVANCED SECURITY SUITE STYLES        */
+/* ============================================================ */
+
+/* 3-Tab Segmented Control */
+.tab-nav-trio .tab-btn {
+    font-size: 11.5px;
+    padding: 9px 4px;
+    gap: 5px;
+}
+
+/* Option Module Boxes */
+.option-module-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin-top: 8px;
+}
+
+.option-module-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-title);
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+}
+
+/* Watermark Preset Chips */
+.watermark-type-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.btn-wm-chip, .btn-sig-chip {
+    padding: 5px 8px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-wm-chip.active, .btn-sig-chip.active {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.watermark-opacity-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.opacity-chips {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-op-chip {
+    padding: 3px 6px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.btn-op-chip.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+/* Dual Inputs Grid */
+.dual-inputs-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.input-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.micro-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+}
+
+.label-with-mini-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.btn-mini-gen {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 9.5px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+}
+
+.sig-position-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.radio-label-micro {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Forensic Audit Report */
+.audit-report-container {
+    padding: 12px;
+}
+
+.audit-report-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    margin-top: 8px;
+}
+
+.audit-status-badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.audit-badge-verified {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid #10b981;
+    color: #10b981;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.audit-item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 5px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.audit-item-label {
+    color: var(--text-muted);
+}
+
+.audit-item-val {
+    color: var(--text-title);
+    font-weight: 600;
+    text-align: right;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Vault Settings Modal */
+.vault-settings-card {
+    max-width: 360px;
+    text-align: left;
+    padding: 20px;
+}
+
+.vault-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.vault-modal-header h3 {
+    margin: 0;
+    font-size: 15px;
+    color: var(--text-title);
+}
+
+.btn-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.vault-setting-group input[type="password"],
+.vault-setting-group input[type="number"] {
+    width: 100%;
+    margin-top: 3px;
+    padding: 8px 10px;
+    font-size: 12px;
+}
+
+.setting-subtext {
+    font-size: 9.5px;
+    color: var(--text-subtle);
+    display: block;
+    margin-top: 3px;
+    line-height: 1.35;
+}
+
+.setting-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+}
+
+.toggle-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-title);
+}
+
+.toggle-desc {
+    font-size: 9.5px;
+    color: var(--text-muted);
+}
+
+.vault-modal-footer {
+    margin-top: 16px;
+}
+
+/* Cyber Lock Screen Gate */
+.cyber-lock-gate {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #111827 0%, #04070d 100%);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.lock-gate-inner {
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lock-gate-badge {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lock-aura-glow {
+    position: absolute;
+    inset: -10px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: pulseGlow 2.5s infinite alternate;
+}
+
+.lock-icon-shield {
+    font-size: 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.lock-gate-title {
+    margin: 0 0 4px;
+    font-size: 19px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+.lock-gate-subtitle {
+    margin: 0 0 20px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+.pin-dots-container {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.pin-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pin-dot.filled {
+    background: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+    transform: scale(1.15);
+}
+
+.cyber-pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 250px;
+}
+
+.btn-pin-key {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(4px);
+}
+
+.btn-pin-key:active {
+    background: rgba(16, 185, 129, 0.25);
+    border-color: #10b981;
+    transform: scale(0.92);
+}
+
+.btn-pin-biometric {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #3b82f6;
+    font-size: 24px;
+}
+
+.btn-pin-del {
+    color: var(--text-muted);
+    font-size: 20px;
+}
+
+.btn-unlock-by-pass {
+    margin-top: 20px;
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+}
+
+.btn-unlock-by-pass:hover {
+    background: var(--primary-light);
+}
+
+@keyframes pulseGlow {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.15); opacity: 1; }
+}

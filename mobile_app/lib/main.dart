@@ -409,6 +409,19 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
             final isViewOnly = (protectionLevel == 'view_only_restricted');
             final watermark = data['watermark'] as String? ?? '';
             final compress = data['compress'] as bool? ?? true;
+            final allowPrint = data['allow_print'] as bool? ?? false;
+            final watermarkMode = data['watermark_mode'] as String? ?? 'none';
+            final watermarkImageB64 = data['watermark_image_base64'] as String? ?? '';
+            final watermarkOpacity = (data['watermark_opacity'] as num?)?.toDouble() ?? 0.15;
+            final recipientName = data['recipient_name'] as String? ?? '';
+            final releaseCode = data['release_code'] as String? ?? '';
+            final enableManifest = data['enable_manifest'] as bool? ?? false;
+            final enableSignature = data['enable_signature'] as bool? ?? false;
+            final signerName = data['signer_name'] as String? ?? '';
+            final signingReason = data['signing_reason'] as String? ?? '';
+            final signaturePos = data['signature_pos'] as String? ?? 'last_page';
+            final signatureImageB64 = data['signature_image_base64'] as String? ?? '';
+            final masterPassword = data['master_password'] as String? ?? '';
 
             // -----------------------------------------------------------------
             // CHỨC NĂNG 1B: NÉN & ĐẶT MẬT KHẨU FILE .ZIP (CHUẨN WINZIP / 7-ZIP AES-256)
@@ -547,7 +560,20 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                       'destPath': outTempPath,
                       'password': password,
                       'isViewOnly': isViewOnly,
+                      'allowPrint': allowPrint,
+                      'watermarkMode': watermarkMode,
                       'watermark': watermark,
+                      'watermarkImageBase64': watermarkImageB64,
+                      'watermarkOpacity': watermarkOpacity,
+                      'recipientName': recipientName,
+                      'releaseCode': releaseCode,
+                      'enableManifest': enableManifest,
+                      'enableSignature': enableSignature,
+                      'signerName': signerName,
+                      'signingReason': signingReason,
+                      'signaturePos': signaturePos,
+                      'signatureImageBase64': signatureImageB64,
+                      'masterPassword': masterPassword,
                       'compress': compress,
                     });
                     processedNatively = true;
@@ -582,6 +608,18 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                     'destPath': outTempPath,
                     'password': password,
                     'isViewOnly': isViewOnly,
+                    'allowPrint': allowPrint,
+                    'watermarkMode': watermarkMode,
+                    'watermark': watermark,
+                    'watermarkImageBase64': watermarkImageB64,
+                    'watermarkOpacity': watermarkOpacity,
+                    'recipientName': recipientName,
+                    'releaseCode': releaseCode,
+                    'enableManifest': enableManifest,
+                    'enableSignature': enableSignature,
+                    'signerName': signerName,
+                    'signingReason': signingReason,
+                    'masterPassword': masterPassword,
                   });
                 } on PlatformException catch (pErr) {
                   if (pErr.code == 'ALREADY_ENCRYPTED') {
@@ -692,6 +730,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                     'zipPath': srcPath,
                     'destDirPath': extractFolder,
                     'password': password,
+                    'masterPassword': masterPassword,
                   });
 
                   final List<dynamic> fileNames = (res is List) ? res : [];
@@ -728,6 +767,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                     'srcPath': srcPath,
                     'destPath': outDecryptedPath,
                     'password': password,
+                    'masterPassword': masterPassword,
                   });
 
                   final savedFullPath = await _saveToDownloadsFolder(outDecryptedPath, outDecryptedName);
@@ -760,6 +800,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                     'srcPath': srcPath,
                     'destPath': outDecryptedPath,
                     'password': password,
+                    'masterPassword': masterPassword,
                   });
 
                   final savedFullPath = await _saveToDownloadsFolder(outDecryptedPath, outDecryptedName);
@@ -848,6 +889,62 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               } else {
                 await _saveToDownloadsFolder(tempFile.path, fileName);
               }
+            }
+
+            // -----------------------------------------------------------------
+            // CHỨC NĂNG 6: KIỂM ĐỊNH PHÁP Y SỐ & TRUY VẾT DẤU VẾT NGUỒN GỐC
+            // -----------------------------------------------------------------
+            if (action == 'inspect_forensic_native') {
+              String? srcPath = _cachedFilePaths[fileName];
+              if (srcPath == null || !await File(srcPath).exists()) {
+                if (_latestPickedFilePath != null && await File(_latestPickedFilePath!).exists()) {
+                  srcPath = _latestPickedFilePath;
+                }
+              }
+
+              if (srcPath == null || !await File(srcPath).exists()) {
+                final errMsg = 'Không tìm thấy tệp "$fileName" để kiểm định. Vui lòng chọn lại!';
+                await _controller.runJavaScript("if (window.onNativeForensicError) window.onNativeForensicError('$errMsg');");
+                return;
+              }
+
+              if (Platform.isAndroid) {
+                try {
+                  final forensicJson = await _nativeChannel.invokeMethod('inspectForensic', {
+                    'srcPath': srcPath,
+                  });
+                  final escJson = forensicJson.toString().replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+                  await _controller.runJavaScript("if (window.onNativeForensicResult) window.onNativeForensicResult('$escJson');");
+                } catch (fErr) {
+                  final errMsg = fErr.toString().replaceAll("'", r"\'");
+                  await _controller.runJavaScript("if (window.onNativeForensicError) window.onNativeForensicError('$errMsg');");
+                }
+              } else {
+                await _controller.runJavaScript("if (window.onNativeForensicError) window.onNativeForensicError('Động cơ pháp y số chỉ hỗ trợ trên Android Native');");
+              }
+              return;
+            }
+
+            // -----------------------------------------------------------------
+            // CHỨC NĂNG 7: XÁC THỰC SINH TRẮC HỌC PHẦN CỨNG (VÂN TAY / FACE UNLOCK)
+            // -----------------------------------------------------------------
+            if (action == 'authenticate_biometrics') {
+              if (Platform.isAndroid) {
+                try {
+                  final bool success = await _nativeChannel.invokeMethod('authenticateBiometrics') ?? false;
+                  if (success) {
+                    await _controller.runJavaScript("if (window.onBiometricAuthSuccess) window.onBiometricAuthSuccess();");
+                  } else {
+                    await _controller.runJavaScript("if (window.onBiometricAuthFailed) window.onBiometricAuthFailed('Xác thực bị hủy bỏ');");
+                  }
+                } catch (bioErr) {
+                  final errMsg = bioErr.toString().replaceAll("'", r"\'");
+                  await _controller.runJavaScript("if (window.onBiometricAuthFailed) window.onBiometricAuthFailed('$errMsg');");
+                }
+              } else {
+                await _controller.runJavaScript("if (window.onBiometricAuthSuccess) window.onBiometricAuthSuccess();");
+              }
+              return;
             }
           } catch (e) {
             debugPrint('FlutterBridge error: $e');

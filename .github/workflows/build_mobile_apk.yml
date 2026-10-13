@@ -64,16 +64,28 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.3.8
-          name: "KryptoDoc v2.3.8 - Dual Notification Engine & Active Cyber Modal (Android APK)"
+          tag_name: v2.4.0
+          name: "KryptoDoc Enterprise Vault v2.4.0 - Watermark Suite, Audit Forensics & Hardware Biometrics"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.3.8 (Khắc Phục Hiển Thị & Cơ Chế Thông Báo Kép)
-            - **Cơ Chế Thông Báo Kép (Dual Notification Engine)**:
-              + Kích hoạt đồng thời cả Krypto Toast cảnh báo nhanh và Cyber Modal Dialog sang trọng.
-              + Khắc phục hoàn toàn lỗi xung đột class CSS hiển thị giữa .active và .show trên Android WebView.
-              + Đảm bảo 100% người dùng nhận thông báo cảnh báo rõ ràng khi chưa chọn tệp hoặc chưa nhập mật khẩu.
-            - **Hiệu Ứng Trực Quan Cao Cấp**:
-              + Tự động focus con trỏ vào ô mật khẩu kèm hiệu ứng rung lắc viền nổi bật (Pulse Shake Animation).
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.4.0
+            - **Bộ Chọn Dấu Bản Quyền (Watermark Suite)**:
+              + Tích hợp sẵn Logo IBST-BIM (Viện Khoa học Công nghệ Xây dựng) và Logo ANH'S TEAM dạng PNG trong suốt.
+              + Hỗ trợ dấu chữ mờ tùy biến (CONFIDENTIAL, BẢN MẬT) và tải ảnh Watermark riêng từ bộ nhớ máy.
+              + Tùy chỉnh độ mờ linh hoạt (15%, 25%, 35%) chèn trực tiếp vào PDF và OpenXML.
+            - **Kiểm Soát Quyền In Ấn (Allow Print Toggle)**:
+              + Bổ sung tùy chọn cho phép hoặc cấm in ấn khi mở xem tự do (Chế độ Chỉ Xem / View-Only) chuẩn Adobe ISO 32000.
+            - **Truy Vết Đối Tượng Tiếp Nhận (Recipient Tracking & Anti-Tamper)**:
+              + Tự động gắn nhãn định danh phát hành (KD-2026-XXXX) và tên người nhận trực tiếp vào tài liệu.
+              + Nhúng siêu dữ liệu ẩn vào PDF Catalog và OpenXML customXml chống xóa Properties và chống đổi tên.
+            - **Tab Kiểm Định Pháp Y Số (Forensic Audit Engine)**:
+              + Truy vết nguồn gốc phát hành, bóc tách mã định danh, người nhận và kiểm chuẩn tính toàn vẹn 100% khi nhận lại file.
+            - **Mật Khẩu Chủ Quản Trị (Master Password)**:
+              + Cơ chế Master Key cho phép quản trị viên/người phát hành cứu hộ và mở tất cả các tệp đã mã hóa bằng app.
+            - **Bảo Vệ Ứng Dụng (App Lock, PIN Keypad & Hardware Biometrics)**:
+              + Khóa ứng dụng với bàn phím mã PIN 4-6 số siêu tốc.
+              + Tích hợp xác thực phần cứng máy: Cảm biến vân tay và nhận diện khuôn mặt (Android Keyguard).
+            - **Chữ Ký Số & Con Dấu Điện Tử (Digital Signature PAdES)**:
+              + Chèn con dấu điện tử, mộc két và chữ ký xác thực thời gian phát hành.
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk
