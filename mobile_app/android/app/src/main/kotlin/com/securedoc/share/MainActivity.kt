@@ -1412,7 +1412,7 @@ class MainActivity: FlutterActivity() {
                     }
                 }
                 if (!hasSettings) {
-                    val simpleSettings = "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">$protTag</w:settings>"
+                    val simpleSettings = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">$protTag</w:settings>"""
                     val newEntry = JZipEntry("word/settings.xml")
                     zipOut.putNextEntry(newEntry)
                     zipOut.write(simpleSettings.toByteArray(Charsets.UTF_8))
