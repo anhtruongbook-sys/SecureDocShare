@@ -49,7 +49,6 @@ let currentPinInput = '';
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     renderSessionHistory();
-    closeVaultSettingsModal();
     checkAppLockOnStartup();
 });
 initTheme();
@@ -201,7 +200,7 @@ function selectPackagingMode(mode, el, silent = false) {
 
 
 function switchTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-btn, .tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => {
         c.classList.remove('active');
         c.style.display = 'none';
@@ -227,6 +226,10 @@ function switchTab(tabName) {
         } else {
             badge.classList.remove('state-locked', 'state-unlocked');
         }
+    }
+
+    if (tabName === 'vault') {
+        checkVaultAccess();
     }
 }
 
@@ -2203,9 +2206,51 @@ function checkPinMatch() {
     }
 }
 
-function openVaultSettingsModal() {
-    const modal = document.getElementById('vault-settings-modal');
-    if (!modal) return;
+let isVaultSessionUnlocked = false;
+let currentVaultPinInput = '';
+
+function checkVaultAccess() {
+    const curPin = localStorage.getItem('krypto_vault_pin') || '';
+    const curMaster = localStorage.getItem('krypto_master_password') || '';
+    const lockedView = document.getElementById('vault-locked-view');
+    const unlockedView = document.getElementById('vault-unlocked-view');
+
+    // Nếu chưa từng thiết lập PIN hoặc Master Password: Hiển thị ngay màn hình cấu hình
+    if (!curPin && !curMaster) {
+        if (lockedView) lockedView.style.display = 'none';
+        if (unlockedView) {
+            unlockedView.style.display = 'block';
+            loadVaultConfigInputs();
+        }
+        return;
+    }
+
+    if (isVaultSessionUnlocked) {
+        if (lockedView) lockedView.style.display = 'none';
+        if (unlockedView) {
+            unlockedView.style.display = 'block';
+            loadVaultConfigInputs();
+        }
+    } else {
+        // Đang khóa: Hiển thị màn hình xác thực
+        if (unlockedView) unlockedView.style.display = 'none';
+        if (lockedView) {
+            lockedView.style.display = 'block';
+            currentVaultPinInput = '';
+            updateVaultPinDots();
+
+            // Tự động kích hoạt Vân tay nếu có bật sinh trắc học
+            const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
+            if (bioEnabled && window.FlutterBridge) {
+                setTimeout(() => {
+                    triggerDeviceBiometricAuth();
+                }, 350);
+            }
+        }
+    }
+}
+
+function loadVaultConfigInputs() {
     const masterInput = document.getElementById('setting-master-password');
     const masterConfirm = document.getElementById('setting-master-password-confirm');
     const pinInput = document.getElementById('setting-quick-pin');
@@ -2223,30 +2268,102 @@ function openVaultSettingsModal() {
     if (bioToggle) bioToggle.checked = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
     if (autoToggle) autoToggle.checked = localStorage.getItem('krypto_autolock_enabled') !== 'false';
 
-    // Ẩn thông báo so khớp ban đầu, chỉ hiển thị khi người dùng nhập vào ô xác nhận
     const msgMaster = document.getElementById('master-pass-match-msg');
     if (msgMaster) msgMaster.style.display = 'none';
     const msgPin = document.getElementById('pin-match-msg');
     if (msgPin) msgPin.style.display = 'none';
-
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    modal.classList.add('show');
 }
 
-function closeVaultSettingsModal() {
-    const modal = document.getElementById('vault-settings-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        modal.classList.remove('show');
-        modal.style.display = 'none';
+function pressVaultPinDigit(digit) {
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    const maxLen = configuredPin.length > 0 ? configuredPin.length : 4;
+    if (currentVaultPinInput.length < maxLen) {
+        currentVaultPinInput += digit;
+        updateVaultPinDots();
+        if (currentVaultPinInput.length === maxLen) {
+            setTimeout(verifyVaultEnteredPin, 150);
+        }
     }
 }
 
-function handleVaultSettingsOverlayClick(e) {
-    if (e.target.id === 'vault-settings-modal') {
-        closeVaultSettingsModal();
+function deleteVaultPinDigit() {
+    if (currentVaultPinInput.length > 0) {
+        currentVaultPinInput = currentVaultPinInput.slice(0, -1);
+        updateVaultPinDots();
     }
+}
+
+function updateVaultPinDots() {
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    const totalDots = configuredPin.length > 0 ? configuredPin.length : 4;
+    const container = document.getElementById('vault-pin-dots-container');
+    if (container) {
+        container.innerHTML = '';
+        for (let i = 0; i < totalDots; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'pin-dot' + (i < currentVaultPinInput.length ? ' filled' : '');
+            dot.id = 'vdot-' + i;
+            container.appendChild(dot);
+        }
+    }
+}
+
+function verifyVaultEnteredPin() {
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    if (currentVaultPinInput === configuredPin) {
+        unlockVaultSuccess();
+    } else {
+        const container = document.getElementById('vault-pin-dots-container');
+        if (container) {
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 400);
+        }
+        showToast('⚠️ Mã PIN không chính xác! Vui lòng thử lại.');
+        currentVaultPinInput = '';
+        updateVaultPinDots();
+    }
+}
+
+function toggleVaultAltPassBox() {
+    const box = document.getElementById('vault-alt-pass-box');
+    const text = document.getElementById('vault-alt-toggle-text');
+    if (box) {
+        const isHidden = box.style.display === 'none';
+        box.style.display = isHidden ? 'block' : 'none';
+        if (text) text.innerText = isHidden ? '🔢 Sử dụng Mã PIN Thay Vì Mật Khẩu' : '🔑 Nhập Mật Khẩu Két Thay Vì PIN';
+    }
+}
+
+function submitVaultPasswordUnlock() {
+    const input = document.getElementById('vault-entered-pass');
+    const entered = input ? input.value.trim() : '';
+    const masterPass = localStorage.getItem('krypto_master_password') || '';
+    if (entered && entered === masterPass) {
+        unlockVaultSuccess();
+    } else {
+        showToast('⚠️ Mật khẩu Két không chính xác!');
+    }
+}
+
+function unlockVaultSuccess() {
+    isVaultSessionUnlocked = true;
+    const lockedView = document.getElementById('vault-locked-view');
+    const unlockedView = document.getElementById('vault-unlocked-view');
+    if (lockedView) lockedView.style.display = 'none';
+    if (unlockedView) {
+        unlockedView.style.display = 'block';
+        loadVaultConfigInputs();
+    }
+    showToast('🔓 Đã xác thực & mở Két bảo mật thành công! 🛡️');
+}
+
+function lockVaultSession() {
+    isVaultSessionUnlocked = false;
+    currentVaultPinInput = '';
+    const passInput = document.getElementById('vault-entered-pass');
+    if (passInput) passInput.value = '';
+    checkVaultAccess();
+    showToast('🔒 Két đã được khóa an toàn!');
 }
 
 function saveVaultSettings() {
@@ -2309,7 +2426,7 @@ function saveVaultSettings() {
     localStorage.setItem('krypto_biometrics_enabled', bio ? 'true' : 'false');
     localStorage.setItem('krypto_autolock_enabled', autolock ? 'true' : 'false');
 
-    closeVaultSettingsModal();
+    isVaultSessionUnlocked = true;
     showToast('✓ Đã lưu cấu hình Két & Master Key an toàn! 🛡️');
 }
 
@@ -2396,7 +2513,12 @@ function triggerDeviceBiometricAuth() {
 }
 
 window.onBiometricAuthSuccess = function() {
+    isVaultSessionUnlocked = true;
     unlockGateSuccess();
+    const tabVault = document.getElementById('tab-vault');
+    if (tabVault && tabVault.classList.contains('active')) {
+        unlockVaultSuccess();
+    }
 };
 
 window.onBiometricAuthFailed = function(errMsg) {

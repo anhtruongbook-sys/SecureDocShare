@@ -44,47 +44,18 @@
                 <div class="logo-text">
                     <div class="brand-title-row">
                         <h1>KryptoDoc</h1>
-                        <span class="vault-version-tag">PRO v2.5</span>
+                        <span class="vault-version-tag">PRO v2.6</span>
                     </div>
-                    <p class="subtitle">Két Khóa & Mã Hóa Offline 100%</p>
+                    <p class="subtitle">Két Khóa & Bảo Mật Offline 100%</p>
                 </div>
             </div>
             <div class="header-badges">
-                <button type="button" class="btn-theme-toggle" id="vault-settings-btn" onclick="openVaultSettingsModal()" title="Cài đặt Két Bảo Mật & Master Key">
-                    <span>⚙️</span>
-                </button>
                 <button type="button" class="btn-theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Đổi chế độ Sáng / Tối">
                     <span id="theme-icon">🌙</span>
                 </button>
                 <span class="badge badge-success">✓ Offline</span>
-                <span class="badge badge-info">AES-256</span>
             </div>
         </header>
-
-        <!-- Navigation Tabs: Segmented Control 3 Tabs -->
-        <div class="tab-nav tab-nav-trio">
-            <button type="button" class="tab-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <span>MÃ HÓA</span>
-            </button>
-            <button type="button" class="tab-btn" id="tab-btn-unlock" onclick="switchTab('unlock')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-                </svg>
-                <span>MỞ KHÓA</span>
-            </button>
-            <button type="button" class="tab-btn" id="tab-btn-audit" onclick="switchTab('audit')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <span>TRUY VẾT</span>
-            </button>
-        </div>
 
         <!-- ==================== TAB 1: LOCK ==================== -->
         <div id="tab-lock" class="tab-content active">
@@ -442,6 +413,133 @@
             </div>
         </div>
 
+        <!-- ==================== TAB 4: KÉT BẢO MẬT (VAULT) ==================== -->
+        <div id="tab-vault" class="tab-content" style="display: none;">
+            <!-- VIEW A: KÉT ĐANG KHÓA (Yêu cầu xác thực bằng Vân tay, Mã PIN, hoặc Mật khẩu) -->
+            <div id="vault-locked-view" class="card vault-auth-card">
+                <div class="vault-auth-icon-badge">
+                    <div class="vault-shield-icon">🛡️</div>
+                    <div class="vault-lock-status-badge">🔒 KÉT ĐANG KHÓA</div>
+                </div>
+                <h3 class="vault-auth-title">Xác Thực Để Mở Két</h3>
+                <p class="vault-auth-subtitle">Vui lòng quét Vân tay, nhập Mã PIN hoặc Mật khẩu để truy cập Két & Chìa Khóa Quản Trị</p>
+
+                <!-- PIN Dots Container -->
+                <div class="pin-dots-container" id="vault-pin-dots-container">
+                    <div class="pin-dot" id="vdot-0"></div>
+                    <div class="pin-dot" id="vdot-1"></div>
+                    <div class="pin-dot" id="vdot-2"></div>
+                    <div class="pin-dot" id="vdot-3"></div>
+                </div>
+
+                <!-- Flat Numeric Keypad for Vault -->
+                <div class="cyber-pin-pad">
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('1')">1</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('2')">2</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('3')">3</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('4')">4</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('5')">5</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('6')">6</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('7')">7</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('8')">8</button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('9')">9</button>
+                    <button type="button" class="btn-pin-key btn-pin-biometric" onclick="triggerDeviceBiometricAuth()" title="Xác thực Vân tay / Khuôn mặt">
+                        <span>👆</span>
+                    </button>
+                    <button type="button" class="btn-pin-key" onclick="pressVaultPinDigit('0')">0</button>
+                    <button type="button" class="btn-pin-key btn-pin-del" onclick="deleteVaultPinDigit()" title="Xóa">
+                        <span>⌫</span>
+                    </button>
+                </div>
+
+                <!-- Password Alternative Toggle -->
+                <div class="vault-alt-auth" style="margin-top: 12px; width: 100%;">
+                    <button type="button" class="btn-flat-link" onclick="toggleVaultAltPassBox()">
+                        <span id="vault-alt-toggle-text">🔑 Nhập Mật Khẩu Két Thay Vì PIN</span>
+                    </button>
+                    <div id="vault-alt-pass-box" style="display: none; margin-top: 10px; width: 100%;">
+                        <div class="vault-input-with-eye">
+                            <input type="password" id="vault-entered-pass" placeholder="Nhập Mật khẩu Két..." style="width: 100%; text-align: center;">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('vault-entered-pass', this)">👁️</button>
+                        </div>
+                        <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 8px; width: 100%;" onclick="submitVaultPasswordUnlock()">
+                            <span>Mở Khóa Két</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW B: KÉT ĐÃ MỞ KHÓA (Cấu hình bảo mật & Quản trị chìa khóa) -->
+            <div id="vault-unlocked-view" class="card vault-settings-card-flat" style="display: none;">
+                <div class="vault-status-header">
+                    <div class="vault-status-indicator">
+                        <span class="status-dot-active"></span>
+                        <span class="status-text">Két Đang Mở Khóa</span>
+                    </div>
+                    <button type="button" class="btn-lock-vault-now" onclick="lockVaultSession()" title="Khóa Két ngay lập tức">
+                        🔒 Khóa Két Lại
+                    </button>
+                </div>
+
+                <div class="flat-grouped-settings">
+                    <!-- Nhóm 1: Mật khẩu Master -->
+                    <div class="flat-setting-item">
+                        <label class="micro-label">MẬT KHẨU KÉT / MASTER PASS:</label>
+                        <div class="vault-input-with-eye">
+                            <input type="password" id="setting-master-password" placeholder="Mật khẩu quản trị viên..." oninput="checkMasterPassMatch()">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password', this)">👁️</button>
+                        </div>
+                        <div class="vault-input-with-eye" style="margin-top: 6px;">
+                            <input type="password" id="setting-master-password-confirm" placeholder="Xác nhận lại mật khẩu nếu muốn đổi..." oninput="checkMasterPassMatch()">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password-confirm', this)">👁️</button>
+                        </div>
+                        <div id="master-pass-match-msg" class="vault-match-status" style="display: none;"></div>
+                        <span class="setting-subtext">Dùng để mở khóa cứu hộ mọi tệp tin đã mã hóa.</span>
+                    </div>
+
+                    <!-- Nhóm 2: Mã PIN nhanh -->
+                    <div class="flat-setting-item" style="margin-top: 10px;">
+                        <label class="micro-label">MÃ PIN NHANH (4 - 6 SỐ):</label>
+                        <div class="vault-input-with-eye">
+                            <input type="password" id="setting-quick-pin" placeholder="Ví dụ: 1234 hoặc 888888" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin', this)">👁️</button>
+                        </div>
+                        <div class="vault-input-with-eye" style="margin-top: 6px;">
+                            <input type="password" id="setting-quick-pin-confirm" placeholder="Xác nhận lại mã PIN nếu muốn đổi..." maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin-confirm', this)">👁️</button>
+                        </div>
+                        <div id="pin-match-msg" class="vault-match-status" style="display: none;"></div>
+                        <span class="setting-subtext">Mở két 1 chạm siêu tốc bằng bàn phím số.</span>
+                    </div>
+
+                    <!-- Nhóm 3: Sinh trắc học & Tự động khóa -->
+                    <div class="flat-setting-item" style="margin-top: 10px;">
+                        <label class="setting-toggle-row">
+                            <div class="toggle-info">
+                                <span class="toggle-name">👆 Sinh Trắc Học Phần Cứng</span>
+                                <span class="toggle-desc">Sử dụng Cảm biến vân tay hoặc Nhận diện khuôn mặt</span>
+                            </div>
+                            <input type="checkbox" id="setting-biometric-toggle" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        </label>
+                    </div>
+
+                    <div class="flat-setting-item" style="margin-top: 8px;">
+                        <label class="setting-toggle-row">
+                            <div class="toggle-info">
+                                <span class="toggle-name">🔒 Tự Động Khóa Két Khi Thoát App</span>
+                                <span class="toggle-desc">Yêu cầu xác thực lại ngay khi mở lại ứng dụng</span>
+                            </div>
+                            <input type="checkbox" id="setting-autolock-toggle" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        </label>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 16px; width: 100%;" onclick="saveVaultSettings()">
+                    <span>Lưu Cấu Hình Két Bảo Mật</span>
+                </button>
+            </div>
+        </div>
+
         <!-- ==================== SESSION HISTORY CARD ==================== -->
         <div class="card history-card" id="history-card">
             <div class="history-header" onclick="toggleHistoryDrawer()">
@@ -468,6 +566,26 @@
         <footer class="footer">
             <p>KryptoDoc Enterprise Vault • Bản Quyền ANH'S TEAM • Mã Hóa Offline 100%</p>
         </footer>
+
+        <!-- Bottom Navigation Bar (Flat Luxury 4 Tabs) -->
+        <nav class="bottom-nav-bar" id="bottom-nav-bar">
+            <button type="button" class="bottom-nav-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
+                <span class="nav-icon">🔒</span>
+                <span class="nav-label">Mã Hóa</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-unlock" onclick="switchTab('unlock')">
+                <span class="nav-icon">🔓</span>
+                <span class="nav-label">Mở Khóa</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-audit" onclick="switchTab('audit')">
+                <span class="nav-icon">🔎</span>
+                <span class="nav-label">Pháp Y</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-vault" onclick="switchTab('vault')">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label">Két</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Krypto Toast Notification -->
@@ -503,74 +621,7 @@
         </div>
     </div>
 
-    <!-- Vault Settings Modal (Cài đặt két bảo mật, Master Pass & PIN) -->
-    <div id="vault-settings-modal" class="cyber-dialog-overlay" style="display: none;" onclick="handleVaultSettingsOverlayClick(event)">
-        <div class="cyber-dialog-card vault-settings-card" id="vault-settings-card">
-            <div class="cyber-dialog-glow"></div>
-            <div class="vault-modal-header">
-                <h3>⚙️ Cài Đặt Két & Master Key</h3>
-                <button type="button" class="btn-modal-close" onclick="closeVaultSettingsModal()">✕</button>
-            </div>
-            <div class="vault-modal-body">
-                <!-- App Lock Master Password -->
-                <div class="vault-setting-group">
-                    <label class="micro-label">MẬT KHẨU KÉT / MASTER PASS:</label>
-                    <div class="vault-input-with-eye">
-                        <input type="password" id="setting-master-password" placeholder="Mật khẩu vạn năng quản trị viên..." oninput="checkMasterPassMatch()">
-                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password', this)">👁️</button>
-                    </div>
-                    <div class="vault-input-with-eye" style="margin-top: 6px;">
-                        <input type="password" id="setting-master-password-confirm" placeholder="Nhập lại mật khẩu để xác nhận..." oninput="checkMasterPassMatch()">
-                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password-confirm', this)">👁️</button>
-                    </div>
-                    <div id="master-pass-match-msg" class="vault-match-status" style="display: none;"></div>
-                    <span class="setting-subtext">Dùng để mở khóa ứng dụng và cứu hộ tất cả các tệp khi cần.</span>
-                </div>
 
-                <!-- 4-Digit Quick PIN -->
-                <div class="vault-setting-group" style="margin-top: 10px;">
-                    <label class="micro-label">MÃ PIN NHANH (4 - 6 SỐ):</label>
-                    <div class="vault-input-with-eye">
-                        <input type="password" id="setting-quick-pin" placeholder="Ví dụ: 1234 hoặc 888888" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
-                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin', this)">👁️</button>
-                    </div>
-                    <div class="vault-input-with-eye" style="margin-top: 6px;">
-                        <input type="password" id="setting-quick-pin-confirm" placeholder="Nhập lại mã PIN để xác nhận..." maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
-                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin-confirm', this)">👁️</button>
-                    </div>
-                    <div id="pin-match-msg" class="vault-match-status" style="display: none;"></div>
-                    <span class="setting-subtext">Mở két 1 chạm nhanh trên điện thoại không cần gõ dài.</span>
-                </div>
-
-                <!-- Hardware Biometric Toggle -->
-                <div class="vault-setting-group" style="margin-top: 10px;">
-                    <label class="setting-toggle-row">
-                        <div class="toggle-info">
-                            <span class="toggle-name">👆 Sinh Trắc Học Phần Cứng</span>
-                            <span class="toggle-desc">Sử dụng Cảm biến vân tay hoặc Nhận diện khuôn mặt</span>
-                        </div>
-                        <input type="checkbox" id="setting-biometric-toggle" checked style="width: 18px; height: 18px; cursor: pointer;">
-                    </label>
-                </div>
-
-                <!-- Auto Lock on Exit -->
-                <div class="vault-setting-group" style="margin-top: 8px;">
-                    <label class="setting-toggle-row">
-                        <div class="toggle-info">
-                            <span class="toggle-name">🔒 Tự Động Khóa Két Khi Thoát App</span>
-                            <span class="toggle-desc">Yêu cầu xác thực lại ngay khi mở lại ứng dụng</span>
-                        </div>
-                        <input type="checkbox" id="setting-autolock-toggle" checked style="width: 18px; height: 18px; cursor: pointer;">
-                    </label>
-                </div>
-            </div>
-            <div class="vault-modal-footer">
-                <button type="button" class="btn-cyber-dialog-primary" onclick="saveVaultSettings()">
-                    <span>Lưu Cấu Hình Két Bảo Mật</span>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Cyber Lock Screen Gate (Màn hình khóa bảo vệ ứng dụng khi mở app) -->
     <div id="cyber-lock-gate" class="cyber-lock-gate" style="display: none;">

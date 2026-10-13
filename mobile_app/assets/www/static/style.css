@@ -1,56 +1,58 @@
 /* style.css: Modern Sleek Dark Design System (Default) for SecureDocShare Mobile */
 
 :root {
-    /* Dark Theme Default */
-    --bg-main: #0b0f19;          /* Deep rich obsidian dark */
-    --bg-card: #131b2e;          /* Elevated slate navy card */
-    --bg-subtle: #1c263d;        /* Surface secondary */
-    --bg-input: #0a0e1a;         /* Input field background */
+    /* Flat Luxury Dark Slate (Titanium) - Không quá tối, ấm áp, tinh tế */
+    --bg-main: #14171f;          /* Titan than ấm, không bị đen ngòm */
+    --bg-card: #1c212b;          /* Thẻ titan phẳng thanh lịch */
+    --bg-subtle: #242a37;        /* Bề mặt phụ */
+    --bg-input: #12151c;         /* Ô nhập liệu phẳng */
     
-    --border: #232f48;           /* Subtle dark border */
-    --border-hover: #35476a;     /* Hover border */
-    --border-active: #3b82f6;    /* Active blue border */
+    --border: #2a313d;           /* Viền hairline tinh tế 1px */
+    --border-hover: #3b4556;
+    --border-active: #4078ff;
     
-    --primary: #3b82f6;          /* Vibrant modern blue */
-    --primary-light: rgba(59, 130, 246, 0.15);    /* Subtle blue tint */
-    --primary-dark: #2563eb;
+    --primary: #4078ff;          /* Xanh Cobalt điềm đạm, không chói neon */
+    --primary-light: rgba(64, 120, 255, 0.12);
+    --primary-dark: #3162d6;
     
-    --success: #10b981;          /* Emerald success */
-    --success-light: rgba(16, 185, 129, 0.15);    /* Emerald background tint */
+    --success: #10b981;
+    --success-light: rgba(16, 185, 129, 0.12);
     --success-dark: #059669;
     
     --warning: #f59e0b;
-    --warning-light: rgba(245, 158, 11, 0.15);
+    --warning-light: rgba(245, 158, 11, 0.12);
     
     --danger: #ef4444;
-    --danger-light: rgba(239, 68, 68, 0.15);
+    --danger-light: rgba(239, 68, 68, 0.12);
     
-    --text-title: #f8fafc;       /* Crisp white headings */
-    --text-body: #cbd5e1;        /* Clean readable light text */
-    --text-muted: #94a3b8;       /* Subtle muted text */
-    --text-subtle: #64748b;      /* Caption text */
+    --text-title: #f1f5f9;       /* Trắng bạc */
+    --text-body: #cbd5e1;        /* Xám bạc */
+    --text-muted: #94a3b8;
+    --text-subtle: #64748b;
     
     --radius-xl: 14px;
     --radius-lg: 10px;
     --radius-md: 8px;
     --radius-sm: 6px;
     
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.45), 0 2px 6px -2px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.55), 0 6px 12px -3px rgba(0, 0, 0, 0.45);
+    /* Phẳng hoàn toàn: Không dùng bóng đổ nặng nề đa lớp */
+    --shadow-sm: none;
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 body.light-mode {
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --bg-subtle: #f1f5f9;
+    /* Flat Luxury Soft Canvas - Ngà xám bột giấy mịn màng, chống lóa 100% */
+    --bg-main: #f4f5f8;          /* Xám ngà canvas bột giấy cao cấp */
+    --bg-card: #ffffff;          /* Thẻ trắng tinh khiết phẳng */
+    --bg-subtle: #ebeef3;        /* Bề mặt xám ngà nhẹ */
     --bg-input: #ffffff;
     
-    --border: #e2e8f0;
+    --border: #e2e6ec;           /* Viền hairline 1px siêu sạch */
     --border-hover: #cbd5e1;
     --border-active: #2563eb;
     
-    --primary: #2563eb;
+    --primary: #2563eb;          /* Xanh mực bút dạ Royal Blue */
     --primary-light: #eff6ff;
     --primary-dark: #1d4ed8;
     
@@ -64,14 +66,14 @@ body.light-mode {
     --danger: #dc2626;
     --danger-light: #fef2f2;
     
-    --text-title: #0f172a;
+    --text-title: #1e293b;       /* Xám than đậm */
     --text-body: #334155;
     --text-muted: #64748b;
     --text-subtle: #94a3b8;
     
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 2px 6px -1px rgba(0, 0, 0, 0.06), 0 1px 4px -1px rgba(0, 0, 0, 0.03);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    --shadow-sm: none;
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -97,7 +99,8 @@ body {
     max-width: 480px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    padding-bottom: 84px;
 }
 
 /* Header */
@@ -2340,4 +2343,182 @@ body.light-mode .krypto-toast {
 @keyframes pulseGlow {
     0% { transform: scale(0.9); opacity: 0.6; }
     100% { transform: scale(1.15); opacity: 1; }
+}
+
+/* ============================================================ */
+/* BOTTOM NAVIGATION BAR (CHUẨN 1PASSWORD & APPLE PASSWORDS)     */
+/* ============================================================ */
+.bottom-nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 6px 12px max(10px, env(safe-area-inset-bottom));
+    z-index: 1000;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.bottom-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 0;
+    border-radius: var(--radius-md);
+    transition: all 0.18s ease;
+    user-select: none;
+}
+
+.bottom-nav-btn .nav-icon {
+    font-size: 19px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.18s ease;
+}
+
+.bottom-nav-btn.active {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.bottom-nav-btn.active .nav-icon {
+    transform: scale(1.12);
+}
+
+/* ============================================================ */
+/* TAB 4: KÉT BẢO MẬT & QUẢN TRỊ CHÌA KHÓA                      */
+/* ============================================================ */
+.vault-auth-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+}
+
+.vault-auth-icon-badge {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.vault-shield-icon {
+    font-size: 42px;
+    margin-bottom: 6px;
+}
+
+.vault-lock-status-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.vault-auth-title {
+    font-size: 16.5px;
+    font-weight: 700;
+    color: var(--text-title);
+    margin-bottom: 4px;
+}
+
+.vault-auth-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.vault-status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.vault-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.status-dot-active {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.btn-lock-vault-now {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--text-title);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-lock-vault-now:active {
+    transform: scale(0.95);
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.flat-grouped-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flat-setting-item {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 12px 14px;
+}
+
+.btn-flat-link {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 12px;
+    margin-top: 10px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
