@@ -11,8 +11,8 @@
         <!-- Modern Flat Hero Banner (MobiFone / FinTech Inspired) -->
         <header class="mobi-hero-header">
             <div class="mobi-top-bar">
-                <button type="button" class="btn-mobi-menu" onclick="toggleHistoryDrawer()" title="Lịch sử phiên làm việc">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                <button type="button" class="btn-mobi-menu" onclick="openAppDrawer()" title="Cài đặt & Danh mục">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
                         <line x1="3" y1="6" x2="21" y2="6"/>
                         <line x1="3" y1="12" x2="21" y2="12"/>
                         <line x1="3" y1="18" x2="21" y2="18"/>
@@ -38,7 +38,7 @@
         <!-- ==================== TAB 1: TRANG CHỦ / LOCK ==================== -->
         <div id="tab-lock" class="tab-content active">
             <!-- Floating Quick Status Card Overlapping Hero Banner -->
-            <div class="mobi-floating-status-card">
+            <div class="mobi-floating-status-card" onclick="openAppDrawer()" title="Chạm để mở Cài đặt & Quản trị Két">
                 <div class="floating-card-left">
                     <div class="floating-card-icon">🛡️</div>
                     <div class="floating-card-info">
@@ -46,42 +46,9 @@
                         <p class="floating-card-sub">Trạng thái: Hoạt động Offline 100% • AES-256</p>
                     </div>
                 </div>
-                <button type="button" class="btn-floating-action" onclick="switchTab('vault')">Cài đặt</button>
-            </div>
-
-            <!-- Section: Tiện ích Nhanh (4 Cột Squircle) -->
-            <div class="mobi-section-group">
-                <div class="mobi-section-header">
-                    <h3 class="mobi-section-title">Tiện ích</h3>
-                    <button type="button" class="mobi-section-link" onclick="toggleHistoryDrawer()">Nhật ký</button>
-                </div>
-                <div class="mobi-services-grid">
-                    <div class="mobi-service-item" onclick="triggerPickFiles('lock')">
-                        <div class="mobi-service-squircle squircle-blue">
-                            <span class="mobi-badge-hot">HOT</span>
-                            <span class="service-icon">🔒</span>
-                        </div>
-                        <span class="mobi-service-label">Khóa & Đóng dấu</span>
-                    </div>
-                    <div class="mobi-service-item" onclick="switchTab('unlock')">
-                        <div class="mobi-service-squircle squircle-cyan">
-                            <span class="mobi-badge-hot">HOT</span>
-                            <span class="service-icon">🔓</span>
-                        </div>
-                        <span class="mobi-service-label">Mở khóa tệp</span>
-                    </div>
-                    <div class="mobi-service-item" onclick="switchTab('audit')">
-                        <div class="mobi-service-squircle squircle-navy">
-                            <span class="service-icon">🔎</span>
-                        </div>
-                        <span class="mobi-service-label">Pháp y số</span>
-                    </div>
-                    <div class="mobi-service-item" onclick="switchTab('vault')">
-                        <div class="mobi-service-squircle squircle-purple">
-                            <span class="service-icon">🛡️</span>
-                        </div>
-                        <span class="mobi-service-label">Két bí mật</span>
-                    </div>
+                <div class="floating-card-badge">
+                    <span class="badge-dot"></span>
+                    <span>An Toàn</span>
                 </div>
             </div>
 
@@ -456,8 +423,11 @@
         <!-- ==================== TAB 4: KÉT BẢO MẬT (VAULT) ==================== -->
         <div id="tab-vault" class="tab-content" style="display: none;">
             <!-- VIEW A: KÉT ĐANG KHÓA (Yêu cầu xác thực bằng Vân tay, Mã PIN, hoặc Mật khẩu) -->
-            <div id="vault-locked-view" class="card vault-auth-card">
-                <div class="vault-auth-icon-badge">
+            <div id="vault-locked-view" class="card vault-auth-card" style="position: relative;">
+                <button type="button" class="btn-vault-back" onclick="switchTab('lock')" title="Quay lại Trang chủ">
+                    ← Quay lại Trang chủ
+                </button>
+                <div class="vault-auth-icon-badge" style="margin-top: 24px;">
                     <div class="vault-shield-icon">🛡️</div>
                     <div class="vault-lock-status-badge">🔒 KÉT ĐANG KHÓA</div>
                 </div>
@@ -642,6 +612,79 @@
                 <span class="nav-label">Két sắt</span>
             </button>
         </nav>
+    </div>
+
+    <!-- ==================== APP DRAWER (SETTINGS & MENU) ==================== -->
+    <div class="drawer-overlay" id="app-drawer-overlay" onclick="closeAppDrawer()"></div>
+    <div class="app-drawer" id="app-drawer">
+        <div class="drawer-header">
+            <div class="drawer-brand">
+                <div class="drawer-logo-icon">🛡️</div>
+                <div>
+                    <h3 class="drawer-title">KryptoDoc Pro</h3>
+                    <span class="drawer-subtitle">Bảo Mật Tối Cao • Offline 100%</span>
+                </div>
+            </div>
+            <button type="button" class="btn-drawer-close" onclick="closeAppDrawer()" title="Đóng Menu">✕</button>
+        </div>
+        <div class="drawer-content">
+            <div class="drawer-section-title">HỆ THỐNG & CÀI ĐẶT</div>
+            <div class="drawer-menu-item" onclick="openVaultSettingsFromMenu()">
+                <span class="drawer-menu-icon">⚙️</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Cài Đặt Két Sắt & Quản Trị</div>
+                    <div class="drawer-menu-desc">Đổi PIN nhanh, Master Password, Vân tay</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
+            <div class="drawer-menu-item" onclick="openHistoryModalFromMenu()">
+                <span class="drawer-menu-icon">📋</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Nhật Ký Phiên Làm Việc</div>
+                    <div class="drawer-menu-desc">Lịch sử tệp đã khóa / mở khóa trong phiên</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
+            <div class="drawer-menu-item" onclick="closeAppDrawer(); toggleTheme()">
+                <span class="drawer-menu-icon">🌓</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Chế Độ Giao Diện (Sáng / Tối)</div>
+                    <div class="drawer-menu-desc">Chuyển đổi giao diện Sáng Phẳng & Tối</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
+
+            <div class="drawer-divider"></div>
+            <div class="drawer-section-title">THÔNG TIN BẢO MẬT</div>
+            <div class="drawer-info-card">
+                <div class="drawer-info-row">
+                    <span>Mã hóa tài liệu:</span>
+                    <strong>AES-256-GCM</strong>
+                </div>
+                <div class="drawer-info-row">
+                    <span>Hàm băm xác thực:</span>
+                    <strong>SHA-256 PBKDF2</strong>
+                </div>
+                <div class="drawer-info-row">
+                    <span>Thủy vân tàng hình:</span>
+                    <strong>LSB 2 Lớp (Deep-Forensic)</strong>
+                </div>
+                <div class="drawer-info-row">
+                    <span>Môi trường:</span>
+                    <strong style="color: #059669;">Offline 100% Cục Bộ</strong>
+                </div>
+                <div class="drawer-info-row">
+                    <span>Phiên bản:</span>
+                    <strong>v2.6.8 Mobile Pro</strong>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button type="button" class="btn-drawer-lock-now" onclick="closeAppDrawer(); lockVaultSession()">
+                    🔒 Khóa Két & Đóng Lại Ngay
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Krypto Toast Notification -->

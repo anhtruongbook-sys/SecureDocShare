@@ -64,13 +64,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.7
-          name: "KryptoDoc Enterprise Vault v2.6.7 - Clean Flat Home Layout & Light Theme Default Fix"
+          tag_name: v2.6.8
+          name: "KryptoDoc Enterprise Vault v2.6.8 - App Drawer Menu, Deduped Layout & Vault Auto-Exit Fix"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.7 (Clean Flat Home Layout & Light Theme Fix)
-            - **Khắc Phục Hoàn Toàn Xung Đột Thẻ Nổi & Bàn Phím Két Sắt (Isolated Home Tab Hierarchy)**:
-              + Đưa toàn bộ Thẻ trạng thái nổi (`mobi-floating-status-card`), Cụm 4 tiện ích squircle (`mobi-section-group`), và Thẻ tác vụ D5 (`mobi-featured-card`) vào đúng bên trong Tab 1 (`tab-lock`).
-              + Khi chuyển sang Tab Két Sắt (`tab-vault`), Mở Khóa (`tab-unlock`), hoặc Pháp Y (`tab-audit`), các thẻ của Trang chủ ẩn đi 100%, trả lại không gian nhập mã PIN Két sắt và thao tác độc lập, sắc nét.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.8 (App Drawer Menu & Clean Deduped UX)
+            - **Khắc Phục 3 Vấn Đề Giao Diện & Trải Nghiệm Người Dùng (Theo Phản Hồi Trực Tiếp)**:
+              1. **Đã Khóa Két Thì Tự Động Đóng Lại / Thoát Về Trang Chủ (Vault Auto-Exit On Lock)**:
+                 + Khi người dùng bấm "Khóa Két Lại" hoặc khi Két được khóa, ứng dụng tự động đóng Két và chuyển ngay về Trang chủ, không còn giữ màn hình bàn phím số "Xác Thực Để Mở Két".
+                 + Bổ sung nút `← Quay lại Trang chủ` ngay trên giao diện nhập mã PIN của Két sắt để thoát nhanh bất cứ lúc nào.
+                 + Khi ứng dụng bị thu nhỏ hoặc tắt màn hình, tự động chuyển về Trang chủ để khi mở lại không bị đè bàn phím PIN.
+              2. **Kích Hoạt Nút Menu 3 Gạch Ngang (App Drawer) & Dọn Dẹp Nút Cài Đặt Thừa**:
+                 + Chạm vào nút 3 gạch ngang (`☰`) ở góc trên bên trái mở thanh trượt App Drawer sang trọng (Cài đặt Két, Mật khẩu Quản trị, Nhật ký phiên làm việc, Đổi giao diện, Khóa Két ngay).
+                 + Loại bỏ nút `Cài đặt` chình ình trên Thẻ trạng thái nổi, thay bằng huy hiệu xanh `● An Toàn` tinh tế.
+              3. **Loại Bỏ Hoàn Toàn 4 Nút Trùng Lặp Ở Giữa Màn Hình (Deduped Home Screen)**:
+                 + Xóa bỏ cụm 4 nút "Tiện ích" ở giữa màn hình vì đã trùng lặp chức năng 100% với 4 mục ở Thanh điều hướng đáy (`Trang chủ`, `Mở khóa`, `Pháp y`, `Két sắt`).
+                 + Màn hình Trang chủ trở nên vô cùng thoáng đãng, liền mạch từ Thẻ trạng thái nổi trực tiếp xuống Thẻ tác vụ KD-PRO và các bộ tùy chọn bảo mật.
             - **Mặc Định 100% Chế Độ Sáng Phẳng Trắng - Xanh MobiFone (Pure White & Telecom Blue Default)**:
               + Cập nhật cơ chế nạp theme mặc định sang `sds_theme_v266 = 'light'`.
               + Nền trắng tinh khôi (#ffffff), Header vòm cong xanh dương đậm (#005baa), các thẻ bo tròn đổ bóng tinh tế.

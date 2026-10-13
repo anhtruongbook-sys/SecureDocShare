@@ -2431,7 +2431,48 @@ function lockVaultSession() {
     if (altText) altText.innerText = '🔑 Nhập Mật Khẩu Két Thay Vì PIN';
     closeCyberDialog(false);
     checkVaultAccess();
-    showToast('🔒 Két đã được khóa an toàn!');
+    
+    // TẮT LUÔN / ĐÓNG KÉT VÀ CHUYỂN VỀ TRANG CHỦ THEO YÊU CẦU CỦA NGƯỜI DÙNG:
+    switchTab('lock');
+    showToast('🔒 Đã khóa an toàn và đóng Két!');
+}
+
+// ==========================================
+// APP DRAWER (SETTINGS & MENU SLIDE-OUT)
+// ==========================================
+function openAppDrawer() {
+    const drawer = document.getElementById('app-drawer');
+    const overlay = document.getElementById('app-drawer-overlay');
+    if (drawer) drawer.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+}
+
+function closeAppDrawer() {
+    const drawer = document.getElementById('app-drawer');
+    const overlay = document.getElementById('app-drawer-overlay');
+    if (drawer) drawer.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+}
+
+function openVaultSettingsFromMenu() {
+    closeAppDrawer();
+    switchTab('vault');
+    showToast('⚙️ Cài đặt Két Sắt & Mật Khẩu Quản Trị');
+}
+
+function openHistoryModalFromMenu() {
+    closeAppDrawer();
+    const historyBody = document.getElementById('history-body');
+    const historySection = document.querySelector('.history-section-collapsible');
+    if (historyBody) {
+        historyBody.style.display = 'block';
+        const arrow = document.getElementById('history-arrow');
+        if (arrow) arrow.textContent = '▴';
+    }
+    if (historySection) {
+        historySection.scrollIntoView({ behavior: 'smooth' });
+    }
+    showToast('📋 Đã mở Nhật Ký Phiên Làm Việc');
 }
 
 function saveVaultSettings() {
@@ -2666,7 +2707,7 @@ window.onAppBackgrounded = function() {
 
     const tabVault = document.getElementById('tab-vault');
     if (tabVault && tabVault.classList.contains('active')) {
-        checkVaultAccess();
+        switchTab('lock');
     }
 };
 
