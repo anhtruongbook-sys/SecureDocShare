@@ -22,6 +22,19 @@ function initTheme() {
             const icon = document.getElementById('theme-icon');
             if (icon) icon.innerText = '🌙 Tối';
         }
+        updateDrawerThemeUI();
+    } catch (_) {}
+}
+
+function updateDrawerThemeUI() {
+    try {
+        const isLight = document.body.classList.contains('light-mode');
+        const nameEl = document.getElementById('drawer-theme-name');
+        const descEl = document.getElementById('drawer-theme-desc');
+        const iconEl = document.getElementById('drawer-theme-icon');
+        if (nameEl) nameEl.innerText = isLight ? 'Sáng Phẳng' : 'Chế Độ Tối';
+        if (descEl) descEl.innerText = isLight ? 'Chạm để đổi sang chế độ Tối 🌙' : 'Chạm để đổi sang chế độ Sáng ☀️';
+        if (iconEl) iconEl.innerText = isLight ? '☀️' : '🌙';
     } catch (_) {}
 }
 
@@ -34,7 +47,7 @@ function toggleTheme() {
             localStorage.setItem('sds_theme', 'dark');
             const icon = document.getElementById('theme-icon');
             if (icon) icon.innerText = '☀️ Sáng';
-            showToast('Đã chuyển sang chế độ Tối');
+            showToast('🌙 Đã chuyển sang chế độ Tối');
         } else {
             document.body.classList.remove('dark-mode');
             document.body.classList.add('light-mode');
@@ -42,9 +55,14 @@ function toggleTheme() {
             localStorage.setItem('sds_theme', 'light');
             const icon = document.getElementById('theme-icon');
             if (icon) icon.innerText = '🌙 Tối';
-            showToast('Đã chuyển sang chế độ Sáng Phẳng');
+            showToast('☀️ Đã chuyển sang chế độ Sáng Phẳng');
         }
+        updateDrawerThemeUI();
     } catch (_) {}
+}
+
+function toggleThemeFromDrawer() {
+    toggleTheme();
 }
 
 let currentWatermarkMode = 'none'; // 'none' | 'ibst_bim' | 'anhs_team' | 'text' | 'custom'
@@ -257,9 +275,19 @@ function switchTab(tabName) {
             }, 250);
         }
     } else {
+        // ========================================================
+        // BẤT BIẾN AN NINH: KHI CHUYỂN SANG CHỨC NĂNG KHÁC, KHÓA VÀ ĐÓNG KÉT NGAY LẬP TỨC!
+        // ========================================================
+        isVaultSessionUnlocked = false;
+        currentVaultPinInput = '';
         vaultBiometricDismissedInSession = false;
-        if (localStorage.getItem('krypto_autolock_enabled') !== 'false') {
-            isVaultSessionUnlocked = false;
+
+        const unlockedView = document.getElementById('vault-unlocked-view');
+        const lockedView = document.getElementById('vault-locked-view');
+        if (unlockedView) unlockedView.style.display = 'none';
+        if (lockedView) {
+            lockedView.style.display = 'block';
+            updateVaultPinDots();
         }
     }
 }
@@ -2440,6 +2468,7 @@ function lockVaultSession() {
 // APP DRAWER (SETTINGS & MENU SLIDE-OUT)
 // ==========================================
 function openAppDrawer() {
+    updateDrawerThemeUI();
     const drawer = document.getElementById('app-drawer');
     const overlay = document.getElementById('app-drawer-overlay');
     if (drawer) drawer.classList.add('active');
@@ -2461,17 +2490,56 @@ function openVaultSettingsFromMenu() {
 
 function openHistoryModalFromMenu() {
     closeAppDrawer();
-    const historyBody = document.getElementById('history-body');
-    const historySection = document.querySelector('.history-section-collapsible');
-    if (historyBody) {
-        historyBody.style.display = 'block';
-        const arrow = document.getElementById('history-arrow');
-        if (arrow) arrow.textContent = '▴';
+    renderSessionHistoryInModal();
+    const modal = document.getElementById('history-modal-overlay');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active', 'show');
     }
-    if (historySection) {
-        historySection.scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeHistoryModal() {
+    const modal = document.getElementById('history-modal-overlay');
+    if (modal) {
+        modal.classList.remove('active', 'show');
+        modal.style.display = 'none';
     }
-    showToast('📋 Đã mở Nhật Ký Phiên Làm Việc');
+}
+
+function renderSessionHistoryInModal() {
+    const container = document.getElementById('modal-history-content');
+    if (!container) return;
+    const history = getSessionHistory();
+    if (!history || history.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 24px 0;">Chưa có tệp nào được xử lý trong phiên này.</p>';
+        return;
+    }
+    container.innerHTML = '';
+    history.slice().reverse().forEach((item) => {
+        const el = document.createElement('div');
+        el.style.cssText = 'padding: 9px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 12px;';
+        const icon = item.action === 'lock' ? '🔒' : (item.action === 'unlock' ? '🔓' : '🔎');
+        const actionLabel = item.action === 'lock' ? 'Đã Khóa' : (item.action === 'unlock' ? 'Đã Mở' : 'Pháp Y');
+        const safeName = (item.fileName || 'Tệp tin').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeTime = (item.timestamp || '').replace(/&/g, '&amp;');
+        el.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">
+                <span style="font-size: 18px;">${icon}</span>
+                <div style="overflow: hidden;">
+                    <div style="font-weight: 600; color: var(--text-title); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 190px;">${safeName}</div>
+                    <div style="font-size: 10.5px; color: var(--text-muted);">${actionLabel} • ${safeTime}</div>
+                </div>
+            </div>
+            <span style="font-size: 10px; font-weight: 700; color: #059669; background: rgba(16, 185, 129, 0.12); padding: 2px 7px; border-radius: 10px; white-space: nowrap;">Thành công</span>
+        `;
+        container.appendChild(el);
+    });
+}
+
+function clearSessionHistoryInModal() {
+    clearSessionHistory();
+    renderSessionHistoryInModal();
+    showToast('🗑️ Đã xóa sạch nhật ký phiên!');
 }
 
 function saveVaultSettings() {

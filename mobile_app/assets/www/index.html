@@ -641,15 +641,15 @@
                 <span class="drawer-menu-icon">📋</span>
                 <div class="drawer-menu-text">
                     <div class="drawer-menu-name">Nhật Ký Phiên Làm Việc</div>
-                    <div class="drawer-menu-desc">Lịch sử tệp đã khóa / mở khóa trong phiên</div>
+                    <div class="drawer-menu-desc">Xem danh sách tệp đã xử lý trong phiên</div>
                 </div>
                 <span class="drawer-menu-arrow">›</span>
             </div>
-            <div class="drawer-menu-item" onclick="closeAppDrawer(); toggleTheme()">
-                <span class="drawer-menu-icon">🌓</span>
+            <div class="drawer-menu-item" onclick="toggleThemeFromDrawer()">
+                <span class="drawer-menu-icon" id="drawer-theme-icon">☀️</span>
                 <div class="drawer-menu-text">
-                    <div class="drawer-menu-name">Chế Độ Giao Diện (Sáng / Tối)</div>
-                    <div class="drawer-menu-desc">Chuyển đổi giao diện Sáng Phẳng & Tối</div>
+                    <div class="drawer-menu-name">Giao Diện: <span id="drawer-theme-name" style="color: var(--primary);">Sáng Phẳng</span></div>
+                    <div class="drawer-menu-desc" id="drawer-theme-desc">Chạm để chuyển sang chế độ Tối</div>
                 </div>
                 <span class="drawer-menu-arrow">›</span>
             </div>
@@ -689,6 +689,30 @@
 
     <!-- Krypto Toast Notification -->
     <div id="krypto-toast" class="krypto-toast"></div>
+
+    <!-- Modal Nhật Ký Phiên Làm Việc (History Modal) -->
+    <div id="history-modal-overlay" class="cyber-dialog-overlay" style="display: none;" onclick="closeHistoryModal()">
+        <div class="cyber-dialog-card" style="max-width: 380px; width: 92%; text-align: left; padding: 18px;" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">📋</span>
+                    <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-title);">Nhật Ký Phiên Làm Việc</h3>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="btn-history-clear" onclick="clearSessionHistoryInModal()" title="Xóa lịch sử phiên" style="background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer;">🗑️ Xóa</button>
+                    <button type="button" class="btn-drawer-close" onclick="closeHistoryModal()" style="width: 28px; height: 28px; font-size: 14px; background: rgba(0,0,0,0.06); color: var(--text-primary); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+                </div>
+            </div>
+            <div id="modal-history-content" style="max-height: 50vh; overflow-y: auto;">
+                <p style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px 0;">Chưa có tệp nào được xử lý trong phiên này.</p>
+            </div>
+            <div style="margin-top: 14px;">
+                <button type="button" class="btn-cyber-dialog-primary" style="width: 100%; padding: 10px;" onclick="closeHistoryModal()">
+                    <span>Đóng Nhật Ký</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Cyber Modal Dialog (Thay thế hoàn toàn window.alert mặc định) -->
     <div id="cyber-dialog-overlay" class="cyber-dialog-overlay" style="display: none;" onclick="handleCyberDialogOverlayClick(event)">
