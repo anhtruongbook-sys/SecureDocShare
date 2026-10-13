@@ -199,6 +199,8 @@ function selectPackagingMode(mode, el, silent = false) {
 }
 
 
+let vaultBiometricDismissedInSession = false;
+
 function switchTab(tabName) {
     document.querySelectorAll('.bottom-nav-btn, .tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => {
@@ -236,7 +238,18 @@ function switchTab(tabName) {
         if (altText) altText.innerText = '🔑 Nhập Mật Khẩu Két Thay Vì PIN';
         closeCyberDialog(false);
         checkVaultAccess();
+
+        const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
+        if (bioEnabled && !isVaultSessionUnlocked && window.FlutterBridge && !vaultBiometricDismissedInSession) {
+            setTimeout(() => {
+                const tabVault = document.getElementById('tab-vault');
+                if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked && !vaultBiometricDismissedInSession) {
+                    triggerDeviceBiometricAuth();
+                }
+            }, 300);
+        }
     } else {
+        vaultBiometricDismissedInSession = false;
         if (localStorage.getItem('krypto_autolock_enabled') !== 'false') {
             isVaultSessionUnlocked = false;
         }
@@ -2363,6 +2376,7 @@ function unlockVaultSuccess(method) {
 
 function lockVaultSession() {
     isVaultSessionUnlocked = false;
+    vaultBiometricDismissedInSession = true;
     currentVaultPinInput = '';
     const passInput = document.getElementById('vault-entered-pass');
     if (passInput) passInput.value = '';
@@ -2505,6 +2519,7 @@ function verifyEnteredPin() {
 }
 
 function triggerDeviceBiometricAuth() {
+    vaultBiometricDismissedInSession = false;
     if (window.FlutterBridge) {
         window.FlutterBridge.postMessage(JSON.stringify({
             action: 'authenticate_biometrics'
@@ -2516,6 +2531,7 @@ function triggerDeviceBiometricAuth() {
 }
 
 window.onBiometricAuthSuccess = function() {
+    vaultBiometricDismissedInSession = false;
     const gate = document.getElementById('cyber-lock-gate');
     if (gate && gate.style.display !== 'none') {
         unlockGateSuccess();
@@ -2528,6 +2544,7 @@ window.onBiometricAuthSuccess = function() {
 
 window.onBiometricAuthFailed = function(errMsg) {
     // Khi người dùng bấm tắt hoặc hủy bỏ xác thực: Két luôn ở trạng thái khóa và không bật bất cứ hộp thoại nào
+    vaultBiometricDismissedInSession = true;
     const tabVault = document.getElementById('tab-vault');
     if (tabVault && tabVault.classList.contains('active')) {
         isVaultSessionUnlocked = false;

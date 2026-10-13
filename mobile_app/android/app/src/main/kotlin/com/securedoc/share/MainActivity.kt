@@ -1,8 +1,11 @@
 package com.securedoc.share
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import com.itextpdf.text.BaseColor
 import com.itextpdf.text.Element
 import com.itextpdf.text.pdf.BaseFont
@@ -48,7 +51,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import org.json.JSONObject
 
-class MainActivity: FlutterActivity() {
+class MainActivity: FlutterFragmentActivity() {
     private val CHANNEL = "com.securedoc.share/native_engine"
     private val executor = Executors.newSingleThreadExecutor()
     private var pendingBiometricResult: MethodChannel.Result? = null
@@ -847,21 +850,68 @@ class MainActivity: FlutterActivity() {
                     }
                 }
                 "authenticateBiometrics" -> {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-                        if (keyguardManager.isKeyguardSecure) {
-                            val intent = keyguardManager.createConfirmDeviceCredentialIntent(
-                                "KryptoDoc Vault",
-                                "Xác thực danh tính bằng vân tay, khuôn mặt hoặc mã PIN phần cứng"
-                            )
-                            if (intent != null) {
-                                pendingBiometricResult = result
-                                startActivityForResult(intent, REQUEST_CODE_BIOMETRIC)
-                                return@setMethodCallHandler
+                    runOnUiThread {
+                        try {
+                            val biometricManager = BiometricManager.from(this)
+                            val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                                                BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                                                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+                            val canAuth = biometricManager.canAuthenticate(authenticators)
+                            if (canAuth != BiometricManager.BIOMETRIC_SUCCESS && canAuth != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+                                val bioOnly = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
+                                val canBio = biometricManager.canAuthenticate(bioOnly)
+                                if (canBio != BiometricManager.BIOMETRIC_SUCCESS && canBio != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+                                    result.success(false)
+                                    return@runOnUiThread
+                                }
                             }
+
+                            val executor = ContextCompat.getMainExecutor(this)
+                            var responded = false
+
+                            val callback = object : BiometricPrompt.AuthenticationCallback() {
+                                override fun onAuthenticationSucceeded(authResult: BiometricPrompt.AuthenticationResult) {
+                                    super.onAuthenticationSucceeded(authResult)
+                                    if (!responded) {
+                                        responded = true
+                                        result.success(true)
+                                    }
+                                }
+
+                                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                                    super.onAuthenticationError(errorCode, errString)
+                                    if (!responded) {
+                                        responded = true
+                                        result.success(false)
+                                    }
+                                }
+
+                                override fun onAuthenticationFailed() {
+                                    super.onAuthenticationFailed()
+                                }
+                            }
+
+                            val biometricPrompt = BiometricPrompt(this, executor, callback)
+                            try {
+                                val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                                    .setTitle("Xác thực KryptoDoc Vault")
+                                    .setSubtitle("Quét vân tay hoặc nhận diện khuôn mặt để mở Két")
+                                    .setAllowedAuthenticators(authenticators)
+                                    .build()
+                                biometricPrompt.authenticate(promptInfo)
+                            } catch (_: Throwable) {
+                                val promptInfoFallback = BiometricPrompt.PromptInfo.Builder()
+                                    .setTitle("Xác thực KryptoDoc Vault")
+                                    .setSubtitle("Quét vân tay để mở Két")
+                                    .setNegativeButtonText("Hủy")
+                                    .build()
+                                biometricPrompt.authenticate(promptInfoFallback)
+                            }
+                        } catch (e: Throwable) {
+                            result.success(false)
                         }
                     }
-                    result.success(false)
                 }
                 else -> result.notImplemented()
             }

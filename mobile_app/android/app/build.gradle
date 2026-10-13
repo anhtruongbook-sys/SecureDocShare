@@ -90,6 +90,7 @@ dependencies {
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
     implementation "androidx.multidex:multidex:2.0.1"
     implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "androidx.biometric:biometric:1.1.0"
     implementation "com.itextpdf:itextg:5.5.10"
     implementation "org.apache.poi:poi:4.1.2"
     implementation "net.lingala.zip4j:zip4j:2.11.5"

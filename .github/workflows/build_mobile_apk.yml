@@ -64,17 +64,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.2
-          name: "KryptoDoc Enterprise Vault v2.6.2 - Quiet Vault Lock & Zero Auto-Popup"
+          tag_name: v2.6.3
+          name: "KryptoDoc Enterprise Vault v2.6.3 - Modern Android BiometricPrompt & Centered PIN Display"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.2 (Quiet Vault Lock & Zero Auto-Popup)
-            - **Chế Độ Khóa Két Tĩnh Lặng & Tuyệt Đối Không Tự Bật Hộp Thoại (Zero Auto-Popup Invariant)**:
-              + Khi bấm **`🔒 Khóa Két Lại`**: Két ngay lập tức chuyển về màn hình khóa (`🔒 KÉT ĐANG KHÓA`) tĩnh lặng, đóng toàn bộ dialog, tuyệt đối không tự động bật bất kỳ hộp thoại nào.
-              + Khi **Bấm Tắt / Hủy Bỏ** hộp thoại xác thực vân tay: Két luôn giữ vững trạng thái khóa an toàn, không hiển thị thêm bất kỳ hộp thoại lỗi hay thông báo popup nào làm phiền người dùng.
-              + Loại bỏ hoàn toàn cơ chế tự động bật sinh trắc học khi khởi động app: Cảm biến vân tay chỉ kích hoạt khi người dùng **chủ động chạm vào biểu tượng `👆`** trên bàn phím số.
-            - **Cơ Chế Xác Thực Mở Két Đa Tầng (Biometrics, PIN & Password Vault Unlock)**:
-              + Khóa Két Bắt Buộc 100%: Mở Tab Két luôn hiển thị màn hình khóa với bàn phím số PIN phẳng sang trọng.
-              + Hỗ trợ 3 phương thức: Vân tay `👆`, Mã PIN nhanh (mặc định: `0000`), hoặc Mật khẩu Quản trị Master Key.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.3 (BiometricPrompt & Centered PIN Display)
+            - **Nâng Cấp Toàn Diện Động Cơ Sinh Trắc Học Android Native (Modern BiometricPrompt Engine)**:
+              + Tích hợp thư viện chuẩn quốc tế `androidx.biometric:biometric:1.1.0` kế thừa `FlutterFragmentActivity`.
+              + Thay thế hoàn toàn API legacy cũ bằng `BiometricPrompt`: Hỗ trợ 100% tất cả các dòng máy Android đời mới (Android 10, 11, 12, 13, 14, 15).
+              + Cảm biến vân tay phần cứng và nhận diện khuôn mặt hoạt động nhạy bén, siêu tốc.
+              + Tự động kích hoạt quét vân tay 1 lần khi truy cập Két nếu đã bật cấu hình sinh trắc học; chạm ngón tay là Két mở ngay lập tức.
+              + Khi bấm "Hủy / Tắt" hoặc bấm "Khóa Két Lại": Két ghi nhận trạng thái yên lặng, tuyệt đối không tự động bật lại hộp thoại làm phiền; người dùng có thể chạm nút `👆` bất kỳ lúc nào để quét lại.
+            - **Căn Giữa Tuyệt Đối Màn Hình Đăng Nhập Két (Fix Skewed PIN Dots Alignment)**:
+              + Khắc phục triệt để hiện tượng 6 chấm tròn mã PIN bị lệch hẳn sang mép trái màn hình.
+              + Cài đặt `justify-content: center; align-items: center; max-width: 250px; margin: 0 auto;` giúp hàng chấm tròn mã PIN luôn nằm thẳng hàng, đối xứng và cân đối 100% phía trên bàn phím số.
             - **Tái Thiết Kế Giao Diện Phẳng Hoàn Toàn & Sang Trọng (Pure Flat & Quiet Luxury Theme)**:
               + Học tập ngôn ngữ thiết kế từ các ứng dụng bảo mật hàng đầu thế giới (1Password 8, Apple Passwords iOS 18, Bitwarden, Proton Drive).
               + **Hệ màu Trung tính Titan (Neutral Titanium)**: Chế độ tối than đá ấm `#14171f`, chế độ sáng xám ngà canvas bột giấy cao cấp `#f4f5f8`, loại bỏ hoàn toàn viền neon và độ tương phản chói gắt.
