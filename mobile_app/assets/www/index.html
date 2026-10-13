@@ -663,11 +663,14 @@
 
             <!-- Alternative unlock by password -->
             <button type="button" class="btn-unlock-by-pass" onclick="togglePassUnlockAlternative()">
-                <span id="alt-unlock-text">Sử dụng Mật khẩu thay vì PIN</span>
+                <span id="alt-unlock-text">🔑 Sử dụng Mật Khẩu Thay Vì PIN</span>
             </button>
             <div id="alt-pass-box" style="display: none; margin-top: 10px; width: 100%; max-width: 260px;">
-                <input type="password" id="gate-alt-password" placeholder="Nhập mật khẩu két..." style="width: 100%; text-align: center;">
-                <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 6px; width: 100%;" onclick="submitGatePassword()">
+                <div class="vault-input-with-eye">
+                    <input type="password" id="gate-alt-password" placeholder="Nhập Mật khẩu Két..." style="width: 100%; text-align: center;">
+                    <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('gate-alt-password', this)">👁️</button>
+                </div>
+                <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 8px; width: 100%;" onclick="submitGatePassword()">
                     <span>Mở Khóa Bằng Mật Khẩu</span>
                 </button>
             </div>

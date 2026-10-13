@@ -64,19 +64,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.3
-          name: "KryptoDoc Enterprise Vault v2.6.3 - Modern Android BiometricPrompt & Centered PIN Display"
+          tag_name: v2.6.4
+          name: "KryptoDoc Enterprise Vault v2.6.4 - Background Auto-Lock & Default Biometric Login"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.3 (BiometricPrompt & Centered PIN Display)
-            - **Nâng Cấp Toàn Diện Động Cơ Sinh Trắc Học Android Native (Modern BiometricPrompt Engine)**:
-              + Tích hợp thư viện chuẩn quốc tế `androidx.biometric:biometric:1.1.0` kế thừa `FlutterFragmentActivity`.
-              + Thay thế hoàn toàn API legacy cũ bằng `BiometricPrompt`: Hỗ trợ 100% tất cả các dòng máy Android đời mới (Android 10, 11, 12, 13, 14, 15).
-              + Cảm biến vân tay phần cứng và nhận diện khuôn mặt hoạt động nhạy bén, siêu tốc.
-              + Tự động kích hoạt quét vân tay 1 lần khi truy cập Két nếu đã bật cấu hình sinh trắc học; chạm ngón tay là Két mở ngay lập tức.
-              + Khi bấm "Hủy / Tắt" hoặc bấm "Khóa Két Lại": Két ghi nhận trạng thái yên lặng, tuyệt đối không tự động bật lại hộp thoại làm phiền; người dùng có thể chạm nút `👆` bất kỳ lúc nào để quét lại.
-            - **Căn Giữa Tuyệt Đối Màn Hình Đăng Nhập Két (Fix Skewed PIN Dots Alignment)**:
-              + Khắc phục triệt để hiện tượng 6 chấm tròn mã PIN bị lệch hẳn sang mép trái màn hình.
-              + Cài đặt `justify-content: center; align-items: center; max-width: 250px; margin: 0 auto;` giúp hàng chấm tròn mã PIN luôn nằm thẳng hàng, đối xứng và cân đối 100% phía trên bàn phím số.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.4 (Background Auto-Lock & Default Biometrics)
+            - **Tự Động Khóa App Khi Thu Nhỏ / Chuyển Ứng Dụng / Khóa Màn Hình (Background Auto-Lock Controller)**:
+              + Tích hợp `WidgetsBindingObserver` theo dõi vòng đời ứng dụng Android (`paused`, `inactive`, `hidden`, `resumed`).
+              + Khi người dùng thu nhỏ app, bấm Home, chuyển sang ứng dụng khác hoặc tắt/khóa màn hình điện thoại: Hệ thống lập tức kích hoạt cổng bảo vệ (`cyber-lock-gate`), che chắn toàn bộ nội dung app và khóa phiên làm việc ngay trong màn hình Recent Apps.
+              + Khi người dùng mở lại ứng dụng: Bắt buộc xác thực danh tính để vào lại app.
+            - **Mặc Định Đăng Nhập Vân Tay Tự Động (Default Biometric Login)**:
+              + Nếu đã bật Sinh trắc học: Cả màn hình cổng khởi động và màn hình Két đều tự động kích hoạt cảm biến vân tay ngay khi mở, người dùng chỉ cần chạm ngón tay là mở khóa ngay, không cần thao tác bấm nút `👆`.
+              + Nâng cấp giao diện nút `🔑 Sử dụng Mật Khẩu Thay Vì PIN` với ô nhập mật khẩu kèm nút con mắt `👁️` ẩn/hiện trực quan.
+            - **Nâng Cấp Động Cơ Sinh Trắc Học `androidx.biometric.BiometricPrompt` & Căn Giữa Mã PIN**:
+              + Tương thích 100% cảm biến vân tay phần cứng và FaceID trên Android 11, 12, 13, 14, 15.
+              + Căn giữa đối xứng 100% hàng 6 chấm tròn mã PIN.
             - **Tái Thiết Kế Giao Diện Phẳng Hoàn Toàn & Sang Trọng (Pure Flat & Quiet Luxury Theme)**:
               + Học tập ngôn ngữ thiết kế từ các ứng dụng bảo mật hàng đầu thế giới (1Password 8, Apple Passwords iOS 18, Bitwarden, Proton Drive).
               + **Hệ màu Trung tính Titan (Neutral Titanium)**: Chế độ tối than đá ấm `#14171f`, chế độ sáng xám ngà canvas bột giấy cao cấp `#f4f5f8`, loại bỏ hoàn toàn viền neon và độ tương phản chói gắt.

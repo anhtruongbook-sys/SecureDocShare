@@ -334,7 +334,7 @@ Future<_UnlockResult> _runStreamUnlockIsolate(_StreamUnlockJob job) async {
 // STATE CHÍNH CỦA ỨNG DỤNG
 // =============================================================================
 
-class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
+class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with WidgetsBindingObserver {
   static const MethodChannel _nativeChannel = MethodChannel('com.securedoc.share/native_engine');
   late final WebViewController _controller;
   bool _isLoading = true;
@@ -345,7 +345,24 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initController();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.hidden) {
+      _controller.runJavaScript("if (window.onAppBackgrounded) window.onAppBackgrounded();");
+    } else if (state == AppLifecycleState.resumed) {
+      _controller.runJavaScript("if (window.onAppResumed) window.onAppResumed();");
+    }
   }
 
   Future<String?> _saveToDownloadsFolder(String tempFilePath, String targetFileName) async {

@@ -2464,6 +2464,15 @@ function checkAppLockOnStartup() {
             gate.style.display = 'flex';
             currentPinInput = '';
             updatePinDots();
+            const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
+            if (bioEnabled && window.FlutterBridge) {
+                setTimeout(() => {
+                    const g = document.getElementById('cyber-lock-gate');
+                    if (g && g.style.display !== 'none') {
+                        triggerDeviceBiometricAuth();
+                    }
+                }, 400);
+            }
         }
     }
 }
@@ -2566,7 +2575,11 @@ function togglePassUnlockAlternative() {
     if (box) {
         const isHidden = box.style.display === 'none';
         box.style.display = isHidden ? 'block' : 'none';
-        if (text) text.innerText = isHidden ? 'Quay lại nhập mã PIN' : 'Sử dụng Mật khẩu thay vì PIN';
+        if (text) text.innerText = isHidden ? '🔢 Sử dụng Mã PIN Thay Vì Mật Khẩu' : '🔑 Sử dụng Mật Khẩu Thay Vì PIN';
+        if (isHidden) {
+            const input = document.getElementById('gate-alt-password');
+            if (input) setTimeout(() => input.focus(), 150);
+        }
     }
 }
 
@@ -2580,3 +2593,68 @@ function submitGatePassword() {
         showToast('✕ Mật khẩu két không chính xác!');
     }
 }
+
+// -------------------------------------------------------------
+// APP LIFECYCLE CONTROLLER (KHÓA KHI THU NHỎ / TẮT MÀN HÌNH & MỞ KHÓA KHI VÀO LẠI)
+// -------------------------------------------------------------
+window.onAppBackgrounded = function() {
+    isVaultSessionUnlocked = false;
+    currentVaultPinInput = '';
+    vaultBiometricDismissedInSession = false;
+
+    const pin = localStorage.getItem('krypto_vault_pin') || '';
+    const masterPass = localStorage.getItem('krypto_master_password') || '';
+    const autolock = localStorage.getItem('krypto_autolock_enabled') !== 'false';
+
+    if ((pin || masterPass) && autolock) {
+        const gate = document.getElementById('cyber-lock-gate');
+        if (gate) {
+            gate.style.display = 'flex';
+            currentPinInput = '';
+            updatePinDots();
+            const altBox = document.getElementById('alt-pass-box');
+            if (altBox) altBox.style.display = 'none';
+            const altText = document.getElementById('alt-unlock-text');
+            if (altText) altText.innerText = '🔑 Sử dụng Mật Khẩu Thay Vì PIN';
+        }
+    }
+
+    const tabVault = document.getElementById('tab-vault');
+    if (tabVault && tabVault.classList.contains('active')) {
+        checkVaultAccess();
+    }
+};
+
+window.onAppResumed = function() {
+    const pin = localStorage.getItem('krypto_vault_pin') || '';
+    const masterPass = localStorage.getItem('krypto_master_password') || '';
+    const autolock = localStorage.getItem('krypto_autolock_enabled') !== 'false';
+    const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
+
+    if ((pin || masterPass) && autolock) {
+        const gate = document.getElementById('cyber-lock-gate');
+        if (gate && gate.style.display !== 'none') {
+            if (bioEnabled && window.FlutterBridge) {
+                setTimeout(() => {
+                    const g = document.getElementById('cyber-lock-gate');
+                    if (g && g.style.display !== 'none') {
+                        triggerDeviceBiometricAuth();
+                    }
+                }, 350);
+            }
+            return;
+        }
+    }
+
+    const tabVault = document.getElementById('tab-vault');
+    if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked) {
+        checkVaultAccess();
+        if (bioEnabled && window.FlutterBridge && !vaultBiometricDismissedInSession) {
+            setTimeout(() => {
+                if (tabVault && tabVault.classList.contains('active') && !isVaultSessionUnlocked && !vaultBiometricDismissedInSession) {
+                    triggerDeviceBiometricAuth();
+                }
+            }, 350);
+        }
+    }
+};
