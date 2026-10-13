@@ -64,14 +64,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.0
-          name: "KryptoDoc Enterprise Vault v2.6.0 - Pure Flat Luxury & Biometric Vault UI"
+          tag_name: v2.6.1
+          name: "KryptoDoc Enterprise Vault v2.6.1 - Strict Multi-Factor Vault Authentication"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.0 (Pure Flat & Quiet Luxury)
-            - **Cơ Chế Xác Thực Mở Két Đa Tầng (Biometrics, PIN & Password Vault Unlock)**:
-              + Khi mở Két Bảo Mật (Tab 4): Bắt buộc xác thực danh tính bằng **Vân tay / Khuôn mặt (Biometrics)**, **Mã PIN 4-6 số**, hoặc **Mật khẩu Két (Master Password)**.
-              + Tự động kích hoạt cảm biến vân tay phần cứng khi truy cập Két.
-              + Bổ sung nút Khóa Két Lại Ngay (`🔒 Khóa Két Lại`) tức thì khi rời khỏi màn hình.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.1 (Strict Multi-Factor Vault Authentication)
+            - **Khắc Phục Tuyệt Đối Lỗi Bỏ Qua Xác Thực Khi Chuyển Sang Tab Két (Strict Vault Access Control)**:
+              + Khắc phục triệt để lỗi logic bypass khiến Két tự động mở khóa khi chưa cấu hình mật khẩu hoặc do xung đột xác thực sinh trắc học lúc khởi động app.
+              + Khi chuyển sang Tab Két (Tab 4): **BẮT BUỘC 100% hiển thị màn hình khóa Két (`🔒 KÉT ĐANG KHÓA`)**, yêu cầu xác nhận danh tính người dùng bằng một trong ba phương thức:
+                1. Quét **Vân tay / Khuôn mặt (Biometrics)** qua cảm biến phần cứng Android.
+                2. Nhập **Mã PIN Nhanh 4-6 số** trên bàn phím số (Mã PIN mặc định ban đầu: `0000`).
+                3. Nhập **Mật khẩu Két Quản Trị (Master Password)** qua ô nhập mật khẩu an toàn.
+              + Chỉ khi xác thực thành công mới mở khóa giao diện cấu hình (`🟢 Két Đang Mở Khóa`).
+              + Tự động khóa Két lại ngay lập tức khi người dùng chuyển sang Tab khác hoặc bấm nút `🔒 Khóa Két Lại`.
+              + Sửa lỗi fallback sinh trắc học Android native trả về `false` chuẩn xác khi người dùng hủy bỏ quét vân tay.
             - **Tái Thiết Kế Giao Diện Phẳng Hoàn Toàn & Sang Trọng (Pure Flat & Quiet Luxury Theme)**:
               + Học tập ngôn ngữ thiết kế từ các ứng dụng bảo mật hàng đầu thế giới (1Password 8, Apple Passwords iOS 18, Bitwarden, Proton Drive).
               + **Hệ màu Trung tính Titan (Neutral Titanium)**: Chế độ tối than đá ấm `#14171f`, chế độ sáng xám ngà canvas bột giấy cao cấp `#f4f5f8`, loại bỏ hoàn toàn viền neon và độ tương phản chói gắt.

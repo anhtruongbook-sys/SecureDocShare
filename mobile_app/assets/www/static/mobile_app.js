@@ -229,7 +229,12 @@ function switchTab(tabName) {
     }
 
     if (tabName === 'vault') {
+        isVaultSessionUnlocked = false;
         checkVaultAccess();
+    } else {
+        if (localStorage.getItem('krypto_autolock_enabled') !== 'false') {
+            isVaultSessionUnlocked = false;
+        }
     }
 }
 
@@ -2212,18 +2217,10 @@ let currentVaultPinInput = '';
 function checkVaultAccess() {
     const curPin = localStorage.getItem('krypto_vault_pin') || '';
     const curMaster = localStorage.getItem('krypto_master_password') || '';
+    const hasCustomCreds = !!(curPin || curMaster);
     const lockedView = document.getElementById('vault-locked-view');
     const unlockedView = document.getElementById('vault-unlocked-view');
-
-    // Nếu chưa từng thiết lập PIN hoặc Master Password: Hiển thị ngay màn hình cấu hình
-    if (!curPin && !curMaster) {
-        if (lockedView) lockedView.style.display = 'none';
-        if (unlockedView) {
-            unlockedView.style.display = 'block';
-            loadVaultConfigInputs();
-        }
-        return;
-    }
+    const subtitleEl = document.querySelector('.vault-auth-subtitle');
 
     if (isVaultSessionUnlocked) {
         if (lockedView) lockedView.style.display = 'none';
@@ -2232,19 +2229,18 @@ function checkVaultAccess() {
             loadVaultConfigInputs();
         }
     } else {
-        // Đang khóa: Hiển thị màn hình xác thực
+        // Đang khóa: Luôn hiển thị màn hình xác thực bảo mật (không bao giờ bỏ qua)
         if (unlockedView) unlockedView.style.display = 'none';
         if (lockedView) {
             lockedView.style.display = 'block';
             currentVaultPinInput = '';
             updateVaultPinDots();
-
-            // Tự động kích hoạt Vân tay nếu có bật sinh trắc học
-            const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
-            if (bioEnabled && window.FlutterBridge) {
-                setTimeout(() => {
-                    triggerDeviceBiometricAuth();
-                }, 350);
+            if (subtitleEl) {
+                if (!hasCustomCreds) {
+                    subtitleEl.innerHTML = 'Vui lòng quét <strong>Vân tay 👆</strong> hoặc nhập <strong>Mã PIN mặc định: 0000</strong> để mở Két';
+                } else {
+                    subtitleEl.innerHTML = 'Vui lòng quét <strong>Vân tay 👆</strong>, nhập <strong>Mã PIN</strong> hoặc <strong>Mật khẩu</strong> để mở Két';
+                }
             }
         }
     }
@@ -2275,7 +2271,7 @@ function loadVaultConfigInputs() {
 }
 
 function pressVaultPinDigit(digit) {
-    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '0000';
     const maxLen = configuredPin.length > 0 ? configuredPin.length : 4;
     if (currentVaultPinInput.length < maxLen) {
         currentVaultPinInput += digit;
@@ -2294,7 +2290,7 @@ function deleteVaultPinDigit() {
 }
 
 function updateVaultPinDots() {
-    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '0000';
     const totalDots = configuredPin.length > 0 ? configuredPin.length : 4;
     const container = document.getElementById('vault-pin-dots-container');
     if (container) {
@@ -2309,9 +2305,9 @@ function updateVaultPinDots() {
 }
 
 function verifyVaultEnteredPin() {
-    const configuredPin = localStorage.getItem('krypto_vault_pin') || '';
+    const configuredPin = localStorage.getItem('krypto_vault_pin') || '0000';
     if (currentVaultPinInput === configuredPin) {
-        unlockVaultSuccess();
+        unlockVaultSuccess('Mã PIN');
     } else {
         const container = document.getElementById('vault-pin-dots-container');
         if (container) {
@@ -2338,14 +2334,16 @@ function submitVaultPasswordUnlock() {
     const input = document.getElementById('vault-entered-pass');
     const entered = input ? input.value.trim() : '';
     const masterPass = localStorage.getItem('krypto_master_password') || '';
-    if (entered && entered === masterPass) {
-        unlockVaultSuccess();
+    if (masterPass && entered === masterPass) {
+        unlockVaultSuccess('Mật khẩu Két');
+    } else if (!masterPass) {
+        showToast('⚠️ Chưa thiết lập Mật khẩu Két! Vui lòng dùng Vân tay hoặc PIN 0000.');
     } else {
         showToast('⚠️ Mật khẩu Két không chính xác!');
     }
 }
 
-function unlockVaultSuccess() {
+function unlockVaultSuccess(method) {
     isVaultSessionUnlocked = true;
     const lockedView = document.getElementById('vault-locked-view');
     const unlockedView = document.getElementById('vault-unlocked-view');
@@ -2354,7 +2352,8 @@ function unlockVaultSuccess() {
         unlockedView.style.display = 'block';
         loadVaultConfigInputs();
     }
-    showToast('🔓 Đã xác thực & mở Két bảo mật thành công! 🛡️');
+    const methodText = method ? ` qua ${method}` : '';
+    showToast(`🔓 Đã xác thực${methodText} & mở Két thành công! 🛡️`);
 }
 
 function lockVaultSession() {
@@ -2422,7 +2421,7 @@ function saveVaultSettings() {
     }
 
     localStorage.setItem('krypto_master_password', masterPass);
-    localStorage.setItem('krypto_vault_pin', pin);
+    localStorage.setItem('krypto_vault_pin', pin || '0000');
     localStorage.setItem('krypto_biometrics_enabled', bio ? 'true' : 'false');
     localStorage.setItem('krypto_autolock_enabled', autolock ? 'true' : 'false');
 
@@ -2513,16 +2512,20 @@ function triggerDeviceBiometricAuth() {
 }
 
 window.onBiometricAuthSuccess = function() {
-    isVaultSessionUnlocked = true;
-    unlockGateSuccess();
+    const gate = document.getElementById('cyber-lock-gate');
+    if (gate && gate.style.display !== 'none') {
+        unlockGateSuccess();
+    }
     const tabVault = document.getElementById('tab-vault');
     if (tabVault && tabVault.classList.contains('active')) {
-        unlockVaultSuccess();
+        unlockVaultSuccess('Vân tay');
     }
 };
 
 window.onBiometricAuthFailed = function(errMsg) {
-    showToast('✕ ' + (errMsg || 'Xác thực sinh trắc học không thành công'));
+    if (errMsg && errMsg !== 'Xác thực bị hủy bỏ') {
+        showToast('✕ ' + errMsg);
+    }
 };
 
 function unlockGateSuccess() {
