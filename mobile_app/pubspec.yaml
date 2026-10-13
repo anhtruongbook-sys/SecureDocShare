@@ -1,7 +1,7 @@
 name: securedoc_mobile
 description: KryptoDoc Mobile Client - Military-Grade Document Vault & Offline Encryption (Android APK)
 publish_to: 'none'
-version: 2.5.0+34
+version: 2.5.1+35
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

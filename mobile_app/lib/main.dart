@@ -1066,6 +1066,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
         return true;
       },
       child: Scaffold(
+        backgroundColor: const Color(0xFF0B0F19),
         body: SafeArea(
           child: Stack(
             children: [

@@ -64,10 +64,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.5.0
-          name: "KryptoDoc Enterprise Vault v2.5.0 - Universal Cross-Format Watermarking (Word, Excel, PPTX, PDF & Images)"
+          tag_name: v2.5.1
+          name: "KryptoDoc Enterprise Vault v2.5.1 - Fix Header Layout & Vault Settings Modal"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.5.0
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.5.1
+            - **Sửa Lỗi Bố Cục Header & Loại Bỏ Khoảng Trống**:
+              + Tối ưu hóa Header thành 1 hàng duy nhất: Logo Cyber Shield và Tiêu đề đặt song song với cụm nút Cài đặt & Trạng thái.
+              + Cố định kích thước SVG Cyber Shield chuẩn (28x32px), loại bỏ hiện tượng tràn viền làm vỡ layout.
+            - **Sửa Lỗi Nút Cài Đặt (Vault Settings Modal)**:
+              + Bổ sung lớp `active` và `show` kích hoạt hiển thị cửa sổ Cài Đặt Két Bảo Mật, Master Key, mã PIN và Sinh trắc học phần cứng.
             - **Động Cơ Đóng Dấu Bản Quyền Đa Định Dạng (Universal Cross-Format Watermarking)**:
               + **Văn bản Word (.docx)**: Nhúng VML shape chuẩn OpenXML nằm chìm sau văn bản (`behindDoc="1"`) hiển thị tự động trên mọi trang in và chế độ đọc.
               + **Bảng tính Excel (.xlsx)**: Nhúng ảnh nền sheet chuẩn OpenXML (`<picture r:id="..."/>`) trải đều trên toàn bộ bảng tính.

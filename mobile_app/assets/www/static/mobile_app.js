@@ -2152,11 +2152,19 @@ function openVaultSettingsModal() {
     if (autoToggle) autoToggle.checked = localStorage.getItem('krypto_autolock_enabled') !== 'false';
 
     modal.style.display = 'flex';
+    modal.classList.add('active');
+    modal.classList.add('show');
 }
 
 function closeVaultSettingsModal() {
     const modal = document.getElementById('vault-settings-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.classList.remove('active');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 180);
+    }
 }
 
 function handleVaultSettingsOverlayClick(e) {
