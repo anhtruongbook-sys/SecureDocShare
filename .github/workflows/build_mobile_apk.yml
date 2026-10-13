@@ -64,12 +64,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.0
-          name: "KryptoDoc Enterprise Vault v2.7.0 - Auto Vault Close On Navigation & Active Drawer Features Fix"
+          tag_name: v2.7.1
+          name: "KryptoDoc Enterprise Vault v2.7.1 - Clean UI (Removed AI Assistant Floating Bot)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.0 (Vault Strict Security & Drawer Fix)
-            - **Bất Biến An Ninh: Tự Động Đóng & Khóa Két Ngay Khi Chuyển Sang Chức Năng Khác**:
-              + Ngay khi người dùng rời khỏi Két sắt để sang Trang chủ, Mở khóa tệp hay Pháp y, ứng dụng lập tức khóa Két sắt lại (`isVaultSessionUnlocked = false;`). Lần tiếp theo truy cập Két sắt bắt buộc phải xác thực lại từ đầu.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.1 (Clean UI - Removed AI Assistant Bot)
+            - **Loại Bỏ Hoàn Toàn Nút Trợ Lý AI Nổi (Floating Assistant Bot)**:
+              + Gỡ bỏ nút biểu tượng robot tròn nổi ở góc dưới bên phải màn hình theo yêu cầu của người dùng, giải phóng hoàn toàn không gian hiển thị.
+              + Loại bỏ thông báo popup "Trợ Lý KryptoDoc AI", giúp giao diện ứng dụng tối giản, tinh gọn và chuyên nghiệp.
+            - **Bất Biến An Ninh & Trải Nghiệm Hoàn Chỉnh Kế Thừa**:
+              + Tự động khóa Két sắt khi rời tab sang chức năng khác (`isVaultSessionUnlocked = false`).
+              + Kích hoạt đầy đủ chức năng Nhật ký phiên làm việc và Chuyển đổi giao diện sáng/tối trong Menu 3 gạch ngang (App Drawer).
+              + Xác thực sinh trắc học vân tay / khuôn mặt phần cứng Android và phục hồi qua Master Key 100% Offline.
             - **Kích Hoạt Hoàn Hảo 2 Chức Năng Trong Menu 3 Gạch Ngang (App Drawer)**:
               + **Nhật Ký Phiên Làm Việc**: Chạm vào mở ngay Hộp thoại Modal Nhật Ký hiển thị danh sách các tệp tin đã xử lý trực quan, có nút xóa lịch sử và đóng nhanh.
               + **Chế Độ Giao Diện (Sáng / Tối)**: Hiển thị trạng thái giao diện hiện tại (`Sáng Phẳng` hoặc `Chế Độ Tối`) ngay trên menu, chạm vào chuyển đổi mượt mà và cập nhật tức thì.
