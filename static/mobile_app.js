@@ -1,21 +1,26 @@
 // mobile_app.js: Động cơ Mật Mã Học Cục Bộ Offline 100% trên Điện Thoại (Web Crypto API)
 
 // ==========================================
-// CHỦ ĐỀ GIAO DIỆN (NỀN TỐI LÀ MẶC ĐỊNH)
+// CHỦ ĐỀ GIAO DIỆN (NỀN SÁNG PHẲNG LÀ MẶC ĐỊNH)
 // ==========================================
 function initTheme() {
     try {
-        const saved = localStorage.getItem('sds_theme') || 'dark';
-        if (saved === 'light') {
-            document.body.classList.remove('dark-mode');
-            document.body.classList.add('light-mode');
-            const icon = document.getElementById('theme-icon');
-            if (icon) icon.innerText = '☀️';
-        } else {
+        let saved = localStorage.getItem('sds_theme_v266');
+        if (!saved) {
+            saved = 'light';
+            localStorage.setItem('sds_theme_v266', 'light');
+            localStorage.setItem('sds_theme', 'light');
+        }
+        if (saved === 'dark') {
             document.body.classList.remove('light-mode');
             document.body.classList.add('dark-mode');
             const icon = document.getElementById('theme-icon');
-            if (icon) icon.innerText = '🌙';
+            if (icon) icon.innerText = '☀️ Sáng';
+        } else {
+            document.body.classList.remove('dark-mode');
+            document.body.classList.add('light-mode');
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.innerText = '🌙 Tối';
         }
     } catch (_) {}
 }
@@ -25,15 +30,19 @@ function toggleTheme() {
         if (document.body.classList.contains('light-mode')) {
             document.body.classList.remove('light-mode');
             document.body.classList.add('dark-mode');
+            localStorage.setItem('sds_theme_v266', 'dark');
             localStorage.setItem('sds_theme', 'dark');
             const icon = document.getElementById('theme-icon');
-            if (icon) icon.innerText = '🌙';
+            if (icon) icon.innerText = '☀️ Sáng';
+            showToast('Đã chuyển sang chế độ Tối');
         } else {
             document.body.classList.remove('dark-mode');
             document.body.classList.add('light-mode');
+            localStorage.setItem('sds_theme_v266', 'light');
             localStorage.setItem('sds_theme', 'light');
             const icon = document.getElementById('theme-icon');
-            if (icon) icon.innerText = '☀️';
+            if (icon) icon.innerText = '🌙 Tối';
+            showToast('Đã chuyển sang chế độ Sáng Phẳng');
         }
     } catch (_) {}
 }

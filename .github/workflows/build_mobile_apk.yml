@@ -64,10 +64,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.6
-          name: "KryptoDoc Enterprise Vault v2.6.6 - Flat Modern UI (MobiFone / FinTech Inspired Architecture)"
+          tag_name: v2.6.7
+          name: "KryptoDoc Enterprise Vault v2.6.7 - Clean Flat Home Layout & Light Theme Default Fix"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.6 (Flat Modern UI & Telecom Style Architecture)
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.7 (Clean Flat Home Layout & Light Theme Fix)
+            - **Khắc Phục Hoàn Toàn Xung Đột Thẻ Nổi & Bàn Phím Két Sắt (Isolated Home Tab Hierarchy)**:
+              + Đưa toàn bộ Thẻ trạng thái nổi (`mobi-floating-status-card`), Cụm 4 tiện ích squircle (`mobi-section-group`), và Thẻ tác vụ D5 (`mobi-featured-card`) vào đúng bên trong Tab 1 (`tab-lock`).
+              + Khi chuyển sang Tab Két Sắt (`tab-vault`), Mở Khóa (`tab-unlock`), hoặc Pháp Y (`tab-audit`), các thẻ của Trang chủ ẩn đi 100%, trả lại không gian nhập mã PIN Két sắt và thao tác độc lập, sắc nét.
+            - **Mặc Định 100% Chế Độ Sáng Phẳng Trắng - Xanh MobiFone (Pure White & Telecom Blue Default)**:
+              + Cập nhật cơ chế nạp theme mặc định sang `sds_theme_v266 = 'light'`.
+              + Nền trắng tinh khôi (#ffffff), Header vòm cong xanh dương đậm (#005baa), các thẻ bo tròn đổ bóng tinh tế.
+            - **Hợp Nhất Thẻ D5 & Bộ Chọn Tệp Tin**:
+              + Chạm trực tiếp vào Thẻ D5 hoặc nút `📂 Chọn tệp ngay` mở ngay bộ chọn tệp mã hóa.
+            - **Bổ Sung Nút Trợ Lý AI Nổi (Floating Bot)**:
+              + Biểu tượng trợ lý an ninh mạng góc dưới bên phải màn hình.
             - **Tái Thiết Kế Toàn Diện Giao Diện Phẳng Hiện Đại (Flat Modern FinTech & Telecom Architecture)**:
               + **Hero Banner Cong Xanh Dương Đậm Đà (Royal Blue Curved Header)**: Dải màu chuyển tiếp gradient `#005baa` đến `#007de3`, bo đáy mềm mại 24px, tích hợp biểu tượng KryptoDoc trắng nổi bật, nút Menu Lịch sử và Chuyển chế độ Sáng/Tối.
               + **Thẻ Trạng Thái Nổi Đè Header (Floating Status Overlapping Card)**: Thẻ trắng sang trọng hiển thị trạng thái Két bảo mật Offline 100%, một chạm mở cấu hình Két nhanh.

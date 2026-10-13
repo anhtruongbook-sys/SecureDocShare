@@ -35,96 +35,79 @@
             </div>
         </header>
 
-        <!-- Floating Quick Status Card Overlapping Hero Banner -->
-        <div class="mobi-floating-status-card" onclick="switchTab('vault')">
-            <div class="floating-card-left">
-                <div class="floating-card-icon">🛡️</div>
-                <div class="floating-card-info">
-                    <h4 class="floating-card-title">Két Bảo Mật KryptoDoc</h4>
-                    <p class="floating-card-sub">Trạng thái: Hoạt động Offline 100% • AES-256</p>
-                </div>
-            </div>
-            <button type="button" class="btn-floating-action">Cài đặt</button>
-        </div>
-
-        <!-- Section: Tiện ích Nhanh (4 Cột Squircle) -->
-        <div class="mobi-section-group">
-            <div class="mobi-section-header">
-                <h3 class="mobi-section-title">Tiện ích</h3>
-                <button type="button" class="mobi-section-link" onclick="toggleHistoryDrawer()">Nhật ký</button>
-            </div>
-            <div class="mobi-services-grid">
-                <div class="mobi-service-item" onclick="switchTab('lock')">
-                    <div class="mobi-service-squircle squircle-blue">
-                        <span class="mobi-badge-hot">HOT</span>
-                        <span class="service-icon">🔒</span>
-                    </div>
-                    <span class="mobi-service-label">Khóa & Đóng dấu</span>
-                </div>
-                <div class="mobi-service-item" onclick="switchTab('unlock')">
-                    <div class="mobi-service-squircle squircle-cyan">
-                        <span class="mobi-badge-hot">HOT</span>
-                        <span class="service-icon">🔓</span>
-                    </div>
-                    <span class="mobi-service-label">Mở khóa tệp</span>
-                </div>
-                <div class="mobi-service-item" onclick="switchTab('audit')">
-                    <div class="mobi-service-squircle squircle-navy">
-                        <span class="service-icon">🔎</span>
-                    </div>
-                    <span class="mobi-service-label">Pháp y số</span>
-                </div>
-                <div class="mobi-service-item" onclick="switchTab('vault')">
-                    <div class="mobi-service-squircle squircle-purple">
-                        <span class="service-icon">🛡️</span>
-                    </div>
-                    <span class="mobi-service-label">Két bí mật</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Section: Tác Vụ Bảo Mật Chính (D5 Card Style) -->
-        <div class="mobi-section-group" id="mobi-featured-actions">
-            <div class="mobi-section-header">
-                <h3 class="mobi-section-title">Tác vụ bảo mật</h3>
-                <button type="button" class="mobi-section-link" onclick="switchTab('lock')">Cấu hình</button>
-            </div>
-
-            <!-- Card D5 Style: Khóa Tệp -->
-            <div class="mobi-featured-card">
-                <div class="featured-card-top">
-                    <span class="featured-plan-code">KD-PRO</span>
-                    <span class="featured-plan-price">OFFLINE 100% <span class="price-sub">/Miễn phí</span></span>
-                </div>
-                <h2 class="featured-plan-hero">Khóa & Đóng Dấu Bản Quyền</h2>
-                <div class="featured-dashed-divider"></div>
-                <div class="featured-meta-row">
-                    <span class="featured-meta-icon">🌐</span>
-                    <span class="featured-meta-text">Hỗ trợ: PDF, Word, Excel, CAD (.DWG), Ảnh, ZIP</span>
-                </div>
-                <div class="featured-actions-row">
-                    <button type="button" class="btn-mobi-outline" onclick="scrollToSettings()">⚙️ Chi tiết</button>
-                    <button type="button" class="btn-mobi-solid" onclick="triggerPickFiles('lock')">📂 Chọn tệp ngay</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== TAB 1: LOCK ==================== -->
+        <!-- ==================== TAB 1: TRANG CHỦ / LOCK ==================== -->
         <div id="tab-lock" class="tab-content active">
-            <!-- Sleek Horizontal Dropzone Card -->
-            <div class="dropzone-card" id="dropzone-lock" onclick="triggerPickFiles('lock')">
-                <input type="file" id="file-input-lock" multiple accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'lock')">
-                <div class="dropzone-inner">
-                    <div class="upload-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
+            <!-- Floating Quick Status Card Overlapping Hero Banner -->
+            <div class="mobi-floating-status-card">
+                <div class="floating-card-left">
+                    <div class="floating-card-icon">🛡️</div>
+                    <div class="floating-card-info">
+                        <h4 class="floating-card-title">Két Bảo Mật KryptoDoc</h4>
+                        <p class="floating-card-sub">Trạng thái: Hoạt động Offline 100% • AES-256</p>
                     </div>
-                    <div class="dropzone-text-group">
-                        <h3>Chạm để chọn tệp tin cần khóa</h3>
-                        <p>Ảnh (PNG/JPG), AutoCAD (.DWG), PDF, Word, Excel, ZIP...</p>
+                </div>
+                <button type="button" class="btn-floating-action" onclick="switchTab('vault')">Cài đặt</button>
+            </div>
+
+            <!-- Section: Tiện ích Nhanh (4 Cột Squircle) -->
+            <div class="mobi-section-group">
+                <div class="mobi-section-header">
+                    <h3 class="mobi-section-title">Tiện ích</h3>
+                    <button type="button" class="mobi-section-link" onclick="toggleHistoryDrawer()">Nhật ký</button>
+                </div>
+                <div class="mobi-services-grid">
+                    <div class="mobi-service-item" onclick="triggerPickFiles('lock')">
+                        <div class="mobi-service-squircle squircle-blue">
+                            <span class="mobi-badge-hot">HOT</span>
+                            <span class="service-icon">🔒</span>
+                        </div>
+                        <span class="mobi-service-label">Khóa & Đóng dấu</span>
+                    </div>
+                    <div class="mobi-service-item" onclick="switchTab('unlock')">
+                        <div class="mobi-service-squircle squircle-cyan">
+                            <span class="mobi-badge-hot">HOT</span>
+                            <span class="service-icon">🔓</span>
+                        </div>
+                        <span class="mobi-service-label">Mở khóa tệp</span>
+                    </div>
+                    <div class="mobi-service-item" onclick="switchTab('audit')">
+                        <div class="mobi-service-squircle squircle-navy">
+                            <span class="service-icon">🔎</span>
+                        </div>
+                        <span class="mobi-service-label">Pháp y số</span>
+                    </div>
+                    <div class="mobi-service-item" onclick="switchTab('vault')">
+                        <div class="mobi-service-squircle squircle-purple">
+                            <span class="service-icon">🛡️</span>
+                        </div>
+                        <span class="mobi-service-label">Két bí mật</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Tác Vụ Bảo Mật Chính (D5 Card Style) -->
+            <div class="mobi-section-group" id="mobi-featured-actions">
+                <div class="mobi-section-header">
+                    <h3 class="mobi-section-title">Tác vụ bảo mật</h3>
+                    <button type="button" class="mobi-section-link" onclick="scrollToSettings()">Cấu hình</button>
+                </div>
+
+                <!-- Card D5 Style: Khóa Tệp & Chọn Tệp -->
+                <div class="mobi-featured-card" onclick="triggerPickFiles('lock')">
+                    <input type="file" id="file-input-lock" multiple accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'lock')">
+                    <div class="featured-card-top">
+                        <span class="featured-plan-code">KD-PRO</span>
+                        <span class="featured-plan-price">OFFLINE 100% <span class="price-sub">/Miễn phí</span></span>
+                    </div>
+                    <h2 class="featured-plan-hero">Khóa & Đóng Dấu Bản Quyền</h2>
+                    <div class="featured-dashed-divider"></div>
+                    <div class="featured-meta-row">
+                        <span class="featured-meta-icon">🌐</span>
+                        <span class="featured-meta-text">Hỗ trợ: PDF, Word, Excel, CAD (.DWG), Ảnh, ZIP</span>
+                    </div>
+                    <div class="featured-actions-row">
+                        <button type="button" class="btn-mobi-outline" onclick="event.stopPropagation(); scrollToSettings()">⚙️ Chi tiết</button>
+                        <button type="button" class="btn-mobi-solid" onclick="event.stopPropagation(); triggerPickFiles('lock')">📂 Chọn tệp ngay</button>
                     </div>
                 </div>
             </div>
