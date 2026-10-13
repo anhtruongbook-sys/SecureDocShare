@@ -72,6 +72,7 @@ function showCyberDialog({
 
     if (!overlay || !card) {
         console.warn("Cyber dialog overlay not found:", message);
+        showToast(message);
         return;
     }
 
@@ -101,16 +102,17 @@ function showCyberDialog({
         }
     }
 
+    // Hiển thị trực tiếp chắc chắn 100%
     overlay.style.display = 'flex';
-    requestAnimationFrame(() => {
-        overlay.classList.add('show');
-    });
+    overlay.classList.add('active');
+    overlay.classList.add('show');
 }
 
 function closeCyberDialog(triggerAction = false) {
     const overlay = document.getElementById('cyber-dialog-overlay');
     if (!overlay) return;
 
+    overlay.classList.remove('active');
     overlay.classList.remove('show');
     setTimeout(() => {
         overlay.style.display = 'none';
@@ -132,8 +134,11 @@ function handleCyberDialogOverlayClick(event) {
     }
 }
 
-// Ghi đè toàn cục window.alert để loại bỏ hoàn toàn hộp thoại mặc định Android WebView
+// Ghi đè toàn cục window.alert: Hiển thị cả Toast lẫn Cyber Dialog đẹp mắt
 window.alert = function(msg) {
+    try {
+        showToast(String(msg));
+    } catch (_) {}
     showCyberDialog({
         type: 'warning',
         title: 'Thông Báo',
@@ -981,6 +986,7 @@ function toggleQrCodeModal() {
 
 async function executeMobileLockFiles() {
     if (selectedLockFiles.length === 0) {
+        showToast('⚠️ Vui lòng chọn ít nhất 1 tệp tin cần mã hóa!');
         showCyberDialog({
             type: 'warning',
             title: 'Chưa Chọn Tệp Tin',
@@ -995,6 +1001,7 @@ async function executeMobileLockFiles() {
     }
     const pwd = document.getElementById('lock-password').value;
     if (!pwd) {
+        showToast('⚠️ Vui lòng nhập mật khẩu bảo vệ!');
         showCyberDialog({
             type: 'warning',
             title: 'Chưa Nhập Mật Khẩu',
@@ -1515,6 +1522,7 @@ async function shareResult(idx) {
 // -------------------------------------------------------------
 async function executeMobileUnlockFile() {
     if (!selectedUnlockFile) {
+        showToast('⚠️ Vui lòng chọn 1 tệp cần mở khóa!');
         showCyberDialog({
             type: 'warning',
             title: 'Chưa Chọn Tệp Tin',
@@ -1529,6 +1537,7 @@ async function executeMobileUnlockFile() {
     }
     const pwd = document.getElementById('unlock-password').value;
     if (!pwd) {
+        showToast('⚠️ Vui lòng nhập mật khẩu mở khóa!');
         showCyberDialog({
             type: 'warning',
             title: 'Chưa Nhập Mật Khẩu',

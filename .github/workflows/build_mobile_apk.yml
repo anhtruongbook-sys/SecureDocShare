@@ -64,17 +64,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.3.7
-          name: "KryptoDoc v2.3.7 - Premium Cyber Modal System & UX Polish (Android APK)"
+          tag_name: v2.3.8
+          name: "KryptoDoc v2.3.8 - Dual Notification Engine & Active Cyber Modal (Android APK)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc v2.3.7 (Hệ Thống Hộp Thoại Cyber Dialog & Tối Ưu UX)
-            - **Loại Bỏ Hoàn Toàn Hộp Thoại Alert Trình Duyệt Thô Ráp**:
-              + Thay thế 100% các hộp thoại `window.alert` trắng toát, đơn điệu của Android WebView bằng Cyber Modal Dialog sang trọng.
-              + Hiệu ứng mờ nền kính (Backdrop Blur), quầng sáng hào quang (Cyber Glow Aura) đồng bộ chuẩn Obsidian Dark & Clean Light.
-              + Tự động rung viền nổi bật (`input-attention-pulse`) và trỏ con trỏ vào ô nhập mật khẩu khi người dùng quên nhập mật khẩu.
-            - **Bảo Vệ Tệp Cấp Quân Sự Offline 100%**:
-              + Tích hợp đầy đủ Động cơ Pure Native ZIP Streaming ISO/IEC 29500 cho Office (Word, Excel) và Adobe ISO 32000 cho PDF.
-              + Mã hóa tệp tin an toàn tuyệt đối, không gửi bất kỳ dữ liệu nào qua Internet.
+            ## Ứng dụng Di Động KryptoDoc v2.3.8 (Khắc Phục Hiển Thị & Cơ Chế Thông Báo Kép)
+            - **Cơ Chế Thông Báo Kép (Dual Notification Engine)**:
+              + Kích hoạt đồng thời cả Krypto Toast cảnh báo nhanh và Cyber Modal Dialog sang trọng.
+              + Khắc phục hoàn toàn lỗi xung đột class CSS hiển thị giữa .active và .show trên Android WebView.
+              + Đảm bảo 100% người dùng nhận thông báo cảnh báo rõ ràng khi chưa chọn tệp hoặc chưa nhập mật khẩu.
+            - **Hiệu Ứng Trực Quan Cao Cấp**:
+              + Tự động focus con trỏ vào ô mật khẩu kèm hiệu ứng rung lắc viền nổi bật (Pulse Shake Animation).
             - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
           files: |
             build-output/KryptoDoc.apk

@@ -1694,11 +1694,11 @@ body {
 .cyber-dialog-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(4, 7, 13, 0.78);
+    background: rgba(4, 7, 13, 0.82);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: 10000;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 20px;
@@ -1707,9 +1707,12 @@ body {
     transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.cyber-dialog-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
+.cyber-dialog-overlay.active,
+.cyber-dialog-overlay.show {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
 }
 
 .cyber-dialog-card {
@@ -1727,8 +1730,9 @@ body {
     overflow: hidden;
 }
 
-.cyber-dialog-overlay.active .cyber-dialog-card {
-    transform: scale(1) translateY(0);
+.cyber-dialog-overlay.active .cyber-dialog-card,
+.cyber-dialog-overlay.show .cyber-dialog-card {
+    transform: scale(1) translateY(0) !important;
 }
 
 .cyber-dialog-glow {
