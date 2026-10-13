@@ -166,7 +166,11 @@ function isNativePasswordSupported(filename) {
     if (!filename) return false;
     const parts = filename.split('.');
     const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
-    return ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'].includes(ext);
+    const officeAndPdf = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'];
+    const images = ['png', 'jpg', 'jpeg', 'webp', 'bmp'];
+    if (officeAndPdf.includes(ext)) return true;
+    if (images.includes(ext) && (currentProtectionLevel === 'view_only_restricted' || currentPackagingMode === 'native')) return true;
+    return false;
 }
 
 function selectPackagingMode(mode, el, silent = false) {

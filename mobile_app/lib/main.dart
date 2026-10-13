@@ -455,10 +455,38 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
               final outTempPath = '${tempDir.path}/$outZipName';
               final useZipCrypto = data['use_zipcrypto'] as bool? ?? false;
 
+              // Xử lý chèn watermark nếu có cho hình ảnh trước khi nén ZIP
+              List<String> finalSrcPaths = [];
+              if (watermarkMode != 'none' && Platform.isAndroid) {
+                for (final p in srcPaths) {
+                  final fn = p.split(Platform.pathSeparator).last;
+                  final isImg = RegExp(r'\.(png|jpe?g|webp|bmp)$', caseSensitive: false).hasMatch(fn);
+                  if (isImg) {
+                    final wmImgTemp = '${tempDir.path}/wm_${DateTime.now().millisecondsSinceEpoch}_$fn';
+                    try {
+                      await _nativeChannel.invokeMethod('watermarkImage', {
+                        'srcPath': p,
+                        'destPath': wmImgTemp,
+                        'watermark': watermark,
+                        'watermarkImageBase64': watermarkImageB64,
+                        'watermarkOpacity': watermarkOpacity,
+                      });
+                      finalSrcPaths.add(wmImgTemp);
+                    } catch (_) {
+                      finalSrcPaths.add(p);
+                    }
+                  } else {
+                    finalSrcPaths.add(p);
+                  }
+                }
+              } else {
+                finalSrcPaths = srcPaths;
+              }
+
               if (Platform.isAndroid) {
                 try {
                   await _nativeChannel.invokeMethod('createEncryptedZip', {
-                    'srcPaths': srcPaths,
+                    'srcPaths': finalSrcPaths,
                     'destZipPath': outTempPath,
                     'password': password,
                     'useZipCrypto': useZipCrypto,
@@ -538,13 +566,18 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
 
               final isPdf = fileName.toLowerCase().endsWith('.pdf');
               final isOffice = RegExp(r'\.(docx|doc|xlsx|xls|pptx|ppt)$', caseSensitive: false).hasMatch(fileName);
+              final isImage = RegExp(r'\.(png|jpe?g|webp|bmp)$', caseSensitive: false).hasMatch(fileName);
               final baseName = fileName.replaceAll(RegExp(r'\.[^/.]+$'), '');
               final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
+              final bool imageNeedsZip = isImage && (password.isNotEmpty && !isViewOnly);
+
               final outFileName = isPdf 
                   ? (isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf')
                   : (isOffice 
                       ? (isViewOnly ? '${baseName}_ReadOnly$ext' : '${baseName}_Locked$ext')
-                      : '${baseName}_Protected.zip');
+                      : (isImage && !imageNeedsZip
+                          ? (isViewOnly ? '${baseName}_ReadOnly$ext' : '${baseName}_Watermarked$ext')
+                          : '${baseName}_Protected.zip'));
 
               final tempDir = await getTemporaryDirectory();
               final outTempPath = '${tempDir.path}/$outFileName';
@@ -629,8 +662,38 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
                   }
                   rethrow;
                 }
+              } else if (isImage && Platform.isAndroid) {
+                // CHÈN WATERMARK NATIVE CHO HÌNH ẢNH (PNG, JPG, WEBP, BMP)
+                try {
+                  String imageToPackage = srcPath;
+                  if (watermarkMode != 'none') {
+                    final wmImgTemp = '${tempDir.path}/${baseName}_wm$ext';
+                    await _nativeChannel.invokeMethod('watermarkImage', {
+                      'srcPath': srcPath,
+                      'destPath': wmImgTemp,
+                      'watermark': watermark,
+                      'watermarkImageBase64': watermarkImageB64,
+                      'watermarkOpacity': watermarkOpacity,
+                    });
+                    imageToPackage = wmImgTemp;
+                  }
+
+                  if (imageNeedsZip) {
+                    await _nativeChannel.invokeMethod('createEncryptedZip', {
+                      'srcPaths': [imageToPackage],
+                      'destZipPath': outTempPath,
+                      'password': password,
+                      'useZipCrypto': false,
+                    });
+                  } else {
+                    await File(imageToPackage).copy(outTempPath);
+                  }
+                } catch (e) {
+                  debugPrint('Lỗi xử lý ảnh: $e');
+                  rethrow;
+                }
               } else {
-                // TỆP KHÔNG HỖ TRỢ PASS NATIVE (ẢNH, CAD, VIDEO, TEXT, BINARY...):
+                // TỆP KHÔNG HỖ TRỢ PASS NATIVE (CAD, VIDEO, TEXT, BINARY...):
                 // BẮT BUỘC ĐÓNG GÓI VÀO KHO NÉN .ZIP VÀ ĐẶT MẬT KHẨU AES-256 BẰNG ZIP4J NATIVE!
                 // TRÁNH TUYỆT ĐỐI TẠO RA TỆP .PNG/.JPG BỊ LỖI ĐỊNH DẠNG.
                 if (Platform.isAndroid) {
@@ -663,7 +726,11 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> {
 
               final savedFullPath = await _saveToDownloadsFolder(outTempPath, outFileName);
               final displaySaved = savedFullPath ?? 'Thư mục Downloads của máy';
-              final typeDesc = isPdf ? 'Adobe PDF Native' : (isOffice ? 'Microsoft Office Native' : 'Kho Nén .ZIP AES-256');
+              final typeDesc = isPdf 
+                  ? 'Adobe PDF Native' 
+                  : (isOffice 
+                      ? 'Microsoft Office Native' 
+                      : (isImage && !imageNeedsZip ? 'Hình Ảnh Đóng Dấu Bản Quyền' : 'Kho Nén .ZIP AES-256'));
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

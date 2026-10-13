@@ -64,14 +64,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.4.0
-          name: "KryptoDoc Enterprise Vault v2.4.0 - Watermark Suite, Audit Forensics & Hardware Biometrics"
+          tag_name: v2.5.0
+          name: "KryptoDoc Enterprise Vault v2.5.0 - Universal Cross-Format Watermarking (Word, Excel, PPTX, PDF & Images)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.4.0
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.5.0
+            - **Động Cơ Đóng Dấu Bản Quyền Đa Định Dạng (Universal Cross-Format Watermarking)**:
+              + **Văn bản Word (.docx)**: Nhúng VML shape chuẩn OpenXML nằm chìm sau văn bản (`behindDoc="1"`) hiển thị tự động trên mọi trang in và chế độ đọc.
+              + **Bảng tính Excel (.xlsx)**: Nhúng ảnh nền sheet chuẩn OpenXML (`<picture r:id="..."/>`) trải đều trên toàn bộ bảng tính.
+              + **Bản chiếu PowerPoint (.pptx)**: Nhúng trực tiếp vào Slide Master (`ppt/slideMasters/slideMaster1.xml`) bảo đảm hiển thị 100% trang chiếu và không thể xóa lẻ từng trang.
+              + **Tài liệu Adobe PDF (.pdf)**: Đóng dấu mờ bán trong suốt 45 độ bằng iTextG native engine hiệu năng cao.
+              + **Hình ảnh Đồ họa (.png, .jpg, .jpeg, .webp, .bmp)**: Hỗ trợ đóng dấu bản quyền trực tiếp bằng bộ giải mã Android Native Bitmap & Canvas compositing.
             - **Bộ Chọn Dấu Bản Quyền (Watermark Suite)**:
               + Tích hợp sẵn Logo IBST-BIM (Viện Khoa học Công nghệ Xây dựng) và Logo ANH'S TEAM dạng PNG trong suốt.
               + Hỗ trợ dấu chữ mờ tùy biến (CONFIDENTIAL, BẢN MẬT) và tải ảnh Watermark riêng từ bộ nhớ máy.
-              + Tùy chỉnh độ mờ linh hoạt (15%, 25%, 35%) chèn trực tiếp vào PDF và OpenXML.
+              + Tùy chỉnh độ mờ linh hoạt (15%, 25%, 35%).
             - **Kiểm Soát Quyền In Ấn (Allow Print Toggle)**:
               + Bổ sung tùy chọn cho phép hoặc cấm in ấn khi mở xem tự do (Chế độ Chỉ Xem / View-Only) chuẩn Adobe ISO 32000.
             - **Truy Vết Đối Tượng Tiếp Nhận (Recipient Tracking & Anti-Tamper)**:

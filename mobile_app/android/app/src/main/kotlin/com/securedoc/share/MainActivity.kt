@@ -26,6 +26,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -39,6 +40,12 @@ import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import org.json.JSONObject
 
 class MainActivity: FlutterActivity() {
@@ -394,6 +401,7 @@ class MainActivity: FlutterActivity() {
                     val allowPrint = call.argument<Boolean>("allowPrint") ?: false
                     val watermark = call.argument<String>("watermark") ?: ""
                     val watermarkImageBase64 = call.argument<String>("watermarkImageBase64") ?: ""
+                    val watermarkOpacity = (call.argument<Double>("watermarkOpacity") ?: 0.15).toFloat()
                     val recipientName = call.argument<String>("recipientName") ?: ""
                     val releaseCode = call.argument<String>("releaseCode") ?: ""
                     val enableManifest = call.argument<Boolean>("enableManifest") ?: false
@@ -445,74 +453,71 @@ class MainActivity: FlutterActivity() {
                             var encryptSuccess = false
                             var lastError: Throwable? = null
 
-                            if (isViewOnly) {
+                            val hasWatermark = watermarkImageBase64.isNotBlank() || watermark.isNotBlank()
+                            var wmImgBytes: ByteArray? = null
+                            if (watermarkImageBase64.isNotBlank()) {
                                 try {
-                                    if (isZipFile(srcFile)) {
-                                        if (ext == "xlsx" || ext == "xls") {
-                                            protectXlsxReadOnly(srcFile, outFile, password, manifestJson)
+                                    val cleanB64 = if (watermarkImageBase64.contains(",")) watermarkImageBase64.substringAfter(",") else watermarkImageBase64
+                                    wmImgBytes = Base64.decode(cleanB64, Base64.DEFAULT)
+                                } catch (_: Throwable) {}
+                            }
+
+                            if (isZipFile(srcFile)) {
+                                val tempWatermarked = File(outFile.parentFile, "wm_" + srcFile.name)
+                                try {
+                                    if (ext == "docx" || ext == "doc") {
+                                        if (hasWatermark) {
+                                            applyDocxWatermark(srcFile, tempWatermarked, wmImgBytes, watermark, watermarkOpacity, manifestJson)
                                         } else {
-                                            protectDocxReadOnly(srcFile, outFile, password, manifestJson)
+                                            srcFile.copyTo(tempWatermarked, overwrite = true)
                                         }
-                                        encryptSuccess = true
-                                    } else {
-                                        POIFSFileSystem().use { fs ->
-                                            val info = EncryptionInfo(EncryptionMode.standard)
-                                            val encryptor = info.encryptor
-                                            encryptor.confirmPassword(password)
-                                            encryptor.getDataStream(fs).use { os ->
-                                                FileInputStream(srcFile).use { fis ->
-                                                    fis.copyTo(os)
-                                                }
-                                            }
-                                            FileOutputStream(outFile).use { fos ->
-                                                fs.writeFilesystem(fos)
-                                            }
+
+                                        if (isViewOnly) {
+                                            protectDocxReadOnly(tempWatermarked, outFile, password, manifestJson)
+                                            encryptSuccess = true
+                                        } else {
+                                            encryptWithPoifs(tempWatermarked, outFile, password)
+                                            encryptSuccess = true
                                         }
-                                        encryptSuccess = true
+                                    } else if (ext == "xlsx" || ext == "xls") {
+                                        if (hasWatermark) {
+                                            applyXlsxWatermark(srcFile, tempWatermarked, wmImgBytes, watermark, watermarkOpacity, manifestJson)
+                                        } else {
+                                            srcFile.copyTo(tempWatermarked, overwrite = true)
+                                        }
+
+                                        if (isViewOnly) {
+                                            protectXlsxReadOnly(tempWatermarked, outFile, password, manifestJson)
+                                            encryptSuccess = true
+                                        } else {
+                                            encryptWithPoifs(tempWatermarked, outFile, password)
+                                            encryptSuccess = true
+                                        }
+                                    } else if (ext == "pptx" || ext == "ppt") {
+                                        if (hasWatermark) {
+                                            applyPptxWatermark(srcFile, tempWatermarked, wmImgBytes, watermark, watermarkOpacity, manifestJson)
+                                        } else {
+                                            srcFile.copyTo(tempWatermarked, overwrite = true)
+                                        }
+
+                                        if (isViewOnly) {
+                                            tempWatermarked.copyTo(outFile, overwrite = true)
+                                            encryptSuccess = true
+                                        } else {
+                                            encryptWithPoifs(tempWatermarked, outFile, password)
+                                            encryptSuccess = true
+                                        }
                                     }
-                                } catch (eView: Throwable) {
-                                    lastError = eView
+                                } finally {
+                                    if (tempWatermarked.exists()) tempWatermarked.delete()
                                 }
                             } else {
+                                // Tệp nhị phân legacy OLE (.doc cũ, .xls cũ): mã hóa standard MS-OFFCRYPTO
                                 try {
-                                    POIFSFileSystem().use { fs ->
-                                        val info = EncryptionInfo(EncryptionMode.standard)
-                                        val encryptor = info.encryptor
-                                        encryptor.confirmPassword(password)
-
-                                        encryptor.getDataStream(fs).use { os ->
-                                            FileInputStream(srcFile).use { fis ->
-                                                fis.copyTo(os)
-                                            }
-                                        }
-
-                                        FileOutputStream(outFile).use { fos ->
-                                            fs.writeFilesystem(fos)
-                                        }
-                                    }
+                                    encryptWithPoifs(srcFile, outFile, password)
                                     encryptSuccess = true
-                                } catch (eStd: Throwable) {
-                                    lastError = eStd
-                                    try {
-                                        POIFSFileSystem().use { fs ->
-                                            val info = EncryptionInfo(EncryptionMode.agile)
-                                            val encryptor = info.encryptor
-                                            encryptor.confirmPassword(password)
-
-                                            encryptor.getDataStream(fs).use { os ->
-                                                FileInputStream(srcFile).use { fis ->
-                                                    fis.copyTo(os)
-                                                }
-                                            }
-
-                                            FileOutputStream(outFile).use { fos ->
-                                                fs.writeFilesystem(fos)
-                                            }
-                                        }
-                                        encryptSuccess = true
-                                    } catch (eAgile: Throwable) {
-                                        lastError = eAgile
-                                    }
+                                } catch (eOle: Throwable) {
+                                    lastError = eOle
                                 }
                             }
 
@@ -649,6 +654,10 @@ class MainActivity: FlutterActivity() {
                                         }
                                         unprotectXlsx(srcFile, outFile)
                                         decrypted = true
+                                    } else {
+                                        // Tệp PPTX hoặc tài liệu không khóa sửa đổi
+                                        srcFile.copyTo(outFile, overwrite = true)
+                                        decrypted = true
                                     }
                                 }
                             }
@@ -665,6 +674,38 @@ class MainActivity: FlutterActivity() {
                             runOnUiThread {
                                 result.error("OFFICE_DECRYPT_ERROR", errMsg, null)
                             }
+                        }
+                    }
+                }
+                "watermarkImage" -> {
+                    val srcPath = call.argument<String>("srcPath")
+                    val destPath = call.argument<String>("destPath")
+                    val watermark = call.argument<String>("watermark") ?: ""
+                    val watermarkImageBase64 = call.argument<String>("watermarkImageBase64") ?: ""
+                    val watermarkOpacity = (call.argument<Double>("watermarkOpacity") ?: 0.20).toFloat()
+
+                    if (srcPath == null || destPath == null) {
+                        result.error("INVALID_ARGS", "Missing srcPath or destPath", null)
+                        return@setMethodCallHandler
+                    }
+
+                    executor.execute {
+                        try {
+                            val srcFile = File(srcPath)
+                            val outFile = File(destPath)
+                            outFile.parentFile?.mkdirs()
+
+                            var wmImgBytes: ByteArray? = null
+                            if (watermarkImageBase64.isNotBlank()) {
+                                val cleanB64 = if (watermarkImageBase64.contains(",")) watermarkImageBase64.substringAfter(",") else watermarkImageBase64
+                                wmImgBytes = Base64.decode(cleanB64, Base64.DEFAULT)
+                            }
+
+                            applyRasterImageWatermark(srcFile, outFile, wmImgBytes, watermark, watermarkOpacity)
+                            runOnUiThread { result.success(destPath) }
+                        } catch (e: Throwable) {
+                            val errMsg = e.message ?: e.toString()
+                            runOnUiThread { result.error("IMAGE_WATERMARK_ERROR", errMsg, null) }
                         }
                     }
                 }
@@ -827,6 +868,402 @@ class MainActivity: FlutterActivity() {
         }
     }
 
+    private fun encryptWithPoifs(srcFile: File, outFile: File, password: String) {
+        try {
+            POIFSFileSystem().use { fs ->
+                val info = EncryptionInfo(EncryptionMode.standard)
+                val encryptor = info.encryptor
+                encryptor.confirmPassword(password)
+                encryptor.getDataStream(fs).use { os ->
+                    FileInputStream(srcFile).use { fis ->
+                        fis.copyTo(os)
+                    }
+                }
+                FileOutputStream(outFile).use { fos ->
+                    fs.writeFilesystem(fos)
+                }
+            }
+        } catch (_: Throwable) {
+            POIFSFileSystem().use { fs ->
+                val info = EncryptionInfo(EncryptionMode.agile)
+                val encryptor = info.encryptor
+                encryptor.confirmPassword(password)
+                encryptor.getDataStream(fs).use { os ->
+                    FileInputStream(srcFile).use { fis ->
+                        fis.copyTo(os)
+                    }
+                }
+                FileOutputStream(outFile).use { fos ->
+                    fs.writeFilesystem(fos)
+                }
+            }
+        }
+    }
+
+    private fun createTextWatermarkPngBytes(text: String, opacity: Float): ByteArray {
+        val width = 800
+        val height = 400
+        val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.GRAY
+            alpha = (opacity * 255).coerceIn(30f, 220f).toInt()
+            textSize = 58f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+        }
+        canvas.save()
+        canvas.rotate(-30f, width / 2f, height / 2f)
+        canvas.drawText(text, width / 2f, height / 2f + 20f, paint)
+        canvas.restore()
+        val baos = ByteArrayOutputStream()
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, baos)
+        return baos.toByteArray()
+    }
+
+    private fun applyDocxWatermark(srcFile: File, outFile: File, wmImgBytes: ByteArray?, wmText: String, opacity: Float, manifestJson: String) {
+        val relsEntry = "word/_rels/header1.xml.rels"
+        val headerEntry = "word/header1.xml"
+        val wmImgEntry = "word/media/image_wm.png"
+
+        val imgBytes = wmImgBytes ?: if (wmText.isNotBlank()) createTextWatermarkPngBytes(wmText, opacity) else null
+
+        val headerRelsXml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rIdWmPic" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image_wm.png"/>
+</Relationships>"""
+
+        val headerXml = if (imgBytes != null) {
+            """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+  <w:p>
+    <w:pPr><w:pStyle w:val="Header"/></w:pPr>
+    <w:r>
+      <w:rPr><w:noProof/></w:rPr>
+      <w:pict>
+        <v:shape id="WordWatermarkPic" o:spid="_x0000_s1025" type="#_x0000_t75" style="position:absolute;margin-left:0;margin-top:0;width:380pt;height:240pt;z-index:-251654144;mso-position-horizontal:center;mso-position-horizontal-relative:margin;mso-position-vertical:center;mso-position-vertical-relative:margin" fillcolor="#cccccc" stroked="f">
+          <v:imagedata r:id="rIdWmPic" o:title="Watermark" blacklevel="0.1" gain="0.8"/>
+          <v:fill opacity="$opacity"/>
+        </v:shape>
+      </w:pict>
+    </w:r>
+  </w:p>
+</w:hdr>"""
+        } else {
+            ""
+        }
+
+        JZipFile(srcFile).use { zipIn ->
+            JZipOutputStream(FileOutputStream(outFile)).use { zipOut ->
+                val entries = zipIn.entries()
+                var hasHeader = false
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    when (entry.name) {
+                        "word/document.xml" -> {
+                            var docXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (!docXml.contains("headerReference") && headerXml.isNotBlank()) {
+                                docXml = if (docXml.contains("<w:sectPr")) {
+                                    docXml.replace(Regex("<w:sectPr([^>]*)>"), "<w:sectPr$1><w:headerReference w:type=\"default\" r:id=\"rIdWmHeader\"/>")
+                                } else if (docXml.contains("</w:body>")) {
+                                    docXml.replace("</w:body>", "<w:sectPr><w:headerReference w:type=\"default\" r:id=\"rIdWmHeader\"/></w:sectPr></w:body>")
+                                } else {
+                                    docXml
+                                }
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(docXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        "word/_rels/document.xml.rels" -> {
+                            var docRelsXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (!docRelsXml.contains("Target=\"header1.xml\"") && headerXml.isNotBlank()) {
+                                val relTag = "<Relationship Id=\"rIdWmHeader\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/header\" Target=\"header1.xml\"/>"
+                                docRelsXml = docRelsXml.replace("</Relationships>", "$relTag</Relationships>")
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(docRelsXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        "[Content_Types].xml" -> {
+                            var ctXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (headerXml.isNotBlank() && !ctXml.contains("PartName=\"/word/header1.xml\"")) {
+                                val overrideTag = "<Override PartName=\"/word/header1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml\"/>"
+                                ctXml = ctXml.replace("</Types>", "$overrideTag</Types>")
+                            }
+                            if (imgBytes != null && !ctXml.contains("Extension=\"png\"")) {
+                                val defTag = "<Default Extension=\"png\" ContentType=\"image/png\"/>"
+                                ctXml = ctXml.replace("</Types>", "$defTag</Types>")
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(ctXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        "word/header1.xml" -> {
+                            hasHeader = true
+                            var hXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (imgBytes != null && !hXml.contains("WordWatermarkPic")) {
+                                val pTag = """<w:p><w:pPr><w:pStyle w:val="Header"/></w:pPr><w:r><w:rPr><w:noProof/></w:rPr><w:pict><v:shape id="WordWatermarkPic" o:spid="_x0000_s1025" type="#_x0000_t75" style="position:absolute;margin-left:0;margin-top:0;width:380pt;height:240pt;z-index:-251654144;mso-position-horizontal:center;mso-position-horizontal-relative:margin;mso-position-vertical:center;mso-position-vertical-relative:margin" fillcolor="#cccccc" stroked="f"><v:imagedata r:id="rIdWmPic" o:title="Watermark" blacklevel="0.1" gain="0.8"/><v:fill opacity="$opacity"/></v:shape></w:pict></w:r></w:p>"""
+                                hXml = if (hXml.contains("</w:hdr>")) hXml.replace("</w:hdr>", "$pTag</w:hdr>") else hXml
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(hXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        else -> {
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipIn.getInputStream(entry).use { it.copyTo(zipOut) }
+                            zipOut.closeEntry()
+                        }
+                    }
+                }
+
+                if (!hasHeader && headerXml.isNotBlank()) {
+                    val hEntry = JZipEntry(headerEntry)
+                    zipOut.putNextEntry(hEntry)
+                    zipOut.write(headerXml.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+
+                    val rEntry = JZipEntry(relsEntry)
+                    zipOut.putNextEntry(rEntry)
+                    zipOut.write(headerRelsXml.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
+
+                if (imgBytes != null) {
+                    val imgEntry = JZipEntry(wmImgEntry)
+                    zipOut.putNextEntry(imgEntry)
+                    zipOut.write(imgBytes)
+                    zipOut.closeEntry()
+                }
+
+                if (manifestJson.isNotBlank()) {
+                    val mEntry = JZipEntry("customXml/krypto_manifest.dat")
+                    zipOut.putNextEntry(mEntry)
+                    zipOut.write(manifestJson.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
+            }
+        }
+    }
+
+    private fun applyXlsxWatermark(srcFile: File, outFile: File, wmImgBytes: ByteArray?, wmText: String, opacity: Float, manifestJson: String) {
+        val imgBytes = wmImgBytes ?: if (wmText.isNotBlank()) createTextWatermarkPngBytes(wmText, opacity) else null
+
+        JZipFile(srcFile).use { zipIn ->
+            JZipOutputStream(FileOutputStream(outFile)).use { zipOut ->
+                val entries = zipIn.entries()
+                var hasSheetRels = false
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    when (entry.name) {
+                        "xl/worksheets/sheet1.xml" -> {
+                            var sheetXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (imgBytes != null) {
+                                if (sheetXml.contains("<picture")) {
+                                    sheetXml = sheetXml.replace(Regex("<picture[^>]*/>"), "<picture r:id=\"rIdWatermark\"/>")
+                                } else if (sheetXml.contains("</worksheet>")) {
+                                    sheetXml = sheetXml.replace("</worksheet>", "<picture r:id=\"rIdWatermark\"/></worksheet>")
+                                }
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(sheetXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        "xl/worksheets/_rels/sheet1.xml.rels" -> {
+                            hasSheetRels = true
+                            var relsXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (imgBytes != null && !relsXml.contains("Id=\"rIdWatermark\"")) {
+                                val relTag = "<Relationship Id=\"rIdWatermark\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"../media/image_wm.png\"/>"
+                                relsXml = relsXml.replace("</Relationships>", "$relTag</Relationships>")
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(relsXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        "[Content_Types].xml" -> {
+                            var ctXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (imgBytes != null && !ctXml.contains("Extension=\"png\"")) {
+                                val defTag = "<Default Extension=\"png\" ContentType=\"image/png\"/>"
+                                ctXml = ctXml.replace("</Types>", "$defTag</Types>")
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(ctXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        else -> {
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipIn.getInputStream(entry).use { it.copyTo(zipOut) }
+                            zipOut.closeEntry()
+                        }
+                    }
+                }
+
+                if (!hasSheetRels && imgBytes != null) {
+                    val relsXml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rIdWatermark" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image_wm.png"/>
+</Relationships>"""
+                    val rEntry = JZipEntry("xl/worksheets/_rels/sheet1.xml.rels")
+                    zipOut.putNextEntry(rEntry)
+                    zipOut.write(relsXml.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
+
+                if (imgBytes != null) {
+                    val imgEntry = JZipEntry("xl/media/image_wm.png")
+                    zipOut.putNextEntry(imgEntry)
+                    zipOut.write(imgBytes)
+                    zipOut.closeEntry()
+                }
+
+                if (manifestJson.isNotBlank()) {
+                    val mEntry = JZipEntry("customXml/krypto_manifest.dat")
+                    zipOut.putNextEntry(mEntry)
+                    zipOut.write(manifestJson.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
+            }
+        }
+    }
+
+    private fun applyPptxWatermark(srcFile: File, outFile: File, wmImgBytes: ByteArray?, wmText: String, opacity: Float, manifestJson: String) {
+        val imgBytes = wmImgBytes ?: if (wmText.isNotBlank()) createTextWatermarkPngBytes(wmText, opacity) else null
+
+        JZipFile(srcFile).use { zipIn ->
+            JZipOutputStream(FileOutputStream(outFile)).use { zipOut ->
+                val entries = zipIn.entries()
+                var hasMasterRels = false
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    when (entry.name) {
+                        "ppt/slideMasters/slideMaster1.xml" -> {
+                            var masterXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (imgBytes != null && !masterXml.contains("rIdWmPic")) {
+                                val alphaInt = (opacity * 100000).toInt().coerceIn(10000, 90000)
+                                val picShape = """<p:pic xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:nvPicPr><p:cNvPr id="999" name="Watermark"/><p:cNvPicPr><a:picLocks noSelect="1" noMove="1" noResize="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rIdWmPic"><a:alphaModFix amt="$alphaInt"/></a:blip><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="2743200" y="1828800"/><a:ext cx="3657600" cy="2438400"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>"""
+                                masterXml = if (masterXml.contains("</p:spTree>")) {
+                                    masterXml.replace("</p:spTree>", "$picShape</p:spTree>")
+                                } else {
+                                    masterXml
+                                }
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(masterXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        "ppt/slideMasters/_rels/slideMaster1.xml.rels" -> {
+                            hasMasterRels = true
+                            var relsXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (imgBytes != null && !relsXml.contains("rIdWmPic")) {
+                                val relTag = "<Relationship Id=\"rIdWmPic\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"../media/image_wm.png\"/>"
+                                relsXml = relsXml.replace("</Relationships>", "$relTag</Relationships>")
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(relsXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        "[Content_Types].xml" -> {
+                            var ctXml = zipIn.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (imgBytes != null && !ctXml.contains("Extension=\"png\"")) {
+                                val defTag = "<Default Extension=\"png\" ContentType=\"image/png\"/>"
+                                ctXml = ctXml.replace("</Types>", "$defTag</Types>")
+                            }
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipOut.write(ctXml.toByteArray(Charsets.UTF_8))
+                            zipOut.closeEntry()
+                        }
+                        else -> {
+                            val newEntry = JZipEntry(entry.name)
+                            zipOut.putNextEntry(newEntry)
+                            zipIn.getInputStream(entry).use { it.copyTo(zipOut) }
+                            zipOut.closeEntry()
+                        }
+                    }
+                }
+
+                if (!hasMasterRels && imgBytes != null) {
+                    val relsXml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rIdWmPic" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image_wm.png"/>
+</Relationships>"""
+                    val rEntry = JZipEntry("ppt/slideMasters/_rels/slideMaster1.xml.rels")
+                    zipOut.putNextEntry(rEntry)
+                    zipOut.write(relsXml.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
+
+                if (imgBytes != null) {
+                    val imgEntry = JZipEntry("ppt/media/image_wm.png")
+                    zipOut.putNextEntry(imgEntry)
+                    zipOut.write(imgBytes)
+                    zipOut.closeEntry()
+                }
+
+                if (manifestJson.isNotBlank()) {
+                    val mEntry = JZipEntry("customXml/krypto_manifest.dat")
+                    zipOut.putNextEntry(mEntry)
+                    zipOut.write(manifestJson.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
+            }
+        }
+    }
+
+    private fun applyRasterImageWatermark(srcFile: File, outFile: File, wmImgBytes: ByteArray?, wmText: String, opacity: Float) {
+        val srcBmp = BitmapFactory.decodeFile(srcFile.absolutePath) ?: throw Exception("Không thể giải mã tệp hình ảnh")
+        val w = srcBmp.width
+        val h = srcBmp.height
+        val resBmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(resBmp)
+        canvas.drawBitmap(srcBmp, 0f, 0f, null)
+
+        if (wmImgBytes != null && wmImgBytes.isNotEmpty()) {
+            val wmBmp = BitmapFactory.decodeByteArray(wmImgBytes, 0, wmImgBytes.size)
+            if (wmBmp != null) {
+                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    alpha = (opacity * 255).coerceIn(20f, 240f).toInt()
+                }
+                val targetW = (w * 0.45f).toInt().coerceAtLeast(100)
+                val targetH = (wmBmp.height * (targetW.toFloat() / wmBmp.width)).toInt().coerceAtLeast(50)
+                val scaledWm = Bitmap.createScaledBitmap(wmBmp, targetW, targetH, true)
+                val posX = (w - targetW) / 2f
+                val posY = (h - targetH) / 2f
+                canvas.drawBitmap(scaledWm, posX, posY, paint)
+            }
+        } else if (wmText.isNotBlank()) {
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.GRAY
+                alpha = (opacity * 255).coerceIn(20f, 240f).toInt()
+                textSize = (w / 12f).coerceAtLeast(36f)
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.save()
+            canvas.rotate(-35f, w / 2f, h / 2f)
+            canvas.drawText(wmText, w / 2f, h / 2f, paint)
+            canvas.restore()
+        }
+
+        val ext = srcFile.extension.lowercase()
+        val format = if (ext == "jpg" || ext == "jpeg") Bitmap.CompressFormat.JPEG else Bitmap.CompressFormat.PNG
+        FileOutputStream(outFile).use { fos ->
+            resBmp.compress(format, 95, fos)
+        }
+    }
+
     private fun inspectForensic(file: File): String {
         val json = JSONObject()
         val ext = file.extension.lowercase()
@@ -975,7 +1412,7 @@ class MainActivity: FlutterActivity() {
                     }
                 }
                 if (!hasSettings) {
-                    val simpleSettings = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:settings xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">$protTag</w:settings>"
+                    val simpleSettings = "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">$protTag</w:settings>"
                     val newEntry = JZipEntry("word/settings.xml")
                     zipOut.putNextEntry(newEntry)
                     zipOut.write(simpleSettings.toByteArray(Charsets.UTF_8))
