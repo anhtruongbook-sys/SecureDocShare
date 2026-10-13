@@ -2138,18 +2138,92 @@ function renderForensicReport(data) {
 // =============================================================
 // MODULE 5: VAULT SETTINGS, MASTER PASS & APP LOCK (PIN / BIOMETRICS)
 // =============================================================
+function toggleVaultPassEye(inputId, btnEl) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (btnEl) btnEl.textContent = '🔒';
+    } else {
+        input.type = 'password';
+        if (btnEl) btnEl.textContent = '👁️';
+    }
+}
+
+function checkMasterPassMatch() {
+    const p1 = document.getElementById('setting-master-password')?.value || '';
+    const p2 = document.getElementById('setting-master-password-confirm')?.value || '';
+    const msg = document.getElementById('master-pass-match-msg');
+    if (!msg) return true;
+
+    if (!p1 && !p2) {
+        msg.style.display = 'none';
+        return true;
+    }
+    if (!p2) {
+        msg.style.display = 'none';
+        return false;
+    }
+    msg.style.display = 'block';
+    if (p1 === p2) {
+        msg.className = 'vault-match-status match-success';
+        msg.textContent = '✓ Mật khẩu két đã khớp';
+        return true;
+    } else {
+        msg.className = 'vault-match-status match-error';
+        msg.textContent = '⚠️ Mật khẩu xác nhận không khớp!';
+        return false;
+    }
+}
+
+function checkPinMatch() {
+    const pin1 = document.getElementById('setting-quick-pin')?.value || '';
+    const pin2 = document.getElementById('setting-quick-pin-confirm')?.value || '';
+    const msg = document.getElementById('pin-match-msg');
+    if (!msg) return true;
+
+    if (!pin1 && !pin2) {
+        msg.style.display = 'none';
+        return true;
+    }
+    if (!pin2) {
+        msg.style.display = 'none';
+        return false;
+    }
+    msg.style.display = 'block';
+    if (pin1 === pin2) {
+        msg.className = 'vault-match-status match-success';
+        msg.textContent = '✓ Mã PIN xác nhận đã khớp';
+        return true;
+    } else {
+        msg.className = 'vault-match-status match-error';
+        msg.textContent = '⚠️ Mã PIN xác nhận không khớp!';
+        return false;
+    }
+}
+
 function openVaultSettingsModal() {
     const modal = document.getElementById('vault-settings-modal');
     if (!modal) return;
     const masterInput = document.getElementById('setting-master-password');
+    const masterConfirm = document.getElementById('setting-master-password-confirm');
     const pinInput = document.getElementById('setting-quick-pin');
+    const pinConfirm = document.getElementById('setting-quick-pin-confirm');
     const bioToggle = document.getElementById('setting-biometric-toggle');
     const autoToggle = document.getElementById('setting-autolock-toggle');
 
-    if (masterInput) masterInput.value = localStorage.getItem('krypto_master_password') || '';
-    if (pinInput) pinInput.value = localStorage.getItem('krypto_vault_pin') || '';
+    const curMaster = localStorage.getItem('krypto_master_password') || '';
+    const curPin = localStorage.getItem('krypto_vault_pin') || '';
+
+    if (masterInput) masterInput.value = curMaster;
+    if (masterConfirm) masterConfirm.value = curMaster;
+    if (pinInput) pinInput.value = curPin;
+    if (pinConfirm) pinConfirm.value = curPin;
     if (bioToggle) bioToggle.checked = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
     if (autoToggle) autoToggle.checked = localStorage.getItem('krypto_autolock_enabled') !== 'false';
+
+    checkMasterPassMatch();
+    checkPinMatch();
 
     modal.style.display = 'flex';
     modal.classList.add('active');
@@ -2175,17 +2249,36 @@ function handleVaultSettingsOverlayClick(e) {
 
 function saveVaultSettings() {
     const masterInput = document.getElementById('setting-master-password');
+    const masterConfirm = document.getElementById('setting-master-password-confirm');
     const pinInput = document.getElementById('setting-quick-pin');
+    const pinConfirm = document.getElementById('setting-quick-pin-confirm');
     const bioToggle = document.getElementById('setting-biometric-toggle');
     const autoToggle = document.getElementById('setting-autolock-toggle');
 
     const masterPass = masterInput ? masterInput.value.trim() : '';
+    const masterPassConfirm = masterConfirm ? masterConfirm.value.trim() : '';
     const pin = pinInput ? pinInput.value.trim() : '';
+    const pinConf = pinConfirm ? pinConfirm.value.trim() : '';
     const bio = bioToggle ? bioToggle.checked : true;
     const autolock = autoToggle ? autoToggle.checked : true;
 
+    // 1. Kiểm tra xác nhận Master Password
+    if (masterPass && masterPass !== masterPassConfirm) {
+        showToast('⚠️ Mật khẩu Két xác nhận không khớp! Vui lòng kiểm tra lại.');
+        if (masterConfirm) masterConfirm.focus();
+        return;
+    }
+
+    // 2. Kiểm tra xác nhận Mã PIN
+    if (pin && pin !== pinConf) {
+        showToast('⚠️ Mã PIN nhanh xác nhận không khớp! Vui lòng kiểm tra lại.');
+        if (pinConfirm) pinConfirm.focus();
+        return;
+    }
+
     if (pin && (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin))) {
         showToast('⚠️ Mã PIN nhanh phải từ 4 đến 6 chữ số!');
+        if (pinInput) pinInput.focus();
         return;
     }
 
@@ -2195,7 +2288,7 @@ function saveVaultSettings() {
     localStorage.setItem('krypto_autolock_enabled', autolock ? 'true' : 'false');
 
     closeVaultSettingsModal();
-    showToast('✓ Đã lưu cấu hình két & Master Key an toàn!');
+    showToast('✓ Đã xác nhận 2 lần & lưu cấu hình Két & Master Key an toàn! 🛡️');
 }
 
 function checkAppLockOnStartup() {

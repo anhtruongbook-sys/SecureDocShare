@@ -2094,11 +2094,55 @@ body {
 }
 
 .vault-setting-group input[type="password"],
+.vault-setting-group input[type="text"],
 .vault-setting-group input[type="number"] {
     width: 100%;
     margin-top: 3px;
     padding: 8px 10px;
     font-size: 12px;
+}
+
+.vault-input-with-eye {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.vault-input-with-eye input {
+    width: 100%;
+    padding-right: 36px !important;
+}
+
+.btn-eye-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.vault-match-status {
+    font-size: 10.5px;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.vault-match-status.match-success {
+    color: #10b981;
+}
+
+.vault-match-status.match-error {
+    color: #ef4444;
 }
 
 .setting-subtext {

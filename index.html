@@ -515,14 +515,30 @@
                 <!-- App Lock Master Password -->
                 <div class="vault-setting-group">
                     <label class="micro-label">MẬT KHẨU KÉT / MASTER PASS:</label>
-                    <input type="password" id="setting-master-password" placeholder="Mật khẩu vạn năng quản trị viên...">
+                    <div class="vault-input-with-eye">
+                        <input type="password" id="setting-master-password" placeholder="Mật khẩu vạn năng quản trị viên..." oninput="checkMasterPassMatch()">
+                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password', this)">👁️</button>
+                    </div>
+                    <div class="vault-input-with-eye" style="margin-top: 6px;">
+                        <input type="password" id="setting-master-password-confirm" placeholder="Nhập lại mật khẩu để xác nhận..." oninput="checkMasterPassMatch()">
+                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password-confirm', this)">👁️</button>
+                    </div>
+                    <div id="master-pass-match-msg" class="vault-match-status" style="display: none;"></div>
                     <span class="setting-subtext">Dùng để mở khóa ứng dụng và cứu hộ tất cả các tệp khi cần.</span>
                 </div>
 
                 <!-- 4-Digit Quick PIN -->
                 <div class="vault-setting-group" style="margin-top: 10px;">
                     <label class="micro-label">MÃ PIN NHANH (4 - 6 SỐ):</label>
-                    <input type="number" id="setting-quick-pin" placeholder="Ví dụ: 1234 hoặc 888888" maxlength="6">
+                    <div class="vault-input-with-eye">
+                        <input type="password" id="setting-quick-pin" placeholder="Ví dụ: 1234 hoặc 888888" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
+                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin', this)">👁️</button>
+                    </div>
+                    <div class="vault-input-with-eye" style="margin-top: 6px;">
+                        <input type="password" id="setting-quick-pin-confirm" placeholder="Nhập lại mã PIN để xác nhận..." maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
+                        <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin-confirm', this)">👁️</button>
+                    </div>
+                    <div id="pin-match-msg" class="vault-match-status" style="display: none;"></div>
                     <span class="setting-subtext">Mở két 1 chạm nhanh trên điện thoại không cần gõ dài.</span>
                 </div>
 

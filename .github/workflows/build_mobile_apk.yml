@@ -64,15 +64,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.5.1
-          name: "KryptoDoc Enterprise Vault v2.5.1 - Fix Header Layout & Vault Settings Modal"
+          tag_name: v2.5.2
+          name: "KryptoDoc Enterprise Vault v2.5.2 - 2-Step Password & PIN Confirmation with Eye Toggle"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.5.1
-            - **Sửa Lỗi Bố Cục Header & Loại Bỏ Khoảng Trống**:
-              + Tối ưu hóa Header thành 1 hàng duy nhất: Logo Cyber Shield và Tiêu đề đặt song song với cụm nút Cài đặt & Trạng thái.
-              + Cố định kích thước SVG Cyber Shield chuẩn (28x32px), loại bỏ hiện tượng tràn viền làm vỡ layout.
-            - **Sửa Lỗi Nút Cài Đặt (Vault Settings Modal)**:
-              + Bổ sung lớp `active` và `show` kích hoạt hiển thị cửa sổ Cài Đặt Két Bảo Mật, Master Key, mã PIN và Sinh trắc học phần cứng.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.5.2
+            - **Cơ Chế Xác Nhận Mật Khẩu 2 Lần An Toàn (2-Step Password Confirmation)**:
+              + Bổ sung ô Xác Nhận Mật Khẩu Két (Confirm Master Pass) và Xác Nhận Mã PIN (Confirm Quick PIN) chống gõ nhầm ký tự trên bàn phím cảm ứng.
+              + Tích hợp nút xem/ẩn mật khẩu (👁️ / 🔒) tại từng ô nhập liệu.
+              + Tự động kiểm tra trùng khớp tức thì (Real-time Match Validation) và cảnh báo trực quan trước khi lưu.
             - **Động Cơ Đóng Dấu Bản Quyền Đa Định Dạng (Universal Cross-Format Watermarking)**:
               + **Văn bản Word (.docx)**: Nhúng VML shape chuẩn OpenXML nằm chìm sau văn bản (`behindDoc="1"`) hiển thị tự động trên mọi trang in và chế độ đọc.
               + **Bảng tính Excel (.xlsx)**: Nhúng ảnh nền sheet chuẩn OpenXML (`<picture r:id="..."/>`) trải đều trên toàn bộ bảng tính.
