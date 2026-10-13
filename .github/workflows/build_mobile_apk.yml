@@ -64,14 +64,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.5.2
-          name: "KryptoDoc Enterprise Vault v2.5.2 - 2-Step Password & PIN Confirmation with Eye Toggle"
+          tag_name: v2.5.3
+          name: "KryptoDoc Enterprise Vault v2.5.3 - Fix Toast Contrast & Settings Modal UX"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.5.2
-            - **Cơ Chế Xác Nhận Mật Khẩu 2 Lần An Toàn (2-Step Password Confirmation)**:
-              + Bổ sung ô Xác Nhận Mật Khẩu Két (Confirm Master Pass) và Xác Nhận Mã PIN (Confirm Quick PIN) chống gõ nhầm ký tự trên bàn phím cảm ứng.
-              + Tích hợp nút xem/ẩn mật khẩu (👁️ / 🔒) tại từng ô nhập liệu.
-              + Tự động kiểm tra trùng khớp tức thì (Real-time Match Validation) và cảnh báo trực quan trước khi lưu.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.5.3
+            - **Khắc Phục Hoàn Toàn Tương Phản Thông Báo Toast (Fix Toast Contrast)**:
+              + Thiết kế lại Toast thông báo nổi bật siêu tương phản: Nền trắng tinh khiết (`#ffffff`), viền xanh dương (`#2563eb`), chữ đậm rõ nét trên chế độ Sáng (Light Mode), loại bỏ triệt để hiện tượng chữ đen trên nền tối ("đen xì").
+              + Nền Slate tối (`#0f172a`) với chữ trắng phát quang trên chế độ Tối (Dark Mode).
+            - **Chuẩn Hóa Trải Nghiệm Cài Đặt Két (Vault Settings UX & Match Logic)**:
+              + Đảm bảo bảng Cài đặt Két tuyệt đối KHÔNG tự động mở lên khi khởi động ứng dụng.
+              + Ô xác nhận mật khẩu (Confirm Pass) và xác nhận PIN (Confirm PIN) để trống mặc định, chỉ hiển thị thông báo khớp khi người dùng nhập liệu, không hiển thị trước dấu chấm và tích xanh gây hiểu nhầm.
+              + Cho phép lưu cấu hình linh hoạt khi chỉ thay đổi tùy chọn sinh trắc học hoặc tự động khóa mà không bắt buộc gõ lại mật khẩu cũ.
             - **Động Cơ Đóng Dấu Bản Quyền Đa Định Dạng (Universal Cross-Format Watermarking)**:
               + **Văn bản Word (.docx)**: Nhúng VML shape chuẩn OpenXML nằm chìm sau văn bản (`behindDoc="1"`) hiển thị tự động trên mọi trang in và chế độ đọc.
               + **Bảng tính Excel (.xlsx)**: Nhúng ảnh nền sheet chuẩn OpenXML (`<picture r:id="..."/>`) trải đều trên toàn bộ bảng tính.

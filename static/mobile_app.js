@@ -49,6 +49,7 @@ let currentPinInput = '';
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     renderSessionHistory();
+    closeVaultSettingsModal();
     checkAppLockOnStartup();
 });
 initTheme();
@@ -2216,14 +2217,17 @@ function openVaultSettingsModal() {
     const curPin = localStorage.getItem('krypto_vault_pin') || '';
 
     if (masterInput) masterInput.value = curMaster;
-    if (masterConfirm) masterConfirm.value = curMaster;
+    if (masterConfirm) masterConfirm.value = '';
     if (pinInput) pinInput.value = curPin;
-    if (pinConfirm) pinConfirm.value = curPin;
+    if (pinConfirm) pinConfirm.value = '';
     if (bioToggle) bioToggle.checked = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
     if (autoToggle) autoToggle.checked = localStorage.getItem('krypto_autolock_enabled') !== 'false';
 
-    checkMasterPassMatch();
-    checkPinMatch();
+    // Ẩn thông báo so khớp ban đầu, chỉ hiển thị khi người dùng nhập vào ô xác nhận
+    const msgMaster = document.getElementById('master-pass-match-msg');
+    if (msgMaster) msgMaster.style.display = 'none';
+    const msgPin = document.getElementById('pin-match-msg');
+    if (msgPin) msgPin.style.display = 'none';
 
     modal.style.display = 'flex';
     modal.classList.add('active');
@@ -2235,9 +2239,7 @@ function closeVaultSettingsModal() {
     if (modal) {
         modal.classList.remove('active');
         modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 180);
+        modal.style.display = 'none';
     }
 }
 
@@ -2255,6 +2257,9 @@ function saveVaultSettings() {
     const bioToggle = document.getElementById('setting-biometric-toggle');
     const autoToggle = document.getElementById('setting-autolock-toggle');
 
+    const curMaster = localStorage.getItem('krypto_master_password') || '';
+    const curPin = localStorage.getItem('krypto_vault_pin') || '';
+
     const masterPass = masterInput ? masterInput.value.trim() : '';
     const masterPassConfirm = masterConfirm ? masterConfirm.value.trim() : '';
     const pin = pinInput ? pinInput.value.trim() : '';
@@ -2263,23 +2268,40 @@ function saveVaultSettings() {
     const autolock = autoToggle ? autoToggle.checked : true;
 
     // 1. Kiểm tra xác nhận Master Password
-    if (masterPass && masterPass !== masterPassConfirm) {
-        showToast('⚠️ Mật khẩu Két xác nhận không khớp! Vui lòng kiểm tra lại.');
-        if (masterConfirm) masterConfirm.focus();
-        return;
+    if (masterPass) {
+        if (masterPass !== curMaster || masterPassConfirm) {
+            if (!masterPassConfirm) {
+                showToast('⚠️ Vui lòng nhập lại mật khẩu vào ô thứ 2 để xác nhận!');
+                if (masterConfirm) masterConfirm.focus();
+                return;
+            }
+            if (masterPass !== masterPassConfirm) {
+                showToast('⚠️ Mật khẩu Két xác nhận không khớp! Vui lòng kiểm tra lại.');
+                if (masterConfirm) masterConfirm.focus();
+                return;
+            }
+        }
     }
 
     // 2. Kiểm tra xác nhận Mã PIN
-    if (pin && pin !== pinConf) {
-        showToast('⚠️ Mã PIN nhanh xác nhận không khớp! Vui lòng kiểm tra lại.');
-        if (pinConfirm) pinConfirm.focus();
-        return;
-    }
-
-    if (pin && (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin))) {
-        showToast('⚠️ Mã PIN nhanh phải từ 4 đến 6 chữ số!');
-        if (pinInput) pinInput.focus();
-        return;
+    if (pin) {
+        if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
+            showToast('⚠️ Mã PIN nhanh phải từ 4 đến 6 chữ số!');
+            if (pinInput) pinInput.focus();
+            return;
+        }
+        if (pin !== curPin || pinConf) {
+            if (!pinConf) {
+                showToast('⚠️ Vui lòng nhập lại mã PIN vào ô thứ 2 để xác nhận!');
+                if (pinConfirm) pinConfirm.focus();
+                return;
+            }
+            if (pin !== pinConf) {
+                showToast('⚠️ Mã PIN nhanh xác nhận không khớp! Vui lòng kiểm tra lại.');
+                if (pinConfirm) pinConfirm.focus();
+                return;
+            }
+        }
     }
 
     localStorage.setItem('krypto_master_password', masterPass);
@@ -2288,7 +2310,7 @@ function saveVaultSettings() {
     localStorage.setItem('krypto_autolock_enabled', autolock ? 'true' : 'false');
 
     closeVaultSettingsModal();
-    showToast('✓ Đã xác nhận 2 lần & lưu cấu hình Két & Master Key an toàn! 🛡️');
+    showToast('✓ Đã lưu cấu hình Két & Master Key an toàn! 🛡️');
 }
 
 function checkAppLockOnStartup() {
