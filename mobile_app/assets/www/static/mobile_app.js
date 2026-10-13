@@ -1392,12 +1392,18 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
             iconColor = "#ca8a04";
             subDesc = `✓ Tệp Nén .ZIP Bảo Mật Mật Khẩu AES-256`;
             noteText = `💡 Tệp <strong>${outFileName}</strong> đã được nén và mã hóa mật khẩu chuẩn quốc tế WinZip AES-256. Người nhận có thể mở và giải nén bằng <strong>WinRAR, 7-Zip, ZArchiver, Xiaomi/Samsung File Manager</strong> hoặc ứng dụng KryptoDoc!`;
+        } else if (['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)) {
+            fileIcon = "🖼️";
+            iconBg = "#f0fdf4";
+            iconColor = "#16a34a";
+            subDesc = `✓ Hình Ảnh Đã Đóng Dấu Bản Quyền (${ext.toUpperCase()})`;
+            noteText = `💡 Tệp ảnh <strong>${outFileName}</strong> đã được đóng dấu mờ bản quyền trực tiếp. Người nhận có thể mở xem trực tiếp trên mọi thiết bị và ứng dụng thư viện ảnh!`;
         } else {
             fileIcon = "📦";
             iconBg = "#f1f5f9";
             iconColor = "#475569";
             subDesc = `✓ Tệp ${ext.toUpperCase()} Bảo Mật Cấp Quân Sự (AES-256)`;
-            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được mã hóa bảo mật toàn vẹn. Để giải mã và mở xem, vui lòng sử dụng tab <strong>MỞ KHÓA</strong> trên ứng dụng SecureDocShare!`;
+            noteText = `💡 Tệp <strong>${outFileName}</strong> đã được mã hóa bảo mật toàn vẹn. Để giải mã và mở xem, vui lòng sử dụng tab <strong>MỞ KHÓA</strong> trên ứng dụng KryptoDoc!`;
         }
     }
 
@@ -1570,7 +1576,7 @@ async function shareResult(idx) {
             await navigator.share({
                 files: [file],
                 title: item.name,
-                text: 'Tài liệu bảo mật SecureDocShare'
+                text: 'Tài liệu bảo mật KryptoDoc'
             });
         } catch (e) {
             console.log('Share canceled', e);
@@ -1644,7 +1650,7 @@ async function executeMobileUnlockFile() {
         const dataMatch = text.match(/data=b64toU8\('([^']+)'\)/);
 
         if (!saltMatch || !ivMatch || !metaMatch || !dataMatch) {
-            throw new Error("Tệp không đúng định dạng bảo mật của SecureDocShare!");
+            throw new Error("Tệp không đúng định dạng bảo mật của KryptoDoc!");
         }
 
         const salt = base64ToUint8(saltMatch[1]);
