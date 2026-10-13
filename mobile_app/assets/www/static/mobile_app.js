@@ -230,6 +230,11 @@ function switchTab(tabName) {
 
     if (tabName === 'vault') {
         isVaultSessionUnlocked = false;
+        const altBox = document.getElementById('vault-alt-pass-box');
+        if (altBox) altBox.style.display = 'none';
+        const altText = document.getElementById('vault-alt-toggle-text');
+        if (altText) altText.innerText = '🔑 Nhập Mật Khẩu Két Thay Vì PIN';
+        closeCyberDialog(false);
         checkVaultAccess();
     } else {
         if (localStorage.getItem('krypto_autolock_enabled') !== 'false') {
@@ -2361,6 +2366,11 @@ function lockVaultSession() {
     currentVaultPinInput = '';
     const passInput = document.getElementById('vault-entered-pass');
     if (passInput) passInput.value = '';
+    const altBox = document.getElementById('vault-alt-pass-box');
+    if (altBox) altBox.style.display = 'none';
+    const altText = document.getElementById('vault-alt-toggle-text');
+    if (altText) altText.innerText = '🔑 Nhập Mật Khẩu Két Thay Vì PIN';
+    closeCyberDialog(false);
     checkVaultAccess();
     showToast('🔒 Két đã được khóa an toàn!');
 }
@@ -2440,12 +2450,6 @@ function checkAppLockOnStartup() {
             gate.style.display = 'flex';
             currentPinInput = '';
             updatePinDots();
-            const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
-            if (bioEnabled && window.FlutterBridge) {
-                setTimeout(() => {
-                    triggerDeviceBiometricAuth();
-                }, 500);
-            }
         }
     }
 }
@@ -2523,8 +2527,11 @@ window.onBiometricAuthSuccess = function() {
 };
 
 window.onBiometricAuthFailed = function(errMsg) {
-    if (errMsg && errMsg !== 'Xác thực bị hủy bỏ') {
-        showToast('✕ ' + errMsg);
+    // Khi người dùng bấm tắt hoặc hủy bỏ xác thực: Két luôn ở trạng thái khóa và không bật bất cứ hộp thoại nào
+    const tabVault = document.getElementById('tab-vault');
+    if (tabVault && tabVault.classList.contains('active')) {
+        isVaultSessionUnlocked = false;
+        checkVaultAccess();
     }
 };
 

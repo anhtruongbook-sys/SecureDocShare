@@ -64,19 +64,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.1
-          name: "KryptoDoc Enterprise Vault v2.6.1 - Strict Multi-Factor Vault Authentication"
+          tag_name: v2.6.2
+          name: "KryptoDoc Enterprise Vault v2.6.2 - Quiet Vault Lock & Zero Auto-Popup"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.1 (Strict Multi-Factor Vault Authentication)
-            - **Khắc Phục Tuyệt Đối Lỗi Bỏ Qua Xác Thực Khi Chuyển Sang Tab Két (Strict Vault Access Control)**:
-              + Khắc phục triệt để lỗi logic bypass khiến Két tự động mở khóa khi chưa cấu hình mật khẩu hoặc do xung đột xác thực sinh trắc học lúc khởi động app.
-              + Khi chuyển sang Tab Két (Tab 4): **BẮT BUỘC 100% hiển thị màn hình khóa Két (`🔒 KÉT ĐANG KHÓA`)**, yêu cầu xác nhận danh tính người dùng bằng một trong ba phương thức:
-                1. Quét **Vân tay / Khuôn mặt (Biometrics)** qua cảm biến phần cứng Android.
-                2. Nhập **Mã PIN Nhanh 4-6 số** trên bàn phím số (Mã PIN mặc định ban đầu: `0000`).
-                3. Nhập **Mật khẩu Két Quản Trị (Master Password)** qua ô nhập mật khẩu an toàn.
-              + Chỉ khi xác thực thành công mới mở khóa giao diện cấu hình (`🟢 Két Đang Mở Khóa`).
-              + Tự động khóa Két lại ngay lập tức khi người dùng chuyển sang Tab khác hoặc bấm nút `🔒 Khóa Két Lại`.
-              + Sửa lỗi fallback sinh trắc học Android native trả về `false` chuẩn xác khi người dùng hủy bỏ quét vân tay.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.2 (Quiet Vault Lock & Zero Auto-Popup)
+            - **Chế Độ Khóa Két Tĩnh Lặng & Tuyệt Đối Không Tự Bật Hộp Thoại (Zero Auto-Popup Invariant)**:
+              + Khi bấm **`🔒 Khóa Két Lại`**: Két ngay lập tức chuyển về màn hình khóa (`🔒 KÉT ĐANG KHÓA`) tĩnh lặng, đóng toàn bộ dialog, tuyệt đối không tự động bật bất kỳ hộp thoại nào.
+              + Khi **Bấm Tắt / Hủy Bỏ** hộp thoại xác thực vân tay: Két luôn giữ vững trạng thái khóa an toàn, không hiển thị thêm bất kỳ hộp thoại lỗi hay thông báo popup nào làm phiền người dùng.
+              + Loại bỏ hoàn toàn cơ chế tự động bật sinh trắc học khi khởi động app: Cảm biến vân tay chỉ kích hoạt khi người dùng **chủ động chạm vào biểu tượng `👆`** trên bàn phím số.
+            - **Cơ Chế Xác Thực Mở Két Đa Tầng (Biometrics, PIN & Password Vault Unlock)**:
+              + Khóa Két Bắt Buộc 100%: Mở Tab Két luôn hiển thị màn hình khóa với bàn phím số PIN phẳng sang trọng.
+              + Hỗ trợ 3 phương thức: Vân tay `👆`, Mã PIN nhanh (mặc định: `0000`), hoặc Mật khẩu Quản trị Master Key.
             - **Tái Thiết Kế Giao Diện Phẳng Hoàn Toàn & Sang Trọng (Pure Flat & Quiet Luxury Theme)**:
               + Học tập ngôn ngữ thiết kế từ các ứng dụng bảo mật hàng đầu thế giới (1Password 8, Apple Passwords iOS 18, Bitwarden, Proton Drive).
               + **Hệ màu Trung tính Titan (Neutral Titanium)**: Chế độ tối than đá ấm `#14171f`, chế độ sáng xám ngà canvas bột giấy cao cấp `#f4f5f8`, loại bỏ hoàn toàn viền neon và độ tương phản chói gắt.
