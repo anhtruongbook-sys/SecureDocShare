@@ -6,56 +6,108 @@
     <title>KryptoDoc Mobile - Két Khóa & Mã Hóa Cấp Quân Sự</title>
     <link rel="stylesheet" href="static/style.css">
 </head>
-<body class="dark-mode">
+<body class="light-mode">
     <div class="container">
-        <!-- Compact Modern Header -->
-        <header class="header">
-            <div class="logo-container">
-                <div class="krypto-logo-badge state-locked" id="krypto-logo-badge" onclick="triggerLogoHaptic()">
-                    <div class="logo-aura-glow"></div>
-                    <div class="logo-orbit-ring"></div>
-                    <div class="logo-cyber-shield">
-                        <svg viewBox="0 0 32 36" width="28" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path class="shield-outline" d="M16 2L3 7V16C3 24.5 8.5 32 16 34C23.5 32 29 24.5 29 16V7L16 2Z" 
-                                  stroke="url(#shield-border)" stroke-width="2.2" stroke-linejoin="round" fill="url(#shield-fill)"/>
-                            <path class="shield-circuit" d="M16 6V12M11 10.5L16 12.5L21 10.5" stroke="#06b6d4" stroke-width="1.2" stroke-linecap="round" opacity="0.75"/>
-                            <rect class="lock-body" x="10.5" y="16.5" width="11" height="9.5" rx="2" fill="url(#lock-grad)"/>
-                            <path class="lock-shackle" d="M13 16.5V13C13 11.3 14.3 10 16 10C17.7 10 19 11.3 19 13V16.5" 
-                                  stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
-                            <circle class="lock-core" cx="16" cy="21" r="1.3" fill="#0b0f19"/>
-                            <defs>
-                                <linearGradient id="shield-fill" x1="16" y1="2" x2="16" y2="34" gradientUnits="userSpaceOnUse">
-                                    <stop offset="0%" stop-color="#1e293b"/>
-                                    <stop offset="100%" stop-color="#0b1120"/>
-                                </linearGradient>
-                                <linearGradient id="shield-border" x1="3" y1="2" x2="29" y2="34" gradientUnits="userSpaceOnUse">
-                                    <stop offset="0%" stop-color="#10b981"/>
-                                    <stop offset="50%" stop-color="#06b6d4"/>
-                                    <stop offset="100%" stop-color="#3b82f6"/>
-                                </linearGradient>
-                                <linearGradient id="lock-grad" x1="10.5" y1="16.5" x2="21.5" y2="26" gradientUnits="userSpaceOnUse">
-                                    <stop offset="0%" stop-color="#10b981"/>
-                                    <stop offset="100%" stop-color="#059669"/>
-                                </linearGradient>
-                            </defs>
+        <!-- Modern Flat Hero Banner (MobiFone / FinTech Inspired) -->
+        <header class="mobi-hero-header">
+            <div class="mobi-top-bar">
+                <button type="button" class="btn-mobi-menu" onclick="toggleHistoryDrawer()" title="Lịch sử phiên làm việc">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <div class="mobi-logo-center">
+                    <div class="mobi-logo-symbol">
+                        <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                            <path d="M16 2L4 7V16C4 23.5 9.2 30 16 32C22.8 30 28 23.5 28 16V7L16 2Z" fill="rgba(255,255,255,0.25)" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
+                            <path d="M11 16L15 20L22 13" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
+                    <span class="mobi-brand-title">KryptoDoc</span>
                 </div>
-                <div class="logo-text">
-                    <div class="brand-title-row">
-                        <h1>KryptoDoc</h1>
-                        <span class="vault-version-tag">PRO v2.6</span>
-                    </div>
-                    <p class="subtitle">Két Khóa & Bảo Mật Offline 100%</p>
+                <div class="mobi-top-right">
+                    <button type="button" class="mobi-lang-pill" id="theme-toggle-btn" onclick="toggleTheme()" title="Đổi chế độ Sáng / Tối">
+                        <span id="theme-icon">🌙 Tối</span>
+                    </button>
                 </div>
-            </div>
-            <div class="header-badges">
-                <button type="button" class="btn-theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Đổi chế độ Sáng / Tối">
-                    <span id="theme-icon">🌙</span>
-                </button>
-                <span class="badge badge-success">✓ Offline</span>
             </div>
         </header>
+
+        <!-- Floating Quick Status Card Overlapping Hero Banner -->
+        <div class="mobi-floating-status-card" onclick="switchTab('vault')">
+            <div class="floating-card-left">
+                <div class="floating-card-icon">🛡️</div>
+                <div class="floating-card-info">
+                    <h4 class="floating-card-title">Két Bảo Mật KryptoDoc</h4>
+                    <p class="floating-card-sub">Trạng thái: Hoạt động Offline 100% • AES-256</p>
+                </div>
+            </div>
+            <button type="button" class="btn-floating-action">Cài đặt</button>
+        </div>
+
+        <!-- Section: Tiện ích Nhanh (4 Cột Squircle) -->
+        <div class="mobi-section-group">
+            <div class="mobi-section-header">
+                <h3 class="mobi-section-title">Tiện ích</h3>
+                <button type="button" class="mobi-section-link" onclick="toggleHistoryDrawer()">Nhật ký</button>
+            </div>
+            <div class="mobi-services-grid">
+                <div class="mobi-service-item" onclick="switchTab('lock')">
+                    <div class="mobi-service-squircle squircle-blue">
+                        <span class="mobi-badge-hot">HOT</span>
+                        <span class="service-icon">🔒</span>
+                    </div>
+                    <span class="mobi-service-label">Khóa & Đóng dấu</span>
+                </div>
+                <div class="mobi-service-item" onclick="switchTab('unlock')">
+                    <div class="mobi-service-squircle squircle-cyan">
+                        <span class="mobi-badge-hot">HOT</span>
+                        <span class="service-icon">🔓</span>
+                    </div>
+                    <span class="mobi-service-label">Mở khóa tệp</span>
+                </div>
+                <div class="mobi-service-item" onclick="switchTab('audit')">
+                    <div class="mobi-service-squircle squircle-navy">
+                        <span class="service-icon">🔎</span>
+                    </div>
+                    <span class="mobi-service-label">Pháp y số</span>
+                </div>
+                <div class="mobi-service-item" onclick="switchTab('vault')">
+                    <div class="mobi-service-squircle squircle-purple">
+                        <span class="service-icon">🛡️</span>
+                    </div>
+                    <span class="mobi-service-label">Két bí mật</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Tác Vụ Bảo Mật Chính (D5 Card Style) -->
+        <div class="mobi-section-group" id="mobi-featured-actions">
+            <div class="mobi-section-header">
+                <h3 class="mobi-section-title">Tác vụ bảo mật</h3>
+                <button type="button" class="mobi-section-link" onclick="switchTab('lock')">Cấu hình</button>
+            </div>
+
+            <!-- Card D5 Style: Khóa Tệp -->
+            <div class="mobi-featured-card">
+                <div class="featured-card-top">
+                    <span class="featured-plan-code">KD-PRO</span>
+                    <span class="featured-plan-price">OFFLINE 100% <span class="price-sub">/Miễn phí</span></span>
+                </div>
+                <h2 class="featured-plan-hero">Khóa & Đóng Dấu Bản Quyền</h2>
+                <div class="featured-dashed-divider"></div>
+                <div class="featured-meta-row">
+                    <span class="featured-meta-icon">🌐</span>
+                    <span class="featured-meta-text">Hỗ trợ: PDF, Word, Excel, CAD (.DWG), Ảnh, ZIP</span>
+                </div>
+                <div class="featured-actions-row">
+                    <button type="button" class="btn-mobi-outline" onclick="scrollToSettings()">⚙️ Chi tiết</button>
+                    <button type="button" class="btn-mobi-solid" onclick="triggerPickFiles('lock')">📂 Chọn tệp ngay</button>
+                </div>
+            </div>
+        </div>
 
         <!-- ==================== TAB 1: LOCK ==================== -->
         <div id="tab-lock" class="tab-content active">
@@ -572,23 +624,39 @@
             <p>KryptoDoc Enterprise Vault • Bản Quyền ANH'S TEAM • Mã Hóa Offline 100%</p>
         </footer>
 
-        <!-- Bottom Navigation Bar (Flat Luxury 4 Tabs) -->
+        <!-- Floating AI Assistant Bot Button (MobiFone Style) -->
+        <div class="mobi-floating-bot" onclick="showBotTip()" title="Trợ lý KryptoDoc">
+            <div class="bot-avatar-circle">
+                <svg viewBox="0 0 36 36" width="28" height="28" fill="none">
+                    <rect x="7" y="10" width="22" height="18" rx="8" fill="#ffffff"/>
+                    <circle cx="13" cy="18" r="2.5" fill="#0066cc"/>
+                    <circle cx="23" cy="18" r="2.5" fill="#0066cc"/>
+                    <path d="M15 23C15.5 24 17 24.5 18 24.5C19 24.5 20.5 24 21 23" stroke="#0066cc" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M18 4V10" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="18" cy="3.5" r="2" fill="#ffd166"/>
+                    <circle cx="5" cy="19" r="2" fill="#ffffff"/>
+                    <circle cx="31" cy="19" r="2" fill="#ffffff"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar (Flat 4 Tabs) -->
         <nav class="bottom-nav-bar" id="bottom-nav-bar">
             <button type="button" class="bottom-nav-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
-                <span class="nav-icon">🔒</span>
-                <span class="nav-label">Mã Hóa</span>
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Trang chủ</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-unlock" onclick="switchTab('unlock')">
                 <span class="nav-icon">🔓</span>
-                <span class="nav-label">Mở Khóa</span>
+                <span class="nav-label">Mở khóa</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-audit" onclick="switchTab('audit')">
                 <span class="nav-icon">🔎</span>
-                <span class="nav-label">Pháp Y</span>
+                <span class="nav-label">Pháp y</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-vault" onclick="switchTab('vault')">
                 <span class="nav-icon">🛡️</span>
-                <span class="nav-label">Két</span>
+                <span class="nav-label">Két sắt</span>
             </button>
         </nav>
     </div>

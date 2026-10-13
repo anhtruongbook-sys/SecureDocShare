@@ -2694,3 +2694,20 @@ window.onAppResumed = function() {
         }
     }
 };
+
+function scrollToSettings() {
+    switchTab('lock');
+    const el = document.getElementById('settings-card-lock');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function showBotTip() {
+    showCyberDialog({
+        type: 'info',
+        title: 'Trợ Lý KryptoDoc AI',
+        message: 'Hệ thống KryptoDoc hoạt động Offline 100% không gửi dữ liệu ra ngoài. Mọi tệp tin đều được mã hóa bằng chuẩn quân sự AES-256 và bảo trợ cứu hộ bằng Master Key.',
+        actionText: 'Đã Hiểu'
+    });
+}

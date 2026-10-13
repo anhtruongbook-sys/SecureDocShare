@@ -2527,3 +2527,384 @@ body.light-mode .krypto-toast {
     text-decoration: underline;
     text-underline-offset: 3px;
 }
+
+/* ============================================================= */
+/* FLAT DESIGN SYSTEM (MOBIFONE / MODERN TELCO & FINTECH STYLE)   */
+/* ============================================================= */
+
+/* 1. Curved Hero Header Banner */
+.mobi-hero-header {
+    background: linear-gradient(180deg, #005baa 0%, #006ec7 60%, #007de3 100%);
+    border-radius: 0 0 24px 24px;
+    padding: 10px 14px 34px;
+    margin: -2px -10px 0 -10px;
+    color: #ffffff;
+    position: relative;
+    box-shadow: 0 4px 18px rgba(0, 90, 170, 0.15);
+}
+
+.mobi-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+}
+
+.btn-mobi-menu {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: transform 0.15s ease;
+}
+.btn-mobi-menu:active {
+    transform: scale(0.92);
+}
+
+.mobi-logo-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobi-logo-symbol {
+    width: 42px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2px;
+}
+
+.mobi-brand-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+}
+
+.mobi-lang-pill {
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(8px);
+}
+
+/* 2. Floating Status Card Overlapping Hero */
+.mobi-floating-status-card {
+    background: #ffffff;
+    border-radius: 18px;
+    margin: -24px 6px 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 6px 20px rgba(0, 80, 180, 0.09);
+    border: 1px solid rgba(0, 102, 204, 0.08);
+    cursor: pointer;
+    position: relative;
+    z-index: 5;
+    transition: transform 0.15s ease;
+}
+.mobi-floating-status-card:active {
+    transform: scale(0.98);
+}
+body.dark-mode .mobi-floating-status-card {
+    background: #1c212b;
+    border-color: #2a313d;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.floating-card-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.floating-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: #e6f0fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+body.dark-mode .floating-card-icon {
+    background: #242a37;
+}
+
+.floating-card-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-title);
+    margin: 0 0 2px;
+}
+
+.floating-card-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.btn-floating-action {
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* 3. Section Headers */
+.mobi-section-group {
+    margin: 10px 0 14px;
+}
+
+.mobi-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+    margin-bottom: 10px;
+}
+
+.mobi-section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-title);
+    letter-spacing: -0.2px;
+}
+
+.mobi-section-link {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* 4. Squircles Grid (Tiện Ích 4 Cột) */
+.mobi-services-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.mobi-service-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+.mobi-service-item:active {
+    transform: scale(0.93);
+}
+
+.mobi-service-squircle {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    position: relative;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+    margin-bottom: 6px;
+    transition: all 0.2s ease;
+}
+
+.squircle-blue {
+    background: #e6f0fa;
+}
+.squircle-cyan {
+    background: #e0f7fa;
+}
+.squircle-navy {
+    background: #eef2ff;
+}
+.squircle-purple {
+    background: #f3e8ff;
+}
+
+body.dark-mode .squircle-blue {
+    background: rgba(0, 102, 204, 0.2);
+}
+body.dark-mode .squircle-cyan {
+    background: rgba(6, 182, 212, 0.2);
+}
+body.dark-mode .squircle-navy {
+    background: rgba(99, 102, 241, 0.2);
+}
+body.dark-mode .squircle-purple {
+    background: rgba(168, 85, 247, 0.2);
+}
+
+.mobi-badge-hot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 8.5px;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 8px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+.mobi-service-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-title);
+    line-height: 1.25;
+}
+
+/* 5. Featured Cards (Gói Cước / Tác Vụ D5 Style) */
+.mobi-featured-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 12px;
+}
+
+.featured-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.featured-plan-code {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-title);
+}
+
+.featured-plan-price {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #ef4444;
+}
+
+.price-sub {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.featured-plan-hero {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 4px 0 10px;
+    letter-spacing: -0.3px;
+}
+
+.featured-dashed-divider {
+    border-top: 1px dashed var(--border);
+    margin: 10px 0;
+}
+
+.featured-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+}
+
+.featured-actions-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.btn-mobi-outline {
+    background: transparent;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    border-radius: 24px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+.btn-mobi-outline:active {
+    transform: scale(0.95);
+    background: var(--primary-light);
+}
+
+.btn-mobi-solid {
+    background: var(--primary);
+    border: 1.5px solid var(--primary);
+    color: #ffffff;
+    border-radius: 24px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
+    transition: all 0.15s ease;
+}
+.btn-mobi-solid:active {
+    transform: scale(0.95);
+    filter: brightness(0.92);
+}
+
+/* 6. Floating AI Bot Assistant Button */
+.mobi-floating-bot {
+    position: fixed;
+    bottom: 74px;
+    right: 18px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007ae5 0%, #005baa 100%);
+    box-shadow: 0 6px 18px rgba(0, 90, 180, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 99;
+    border: 2px solid #ffffff;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mobi-floating-bot:active {
+    transform: scale(0.88);
+}
+

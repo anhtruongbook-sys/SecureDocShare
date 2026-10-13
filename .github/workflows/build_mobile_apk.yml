@@ -64,15 +64,22 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.6.5
-          name: "KryptoDoc Enterprise Vault v2.6.5 - Robust Invisible Steganography Engine (Dual-Layer Blue-Channel & Forensic Chunk)"
+          tag_name: v2.6.6
+          name: "KryptoDoc Enterprise Vault v2.6.6 - Flat Modern UI (MobiFone / FinTech Inspired Architecture)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.5 (Robust Invisible Steganography Engine)
-            - **Động Cơ Thủy Vân Số Tàng Hình (Robust Invisible Steganography Engine)**:
-              + **Tàng hình 100% mắt thường không thể nhận biết (Zero Visual Degradation)**: Chỉ số PSNR > 48 dB, SSIM > 0.99. Hình ảnh được bảo toàn nguyên vẹn độ sắc nét, màu sắc và dung lượng tệp tin.
-              + **Kiến trúc Bảo vệ Kép (Dual-Layer Architecture)**:
-                * **Lớp 1 (Forensic Structural Manifest Chunk & Trailer)**: Nhúng toàn bộ chứng thư truy vết JSON mã hóa (`recipient`, `releaseCode`, `timestamp`, `originalName`, `signer`) vào cấu trúc tệp ảnh (PNG/JPEG marker & EOF trailer) bảo toàn 100% dữ liệu gốc.
-                * **Lớp 2 (In-Pixel Blue-Channel Parity Modulation)**: Điều chế bit dữ liệu trực tiếp vào kênh màu Xanh Dương (Blue Channel) bằng giải thuật phân tán giả ngẫu nhiên PRNG (seed `0x4B525950`). Giúp nhận diện và khôi phục mã định danh phát hành ngay cả khi tệp bị xóa siêu dữ liệu hoặc chuyển đổi định dạng.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.6.6 (Flat Modern UI & Telecom Style Architecture)
+            - **Tái Thiết Kế Toàn Diện Giao Diện Phẳng Hiện Đại (Flat Modern FinTech & Telecom Architecture)**:
+              + **Hero Banner Cong Xanh Dương Đậm Đà (Royal Blue Curved Header)**: Dải màu chuyển tiếp gradient `#005baa` đến `#007de3`, bo đáy mềm mại 24px, tích hợp biểu tượng KryptoDoc trắng nổi bật, nút Menu Lịch sử và Chuyển chế độ Sáng/Tối.
+              + **Thẻ Trạng Thái Nổi Đè Header (Floating Status Overlapping Card)**: Thẻ trắng sang trọng hiển thị trạng thái Két bảo mật Offline 100%, một chạm mở cấu hình Két nhanh.
+              + **Cụm Tiện Ích 4 Cột Squircle Pastel (Quick Services Grid)**: 4 biểu tượng squircle mềm mại với nhãn `HOT` đỏ (Khóa & Đóng dấu, Mở khóa, Pháp y số, Két bí mật), tiện dụng một chạm.
+              + **Thẻ Tác Vụ Chính Phẳng Hiện Đại (Featured Cards - D5/D7 Style)**: Thẻ trắng bo góc 18px với vạch phân tách nét đứt, mã gói `KD-PRO`, giá trị bảo vệ và bộ nút đôi (Chi tiết outline & Chọn tệp solid blue).
+              + **Nút Trợ Lý Bảo Mật AI Nổi Góc Phải (Floating AI Cyber Bot)**: Biểu tượng robot công nghệ cao nổi góc dưới bên phải, hỗ trợ tư vấn bảo mật và cứu hộ khẩn cấp.
+              + **Thanh Điều Hướng Đáy 4 Mục Phẳng & Tối Giản (Flat Bottom Nav)**: `Trang chủ`, `Mở khóa`, `Pháp y`, `Két sắt`.
+            - **Kế thừa Toàn Bộ Động Cơ Bảo Mật v2.6.5**:
+              + Động cơ Thủy vân số tàng hình ảnh (Invisible Steganography) 2 lớp (Blue-Channel LSB & Forensic Manifest Chunk).
+              + Tự động khóa App khi thu nhỏ / chuyển ứng dụng / tắt màn hình (`WidgetsBindingObserver`).
+              + Mặc định đăng nhập vân tay tự động (`BiometricPrompt`).
+              + Mở khóa cứu hộ khẩn cấp bằng Master Key cho mọi định dạng.
             - **Tích Hợp Tùy Chọn "👁️‍🗨️ Tàng Hình (Stego)" Trực Quan Tại Tab Khóa**:
               + Bổ sung nút chọn chế độ watermark `👁️‍🗨️ Tàng Hình (Stego)`: Giữ ảnh nguyên bản 100%, không chèn bất kỳ chữ mờ hay logo nào đè lên hình ảnh nhưng vẫn tự động gắn mã phát hành và tên người nhận ẩn.
             - **Mở Rộng Động Cơ Pháp Y Số Tab 3 (Forensic Audit Engine For Images)**:
