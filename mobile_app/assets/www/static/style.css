@@ -2300,6 +2300,20 @@ body.light-mode .krypto-toast {
     transform: scale(1.15);
 }
 
+/* Light Mode PIN Dots */
+body.light-mode .pin-dot,
+body:not(.dark-mode) .vault-auth-card .pin-dot {
+    background: #e2e8f0;
+    border: 1.5px solid #cbd5e1;
+}
+
+body.light-mode .pin-dot.filled,
+body:not(.dark-mode) .vault-auth-card .pin-dot.filled {
+    background: #059669;
+    border-color: #059669;
+    box-shadow: 0 0 8px rgba(5, 150, 105, 0.5);
+}
+
 .cyber-pin-pad {
     display: grid;
     grid-template-columns: repeat(3, 72px);
@@ -2317,10 +2331,10 @@ body.light-mode .krypto-toast {
     height: 68px;
     margin: 0 auto !important;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #ffffff;
-    font-size: 22px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #f1f5f9;
+    font-size: 24px;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -2347,6 +2361,54 @@ body.light-mode .krypto-toast {
 .btn-pin-del {
     color: var(--text-muted);
     font-size: 20px;
+}
+
+/* Light Mode PIN Keypad Overrides */
+body.light-mode .btn-pin-key,
+body:not(.dark-mode) .vault-auth-card .btn-pin-key {
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .btn-pin-key:active,
+body:not(.dark-mode) .vault-auth-card .btn-pin-key:active {
+    background: #ecfdf5;
+    border-color: #059669;
+    color: #047857;
+}
+
+body.light-mode .btn-pin-biometric,
+body:not(.dark-mode) .vault-auth-card .btn-pin-biometric {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #2563eb;
+}
+
+body.light-mode .btn-pin-del,
+body:not(.dark-mode) .vault-auth-card .btn-pin-del {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+/* Ensure full screen cyber modal retains dark cyber theme */
+.cyber-lock-gate .pin-dot {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.cyber-lock-gate .pin-dot.filled {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+.cyber-lock-gate .btn-pin-key {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
 }
 
 .btn-unlock-by-pass {

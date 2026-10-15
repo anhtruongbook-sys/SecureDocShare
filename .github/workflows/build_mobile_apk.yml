@@ -64,15 +64,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.4
-          name: "KryptoDoc Enterprise Vault v2.7.4 - Perfectly Centered Keypad & Symmetric Layout Fix"
+          tag_name: v2.7.5
+          name: "KryptoDoc Enterprise Vault v2.7.5 - Light Mode Keypad & PIN Dots Contrast Fix"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.4 (Keypad Horizontal Symmetry & Mathematical Centering Fix)
-            - **Căn Giữa Tuyệt Đối Bàn Phím Số PIN & Các Dấu Chấm Trạng Thái (Keypad Mathematical Centering)**:
-              + Khắc phục triệt để hiện tượng bàn phím số (1, 2, 3... 👆, 0, ⌫) bị lệch hẳn sang bên trái màn hình.
-              + Khắc phục nguyên nhân gốc rễ: JS `lockedView.style.display = 'block'` phá vỡ layout flexbox của `.vault-auth-card`, chuyển thành `lockedView.style.display = 'flex'`.
-              + Thiết lập kích thước cột cố định đối xứng `repeat(3, 72px)` với `margin: 10px auto 16px auto !important; justify-content: center !important; justify-items: center !important; align-self: center !important;` giúp 12 phím tròn nằm chính giữa 100% trục tọa độ màn hình.
-              + Căn chỉnh đồng trục hoàn hảo giữa Biểu tượng Khiên, Chữ tiêu đề, 6 Dấu chấm PIN và Bàn phím số trên mọi kích thước màn hình điện thoại (360px - 480px).
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.5 (Light Mode High-Contrast Keypad Fix)
+            - **Khắc Phục Hoàn Toàn Lỗi Bàn Phím & Dấu Chấm Bị Trắng Xóa Khi Bật Chế Độ Sáng (Light Mode Contrast Fix)**:
+              + Khắc phục nguyên nhân gốc rễ: Màu chữ bàn phím số bị gán cứng `#ffffff` và viền/nền trong suốt 4%, khiến chữ trắng nằm trên thẻ trắng trở nên vô hình 100%.
+              + Thiết lập bộ giao diện tương phản cao cho Chế độ Sáng (`body.light-mode`):
+                * Bàn phím số: Nền phím xám ngà `#f1f5f9`, viền nổi `#cbd5e1`, số đen đậm `#0f172a` sắc nét 100%, hiệu ứng chạm nhấp nháy xanh ngọc `#ecfdf5`.
+                * Dấu chấm PIN: Nền `#e2e8f0`, viền `#cbd5e1`, khi nhập chuyển sang xanh ngọc lục bảo `#059669` có bóng phát quang.
+                * Nút Vân tay (`👆`) xanh dương `#2563eb` và nút Xóa (`⌫`) xám than `#334155` tương phản tối ưu.
+            - **Căn Giữa Tuyệt Đối Bàn Phím Số PIN (Mathematical Centering)**:
+              + 12 phím tròn nằm chính giữa 100% trục tọa độ màn hình (`repeat(3, 72px)`, `margin: 10px auto 16px auto !important;`).
+              + Đồng trục hoàn hảo giữa Khiên, Tiêu đề, Dấu chấm PIN và Bàn phím số.
+            - **Kế thừa toàn diện**: Bảng Pháp y số chuẩn Responsive thẻ đơn không viền lồng dòng bảng (Rule 14.1), triệt tiêu khung lồng kép (Rule 14.2), tự động khóa két khi rời tab, menu trượt App Drawer v2.7.5 Mobile Pro.
             - **Kế thừa toàn diện Chuẩn mực Rule 14 (Mobile UI Single-Level Card & Borderless Tables)**:
               + Bảng kiểm định Pháp y số chuẩn responsive thẻ đơn không viền lồng bên trong dòng bảng.
               + Triệt tiêu hoàn toàn khung thẻ lồng kép 2-4 tầng, sử dụng thanh nhấn lề trái và vạch phân cách phẳng tinh tế.

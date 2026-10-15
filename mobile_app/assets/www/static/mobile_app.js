@@ -2480,7 +2480,7 @@ function updateDrawerVaultStatus() {
     const actionContainer = document.getElementById('drawer-vault-action-container');
     const vaultDesc = document.getElementById('drawer-vault-desc');
     const versionEl = document.getElementById('drawer-app-version');
-    if (versionEl) versionEl.textContent = 'v2.7.4 Mobile Pro';
+    if (versionEl) versionEl.textContent = 'v2.7.5 Mobile Pro';
 
     if (actionContainer) {
         if (isVaultSessionUnlocked) {
