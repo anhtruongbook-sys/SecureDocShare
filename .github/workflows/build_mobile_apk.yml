@@ -64,15 +64,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.3
-          name: "KryptoDoc Enterprise Vault v2.7.3 - Rule 14 Single-Level Cards & Borderless Tables"
+          tag_name: v2.7.4
+          name: "KryptoDoc Enterprise Vault v2.7.4 - Perfectly Centered Keypad & Symmetric Layout Fix"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.3 (Rule 14 & Mobile UI Audit)
-            - **Khắc Phục Triệt Để Hiện Tượng Khung Viền Lồng Bên Trong Từng Dòng Bảng (Rule 14.1)**:
-              + Bảng kiểm định Pháp y số và toàn bộ các bảng dữ liệu được chuẩn hóa cấu trúc `<table>` responsive với thuộc tính `data-label` trên từng cột và bọc nội dung trong `<span class="table-cell-val">`.
-              + Trên màn hình di động (`@media (max-width: 680px)`), mỗi dòng `tr` là một thẻ đơn độc lập (`border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;`).
-              + Xóa sạch viền 4 cạnh của từng ô `td` (`border: none !important; border-bottom: 1px dashed var(--border) !important;`), ô cuối cùng không có viền đáy (`border-bottom: none !important;`).
-              + Trong Light Mode (`body.light-mode`), chỉ dùng `border-color` cho `td`, tuyệt đối không dùng shorthand `border: 1px solid`.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.4 (Keypad Horizontal Symmetry & Mathematical Centering Fix)
+            - **Căn Giữa Tuyệt Đối Bàn Phím Số PIN & Các Dấu Chấm Trạng Thái (Keypad Mathematical Centering)**:
+              + Khắc phục triệt để hiện tượng bàn phím số (1, 2, 3... 👆, 0, ⌫) bị lệch hẳn sang bên trái màn hình.
+              + Khắc phục nguyên nhân gốc rễ: JS `lockedView.style.display = 'block'` phá vỡ layout flexbox của `.vault-auth-card`, chuyển thành `lockedView.style.display = 'flex'`.
+              + Thiết lập kích thước cột cố định đối xứng `repeat(3, 72px)` với `margin: 10px auto 16px auto !important; justify-content: center !important; justify-items: center !important; align-self: center !important;` giúp 12 phím tròn nằm chính giữa 100% trục tọa độ màn hình.
+              + Căn chỉnh đồng trục hoàn hảo giữa Biểu tượng Khiên, Chữ tiêu đề, 6 Dấu chấm PIN và Bàn phím số trên mọi kích thước màn hình điện thoại (360px - 480px).
+            - **Kế thừa toàn diện Chuẩn mực Rule 14 (Mobile UI Single-Level Card & Borderless Tables)**:
+              + Bảng kiểm định Pháp y số chuẩn responsive thẻ đơn không viền lồng bên trong dòng bảng.
+              + Triệt tiêu hoàn toàn khung thẻ lồng kép 2-4 tầng, sử dụng thanh nhấn lề trái và vạch phân cách phẳng tinh tế.
+            - **Tự động khóa két an toàn khi chuyển tab, giao diện phẳng tinh gọn, menu trượt App Drawer v2.7.4 Mobile Pro**.
             - **Khắc Phục Triệt Để Hiện Tượng Khung Thẻ Lồng Kép 2-4 Tầng (Rule 14.2)**:
               + Phẳng hóa toàn bộ wrapper bao ngoài `.results-card` thành trong suốt, không viền, không đổ bóng (`background: transparent !important; border: none !important; padding: 0 !important;`).
               + Bên trong thẻ: Các thông báo lưu tệp (`.saved-status-box`, `.saved-status-compact`), ghi chú (`.result-note`), và cài đặt nâng cao (`.card-feature-toggle-box`, `.tip-collapsible`) được chuyển đổi từ khung hộp đóng kín sang thanh nhấn lề trái (`border: none !important; border-left: 3px solid ... !important; border-radius: 0 8px 8px 0 !important;`).

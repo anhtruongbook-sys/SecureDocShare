@@ -281,7 +281,7 @@ function switchTab(tabName) {
         const lockedView = document.getElementById('vault-locked-view');
         if (unlockedView) unlockedView.style.display = 'none';
         if (lockedView) {
-            lockedView.style.display = 'block';
+            lockedView.style.display = 'flex';
             updateVaultPinDots();
         }
     }
@@ -2329,7 +2329,7 @@ function checkVaultAccess() {
         // Đang khóa: Luôn hiển thị màn hình xác thực bảo mật (không bao giờ bỏ qua)
         if (unlockedView) unlockedView.style.display = 'none';
         if (lockedView) {
-            lockedView.style.display = 'block';
+            lockedView.style.display = 'flex';
             currentVaultPinInput = '';
             updateVaultPinDots();
             if (subtitleEl) {
@@ -2480,7 +2480,7 @@ function updateDrawerVaultStatus() {
     const actionContainer = document.getElementById('drawer-vault-action-container');
     const vaultDesc = document.getElementById('drawer-vault-desc');
     const versionEl = document.getElementById('drawer-app-version');
-    if (versionEl) versionEl.textContent = 'v2.7.3 Mobile Pro';
+    if (versionEl) versionEl.textContent = 'v2.7.4 Mobile Pro';
 
     if (actionContainer) {
         if (isVaultSessionUnlocked) {
