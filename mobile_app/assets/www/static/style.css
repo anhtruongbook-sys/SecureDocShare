@@ -770,13 +770,16 @@ body {
     background: var(--success-dark);
 }
 
-/* Results Card */
+/* Results Card (Single-Level Card Wrapper - Flat & Transparent) */
 .results-card {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    border-color: rgba(16, 185, 129, 0.35);
-    background: var(--success-light);
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    margin-top: 14px;
 }
 
 .results-header {
@@ -843,10 +846,11 @@ body {
     flex-direction: column;
     gap: 3px;
     padding: 8px 12px;
-    border-radius: var(--radius-md);
+    border-radius: 0 8px 8px 0;
     background: var(--success-light);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    margin-top: 2px;
+    border: none !important;
+    border-left: 3px solid #10b981 !important;
+    margin-top: 4px;
 }
 
 .saved-status-badge {
@@ -970,9 +974,10 @@ body {
     font-size: 11.5px;
     color: var(--text-muted);
     line-height: 1.45;
-    background: var(--bg-subtle);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    background: var(--bg-subtle) !important;
+    border: none !important;
+    border-left: 3px solid var(--primary) !important;
+    border-radius: 0 8px 8px 0;
     padding: 10px 12px;
 }
 
@@ -1463,12 +1468,13 @@ body.light-mode .krypto-toast {
 }
 
 .card-feature-toggle-box {
-    background: var(--bg-subtle);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    background: var(--bg-subtle) !important;
+    border: none !important;
+    border-left: 3px solid var(--primary) !important;
+    border-radius: 0 8px 8px 0 !important;
     padding: 10px 12px;
-    margin-top: 6px;
-    margin-bottom: 6px;
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 .feature-toggle-row {
@@ -1647,10 +1653,11 @@ body.light-mode .krypto-toast {
     font-size: 11px;
     color: #34d399;
     background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    border-radius: 6px;
-    padding: 5px 10px;
-    margin-top: 2px;
+    border: none !important;
+    border-left: 3px solid #10b981 !important;
+    border-radius: 0 6px 6px 0;
+    padding: 6px 10px;
+    margin-top: 4px;
 }
 
 .saved-status-compact strong {
@@ -1670,9 +1677,10 @@ body.light-mode .krypto-toast {
 
 .tip-collapsible {
     margin-top: 8px;
-    border: 1px solid rgba(234, 179, 8, 0.25);
-    background: rgba(234, 179, 8, 0.06);
-    border-radius: 6px;
+    border: none !important;
+    border-left: 3px solid #eab308 !important;
+    border-radius: 0 6px 6px 0 !important;
+    background: rgba(234, 179, 8, 0.06) !important;
     overflow: hidden;
     cursor: pointer;
 }
@@ -1902,13 +1910,15 @@ body.light-mode .krypto-toast {
     gap: 5px;
 }
 
-/* Option Module Boxes */
+/* Option Module Boxes - Flattened into Horizontal Dividers (Rule 14) */
 .option-module-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 8px 10px;
-    margin-top: 8px;
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid var(--border) !important;
+    border-radius: 0 !important;
+    padding: 12px 0 4px !important;
+    margin-top: 10px !important;
+    box-shadow: none !important;
 }
 
 .option-module-title {
@@ -2024,17 +2034,21 @@ body.light-mode .krypto-toast {
     margin: 0;
 }
 
-/* Forensic Audit Report */
+/* Forensic Audit Report (Single-Level Card Container) */
 .audit-report-container {
-    padding: 12px;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .audit-report-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: 14px;
-    margin-top: 8px;
+    margin-top: 6px;
+    box-shadow: var(--shadow-sm);
 }
 
 .audit-status-badge-row {
@@ -2505,14 +2519,21 @@ body.light-mode .krypto-toast {
 .flat-grouped-settings {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
 }
 
 .flat-setting-item {
-    background: var(--bg-subtle);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 12px 14px;
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid var(--border) !important;
+    border-radius: 0 !important;
+    padding: 14px 0 !important;
+    box-shadow: none !important;
+}
+
+.flat-setting-item:first-child {
+    border-top: none !important;
+    padding-top: 4px !important;
 }
 
 .btn-flat-link {
@@ -3129,15 +3150,17 @@ body.dark-mode .drawer-menu-item:hover, body.dark-mode .drawer-menu-item:active 
 }
 
 .drawer-info-card {
-    background: #f8fafc;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 12px;
+    background: var(--bg-subtle) !important;
+    border: none !important;
+    border-left: 3px solid var(--primary) !important;
+    border-radius: 0 12px 12px 0 !important;
+    padding: 10px 14px !important;
     font-size: 11.5px;
 }
 body.dark-mode .drawer-info-card {
-    background: #1f2532;
-    border-color: #2b3345;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: none !important;
+    border-left: 3px solid var(--primary) !important;
 }
 
 .drawer-info-row {
@@ -3181,6 +3204,160 @@ body.dark-mode .drawer-info-card {
     align-items: center;
     justify-content: center;
     gap: 8px;
+}
+
+/* ==========================================================================
+   BẤT BIẾN GIAO DIỆN MOBILE: CHỐNG KHUNG VIỀN LỒNG DÒNG BẢNG & CHỐNG KHUNG THẺ LỒNG KÉP
+   (Anti-Inner-Cell-Borders & Anti-Nested-Cards Invariant - Rule 14 & Skill MedLab)
+   ========================================================================== */
+
+/* 1. Desktop & Theme-Light Table Invariant */
+table,
+.tuvi-report-table,
+.report-table,
+.audit-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+}
+
+table th,
+.tuvi-report-table th,
+.report-table th,
+.audit-report-table th {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 9px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+table td,
+.tuvi-report-table td,
+.report-table td,
+.audit-report-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+/* KHẮC PHỤC TRIỆT ĐỂ: Trong Light Mode, CHỈ dùng border-color cho td, TUYỆT ĐỐI KHÔNG dùng shorthand border */
+body.light-mode table td,
+body.theme-light table td,
+body.light-mode .tuvi-report-table td,
+body.theme-light .tuvi-report-table td,
+body.light-mode .report-table td,
+body.theme-light .report-table td,
+body.light-mode .audit-report-table td,
+body.theme-light .audit-report-table td {
+    border-color: var(--border) !important;
+}
+
+/* 2. Responsive Mobile Tables (@media max-width: 680px) */
+@media (max-width: 680px) {
+    .tuvi-table-wrap,
+    .table-responsive-wrap {
+        width: 100%;
+        overflow-x: visible;
+        margin: 6px 0;
+    }
+
+    table,
+    table.tuvi-report-table,
+    table.report-table,
+    table.audit-report-table {
+        display: block !important;
+        width: 100% !important;
+        border: none !important;
+    }
+
+    table thead,
+    table.tuvi-report-table thead,
+    table.report-table thead,
+    table.audit-report-table thead {
+        display: none !important;
+    }
+
+    table tbody,
+    table.tuvi-report-table tbody,
+    table.report-table tbody,
+    table.audit-report-table tbody {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    /* Mỗi dòng tr là một thẻ đơn độc lập */
+    table tr,
+    table.tuvi-report-table tr,
+    table.report-table tr,
+    table.audit-report-table tr {
+        display: block !important;
+        width: 100% !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+        padding: 12px 14px !important;
+        margin-bottom: 10px !important;
+        background: var(--bg-card) !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* XÓA SẠCH VIỀN 4 CẠNH CỦA TD - CHỈ GIỮ ĐƯỜNG KẺ NGANG ĐỨT NÉT PHÂN CÁCH NỘI BỘ */
+    table td,
+    table.tuvi-report-table td,
+    table.report-table td,
+    table.audit-report-table td,
+    body.light-mode table td,
+    body.theme-light table td,
+    body.light-mode table.tuvi-report-table td,
+    body.theme-light table.tuvi-report-table td,
+    body.light-mode table.audit-report-table td,
+    body.theme-light table.audit-report-table td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 14px !important;
+        padding: 9px 4px !important;
+        border: none !important;
+        border-bottom: 1px dashed var(--border) !important;
+        box-sizing: border-box !important;
+        background: transparent !important;
+    }
+
+    /* Ô cuối cùng trong dòng không có đường viền đáy */
+    table td:last-child,
+    table.tuvi-report-table td:last-child,
+    table.report-table td:last-child,
+    table.audit-report-table td:last-child,
+    body.light-mode table td:last-child,
+    body.theme-light table td:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Tiêu đề cột từ data-label */
+    table td::before,
+    table.tuvi-report-table td::before,
+    table.report-table td::before,
+    table.audit-report-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 11.5px;
+        flex-shrink: 0;
+        text-align: left;
+    }
+
+    .table-cell-val {
+        text-align: right;
+        word-break: break-word;
+        font-size: 12px;
+        color: var(--text-title);
+    }
 }
 
 

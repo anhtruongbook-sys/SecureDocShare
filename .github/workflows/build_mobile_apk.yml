@@ -64,18 +64,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.2
-          name: "KryptoDoc Enterprise Vault v2.7.2 - Strict Vault Lock & Drawer Realtime Status Badge"
+          tag_name: v2.7.3
+          name: "KryptoDoc Enterprise Vault v2.7.3 - Rule 14 Single-Level Cards & Borderless Tables"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.2 (Strict Vault Auto-Lock & Drawer Status)
-            - **Bất Biến Tự Động Khóa Két Sắt Khi Rời Tab**:
-              + Khi chuyển sang bất kỳ chức năng nào khác (Trang chủ, Mở khóa, Pháp y), Két sắt lập tức khóa lại 100%.
-              + Khi quay trở lại Két sắt: Luôn hiển thị màn hình Khóa và bàn phím số (không tự động kích hoạt sinh trắc học ngầm gây hiểu lầm là chưa khóa). Người dùng chủ động nhập PIN hoặc chạm biểu tượng [👆] trên bàn phím để quét vân tay.
-            - **Cập Nhật Trạng Thái Két Động Trong Menu 3 Gạch (App Drawer)**:
-              + Khi Két đã khóa: Hiển thị huy hiệu an toàn xanh `🛡️ Két Sắt Đang Khóa An Toàn` (không còn nút đỏ "Khóa Két & Đóng Lại Ngay" gây hoang mang khi Két đã đóng).
-              + Khi Két đang mở: Mới hiển thị nút đỏ `🔒 Khóa Két & Đóng Lại Ngay`.
-              + Cập nhật nhãn phiên bản chính xác: `v2.7.2 Mobile Pro`.
-            - **Kế thừa toàn diện**: Đã gỡ bỏ hoàn toàn Trợ lý AI và các nút thừa trùng lặp.
+            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.3 (Rule 14 & Mobile UI Audit)
+            - **Khắc Phục Triệt Để Hiện Tượng Khung Viền Lồng Bên Trong Từng Dòng Bảng (Rule 14.1)**:
+              + Bảng kiểm định Pháp y số và toàn bộ các bảng dữ liệu được chuẩn hóa cấu trúc `<table>` responsive với thuộc tính `data-label` trên từng cột và bọc nội dung trong `<span class="table-cell-val">`.
+              + Trên màn hình di động (`@media (max-width: 680px)`), mỗi dòng `tr` là một thẻ đơn độc lập (`border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;`).
+              + Xóa sạch viền 4 cạnh của từng ô `td` (`border: none !important; border-bottom: 1px dashed var(--border) !important;`), ô cuối cùng không có viền đáy (`border-bottom: none !important;`).
+              + Trong Light Mode (`body.light-mode`), chỉ dùng `border-color` cho `td`, tuyệt đối không dùng shorthand `border: 1px solid`.
+            - **Khắc Phục Triệt Để Hiện Tượng Khung Thẻ Lồng Kép 2-4 Tầng (Rule 14.2)**:
+              + Phẳng hóa toàn bộ wrapper bao ngoài `.results-card` thành trong suốt, không viền, không đổ bóng (`background: transparent !important; border: none !important; padding: 0 !important;`).
+              + Bên trong thẻ: Các thông báo lưu tệp (`.saved-status-box`, `.saved-status-compact`), ghi chú (`.result-note`), và cài đặt nâng cao (`.card-feature-toggle-box`, `.tip-collapsible`) được chuyển đổi từ khung hộp đóng kín sang thanh nhấn lề trái (`border: none !important; border-left: 3px solid ... !important; border-radius: 0 8px 8px 0 !important;`).
+              + Các mục cài đặt trong Két sắt (`.flat-setting-item`) và tùy chọn (`.option-module-box`) được phân cách bằng đường kẻ ngang phẳng (`border-top: 1px solid var(--border)`), không lồng khung hộp con bên trong khung hộp mẹ.
+            - **Kế thừa toàn diện**: Khóa két sắt an toàn khi chuyển tab, giao diện phẳng tinh gọn, không trợ lý bot thừa.
             - **Kích Hoạt Hoàn Hảo 2 Chức Năng Trong Menu 3 Gạch Ngang (App Drawer)**:
               + **Nhật Ký Phiên Làm Việc**: Chạm vào mở ngay Hộp thoại Modal Nhật Ký hiển thị danh sách các tệp tin đã xử lý trực quan, có nút xóa lịch sử và đóng nhanh.
               + **Chế Độ Giao Diện (Sáng / Tối)**: Hiển thị trạng thái giao diện hiện tại (`Sáng Phẳng` hoặc `Chế Độ Tối`) ngay trên menu, chạm vào chuyển đổi mượt mà và cập nhật tức thì.

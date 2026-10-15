@@ -2176,10 +2176,10 @@ function renderForensicReport(data) {
     const wmTextDisplay = data.watermarkType || 'Đã tích hợp trong cấu trúc';
     const isStego = wmTextDisplay.toLowerCase().includes('tàng hình') || wmTextDisplay.toLowerCase().includes('stego') || wmTextDisplay.toLowerCase().includes('điểm ảnh');
     const stegoRow = isStego ? `
-                <div class="audit-row" style="background: rgba(56, 189, 248, 0.08); padding: 6px 8px; border-radius: 6px; margin: 4px 0; border: 1px dashed rgba(56, 189, 248, 0.3);">
-                    <span class="audit-label" style="color: #38bdf8;">🔬 Phân tích giải thuật:</span>
-                    <span class="audit-val font-mono" style="color: #38bdf8; font-size: 11px;">Dual-Layer Blue-Channel LSB + Forensic Manifest Trailer (0% Suy hao, PSNR &gt; 48 dB)</span>
-                </div>
+                    <tr>
+                        <td data-label="Chỉ mục"><span class="table-cell-val" style="color: #38bdf8;">🔬 Phân tích giải thuật:</span></td>
+                        <td data-label="Dữ liệu"><span class="table-cell-val font-mono" style="color: #38bdf8; font-size: 11px;">Dual-Layer Blue-Channel LSB + Forensic Manifest Trailer (0% Suy hao, PSNR &gt; 48 dB)</span></td>
+                    </tr>
     ` : '';
 
     container.innerHTML = `
@@ -2188,42 +2188,50 @@ function renderForensicReport(data) {
             <h4 style="margin: 8px 0 4px; font-size: 15px; color: var(--text-title);">Chứng Thư Truy Vết Nguồn Gốc Tệp Tin</h4>
             <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Được giải mã trực tiếp từ vùng chứa siêu dữ liệu phân vùng độc lập (Zero-OS-Dependency)</p>
 
-            <div class="audit-grid-table">
-                <div class="audit-row">
-                    <span class="audit-label">🎯 Đối tượng nhận:</span>
-                    <strong class="audit-val" style="color: #38bdf8;">${recipient}</strong>
-                </div>
-                <div class="audit-row">
-                    <span class="audit-label">⚡ Mã định danh phát hành:</span>
-                    <strong class="audit-val font-mono" style="color: #f59e0b;">${releaseCode}</strong>
-                </div>
-                <div class="audit-row">
-                    <span class="audit-label">📁 Tên tệp gốc khi khóa:</span>
-                    <span class="audit-val">${originalName}</span>
-                </div>
-                <div class="audit-row">
-                    <span class="audit-label">⏱️ Thời điểm phát hành:</span>
-                    <span class="audit-val">${timestamp}</span>
-                </div>
-                <div class="audit-row">
-                    <span class="audit-label">🛡️ Toàn vẹn nội dung:</span>
-                    <span class="audit-val" style="color: ${isIntact ? '#10b981' : '#ef4444'};">
-                        ${data.tamperDesc || (isIntact ? 'Chuẩn hash SHA-256 khớp 100% bản gốc' : 'Phát hiện nội dung có sự biến đổi')}
-                    </span>
-                </div>
-                <div class="audit-row">
-                    <span class="audit-label">🏷️ Watermark bảo vệ:</span>
-                    <span class="audit-val" style="color: ${isStego ? '#38bdf8' : 'inherit'}; font-weight: ${isStego ? '600' : 'normal'};">${wmTextDisplay}</span>
-                </div>
-                ${stegoRow}
-                <div class="audit-row">
-                    <span class="audit-label">✍️ Chữ ký / Con dấu:</span>
-                    <span class="audit-val">${data.signer ? ('Đã ký bởi: ' + data.signer) : 'Không có chữ ký số'}</span>
-                </div>
-                <div class="audit-row">
-                    <span class="audit-label">🔑 Quyền Master Key:</span>
-                    <span class="audit-val" style="color: #10b981;">Được bảo trợ cứu hộ bởi Master Password</span>
-                </div>
+            <div class="tuvi-table-wrap">
+                <table class="tuvi-report-table audit-report-table">
+                    <thead>
+                        <tr>
+                            <th>Chỉ Mục Giám Định</th>
+                            <th>Dữ Liệu Trích Xuất</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">🎯 Đối tượng nhận:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val" style="color: #38bdf8; font-weight: 700;">${recipient}</span></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">⚡ Mã định danh:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val font-mono" style="color: #f59e0b; font-weight: 700;">${releaseCode}</span></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">📁 Tên tệp gốc:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val">${originalName}</span></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">⏱️ Thời điểm phát hành:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val">${timestamp}</span></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">🛡️ Toàn vẹn nội dung:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val" style="color: ${isIntact ? '#10b981' : '#ef4444'}; font-weight: 600;">${data.tamperDesc || (isIntact ? 'Chuẩn hash SHA-256 khớp 100% bản gốc' : 'Phát hiện nội dung có sự biến đổi')}</span></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">🏷️ Watermark bảo vệ:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val" style="color: ${isStego ? '#38bdf8' : 'inherit'}; font-weight: ${isStego ? '600' : 'normal'};">${wmTextDisplay}</span></td>
+                        </tr>
+                        ${stegoRow}
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">✍️ Chữ ký / Con dấu:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val">${data.signer ? ('Đã ký bởi: ' + data.signer) : 'Không có chữ ký số'}</span></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">🔑 Quyền Master Key:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val" style="color: #10b981; font-weight: 600;">Được bảo trợ cứu hộ bởi Master Password</span></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     `;
@@ -2472,7 +2480,7 @@ function updateDrawerVaultStatus() {
     const actionContainer = document.getElementById('drawer-vault-action-container');
     const vaultDesc = document.getElementById('drawer-vault-desc');
     const versionEl = document.getElementById('drawer-app-version');
-    if (versionEl) versionEl.textContent = 'v2.7.2 Mobile Pro';
+    if (versionEl) versionEl.textContent = 'v2.7.3 Mobile Pro';
 
     if (actionContainer) {
         if (isVaultSessionUnlocked) {
