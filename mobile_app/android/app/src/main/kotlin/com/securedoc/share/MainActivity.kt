@@ -387,7 +387,7 @@ class MainActivity: FlutterFragmentActivity() {
                                         break
                                     } catch (_: Throwable) {}
                                 }
-                                if (!opened) {
+                                if (!opened || reader == null) {
                                     throw e
                                 }
                             }
@@ -402,7 +402,7 @@ class MainActivity: FlutterFragmentActivity() {
                             stamper = null
                             fos.close()
                             fos = null
-                            reader.close()
+                            reader?.close()
                             reader = null
 
                             runOnUiThread {
