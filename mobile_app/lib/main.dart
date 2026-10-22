@@ -33,7 +33,7 @@ class SecureDocApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KryptoDoc',
+      title: 'Krypto',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -519,6 +519,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                     'srcPaths': finalSrcPaths,
                     'destZipPath': outTempPath,
                     'password': password,
+                    'masterPassword': masterPassword,
                     'useZipCrypto': useZipCrypto,
                   });
                 } on PlatformException catch (pErr) {
@@ -720,6 +721,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                       'srcPaths': [imageToPackage],
                       'destZipPath': outTempPath,
                       'password': password,
+                      'masterPassword': masterPassword,
                       'useZipCrypto': false,
                     });
                   } else {
@@ -739,6 +741,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                       'srcPaths': [srcPath],
                       'destZipPath': outTempPath,
                       'password': password,
+                      'masterPassword': masterPassword,
                       'useZipCrypto': false,
                     });
                   } on PlatformException catch (pErr) {

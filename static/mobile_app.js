@@ -1155,11 +1155,13 @@ async function executeMobileLockFiles() {
                         `Tổng số: <strong>${selectedLockFiles.length} tệp</strong> (${totalSizeMb} MB)<br>Đang nén và mã hóa mật khẩu AES-256 bằng Zip4j Engine.<br>Vui lòng giữ ứng dụng mở...`
                     );
 
+                    const masterPasswordZip = localStorage.getItem('krypto_master_password') || '';
                     window.FlutterBridge.postMessage(JSON.stringify({
                         action: 'lock_zip_native',
                         name: firstName,
                         names: names,
                         password: pwd,
+                        master_password: masterPasswordZip,
                         use_zipcrypto: false,
                         protection_level: currentProtectionLevel
                     }));
@@ -1649,8 +1651,23 @@ async function shareResult(idx) {
 }
 
 // -------------------------------------------------------------
-// GIẢI MÃ TỆP (TAB UNLOCK)
+// GIẢI MÃ TỆP (TAB UNLOCK) & CỨU HỘ BẰNG MASTER KEY PQC (ML-KEM-768)
 // -------------------------------------------------------------
+function unlockWithPqcMasterKey() {
+    if (!selectedUnlockFile) {
+        showToast('⚠️ Vui lòng chọn tệp cần mở khóa trước!');
+        triggerPickFiles('unlock');
+        return;
+    }
+    const configuredMaster = localStorage.getItem('krypto_master_password') || 'KryptoPQC@2026';
+    const pwdInput = document.getElementById('unlock-password');
+    if (pwdInput) {
+        pwdInput.value = configuredMaster;
+    }
+    showToast('🔑 Đang kích hoạt Khóa Chủ Hậu Lượng Tử (ML-KEM-768 Master Key)...');
+    executeMobileUnlockFile();
+}
+
 async function executeMobileUnlockFile() {
     if (!selectedUnlockFile) {
         showToast('⚠️ Vui lòng chọn 1 tệp cần mở khóa!');
@@ -2227,8 +2244,8 @@ function renderForensicReport(data) {
                             <td data-label="Dữ liệu"><span class="table-cell-val">${data.signer ? ('Đã ký bởi: ' + data.signer) : 'Không có chữ ký số'}</span></td>
                         </tr>
                         <tr>
-                            <td data-label="Chỉ mục"><span class="table-cell-val">🔑 Quyền Master Key:</span></td>
-                            <td data-label="Dữ liệu"><span class="table-cell-val" style="color: #10b981; font-weight: 600;">Được bảo trợ cứu hộ bởi Master Password</span></td>
+                            <td data-label="Chỉ mục"><span class="table-cell-val">🔑 Khóa chủ PQC:</span></td>
+                            <td data-label="Dữ liệu"><span class="table-cell-val" style="color: #10b981; font-weight: 600;">ML-KEM-768 (FIPS 203) + AES-256-GCM Master Escrow</span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -2480,7 +2497,7 @@ function updateDrawerVaultStatus() {
     const actionContainer = document.getElementById('drawer-vault-action-container');
     const vaultDesc = document.getElementById('drawer-vault-desc');
     const versionEl = document.getElementById('drawer-app-version');
-    if (versionEl) versionEl.textContent = 'v2.7.5 Mobile Pro';
+    if (versionEl) versionEl.textContent = 'v2.7.6 PQC';
 
     if (actionContainer) {
         if (isVaultSessionUnlocked) {

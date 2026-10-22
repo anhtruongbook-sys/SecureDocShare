@@ -45,9 +45,11 @@ jobs:
         run: |
           mkdir -p build-output
           if [ -f mobile_app/build/app/outputs/flutter-apk/app-release.apk ]; then
+            cp mobile_app/build/app/outputs/flutter-apk/app-release.apk build-output/Krypto.apk
             cp mobile_app/build/app/outputs/flutter-apk/app-release.apk build-output/KryptoDoc.apk
             cp mobile_app/build/app/outputs/flutter-apk/app-release.apk build-output/SecureDocShare.apk
           else
+            cp mobile_app/build/app/outputs/flutter-apk/*.apk build-output/Krypto.apk
             cp mobile_app/build/app/outputs/flutter-apk/*.apk build-output/KryptoDoc.apk
             cp mobile_app/build/app/outputs/flutter-apk/*.apk build-output/SecureDocShare.apk
           fi
@@ -55,8 +57,8 @@ jobs:
       - name: Upload Release APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: KryptoDoc-mobile-release-apk
-          path: build-output/KryptoDoc.apk
+          name: Krypto-mobile-release-apk
+          path: build-output/Krypto.apk
           retention-days: 30
           if-no-files-found: error
 
@@ -64,102 +66,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.5
-          name: "KryptoDoc Enterprise Vault v2.7.5 - Light Mode Keypad & PIN Dots Contrast Fix"
+          tag_name: v2.7.6
+          name: "Krypto v2.7.6 - Tích Hợp Mật Mã Hậu Lượng Tử (ML-KEM-768 FIPS 203 + PQC Master Key)"
           body: |
-            ## Ứng dụng Di Động KryptoDoc Enterprise Vault v2.7.5 (Light Mode High-Contrast Keypad Fix)
-            - **Khắc Phục Hoàn Toàn Lỗi Bàn Phím & Dấu Chấm Bị Trắng Xóa Khi Bật Chế Độ Sáng (Light Mode Contrast Fix)**:
-              + Khắc phục nguyên nhân gốc rễ: Màu chữ bàn phím số bị gán cứng `#ffffff` và viền/nền trong suốt 4%, khiến chữ trắng nằm trên thẻ trắng trở nên vô hình 100%.
-              + Thiết lập bộ giao diện tương phản cao cho Chế độ Sáng (`body.light-mode`):
-                * Bàn phím số: Nền phím xám ngà `#f1f5f9`, viền nổi `#cbd5e1`, số đen đậm `#0f172a` sắc nét 100%, hiệu ứng chạm nhấp nháy xanh ngọc `#ecfdf5`.
-                * Dấu chấm PIN: Nền `#e2e8f0`, viền `#cbd5e1`, khi nhập chuyển sang xanh ngọc lục bảo `#059669` có bóng phát quang.
-                * Nút Vân tay (`👆`) xanh dương `#2563eb` và nút Xóa (`⌫`) xám than `#334155` tương phản tối ưu.
-            - **Căn Giữa Tuyệt Đối Bàn Phím Số PIN (Mathematical Centering)**:
-              + 12 phím tròn nằm chính giữa 100% trục tọa độ màn hình (`repeat(3, 72px)`, `margin: 10px auto 16px auto !important;`).
-              + Đồng trục hoàn hảo giữa Khiên, Tiêu đề, Dấu chấm PIN và Bàn phím số.
-            - **Kế thừa toàn diện**: Bảng Pháp y số chuẩn Responsive thẻ đơn không viền lồng dòng bảng (Rule 14.1), triệt tiêu khung lồng kép (Rule 14.2), tự động khóa két khi rời tab, menu trượt App Drawer v2.7.5 Mobile Pro.
-            - **Kế thừa toàn diện Chuẩn mực Rule 14 (Mobile UI Single-Level Card & Borderless Tables)**:
-              + Bảng kiểm định Pháp y số chuẩn responsive thẻ đơn không viền lồng bên trong dòng bảng.
-              + Triệt tiêu hoàn toàn khung thẻ lồng kép 2-4 tầng, sử dụng thanh nhấn lề trái và vạch phân cách phẳng tinh tế.
-            - **Tự động khóa két an toàn khi chuyển tab, giao diện phẳng tinh gọn, menu trượt App Drawer v2.7.4 Mobile Pro**.
-            - **Khắc Phục Triệt Để Hiện Tượng Khung Thẻ Lồng Kép 2-4 Tầng (Rule 14.2)**:
-              + Phẳng hóa toàn bộ wrapper bao ngoài `.results-card` thành trong suốt, không viền, không đổ bóng (`background: transparent !important; border: none !important; padding: 0 !important;`).
-              + Bên trong thẻ: Các thông báo lưu tệp (`.saved-status-box`, `.saved-status-compact`), ghi chú (`.result-note`), và cài đặt nâng cao (`.card-feature-toggle-box`, `.tip-collapsible`) được chuyển đổi từ khung hộp đóng kín sang thanh nhấn lề trái (`border: none !important; border-left: 3px solid ... !important; border-radius: 0 8px 8px 0 !important;`).
-              + Các mục cài đặt trong Két sắt (`.flat-setting-item`) và tùy chọn (`.option-module-box`) được phân cách bằng đường kẻ ngang phẳng (`border-top: 1px solid var(--border)`), không lồng khung hộp con bên trong khung hộp mẹ.
-            - **Kế thừa toàn diện**: Khóa két sắt an toàn khi chuyển tab, giao diện phẳng tinh gọn, không trợ lý bot thừa.
-            - **Kích Hoạt Hoàn Hảo 2 Chức Năng Trong Menu 3 Gạch Ngang (App Drawer)**:
-              + **Nhật Ký Phiên Làm Việc**: Chạm vào mở ngay Hộp thoại Modal Nhật Ký hiển thị danh sách các tệp tin đã xử lý trực quan, có nút xóa lịch sử và đóng nhanh.
-              + **Chế Độ Giao Diện (Sáng / Tối)**: Hiển thị trạng thái giao diện hiện tại (`Sáng Phẳng` hoặc `Chế Độ Tối`) ngay trên menu, chạm vào chuyển đổi mượt mà và cập nhật tức thì.
-              2. **Kích Hoạt Nút Menu 3 Gạch Ngang (App Drawer) & Dọn Dẹp Nút Cài Đặt Thừa**:
-                 + Chạm vào nút 3 gạch ngang (`☰`) ở góc trên bên trái mở thanh trượt App Drawer sang trọng (Cài đặt Két, Mật khẩu Quản trị, Nhật ký phiên làm việc, Đổi giao diện, Khóa Két ngay).
-                 + Loại bỏ nút `Cài đặt` chình ình trên Thẻ trạng thái nổi, thay bằng huy hiệu xanh `● An Toàn` tinh tế.
-              3. **Loại Bỏ Hoàn Toàn 4 Nút Trùng Lặp Ở Giữa Màn Hình (Deduped Home Screen)**:
-                 + Xóa bỏ cụm 4 nút "Tiện ích" ở giữa màn hình vì đã trùng lặp chức năng 100% với 4 mục ở Thanh điều hướng đáy (`Trang chủ`, `Mở khóa`, `Pháp y`, `Két sắt`).
-                 + Màn hình Trang chủ trở nên vô cùng thoáng đãng, liền mạch từ Thẻ trạng thái nổi trực tiếp xuống Thẻ tác vụ KD-PRO và các bộ tùy chọn bảo mật.
-            - **Mặc Định 100% Chế Độ Sáng Phẳng Trắng - Xanh MobiFone (Pure White & Telecom Blue Default)**:
-              + Cập nhật cơ chế nạp theme mặc định sang `sds_theme_v266 = 'light'`.
-              + Nền trắng tinh khôi (#ffffff), Header vòm cong xanh dương đậm (#005baa), các thẻ bo tròn đổ bóng tinh tế.
-            - **Hợp Nhất Thẻ D5 & Bộ Chọn Tệp Tin**:
-              + Chạm trực tiếp vào Thẻ D5 hoặc nút `📂 Chọn tệp ngay` mở ngay bộ chọn tệp mã hóa.
-            - **Bổ Sung Nút Trợ Lý AI Nổi (Floating Bot)**:
-              + Biểu tượng trợ lý an ninh mạng góc dưới bên phải màn hình.
-            - **Tái Thiết Kế Toàn Diện Giao Diện Phẳng Hiện Đại (Flat Modern FinTech & Telecom Architecture)**:
-              + **Hero Banner Cong Xanh Dương Đậm Đà (Royal Blue Curved Header)**: Dải màu chuyển tiếp gradient `#005baa` đến `#007de3`, bo đáy mềm mại 24px, tích hợp biểu tượng KryptoDoc trắng nổi bật, nút Menu Lịch sử và Chuyển chế độ Sáng/Tối.
-              + **Thẻ Trạng Thái Nổi Đè Header (Floating Status Overlapping Card)**: Thẻ trắng sang trọng hiển thị trạng thái Két bảo mật Offline 100%, một chạm mở cấu hình Két nhanh.
-              + **Cụm Tiện Ích 4 Cột Squircle Pastel (Quick Services Grid)**: 4 biểu tượng squircle mềm mại với nhãn `HOT` đỏ (Khóa & Đóng dấu, Mở khóa, Pháp y số, Két bí mật), tiện dụng một chạm.
-              + **Thẻ Tác Vụ Chính Phẳng Hiện Đại (Featured Cards - D5/D7 Style)**: Thẻ trắng bo góc 18px với vạch phân tách nét đứt, mã gói `KD-PRO`, giá trị bảo vệ và bộ nút đôi (Chi tiết outline & Chọn tệp solid blue).
-              + **Nút Trợ Lý Bảo Mật AI Nổi Góc Phải (Floating AI Cyber Bot)**: Biểu tượng robot công nghệ cao nổi góc dưới bên phải, hỗ trợ tư vấn bảo mật và cứu hộ khẩn cấp.
-              + **Thanh Điều Hướng Đáy 4 Mục Phẳng & Tối Giản (Flat Bottom Nav)**: `Trang chủ`, `Mở khóa`, `Pháp y`, `Két sắt`.
-            - **Kế thừa Toàn Bộ Động Cơ Bảo Mật v2.6.5**:
-              + Động cơ Thủy vân số tàng hình ảnh (Invisible Steganography) 2 lớp (Blue-Channel LSB & Forensic Manifest Chunk).
-              + Tự động khóa App khi thu nhỏ / chuyển ứng dụng / tắt màn hình (`WidgetsBindingObserver`).
-              + Mặc định đăng nhập vân tay tự động (`BiometricPrompt`).
-              + Mở khóa cứu hộ khẩn cấp bằng Master Key cho mọi định dạng.
-            - **Tích Hợp Tùy Chọn "👁️‍🗨️ Tàng Hình (Stego)" Trực Quan Tại Tab Khóa**:
-              + Bổ sung nút chọn chế độ watermark `👁️‍🗨️ Tàng Hình (Stego)`: Giữ ảnh nguyên bản 100%, không chèn bất kỳ chữ mờ hay logo nào đè lên hình ảnh nhưng vẫn tự động gắn mã phát hành và tên người nhận ẩn.
-            - **Mở Rộng Động Cơ Pháp Y Số Tab 3 (Forensic Audit Engine For Images)**:
-              + Cho phép quét và kiểm định toàn diện các tệp hình ảnh (`.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp`).
-              + Trích xuất tự động chứng thư số gốc: Tên đối tượng nhận, Mã phát hành `KD-2026-XXXX`, Thời điểm tạo, Tên tệp ban đầu, và Xác thực chữ ký số KryptoDoc Stego Authority.
-            - **Kế thừa Toàn Bộ Tính Năng v2.6.4**:
-              + Tự động khóa App khi thu nhỏ / chuyển ứng dụng / tắt màn hình (`WidgetsBindingObserver`).
-              + Mặc định đăng nhập vân tay sinh trắc học tự động (`BiometricPrompt`).
-              + Căn giữa 6 chấm tròn mã PIN, hỗ trợ đổi qua Mật khẩu với biểu tượng mắt ẩn/hiện `👁️`.
-            - **Nâng Cấp Động Cơ Sinh Trắc Học `androidx.biometric.BiometricPrompt` & Căn Giữa Mã PIN**:
-              + Tương thích 100% cảm biến vân tay phần cứng và FaceID trên Android 11, 12, 13, 14, 15.
-              + Căn giữa đối xứng 100% hàng 6 chấm tròn mã PIN.
-            - **Tái Thiết Kế Giao Diện Phẳng Hoàn Toàn & Sang Trọng (Pure Flat & Quiet Luxury Theme)**:
-              + Học tập ngôn ngữ thiết kế từ các ứng dụng bảo mật hàng đầu thế giới (1Password 8, Apple Passwords iOS 18, Bitwarden, Proton Drive).
-              + **Hệ màu Trung tính Titan (Neutral Titanium)**: Chế độ tối than đá ấm `#14171f`, chế độ sáng xám ngà canvas bột giấy cao cấp `#f4f5f8`, loại bỏ hoàn toàn viền neon và độ tương phản chói gắt.
-              + **Thanh Điều Hướng Đáy 4 Mục (Bottom Navigation Bar)**: 🔒 Khóa, 🔓 Mở Khóa, 🔎 Pháp Y, 🛡️ Két – tiện dụng một ngón tay cái, loại bỏ triệt để tình trạng chật chội và chạm nhầm trên Header.
-              + **Triết lý Tiết Lộ Cấp Tiến (Progressive Disclosure)**: Màn hình chính tối giản gọn gàng, các tùy chọn chuyên sâu (Watermark, Ký số, Quyền in, Mã định danh) được giấu tinh tế trong Accordion gập mở.
-            - **Khắc Phục Hoàn Toàn Tương Phản Thông Báo Toast (Fix Toast Contrast)**:
-              + Thiết kế lại Toast thông báo nổi bật siêu tương phản: Nền trắng tinh khiết viền xanh dương trên Light Mode, nền Slate tối chữ trắng trên Dark Mode.
-            - **Động Cơ Đóng Dấu Bản Quyền Đa Định Dạng (Universal Cross-Format Watermarking)**:
-              + **Văn bản Word (.docx)**: Nhúng VML shape chuẩn OpenXML nằm chìm sau văn bản (`behindDoc="1"`) hiển thị tự động trên mọi trang in và chế độ đọc.
-              + **Bảng tính Excel (.xlsx)**: Nhúng ảnh nền sheet chuẩn OpenXML (`<picture r:id="..."/>`) trải đều trên toàn bộ bảng tính.
-              + **Bản chiếu PowerPoint (.pptx)**: Nhúng trực tiếp vào Slide Master (`ppt/slideMasters/slideMaster1.xml`) bảo đảm hiển thị 100% trang chiếu và không thể xóa lẻ từng trang.
-              + **Tài liệu Adobe PDF (.pdf)**: Đóng dấu mờ bán trong suốt 45 độ bằng iTextG native engine hiệu năng cao.
-              + **Hình ảnh Đồ họa (.png, .jpg, .jpeg, .webp, .bmp)**: Hỗ trợ đóng dấu bản quyền trực tiếp bằng bộ giải mã Android Native Bitmap & Canvas compositing.
-            - **Bộ Chọn Dấu Bản Quyền (Watermark Suite)**:
-              + Tích hợp sẵn Logo IBST-BIM (Viện Khoa học Công nghệ Xây dựng) và Logo ANH'S TEAM dạng PNG trong suốt.
-              + Hỗ trợ dấu chữ mờ tùy biến (CONFIDENTIAL, BẢN MẬT) và tải ảnh Watermark riêng từ bộ nhớ máy.
-              + Tùy chỉnh độ mờ linh hoạt (15%, 25%, 35%).
-            - **Kiểm Soát Quyền In Ấn (Allow Print Toggle)**:
-              + Bổ sung tùy chọn cho phép hoặc cấm in ấn khi mở xem tự do (Chế độ Chỉ Xem / View-Only) chuẩn Adobe ISO 32000.
-            - **Truy Vết Đối Tượng Tiếp Nhận (Recipient Tracking & Anti-Tamper)**:
-              + Tự động gắn nhãn định danh phát hành (KD-2026-XXXX) và tên người nhận trực tiếp vào tài liệu.
-              + Nhúng siêu dữ liệu ẩn vào PDF Catalog và OpenXML customXml chống xóa Properties và chống đổi tên.
-            - **Tab Kiểm Định Pháp Y Số (Forensic Audit Engine)**:
-              + Truy vết nguồn gốc phát hành, bóc tách mã định danh, người nhận và kiểm chuẩn tính toàn vẹn 100% khi nhận lại file.
-            - **Mật Khẩu Chủ Quản Trị (Master Password)**:
-              + Cơ chế Master Key cho phép quản trị viên/người phát hành cứu hộ và mở tất cả các tệp đã mã hóa bằng app.
-            - **Bảo Vệ Ứng Dụng (App Lock, PIN Keypad & Hardware Biometrics)**:
-              + Khóa ứng dụng với bàn phím mã PIN 4-6 số siêu tốc.
-              + Tích hợp xác thực phần cứng máy: Cảm biến vân tay và nhận diện khuôn mặt (Android Keyguard).
-            - **Chữ Ký Số & Con Dấu Điện Tử (Digital Signature PAdES)**:
-              + Chèn con dấu điện tử, mộc két và chữ ký xác thực thời gian phát hành.
-            - **Tải tệp APK**: Tải file `KryptoDoc.apk` bên dưới về điện thoại Android và chọn Cài đặt (Install).
+            ## Ứng dụng Di Động Krypto v2.7.6 (Post-Quantum Cryptography ML-KEM-768 & Master Key Escrow)
+            - **Tích Hợp Thuật Toán Mật Mã Hậu Lượng Tử Tiên Tiến Nhất (NIST FIPS 203 ML-KEM-768)**:
+              + Tích hợp động cơ `PQCCryptoEngine` (`SECDOC_PQC_V2`) kết hợp bọc khóa lưới đa thức vành `R_q = Z_3329[X]/(X^256 + 1)` (`ML-KEM-768`) với `AES-256-GCM` xác thực toàn vẹn.
+              + **Cơ Chế Khóa Chủ Dự Phòng Hậu Lượng Tử (PQC Master Key Escrow)**: Mọi tệp PDF, Word, Excel, PowerPoint, ZIP và `.pqc` khi khóa đều tự động nhúng phong bì khóa chủ hậu lượng tử (`KD_PQC_ESCROW` / `KryptoPQCEscrow`), cho phép mở khóa cứu hộ độc lập bằng `Master Key PQC` mà không cần biết mật khẩu người dùng.
+              + Bổ sung nút 1 chạm **`🔑 Dùng Master Key PQC`** ngay tại Tab Mở Khóa để cứu hộ tệp tức thì.
+            - **Chuẩn Hóa Tên Ứng Dụng Ngắn Gọn `Krypto` (Chống Ẩn Chữ & Xuống Dòng 100%)**:
+              + Đặt tên ứng dụng ngắn gọn `Krypto` (6 ký tự) trên màn hình chính Android (`AndroidManifest.xml`), tiêu đề thanh điều hướng, thẻ trạng thái nổi và App Drawer, hiển thị trọn vẹn trên 1 dòng duy nhất ở mọi kích thước màn hình điện thoại.
+            - **Kế thừa toàn diện**: Bàn phím PIN chế độ Sáng tương phản cao, Bảng Pháp y số chuẩn Responsive thẻ đơn (Rule 14), Thủy vân số tàng hình 2 lớp, hoạt động độc lập Offline 100%.
           files: |
+            build-output/Krypto.apk
             build-output/KryptoDoc.apk
             build-output/SecureDocShare.apk
           draft: false

@@ -20,6 +20,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
+from core.pqc_crypto_engine import PQCCryptoEngine, MAGIC_PQC_V2
 
 # Số vòng lặp dẫn xuất khóa (OWASP khuyến nghị tối thiểu 600.000 vòng cho SHA-512)
 PBKDF2_ITERATIONS = 600000
@@ -29,7 +30,7 @@ MAGIC_HEADER = b"SECDOC_V1" # Header nhận diện định dạng tệp bảo m�
 
 
 class CryptoEngine:
-    """Động cơ mã hóa và giải mã AES-256-GCM đa nền tảng."""
+    """Động cơ mã hóa và giải mã Hậu Lượng Tử (ML-KEM-768 FIPS 203 + Master Key) & AES-256-GCM đa nền tảng."""
 
     @staticmethod
     def derive_key(password: str, salt: bytes, iterations: int = PBKDF2_ITERATIONS) -> bytes:
@@ -44,12 +45,28 @@ class CryptoEngine:
         return kdf.derive(password.encode("utf-8"))
 
     @classmethod
-    def encrypt_bytes(cls, plaintext: bytes, password: str, metadata: Dict[str, Any] = None) -> bytes:
+    def encrypt_bytes(
+        cls,
+        plaintext: bytes,
+        password: str,
+        metadata: Dict[str, Any] = None,
+        use_pqc_v2: bool = True,
+        recipient_pqc_pk: bytes = None,
+        master_pqc_pk: bytes = None
+    ) -> bytes:
         """
-        Mã hóa dữ liệu nhị phân với AES-256-GCM.
-        Cấu trúc gói tin nhị phân xuất ra:
-        [MAGIC_HEADER (9B)] [SALT (32B)] [NONCE (12B)] [METADATA_LEN (4B BE)] [METADATA_JSON] [CIPHERTEXT + 16B TAG]
+        Mã hóa dữ liệu nhị phân với kiến trúc Hậu lượng tử SECDOC_PQC_V2 (ML-KEM-768 + Master Key + AES-256-GCM)
+        hoặc SECDOC_V1 cổ điển.
         """
+        if use_pqc_v2:
+            return PQCCryptoEngine.encrypt_bytes(
+                plaintext=plaintext,
+                password=password,
+                metadata=metadata,
+                recipient_pqc_pk=recipient_pqc_pk,
+                master_pqc_pk=master_pqc_pk
+            )
+
         salt = os.urandom(SALT_SIZE)
         nonce = os.urandom(NONCE_SIZE)
         key = cls.derive_key(password, salt)
@@ -65,12 +82,24 @@ class CryptoEngine:
         return MAGIC_HEADER + salt + nonce + meta_len + meta_bytes + ciphertext
 
     @classmethod
-    def decrypt_bytes(cls, payload: bytes, password: str) -> Tuple[bytes, Dict[str, Any]]:
+    def decrypt_bytes(
+        cls,
+        payload: bytes,
+        password: str = None,
+        recipient_pqc_sk: bytes = None,
+        master_pqc_sk: bytes = None
+    ) -> Tuple[bytes, Dict[str, Any]]:
         """
-        Giải mã gói tin AES-256-GCM.
-        Trả về: (plaintext_bytes, metadata_dict)
-        Ném ngoại lệ ValueError nếu mật khẩu sai hoặc dữ liệu bị can thiệp.
+        Giải mã gói tin SECDOC_PQC_V2 (bằng Mật khẩu, Khóa PQC Người nhận hoặc Khóa Master Key)
+        và tương thích ngược 100% với SECDOC_V1.
         """
+        if payload.startswith(MAGIC_PQC_V2):
+            return PQCCryptoEngine.decrypt_bytes(
+                payload=payload,
+                password=password,
+                recipient_pqc_sk=recipient_pqc_sk,
+                master_pqc_sk=master_pqc_sk
+            )
         magic_len = len(MAGIC_HEADER)
         if len(payload) < magic_len + SALT_SIZE + NONCE_SIZE + 4 + 16:
             raise ValueError("Dữ liệu tệp không đúng định dạng hoặc đã bị hư hại.")

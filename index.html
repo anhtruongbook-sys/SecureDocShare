@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KryptoDoc Mobile - Két Khóa & Mã Hóa Cấp Quân Sự</title>
+    <title>Krypto - Mã Hóa Hậu Lượng Tử PQC</title>
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body class="light-mode">
@@ -20,12 +20,12 @@
                 </button>
                 <div class="mobi-logo-center">
                     <div class="mobi-logo-symbol">
-                        <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
                             <path d="M16 2L4 7V16C4 23.5 9.2 30 16 32C22.8 30 28 23.5 28 16V7L16 2Z" fill="rgba(255,255,255,0.25)" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
                             <path d="M11 16L15 20L22 13" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="mobi-brand-title">KryptoDoc</span>
+                    <span class="mobi-brand-title">Krypto</span>
                 </div>
                 <div class="mobi-top-right">
                     <button type="button" class="mobi-lang-pill" id="theme-toggle-btn" onclick="toggleTheme()" title="Đổi chế độ Sáng / Tối">
@@ -42,13 +42,13 @@
                 <div class="floating-card-left">
                     <div class="floating-card-icon">🛡️</div>
                     <div class="floating-card-info">
-                        <h4 class="floating-card-title">Két Bảo Mật KryptoDoc</h4>
-                        <p class="floating-card-sub">Trạng thái: Hoạt động Offline 100% • AES-256</p>
+                        <h4 class="floating-card-title">Két Hậu Lượng Tử Krypto</h4>
+                        <p class="floating-card-sub">Offline 100% • ML-KEM-768 + AES-256</p>
                     </div>
                 </div>
                 <div class="floating-card-badge">
                     <span class="badge-dot"></span>
-                    <span>An Toàn</span>
+                    <span>PQC</span>
                 </div>
             </div>
 
@@ -63,18 +63,18 @@
                 <div class="mobi-featured-card" onclick="triggerPickFiles('lock')">
                     <input type="file" id="file-input-lock" multiple accept="*/*" style="display: none;" onchange="handleFilesSelected(this.files, 'lock')">
                     <div class="featured-card-top">
-                        <span class="featured-plan-code">KD-PRO</span>
-                        <span class="featured-plan-price">OFFLINE 100% <span class="price-sub">/Miễn phí</span></span>
+                        <span class="featured-plan-code">PQC-768</span>
+                        <span class="featured-plan-price">OFFLINE 100% <span class="price-sub">/FIPS 203</span></span>
                     </div>
                     <h2 class="featured-plan-hero">Khóa & Đóng Dấu Bản Quyền</h2>
                     <div class="featured-dashed-divider"></div>
                     <div class="featured-meta-row">
                         <span class="featured-meta-icon">🌐</span>
-                        <span class="featured-meta-text">Hỗ trợ: PDF, Word, Excel, CAD (.DWG), Ảnh, ZIP</span>
+                        <span class="featured-meta-text">PDF, Word, Excel, CAD (.DWG), Ảnh, ZIP</span>
                     </div>
                     <div class="featured-actions-row">
-                        <button type="button" class="btn-mobi-outline" onclick="event.stopPropagation(); scrollToSettings()">⚙️ Chi tiết</button>
-                        <button type="button" class="btn-mobi-solid" onclick="event.stopPropagation(); triggerPickFiles('lock')">📂 Chọn tệp ngay</button>
+                        <button type="button" class="btn-mobi-outline" onclick="event.stopPropagation(); scrollToSettings()">⚙️ Cấu hình</button>
+                        <button type="button" class="btn-mobi-solid" onclick="event.stopPropagation(); triggerPickFiles('lock')">📂 Chọn tệp</button>
                     </div>
                 </div>
             </div>
@@ -346,9 +346,14 @@
 
             <div class="card settings-card">
                 <div class="form-group-compact">
-                    <label for="unlock-password" class="compact-label">MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
+                    <div class="label-with-action">
+                        <label for="unlock-password" class="compact-label">MẬT KHẨU / MASTER KEY <span class="required">*</span></label>
+                        <button type="button" class="btn-micro-gen" onclick="unlockWithPqcMasterKey()" title="Mở khóa cứu hộ bằng Khóa Chủ PQC">
+                            🔑 Dùng Master Key PQC
+                        </button>
+                    </div>
                     <div class="input-with-actions-unified">
-                        <input type="password" id="unlock-password" placeholder="Nhập đúng mật khẩu đã đặt..." required>
+                        <input type="password" id="unlock-password" placeholder="Nhập mật khẩu tệp hoặc Master Key..." required>
                         <div class="inline-input-btns">
                             <button type="button" class="btn-input-tool" onclick="togglePasswordVisibility('unlock-password', this)" title="Hiện/ẩn mật khẩu">👁️</button>
                         </div>
@@ -574,7 +579,7 @@
         </div>
 
         <footer class="footer">
-            <p>KryptoDoc Enterprise Vault • Bản Quyền ANH'S TEAM • Mã Hóa Offline 100%</p>
+            <p>Krypto Vault • Mật Mã Hậu Lượng Tử ML-KEM-768 • Offline 100%</p>
         </footer>
 
         <!-- Bottom Navigation Bar (Flat 4 Tabs) -->
@@ -605,8 +610,8 @@
             <div class="drawer-brand">
                 <div class="drawer-logo-icon">🛡️</div>
                 <div>
-                    <h3 class="drawer-title">KryptoDoc Pro</h3>
-                    <span class="drawer-subtitle">Bảo Mật Tối Cao • Offline 100%</span>
+                    <h3 class="drawer-title">Krypto</h3>
+                    <span class="drawer-subtitle">Hậu Lượng Tử PQC • Offline 100%</span>
                 </div>
             </div>
             <button type="button" class="btn-drawer-close" onclick="closeAppDrawer()" title="Đóng Menu">✕</button>
@@ -617,7 +622,7 @@
                 <span class="drawer-menu-icon">⚙️</span>
                 <div class="drawer-menu-text">
                     <div class="drawer-menu-name">Cài Đặt Két Sắt & Quản Trị</div>
-                    <div class="drawer-menu-desc" id="drawer-vault-desc">Đổi PIN nhanh, Master Password, Vân tay</div>
+                    <div class="drawer-menu-desc" id="drawer-vault-desc">Đổi PIN nhanh, Master Key PQC, Vân tay</div>
                 </div>
                 <span class="drawer-menu-arrow">›</span>
             </div>
@@ -642,16 +647,16 @@
             <div class="drawer-section-title">THÔNG TIN BẢO MẬT</div>
             <div class="drawer-info-card">
                 <div class="drawer-info-row">
-                    <span>Mã hóa tài liệu:</span>
+                    <span>Khóa hậu lượng tử:</span>
+                    <strong>ML-KEM-768 (FIPS 203)</strong>
+                </div>
+                <div class="drawer-info-row">
+                    <span>Mã hóa đối xứng:</span>
                     <strong>AES-256-GCM</strong>
                 </div>
                 <div class="drawer-info-row">
-                    <span>Hàm băm xác thực:</span>
-                    <strong>SHA-256 PBKDF2</strong>
-                </div>
-                <div class="drawer-info-row">
-                    <span>Thủy vân tàng hình:</span>
-                    <strong>LSB 2 Lớp (Deep-Forensic)</strong>
+                    <span>Khóa chủ cứu hộ:</span>
+                    <strong>PQC Master Key Escrow</strong>
                 </div>
                 <div class="drawer-info-row">
                     <span>Môi trường:</span>
@@ -659,7 +664,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.7.5 Mobile Pro</strong>
+                    <strong id="drawer-app-version">v2.7.6 PQC</strong>
                 </div>
             </div>
 
@@ -738,7 +743,7 @@
                 <div class="lock-aura-glow"></div>
                 <div class="lock-icon-shield">🛡️</div>
             </div>
-            <h2 class="lock-gate-title">KryptoDoc Vault</h2>
+            <h2 class="lock-gate-title">Krypto</h2>
             <p class="lock-gate-subtitle" id="lock-gate-subtitle">Xác thực vân tay, khuôn mặt hoặc nhập mã PIN</p>
 
             <!-- PIN Display Dots -->
@@ -787,6 +792,7 @@
 
     <script src="static/qrcode.min.js"></script>
     <script src="static/watermark_presets.js"></script>
+    <script src="static/pqc_crypto_engine.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>
