@@ -66,14 +66,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.8.0
-          name: "Krypto v2.8.0 - Xuất Tệp .MD / .JSON Chuẩn Android MediaStore Downloads & Mở/Chia Sẻ Ngay 1 Chạm"
+          tag_name: v2.8.1
+          name: "Krypto v2.8.1 - Tự Động Nhận Dạng & Nhóm Tri Thức Theo Chủ Đề + Xuất Tệp .MD Qua MediaStore Downloads"
           body: |
-            ## Ứng dụng Di Động Krypto v2.8.0 (PQC ML-KEM-768 + Chat Knowledge Vault v3.0)
-            - **Lưu Tệp `.md` / `.json` Qua Chuẩn Android `MediaStore.Downloads` (`MainActivity.kt`)**:
-              + Sử dụng `ContentResolver` + `MediaStore.Downloads.EXTERNAL_CONTENT_URI` (Android 10–15 Scoped Storage) kết hợp `MediaScannerConnection.scanFile` để tệp `.md` và `.json` xuất ra hiển thị **ngay lập tức** ở đầu mục **Tệp gần đây (Recent)** và **Tải về (Downloads)** trong ứng dụng **File của bạn (My Files)** trên điện thoại Samsung/Android.
-              + Sau khi lưu thành công, hiển thị hộp thoại xác nhận đường dẫn chính xác kèm nút **`📤 Mở / Chia Sẻ Ngay`** để mở trực tiếp hoặc gửi qua Zalo, Samsung Notes, Google Drive chỉ với 1 chạm.
-            - **Kế thừa toàn diện v2.7.9**: Tổng hợp tri thức mạch lạc chuẩn v3 (YouTube Chapter Synthesis & GitHub README AST), Song ngữ Việt - Anh (`🇻🇳 Tiếng Việt` mặc định) và Tự động xử lý khi chia sẻ link (`Share -> Krypto`).
+            ## Ứng dụng Di Động Krypto v2.8.1 (PQC ML-KEM-768 + Chat Knowledge Vault v3.1)
+            - **Tự Động Nhận Dạng Chủ Đề & Nhóm Theo Chủ Đề (`Auto-Topic Clustering`)**:
+              + Tự động phân tích nội dung, tiêu đề và từ khóa để nhận diện **10 nhóm chủ đề chuyên sâu** (`📈 Chiến lược RevOps, Kinh doanh & Quản trị`, `🤖 AI Agent & Công cụ Lập trình`, `🛡️ An toàn Thông tin & Kiểm toán Bảo mật`, `⚖️ Pháp lý, Đấu thầu & Quy chuẩn Xây dựng`, `🏗️ BIM, CDE & Kỹ thuật Công trình`, `💰 Tài chính, Đầu tư & Kinh tế Vĩ mô`, `🧬 Y sinh, Ngân hàng Sinh học & Nghiên cứu KH&CN`, `🌐 Hạ tầng Đám mây, Mạng & Hệ thống`, `☯️ Huyền học, Tử vi & Phong thủy`) hoặc tự sinh nhãn chủ đề động (`🔖 Chủ đề: ...`) cho lĩnh vực mới.
+              + **Thanh Chip Chủ Đề 1 Chạm (`#cvTopicChipsBar`)** thống kê số lượng bản ghi theo từng chủ đề.
+              + **Chế độ `🗂️ Nhóm theo Chủ đề` (Mặc định bật)**: Tự động gom các bản ghi cùng chủ đề vào từng phân đoạn có nút **Thu gọn / Mở rộng** và nút **`📝 Xuất Nhóm (.md)`** để xuất toàn bộ tài liệu thuộc 1 chủ đề ra 1 tệp Markdown tổng hợp duy nhất.
+            - **Lưu Tệp `.md` / `.json` Qua Chuẩn Android `MediaStore.Downloads` & Mở/Chia Sẻ Ngay 1 Chạm (`v2.8.0`)**.
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk

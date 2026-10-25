@@ -368,6 +368,7 @@
 
           <div class="cv-single-card">
             <div class="cv-stats-row" id="cvStatsRow"></div>
+            <div id="cvTopicChipsBar" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:10px;"></div>
 
             <div class="cv-grid-3" style="margin-top:0;">
               <input id="cvSearchInput" class="cv-input" type="text" placeholder="🔍 Tìm từ khóa (Tiếng Việt có dấu/không dấu, Tiếng Anh, [mm:ss])..." />
@@ -379,14 +380,7 @@
                 <option value="chat_note">💬 Ghi chú Chat</option>
               </select>
               <select id="cvFilterCat" class="cv-input">
-                <option value="">-- Tất cả Danh mục --</option>
-                <option value="Công nghệ, Lập trình & AI">Công nghệ, Lập trình & AI</option>
-                <option value="Pháp lý & Tiêu chuẩn Xây dựng">Pháp lý & Tiêu chuẩn Xây dựng</option>
-                <option value="BIM & Kỹ thuật Công trình">BIM & Kỹ thuật Công trình</option>
-                <option value="Tài chính, Đầu tư & Kinh tế">Tài chính, Đầu tư & Kinh tế</option>
-                <option value="Huyền học & Phong thủy">Huyền học & Phong thủy</option>
-                <option value="Quản trị & Phương pháp Nghiên cứu">Quản trị & Phương pháp Nghiên cứu</option>
-                <option value="Tri thức Tổng hợp">Tri thức Tổng hợp</option>
+                <option value="">-- Tất cả Chủ đề (Tự động nhận dạng) --</option>
               </select>
             </div>
 
@@ -397,7 +391,7 @@
                 <tr>
                   <th>Loại</th>
                   <th>Tiêu đề, Tóm tắt & Mốc khớp từ khóa</th>
-                  <th>Danh mục</th>
+                  <th>Chủ đề</th>
                   <th>Thao tác</th>
                 </tr>
               </thead>
@@ -408,6 +402,8 @@
       `;
 
       let currentResults = [];
+      let groupByTopic = global.localStorage.getItem('CHAT_VAULT_GROUP_BY_TOPIC') !== '0';
+      const collapsedTopics = new Set();
 
       function syncLangButtonsUI() {
         container.querySelectorAll('.cv-lang-btn').forEach(btn => {
@@ -432,29 +428,134 @@
 
       await global.ChatVaultEngine.init();
 
-      async function updateStatsBar() {
+      async function updateStatsAndTopicsBar() {
         const allItems = await global.ChatVaultEngine.getAllItems();
         const ytCount = allItems.filter(x => x.resource_type === 'youtube_video').length;
         const ghCount = allItems.filter(x => x.resource_type === 'github_repo').length;
         const otherCount = allItems.length - ytCount - ghCount;
+
+        // Thống kê tự động các Chủ đề đang có trong kho
+        const topicCounts = new Map();
+        for (const it of allItems) {
+          const cat = (it.taxonomy && it.taxonomy.category) || '📚 Tri thức Đa ngành & Ghi chú';
+          topicCounts.set(cat, (topicCounts.get(cat) || 0) + 1);
+        }
+
         const statsRow = container.querySelector('#cvStatsRow');
         if (statsRow) {
           statsRow.innerHTML = `
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
               <span class="cv-stat-pill">Tổng kho: <strong>${allItems.length}</strong></span>
+              <span class="cv-stat-pill">🗂️ Chủ đề: <strong>${topicCounts.size}</strong></span>
               <span class="cv-stat-pill">▶ YouTube: <strong>${ytCount}</strong></span>
               <span class="cv-stat-pill">📦 GitHub: <strong>${ghCount}</strong></span>
-              <span class="cv-stat-pill">🌐 Web/Ghi chú: <strong>${otherCount}</strong></span>
+              ${otherCount > 0 ? `<span class="cv-stat-pill">🌐 Web/Ghi chú: <strong>${otherCount}</strong></span>` : ''}
             </div>
-            <span style="font-size:11px; color:var(--cv-accent); font-weight:700;">
-              Ngôn ngữ: ${currentLang === 'vi' ? '🇻🇳 Tiếng Việt (Mặc định)' : '🇬🇧 English (Original)'}
-            </span>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <button type="button" id="cvToggleGroupMode" class="cv-btn cv-btn-outline" style="padding:4px 9px; font-size:11px;">
+                ${groupByTopic ? '🗂️ Đang Nhóm Theo Chủ Đề' : '📋 Đang Xem Danh Sách Phẳng'}
+              </button>
+              <span style="font-size:11px; color:var(--cv-accent); font-weight:700;">
+                ${currentLang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
+              </span>
+            </div>
           `;
+          const btnToggle = statsRow.querySelector('#cvToggleGroupMode');
+          if (btnToggle) {
+            btnToggle.addEventListener('click', () => {
+              groupByTopic = !groupByTopic;
+              global.localStorage.setItem('CHAT_VAULT_GROUP_BY_TOPIC', groupByTopic ? '1' : '0');
+              refreshList();
+              notifyUser(groupByTopic ? '🗂️ Đã bật chế độ Tự động Nhóm theo Chủ đề' : '📋 Đã chuyển sang chế độ Danh sách phẳng');
+            });
+          }
+        }
+
+        // Đồng bộ danh sách Chủ đề vào ô Select #cvFilterCat và Thanh Chip Chủ đề #cvTopicChipsBar
+        const selectCat = container.querySelector('#cvFilterCat');
+        const activeCat = selectCat ? selectCat.value : '';
+        const defaultTopics = [
+          '📈 Chiến lược RevOps, Kinh doanh & Quản trị',
+          '🤖 AI Agent & Công cụ Lập trình',
+          '🛡️ An toàn Thông tin & Kiểm toán Bảo mật',
+          '⚖️ Pháp lý, Đấu thầu & Quy chuẩn Xây dựng',
+          '🏗️ BIM, CDE & Kỹ thuật Công trình',
+          '💰 Tài chính, Đầu tư & Kinh tế Vĩ mô',
+          '🧬 Y sinh, Ngân hàng Sinh học & Nghiên cứu KH&CN',
+          '🌐 Hạ tầng Đám mây, Mạng & Hệ thống',
+          '☯️ Huyền học, Tử vi & Phong thủy'
+        ];
+        const allTopicNames = Array.from(new Set([...topicCounts.keys(), ...defaultTopics]));
+        if (selectCat) {
+          selectCat.innerHTML = `<option value="">-- Tất cả Chủ đề (${allItems.length}) --</option>` +
+            allTopicNames.map(c => {
+              const cnt = topicCounts.get(c) || 0;
+              return `<option value="${escapeHtml(c)}" ${c === activeCat ? 'selected' : ''}>${escapeHtml(c)}${cnt > 0 ? ` (${cnt})` : ''}</option>`;
+            }).join('');
+        }
+
+        const chipsBar = container.querySelector('#cvTopicChipsBar');
+        if (chipsBar) {
+          const activeEntries = Array.from(topicCounts.entries()).sort((a, b) => b[1] - a[1]);
+          chipsBar.innerHTML = `
+            <button type="button" class="cv-btn ${!activeCat ? '' : 'cv-btn-outline'}" data-topic-chip="" style="padding:4px 10px; font-size:11px; border-radius:999px;">
+              🗂️ Tất cả (${allItems.length})
+            </button>
+            ${activeEntries.map(([tName, cnt]) => `
+              <button type="button" class="cv-btn ${activeCat === tName ? '' : 'cv-btn-outline'}" data-topic-chip="${escapeHtml(tName)}" style="padding:4px 10px; font-size:11px; border-radius:999px;">
+                ${escapeHtml(tName)} <strong>(${cnt})</strong>
+              </button>
+            `).join('')}
+          `;
+          chipsBar.querySelectorAll('button[data-topic-chip]').forEach(chip => {
+            chip.addEventListener('click', () => {
+              const chosen = chip.getAttribute('data-topic-chip') || '';
+              if (selectCat) selectCat.value = chosen;
+              refreshList();
+            });
+          });
         }
       }
 
+      function renderSingleItemRow(item, idx) {
+        const meta = item.metadata || {};
+        const tax = item.taxonomy || {};
+        const summ = item.summary || {};
+        const ctx = item.chat_context || {};
+        const subTopicHtml = tax.sub_topic
+          ? `<div style="font-size:10.5px; font-weight:700; color:var(--cv-accent); margin-top:2px;">↳ Nhánh: ${escapeHtml(tax.sub_topic)}</div>`
+          : '';
+        const tagsHtml = (tax.tags || []).slice(0, 5).map(t => `<span style="display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:var(--cv-bg-input); border:1px solid var(--cv-border); margin-left:4px; color:var(--cv-muted);">#${escapeHtml(t)}</span>`).join('');
+        const hits = (item.matched_transcript_segments || []).map(s => {
+          const u = item.resource_type === 'youtube_video' ? `${meta.url}&t=${s.start_seconds || 0}s` : meta.url;
+          return `<div style="font-size:11px; margin-top:5px; color:var(--cv-muted); text-align:left;"><a href="${escapeHtml(u)}" target="_blank" style="color:var(--cv-accent); font-family:monospace; font-weight:700;">[${escapeHtml(s.timestamp)}]</a> ${escapeHtml(s.text)}</div>`;
+        }).join('');
+
+        return `
+          <tr>
+            <td data-label="Loại"><span class="table-cell-val"><span class="cv-badge ${escapeHtml(item.resource_type)}">${escapeHtml(formatTypeLabel(item.resource_type))}</span></span></td>
+            <td data-label="Nội dung">
+              <span class="table-cell-val">
+                <div style="font-weight:700; font-size:12.5px; color:var(--cv-text);">${escapeHtml(meta.title)}</div>
+                ${subTopicHtml}
+                <div style="font-size:11px; color:var(--cv-muted); margin-top:2px;">${escapeHtml(meta.channel || '')} • ${escapeHtml(meta.duration || '')} • Chia sẻ bởi: <strong>${escapeHtml(ctx.shared_by || 'User')}</strong> (${escapeHtml(ctx.chat_group || 'General')})</div>
+                <div style="font-size:11.5px; color:var(--cv-muted); margin-top:4px;">${escapeHtml(summ.one_liner)}</div>
+                <div style="margin-top:4px;">${tagsHtml}</div>
+                ${hits}
+              </span>
+            </td>
+            <td data-label="Chủ đề"><span class="table-cell-val"><span style="font-weight:700; color:var(--cv-accent); font-size:11.5px;">${escapeHtml(tax.category)}</span></span></td>
+            <td data-label="Thao tác">
+              <span class="table-cell-val">
+                <button type="button" class="cv-btn" data-idx="${idx}" style="padding:5px 10px; font-size:11px;">👁️ Chi tiết</button>
+              </span>
+            </td>
+          </tr>
+        `;
+      }
+
       async function refreshList() {
-        await updateStatsBar();
+        await updateStatsAndTopicsBar();
         const query = container.querySelector('#cvSearchInput').value;
         const resourceType = container.querySelector('#cvFilterType').value;
         const category = container.querySelector('#cvFilterCat').value;
@@ -467,38 +568,72 @@
           return;
         }
 
-        tbody.innerHTML = currentResults.map((item, idx) => {
-          const meta = item.metadata || {};
-          const tax = item.taxonomy || {};
-          const summ = item.summary || {};
-          const ctx = item.chat_context || {};
-          const tagsHtml = (tax.tags || []).slice(0, 5).map(t => `<span style="display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:var(--cv-bg-input); border:1px solid var(--cv-border); margin-left:4px; color:var(--cv-muted);">#${escapeHtml(t)}</span>`).join('');
-          const hits = (item.matched_transcript_segments || []).map(s => {
-            const u = item.resource_type === 'youtube_video' ? `${meta.url}&t=${s.start_seconds || 0}s` : meta.url;
-            return `<div style="font-size:11px; margin-top:5px; color:var(--cv-muted); text-align:left;"><a href="${escapeHtml(u)}" target="_blank" style="color:var(--cv-accent); font-family:monospace; font-weight:700;">[${escapeHtml(s.timestamp)}]</a> ${escapeHtml(s.text)}</div>`;
-          }).join('');
+        if (!groupByTopic) {
+          tbody.innerHTML = currentResults.map((item, idx) => renderSingleItemRow(item, idx)).join('');
+        } else {
+          // Gom nhóm tự động theo Chủ đề
+          const groups = new Map();
+          currentResults.forEach((item, idx) => {
+            const cat = (item.taxonomy && item.taxonomy.category) || '📚 Tri thức Đa ngành & Ghi chú';
+            if (!groups.has(cat)) groups.set(cat, []);
+            groups.get(cat).push({ item, idx });
+          });
 
-          return `
-            <tr>
-              <td data-label="Loại"><span class="table-cell-val"><span class="cv-badge ${escapeHtml(item.resource_type)}">${escapeHtml(formatTypeLabel(item.resource_type))}</span></span></td>
-              <td data-label="Nội dung">
-                <span class="table-cell-val">
-                  <div style="font-weight:700; font-size:12.5px; color:var(--cv-text);">${escapeHtml(meta.title)}</div>
-                  <div style="font-size:11px; color:var(--cv-muted); margin-top:2px;">${escapeHtml(meta.channel || '')} • ${escapeHtml(meta.duration || '')} • Chia sẻ bởi: <strong>${escapeHtml(ctx.shared_by || 'User')}</strong> (${escapeHtml(ctx.chat_group || 'General')})</div>
-                  <div style="font-size:11.5px; color:var(--cv-muted); margin-top:4px;">${escapeHtml(summ.one_liner)}</div>
-                  <div style="margin-top:4px;">${tagsHtml}</div>
-                  ${hits}
-                </span>
-              </td>
-              <td data-label="Danh mục"><span class="table-cell-val">${escapeHtml(tax.category)}</span></td>
-              <td data-label="Thao tác">
-                <span class="table-cell-val">
-                  <button type="button" class="cv-btn" data-idx="${idx}" style="padding:5px 10px; font-size:11px;">👁️ Chi tiết</button>
-                </span>
-              </td>
-            </tr>
-          `;
-        }).join('');
+          const rowsHtml = [];
+          for (const [catName, entries] of groups.entries()) {
+            const isCollapsed = collapsedTopics.has(catName);
+            const groupTags = Array.from(new Set(entries.flatMap(e => (e.item.taxonomy && e.item.taxonomy.tags) || []))).slice(0, 5);
+            const groupTagsStr = groupTags.map(t => `#${t}`).join(' • ');
+            rowsHtml.push(`
+              <tr class="cv-topic-group-row" style="background:var(--cv-bg-input);">
+                <td colspan="4" data-label="Nhóm chủ đề" style="border-top:2px solid var(--cv-accent) !important;">
+                  <span class="table-cell-val" style="width:100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; width:100%;">
+                      <div style="text-align:left; cursor:pointer;" data-toggle-topic="${escapeHtml(catName)}">
+                        <div style="font-size:13px; font-weight:800; color:var(--cv-accent);">
+                          ${isCollapsed ? '▶' : '▼'} ${escapeHtml(catName)} <span style="font-size:11.5px; color:var(--cv-text);">(${entries.length} bản ghi)</span>
+                        </div>
+                        ${groupTagsStr ? `<div style="font-size:10.5px; color:var(--cv-muted); margin-top:2px;">Từ khóa nhóm: ${escapeHtml(groupTagsStr)}</div>` : ''}
+                      </div>
+                      <div style="display:flex; gap:6px; align-items:center;">
+                        <button type="button" class="cv-btn cv-btn-outline" data-export-topic="${escapeHtml(catName)}" style="padding:4px 9px; font-size:10.5px;">📝 Xuất Nhóm (.md)</button>
+                        <button type="button" class="cv-btn cv-btn-outline" data-toggle-topic="${escapeHtml(catName)}" style="padding:4px 8px; font-size:10.5px;">${isCollapsed ? 'Mở rộng' : 'Thu gọn'}</button>
+                      </div>
+                    </div>
+                  </span>
+                </td>
+              </tr>
+            `);
+            if (!isCollapsed) {
+              for (const { item, idx } of entries) {
+                rowsHtml.push(renderSingleItemRow(item, idx));
+              }
+            }
+          }
+          tbody.innerHTML = rowsHtml.join('');
+
+          tbody.querySelectorAll('[data-toggle-topic]').forEach(el => {
+            el.addEventListener('click', () => {
+              const tName = el.getAttribute('data-toggle-topic');
+              if (collapsedTopics.has(tName)) collapsedTopics.delete(tName);
+              else collapsedTopics.add(tName);
+              refreshList();
+            });
+          });
+
+          tbody.querySelectorAll('button[data-export-topic]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const tName = btn.getAttribute('data-export-topic');
+              const groupItems = (groups.get(tName) || []).map(x => x.item);
+              if (global.ChatVaultEngine.exportTopicGroupMarkdown) {
+                const md = global.ChatVaultEngine.exportTopicGroupMarkdown(tName, groupItems);
+                const slug = global.ChatVaultEngine.removeVietnameseAccents(tName).replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
+                saveTextFileNativeOrWeb(`Chu_De_${slug}_${currentLang}.md`, md, 'text/markdown;charset=utf-8');
+              }
+            });
+          });
+        }
 
         tbody.querySelectorAll('button[data-idx]').forEach(btn => {
           btn.addEventListener('click', () => showDetail(Number(btn.getAttribute('data-idx')), true));
