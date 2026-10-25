@@ -66,18 +66,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.7
-          name: "Krypto v2.7.7 - Tích Hợp Kho Lưu Trữ & Tra Cứu Tri Thức Chat (YouTube / GitHub / Web / Ghi Chú)"
+          tag_name: v2.7.8
+          name: "Krypto v2.7.8 - Kho Tri Thức Song Ngữ (Mặc Định Tiếng Việt) & Tự Động Xử Lý Link Chia Sẻ"
           body: |
-            ## Ứng dụng Di Động Krypto v2.7.7 (PQC ML-KEM-768 + Chat Knowledge Vault)
-            - **Tích Hợp Tab 5 `🧠 Tri thức` (Chat Knowledge Vault v1.1)**:
-              + Tự động bóc tách phụ đề video YouTube kèm mốc thời gian `[mm:ss]` qua giao thức Innertube Android (`com.google.android.youtube/20.10.38`) không cần API Key.
-              + Tự động tra cứu GitHub Repository (`README.md`, Stars, Ngôn ngữ), bài báo Web và ghi chú tin nhắn Chat.
-              + Chấm điểm `TF-IDF` bất đồng bộ (Chunked Non-blocking) để chắt lọc Ý tưởng cốt lõi (`Core Ideas`), Đúc kết sâu (`Key Insights`) và tự động gắn thẻ phân loại 6 chuyên ngành.
-              + Tìm kiếm toàn văn (`BM25` + khử dấu tiếng Việt) định vị chính xác câu nói tại mốc `[mm:ss]` trong video YouTube.
-              + **Kiến trúc Sao lưu 3 lớp (`Triple-Persistence`)**: Đồng bộ tự động giữa `IndexedDB`, bộ nhớ nội bộ ứng dụng và `/storage/emulated/0/Download/ChatKnowledgeVault/vault_master_backup.json` giúp giữ nguyên dữ liệu khi gỡ hoặc cài đặt lại APK.
-              + Hỗ trợ nhận chia sẻ đường dẫn trực tiếp từ Zalo, YouTube, Trình duyệt qua menu **Chia sẻ (Share) -> Krypto**.
-            - **Kế thừa toàn diện v2.7.6**: Mật mã Hậu lượng tử `ML-KEM-768` (FIPS 203) + `AES-256-GCM` + `PQC Master Key Escrow`, Bảng Responsive chuẩn thẻ đơn (Rule 14).
+            ## Ứng dụng Di Động Krypto v2.7.8 (PQC ML-KEM-768 + Chat Knowledge Vault v1.2)
+            - **Hỗ Trợ Song Ngữ (`🇻🇳 Tiếng Việt` Mặc Định | Chuyển Đổi `🇬🇧 English`)**:
+              + Tự động dịch và chuẩn hóa toàn bộ Tiêu đề, Tóm tắt 1 dòng, Tổng quan điều hành, Mục lục chương, Ý tưởng cốt lõi, Đúc kết sâu và Khuyến nghị hành động sang **Tiếng Việt mặc định** (`i18n.vi`).
+              + Hỗ trợ nút chuyển đổi ngôn ngữ 1 chạm (`🇻🇳 Tiếng Việt` | `🇬🇧 English`) ngay trên thanh công cụ và trong màn hình chi tiết bản ghi.
+              + Tự động nâng cấp các bản ghi tiếng Anh hiện có trong bộ nhớ thiết bị sang định dạng song ngữ Việt - Anh.
+            - **Tự Động Bóc Tách Ngay Khi Chia Sẻ Link Sang Krypto (`Share -> Krypto`)**:
+              + Bắt sự kiện `Intent.ACTION_SEND` đồng bộ ngay từ tầng Native Kotlin -> Dart MethodChannel -> JavaScript Queue, tự động chuyển sang Tab `🧠 Tri thức`, điền link, chạy bóc tách + dịch thuật Tiếng Việt và mở ngay trang Chi tiết bản ghi.
+            - **Kế thừa toàn diện v2.7.7**: Mật mã Hậu lượng tử `ML-KEM-768` (FIPS 203) + `AES-256-GCM` + `PQC Master Key Escrow`, Sao lưu 3 lớp (`Triple-Persistence`), Bảng Responsive chuẩn thẻ đơn (Rule 14).
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk

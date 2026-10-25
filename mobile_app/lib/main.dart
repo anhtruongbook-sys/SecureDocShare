@@ -339,6 +339,8 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
   static const MethodChannel _nativeChannel = MethodChannel('com.securedoc.share/native_engine');
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _pageLoaded = false;
+  String? _pendingSharedTextInDart;
   bool _isBiometricInProgress = false;
   final Map<String, String> _cachedFilePaths = {};
   String? _latestPickedFilePath;
@@ -348,6 +350,23 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _nativeChannel.setMethodCallHandler((MethodCall call) async {
+      if (call.method == 'onSharedTextReceived') {
+        final String? txt = call.arguments?.toString();
+        if (txt != null && txt.trim().isNotEmpty) {
+          _pendingSharedTextInDart = txt.trim();
+          if (_pageLoaded) {
+            final String toSend = _pendingSharedTextInDart!;
+            _pendingSharedTextInDart = null;
+            await _deliverSharedTextToJs(toSend);
+            Future.delayed(const Duration(milliseconds: 500), () {
+              _deliverSharedTextToJs(toSend);
+            });
+          }
+        }
+      }
+      return null;
+    });
     _initController();
   }
 
@@ -368,23 +387,51 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       _controller.runJavaScript("if (window.onAppBackgrounded) window.onAppBackgrounded();");
     } else if (state == AppLifecycleState.resumed) {
-      _controller.runJavaScript("if (window.onAppResumed) window.onAppResumed();");
-      _checkAndForwardSharedIntentText();
+      _handleAppResumedWithShareCheck();
     }
   }
 
-  Future<void> _checkAndForwardSharedIntentText() async {
-    if (!Platform.isAndroid) return;
+  Future<void> _handleAppResumedWithShareCheck() async {
+    final bool hasShared = await _checkAndForwardSharedIntentText();
+    if (!hasShared && _pendingSharedTextInDart == null) {
+      try {
+        await _controller.runJavaScript("if (window.onAppResumed) window.onAppResumed();");
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _deliverSharedTextToJs(String rawText) async {
+    final String escaped = jsonEncode(rawText);
+    try {
+      await _controller.runJavaScript(
+        "window.__kryptoHandlingShare = Date.now(); "
+        "window.__pendingSharedLink = $escaped; "
+        "var _g = document.getElementById('cyber-lock-gate'); if (_g) _g.style.display = 'none'; "
+        "if (window.onReceiveSharedContent) { window.onReceiveSharedContent($escaped); }",
+      );
+    } catch (_) {}
+  }
+
+  Future<bool> _checkAndForwardSharedIntentText() async {
+    if (!Platform.isAndroid) return false;
     try {
       final String? sharedText = await _nativeChannel.invokeMethod<String>('consumeSharedText');
       if (sharedText != null && sharedText.trim().isNotEmpty) {
-        final String escaped = jsonEncode(sharedText.trim());
-        await _controller.runJavaScript(
-          "if (window.switchTab) { window.switchTab('knowledge'); } "
-          "setTimeout(function() { if (window.onReceiveSharedContent) window.onReceiveSharedContent($escaped); }, 350);",
-        );
+        _pendingSharedTextInDart = sharedText.trim();
       }
-    } catch (_) {}
+      if (_pendingSharedTextInDart != null && _pageLoaded) {
+        final String toSend = _pendingSharedTextInDart!;
+        _pendingSharedTextInDart = null;
+        await _deliverSharedTextToJs(toSend);
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _deliverSharedTextToJs(toSend);
+        });
+        return true;
+      }
+      return _pendingSharedTextInDart != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<String?> _saveToDownloadsFolder(String tempFilePath, String targetFileName) async {
@@ -426,9 +473,11 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
+            _pageLoaded = false;
             setState(() => _isLoading = true);
           },
           onPageFinished: (String url) {
+            _pageLoaded = true;
             setState(() => _isLoading = false);
             _checkAndForwardSharedIntentText();
           },

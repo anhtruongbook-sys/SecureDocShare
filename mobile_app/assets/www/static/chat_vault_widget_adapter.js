@@ -1,13 +1,37 @@
 /**
- * CHAT VAULT WIDGET ADAPTER v1.1 (KRYPTO INTEGRATED EDITION)
- * ----------------------------------------------------------
+ * CHAT VAULT WIDGET ADAPTER v1.2 (BILINGUAL VI DEFAULT + AUTO SHARE INTENT)
+ * -------------------------------------------------------------------------
  * Cầu nối giao diện 1-dòng-lệnh (`ChatVaultAdapter.mount('#container', options)`)
  * tích hợp Kho Lưu Trữ & Tra Cứu Tri Thức Chat (YouTube / GitHub / Web / Ghi chú) vào ứng dụng Krypto.
- * Tuân thủ nghiêm ngặt Rule 14 (Single-Level Card & Borderless Mobile Table Cells).
+ * - Mặc định hiển thị Tiếng Việt ('vi'), hỗ trợ chuyển đổi 1 chạm sang Tiếng Anh ('en').
+ * - Tự động nhận diện và bóc tách ngay lập tức khi người dùng bấm Chia sẻ (Share) từ Zalo/YouTube sang Krypto.
+ * - Tuân thủ nghiêm ngặt Rule 14 (Single-Level Card & Borderless Mobile Table Cells).
  */
 
 (function (global) {
   'use strict';
+
+  // Hàng đợi toàn cục đảm bảo Share Intent đến trước khi mount() hoàn tất vẫn được xử lý 100%
+  let activeShareHandler = null;
+  let lastHandledShareText = '';
+  let lastHandledShareTime = 0;
+
+  global.onReceiveSharedContent = function (sharedText) {
+    if (!sharedText || !String(sharedText).trim()) return;
+    const cleaned = String(sharedText).trim();
+    if (cleaned === lastHandledShareText && (Date.now() - lastHandledShareTime < 4000)) {
+      return;
+    }
+    global.__kryptoHandlingShare = Date.now();
+    const lockGate = document.getElementById('cyber-lock-gate');
+    if (lockGate) lockGate.style.display = 'none';
+    global.__pendingSharedLink = cleaned;
+    if (typeof activeShareHandler === 'function') {
+      activeShareHandler(cleaned);
+    } else if (typeof global.switchTab === 'function') {
+      global.switchTab('knowledge');
+    }
+  };
 
   function injectScopedStyles() {
     if (document.getElementById('chat-vault-scoped-css')) return;
@@ -81,13 +105,13 @@
         align-items: center;
         justify-content: center;
         gap: 5px;
-        padding: 8px 13px;
+        padding: 8px 12px;
         border-radius: 8px;
         border: 1px solid transparent;
         background-color: var(--cv-accent);
         color: #ffffff;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 11.5px;
         cursor: pointer;
         white-space: nowrap;
         transition: all 0.15s ease;
@@ -104,6 +128,27 @@
         background-color: rgba(239, 68, 68, 0.12);
         border-color: rgba(239, 68, 68, 0.35);
         color: #ef4444;
+      }
+      .cv-lang-switch {
+        display: inline-flex;
+        border: 1px solid var(--cv-border);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--cv-bg-input);
+      }
+      .cv-lang-btn {
+        border: none;
+        background: transparent;
+        color: var(--cv-muted);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 9px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .cv-lang-btn.active {
+        background: var(--cv-accent);
+        color: #ffffff;
       }
       .cv-badge {
         display: inline-block;
@@ -122,6 +167,8 @@
       .cv-stats-row {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
         gap: 6px;
         margin-bottom: 10px;
       }
@@ -260,6 +307,9 @@
 
       const defaultSender = options.defaultSender || 'User';
       const defaultGroup = options.defaultGroup || 'Zalo / R&D';
+      let currentLang = global.localStorage.getItem('CHAT_VAULT_LANG') || 'vi';
+      if (currentLang !== 'vi' && currentLang !== 'en') currentLang = 'vi';
+      let currentDetailIdx = -1;
 
       container.innerHTML = `
         <div class="cv-root-wrap">
@@ -267,23 +317,27 @@
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
               <div>
                 <h3 style="margin:0; font-size:14.5px; font-weight:800; color:var(--cv-text);">🧠 Kho Lưu Trữ & Tra Cứu Tri Thức Chat</h3>
-                <p style="margin:2px 0 0; font-size:11px; color:var(--cv-muted);">Tự động bóc tách phụ đề YouTube [mm:ss], GitHub README, bài viết Web & ghi chú</p>
+                <p style="margin:2px 0 0; font-size:11px; color:var(--cv-muted);">Tự động bóc tách & dịch Tiếng Việt phụ đề YouTube [mm:ss], GitHub, Web</p>
               </div>
-              <div style="display:flex; gap:6px;">
-                <button type="button" class="cv-btn cv-btn-outline" id="cvBtnExport" title="Xuất toàn bộ CSDL ra file .json">💾 Sao lưu (.json)</button>
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <div class="cv-lang-switch" title="Chọn ngôn ngữ hiển thị (Mặc định: Tiếng Việt)">
+                  <button type="button" class="cv-lang-btn ${currentLang === 'vi' ? 'active' : ''}" data-lang="vi">🇻🇳 Tiếng Việt</button>
+                  <button type="button" class="cv-lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en">🇬🇧 English</button>
+                </div>
+                <button type="button" class="cv-btn cv-btn-outline" id="cvBtnExport" title="Xuất toàn bộ CSDL ra file .json">💾 Sao lưu</button>
                 <button type="button" class="cv-btn cv-btn-outline" id="cvBtnImport" title="Khôi phục từ file .json">📂 Khôi phục</button>
                 <input type="file" id="cvFileImport" accept=".json" style="display:none;" />
               </div>
             </div>
 
-            <textarea id="cvInputRaw" class="cv-input" rows="2" placeholder="Dán link YouTube (https://youtu.be/...), GitHub, bài báo hoặc nội dung tin nhắn chat cần lưu..."></textarea>
+            <textarea id="cvInputRaw" class="cv-input" rows="2" placeholder="Dán link YouTube (https://youtu.be/...), GitHub, bài báo hoặc chia sẻ trực tiếp từ Zalo/YouTube sang Krypto..."></textarea>
             <div class="cv-grid-3">
               <input id="cvInputNote" class="cv-input" type="text" placeholder="Ghi chú ngữ cảnh chia sẻ (tùy chọn)..." />
               <input id="cvInputSender" class="cv-input" type="text" value="${escapeHtml(defaultSender)}" placeholder="Người chia sẻ" />
               <input id="cvInputGroup" class="cv-input" type="text" value="${escapeHtml(defaultGroup)}" placeholder="Nhóm chat / Dự án" />
             </div>
             <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <button type="button" id="cvBtnSave" class="cv-btn" style="flex:1; min-width:200px;">⚡ Tự Động Bóc Tách & Lưu Kho</button>
+              <button type="button" id="cvBtnSave" class="cv-btn" style="flex:1; min-width:200px;">⚡ Tự Động Bóc Tách & Dịch Lưu Kho</button>
               <button type="button" id="cvBtnPaste" class="cv-btn cv-btn-outline" title="Dán nhanh từ bộ nhớ tạm">📋 Dán Nhanh</button>
             </div>
             <div id="cvStatus" style="margin-top:6px; font-size:11.5px; font-weight:600; color:var(--cv-accent); min-height:16px;"></div>
@@ -293,7 +347,7 @@
             <div class="cv-stats-row" id="cvStatsRow"></div>
 
             <div class="cv-grid-3" style="margin-top:0;">
-              <input id="cvSearchInput" class="cv-input" type="text" placeholder="🔍 Tìm từ khóa (có dấu/không dấu, tên kênh, lời thoại [mm:ss])..." />
+              <input id="cvSearchInput" class="cv-input" type="text" placeholder="🔍 Tìm từ khóa (Tiếng Việt có dấu/không dấu, Tiếng Anh, [mm:ss])..." />
               <select id="cvFilterType" class="cv-input">
                 <option value="">-- Tất cả Loại nguồn --</option>
                 <option value="youtube_video">▶ YouTube Idea Card</option>
@@ -330,8 +384,30 @@
         </div>
       `;
 
-      await global.ChatVaultEngine.init();
       let currentResults = [];
+
+      function syncLangButtonsUI() {
+        container.querySelectorAll('.cv-lang-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+        });
+      }
+
+      async function setLanguage(lang) {
+        currentLang = (lang === 'en') ? 'en' : 'vi';
+        global.localStorage.setItem('CHAT_VAULT_LANG', currentLang);
+        syncLangButtonsUI();
+        await refreshList();
+        if (currentDetailIdx >= 0 && currentDetailIdx < currentResults.length) {
+          showDetail(currentDetailIdx, false);
+        }
+        notifyUser(currentLang === 'vi' ? '🇻🇳 Đã chuyển sang hiển thị Tiếng Việt' : '🇬🇧 Switched to English view');
+      }
+
+      container.querySelectorAll('.cv-lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
+      });
+
+      await global.ChatVaultEngine.init();
 
       async function updateStatsBar() {
         const allItems = await global.ChatVaultEngine.getAllItems();
@@ -341,10 +417,15 @@
         const statsRow = container.querySelector('#cvStatsRow');
         if (statsRow) {
           statsRow.innerHTML = `
-            <span class="cv-stat-pill">Tổng kho: <strong>${allItems.length}</strong></span>
-            <span class="cv-stat-pill">▶ YouTube: <strong>${ytCount}</strong></span>
-            <span class="cv-stat-pill">📦 GitHub: <strong>${ghCount}</strong></span>
-            <span class="cv-stat-pill">🌐 Web/Ghi chú: <strong>${otherCount}</strong></span>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <span class="cv-stat-pill">Tổng kho: <strong>${allItems.length}</strong></span>
+              <span class="cv-stat-pill">▶ YouTube: <strong>${ytCount}</strong></span>
+              <span class="cv-stat-pill">📦 GitHub: <strong>${ghCount}</strong></span>
+              <span class="cv-stat-pill">🌐 Web/Ghi chú: <strong>${otherCount}</strong></span>
+            </div>
+            <span style="font-size:11px; color:var(--cv-accent); font-weight:700;">
+              Ngôn ngữ: ${currentLang === 'vi' ? '🇻🇳 Tiếng Việt (Mặc định)' : '🇬🇧 English (Original)'}
+            </span>
           `;
         }
       }
@@ -354,7 +435,8 @@
         const query = container.querySelector('#cvSearchInput').value;
         const resourceType = container.querySelector('#cvFilterType').value;
         const category = container.querySelector('#cvFilterCat').value;
-        currentResults = await global.ChatVaultEngine.searchVault({ query, resourceType, category });
+        const rawResults = await global.ChatVaultEngine.searchVault({ query, resourceType, category });
+        currentResults = rawResults.map(r => global.ChatVaultEngine.getLocalizedRecord(r, currentLang));
 
         const tbody = container.querySelector('#cvTableBody');
         if (!currentResults.length) {
@@ -396,13 +478,14 @@
         }).join('');
 
         tbody.querySelectorAll('button[data-idx]').forEach(btn => {
-          btn.addEventListener('click', () => showDetail(Number(btn.getAttribute('data-idx'))));
+          btn.addEventListener('click', () => showDetail(Number(btn.getAttribute('data-idx')), true));
         });
       }
 
-      function showDetail(idx) {
+      function showDetail(idx, shouldScroll = true) {
         const item = currentResults[idx];
         if (!item) return;
+        currentDetailIdx = idx;
         const meta = item.metadata || {};
         const ctx = item.chat_context || {};
         const summ = item.summary || {};
@@ -437,7 +520,11 @@
                 • Ghi chú: <em>"${escapeHtml(ctx.sender_note || '')}"</em>
               </div>
             </div>
-            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
+              <div class="cv-lang-switch">
+                <button type="button" class="cv-lang-btn ${currentLang === 'vi' ? 'active' : ''}" id="cvDetailLangVi">🇻🇳 VI</button>
+                <button type="button" class="cv-lang-btn ${currentLang === 'en' ? 'active' : ''}" id="cvDetailLangEn">🇬🇧 EN</button>
+              </div>
               <button type="button" class="cv-btn cv-btn-outline" id="cvCopyMd" style="padding:5px 9px; font-size:11px;">📋 Copy Thẻ</button>
               <button type="button" class="cv-btn cv-btn-outline" id="cvExportMd" style="padding:5px 9px; font-size:11px;">📝 Xuất (.md)</button>
               <button type="button" class="cv-btn cv-btn-danger" id="cvDeleteRecord" style="padding:5px 9px; font-size:11px;">🗑️ Xóa</button>
@@ -457,8 +544,12 @@
           ${insightsHtml ? `<div style="margin-top:8px;"><div style="font-size:11px; font-weight:700; color:var(--cv-muted);">🔑 ĐÚC KẾT SÂU (KEY INSIGHTS):</div><ul style="list-style:none; padding-left:0; margin:4px 0 0; font-size:12px; line-height:1.45;">${insightsHtml}</ul></div>` : ''}
         `;
 
+        box.querySelector('#cvDetailLangVi').addEventListener('click', () => setLanguage('vi'));
+        box.querySelector('#cvDetailLangEn').addEventListener('click', () => setLanguage('en'));
+
         box.querySelector('#cvCloseDetail').addEventListener('click', () => {
           box.style.display = 'none';
+          currentDetailIdx = -1;
         });
 
         box.querySelector('#cvCopyMd').addEventListener('click', async () => {
@@ -473,17 +564,59 @@
 
         box.querySelector('#cvExportMd').addEventListener('click', () => {
           const mdText = global.ChatVaultEngine.exportIdeaCardMarkdown(item);
-          saveTextFileNativeOrWeb(`${item.id}_idea_card.md`, mdText, 'text/markdown;charset=utf-8');
+          saveTextFileNativeOrWeb(`${item.id}_${currentLang}_idea_card.md`, mdText, 'text/markdown;charset=utf-8');
         });
 
         box.querySelector('#cvDeleteRecord').addEventListener('click', async () => {
           await global.ChatVaultEngine.deleteRecord(item.id);
           box.style.display = 'none';
+          currentDetailIdx = -1;
           notifyUser('🗑️ Đã xóa bản ghi khỏi Kho Tri Thức');
           await refreshList();
         });
 
-        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (shouldScroll) {
+          box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+
+      async function executeSaveInput(autoOpenDetail = true) {
+        const raw = container.querySelector('#cvInputRaw').value.trim();
+        const note = container.querySelector('#cvInputNote').value.trim();
+        const sender = container.querySelector('#cvInputSender').value.trim();
+        const group = container.querySelector('#cvInputGroup').value.trim();
+        const status = container.querySelector('#cvStatus');
+
+        if (!raw) {
+          status.textContent = '⚠️ Vui lòng nhập đường dẫn YouTube, GitHub, Web hoặc nội dung ghi chú.';
+          return;
+        }
+        status.textContent = '⏳ Đang tự động bóc tách phụ đề, chắt lọc ý tưởng & dịch sang Tiếng Việt...';
+        try {
+          const rec = await global.ChatVaultEngine.ingestAndSave(raw, {
+            senderNote: note,
+            sharedBy: sender,
+            chatGroup: group
+          });
+          const localizedRec = global.ChatVaultEngine.getLocalizedRecord(rec, currentLang);
+          status.textContent = `✓ Đã lưu (${currentLang.toUpperCase()}): ${localizedRec.metadata.title}`;
+          notifyUser(`✓ Đã bóc tách & lưu: ${localizedRec.metadata.title}`);
+          container.querySelector('#cvInputRaw').value = '';
+          container.querySelector('#cvInputNote').value = '';
+          container.querySelector('#cvSearchInput').value = '';
+          container.querySelector('#cvFilterType').value = '';
+          container.querySelector('#cvFilterCat').value = '';
+          await refreshList();
+          if (autoOpenDetail) {
+            const foundIdx = currentResults.findIndex(x => x.id === rec.id);
+            if (foundIdx !== -1) {
+              showDetail(foundIdx, true);
+            }
+          }
+          if (typeof options.onItemSaved === 'function') options.onItemSaved(rec);
+        } catch (err) {
+          status.textContent = '❌ Lỗi: ' + err.message;
+        }
       }
 
       container.querySelector('#cvBtnPaste').addEventListener('click', async () => {
@@ -500,35 +633,7 @@
         }
       });
 
-      container.querySelector('#cvBtnSave').addEventListener('click', async () => {
-        const raw = container.querySelector('#cvInputRaw').value.trim();
-        const note = container.querySelector('#cvInputNote').value.trim();
-        const sender = container.querySelector('#cvInputSender').value.trim();
-        const group = container.querySelector('#cvInputGroup').value.trim();
-        const status = container.querySelector('#cvStatus');
-
-        if (!raw) {
-          status.textContent = '⚠️ Vui lòng nhập đường dẫn YouTube, GitHub, Web hoặc nội dung ghi chú.';
-          return;
-        }
-        status.textContent = '⏳ Đang tự động tải dữ liệu, bóc tách phụ đề & chắt lọc ý tưởng...';
-        try {
-          const rec = await global.ChatVaultEngine.ingestAndSave(raw, {
-            senderNote: note,
-            sharedBy: sender,
-            chatGroup: group
-          });
-          status.textContent = `✓ Đã lưu: ${rec.metadata.title}`;
-          notifyUser(`✓ Đã bóc tách & lưu: ${rec.metadata.title}`);
-          container.querySelector('#cvInputRaw').value = '';
-          container.querySelector('#cvInputNote').value = '';
-          await refreshList();
-          if (typeof options.onItemSaved === 'function') options.onItemSaved(rec);
-        } catch (err) {
-          status.textContent = '❌ Lỗi: ' + err.message;
-        }
-      });
-
+      container.querySelector('#cvBtnSave').addEventListener('click', () => executeSaveInput(true));
       container.querySelector('#cvSearchInput').addEventListener('input', refreshList);
       container.querySelector('#cvFilterType').addEventListener('change', refreshList);
       container.querySelector('#cvFilterCat').addEventListener('change', refreshList);
@@ -552,15 +657,41 @@
         await refreshList();
       });
 
-      // Hỗ trợ nhận link chia sẻ trực tiếp từ Android Share Intent (Zalo/YouTube -> Krypto)
-      global.onReceiveSharedContent = async function (sharedText) {
-        if (!sharedText) return;
-        container.querySelector('#cvInputRaw').value = sharedText;
-        container.querySelector('#cvBtnSave').click();
+      // Xử lý tự động ngay lập tức khi nhận link chia sẻ từ Android Share Intent (Zalo/YouTube -> Krypto)
+      activeShareHandler = async function (sharedText) {
+        if (!sharedText || !String(sharedText).trim()) return;
+        const cleaned = String(sharedText).trim();
+        if (cleaned === lastHandledShareText && (Date.now() - lastHandledShareTime < 4000)) {
+          return;
+        }
+        lastHandledShareText = cleaned;
+        lastHandledShareTime = Date.now();
+        global.__kryptoHandlingShare = Date.now();
+        global.__pendingSharedLink = null;
+
+        // Mở khóa màn hình cổng PIN (nếu đang che) để hiển thị ngay tiến trình bóc tách link chia sẻ
+        const lockGate = document.getElementById('cyber-lock-gate');
+        if (lockGate) lockGate.style.display = 'none';
+        if (typeof global.switchTab === 'function') {
+          global.switchTab('knowledge');
+        }
+
+        container.querySelector('#cvInputRaw').value = cleaned;
+        container.querySelector('#cvInputNote').value = 'Chia sẻ trực tiếp sang Krypto';
+        notifyUser('⏳ Đang tự động bóc tách liên kết vừa chia sẻ...');
+        await executeSaveInput(true);
       };
 
       await refreshList();
-      return { refreshList };
+
+      // Nếu có link được chia sẻ đến trong lúc app đang khởi động -> xử lý tự động ngay lập tức!
+      if (global.__pendingSharedLink) {
+        const pending = global.__pendingSharedLink;
+        global.__pendingSharedLink = null;
+        setTimeout(() => activeShareHandler(pending), 100);
+      }
+
+      return { refreshList, setLanguage };
     }
   };
 

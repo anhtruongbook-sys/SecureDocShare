@@ -63,6 +63,7 @@ class MainActivity: FlutterFragmentActivity() {
     private var pendingBiometricResult: MethodChannel.Result? = null
     private val REQUEST_CODE_BIOMETRIC = 9901
     private var pendingSharedText: String? = null
+    private var methodChannel: MethodChannel? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,12 +76,30 @@ class MainActivity: FlutterFragmentActivity() {
         extractSharedIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        extractSharedIntent(intent)
+    }
+
     private fun extractSharedIntent(intent: Intent?) {
         if (intent == null) return
-        if (Intent.ACTION_SEND == intent.action && intent.type?.startsWith("text/") == true) {
-            val shared = intent.getStringExtra(Intent.EXTRA_TEXT)
-            if (!shared.isNullOrBlank()) {
-                pendingSharedText = shared
+        if (Intent.ACTION_SEND == intent.action) {
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: intent.dataString
+            val sharedSubj = intent.getStringExtra(Intent.EXTRA_SUBJECT) ?: ""
+            val combined = if (sharedSubj.isNotBlank() && !(sharedText ?: "").contains(sharedSubj)) {
+                "$sharedSubj - ${sharedText ?: ""}".trim()
+            } else {
+                (sharedText ?: "").trim()
+            }
+            if (combined.isNotEmpty()) {
+                pendingSharedText = combined
+                intent.action = Intent.ACTION_MAIN
+                intent.removeExtra(Intent.EXTRA_TEXT)
+                runOnUiThread {
+                    try {
+                        methodChannel?.invokeMethod("onSharedTextReceived", combined)
+                    } catch (_: Exception) {}
+                }
             }
         }
     }
@@ -96,7 +115,9 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        val ch = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel = ch
+        ch.setMethodCallHandler { call, result ->
             when (call.method) {
                 "consumeSharedText" -> {
                     val txt = pendingSharedText

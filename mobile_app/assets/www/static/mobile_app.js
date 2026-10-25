@@ -2689,6 +2689,9 @@ function saveVaultSettings() {
 }
 
 function checkAppLockOnStartup() {
+    if (window.__pendingSharedLink || (window.__kryptoHandlingShare && (Date.now() - window.__kryptoHandlingShare < 8000))) {
+        return;
+    }
     const pin = localStorage.getItem('krypto_vault_pin') || '';
     const masterPass = localStorage.getItem('krypto_master_password') || '';
     const autolock = localStorage.getItem('krypto_autolock_enabled') !== 'false';
@@ -2702,6 +2705,11 @@ function checkAppLockOnStartup() {
             const bioEnabled = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
             if (bioEnabled && window.FlutterBridge) {
                 setTimeout(() => {
+                    if (window.__pendingSharedLink || (window.__kryptoHandlingShare && (Date.now() - window.__kryptoHandlingShare < 8000))) {
+                        const gHide = document.getElementById('cyber-lock-gate');
+                        if (gHide) gHide.style.display = 'none';
+                        return;
+                    }
                     const g = document.getElementById('cyber-lock-gate');
                     if (g && g.style.display !== 'none') {
                         triggerDeviceBiometricAuth();
@@ -2861,6 +2869,11 @@ window.onAppBackgrounded = function() {
 };
 
 window.onAppResumed = function() {
+    if (window.__pendingSharedLink || (window.__kryptoHandlingShare && (Date.now() - window.__kryptoHandlingShare < 8000))) {
+        const gate = document.getElementById('cyber-lock-gate');
+        if (gate) gate.style.display = 'none';
+        return;
+    }
     const pin = localStorage.getItem('krypto_vault_pin') || '';
     const masterPass = localStorage.getItem('krypto_master_password') || '';
     const autolock = localStorage.getItem('krypto_autolock_enabled') !== 'false';
@@ -2871,6 +2884,11 @@ window.onAppResumed = function() {
         if (gate && gate.style.display !== 'none') {
             if (bioEnabled && window.FlutterBridge) {
                 setTimeout(() => {
+                    if (window.__pendingSharedLink || (window.__kryptoHandlingShare && (Date.now() - window.__kryptoHandlingShare < 8000))) {
+                        const gHide = document.getElementById('cyber-lock-gate');
+                        if (gHide) gHide.style.display = 'none';
+                        return;
+                    }
                     const g = document.getElementById('cyber-lock-gate');
                     if (g && g.style.display !== 'none') {
                         triggerDeviceBiometricAuth();
