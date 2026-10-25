@@ -13,6 +13,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'chat_vault_bridge.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -368,7 +369,22 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
       _controller.runJavaScript("if (window.onAppBackgrounded) window.onAppBackgrounded();");
     } else if (state == AppLifecycleState.resumed) {
       _controller.runJavaScript("if (window.onAppResumed) window.onAppResumed();");
+      _checkAndForwardSharedIntentText();
     }
+  }
+
+  Future<void> _checkAndForwardSharedIntentText() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final String? sharedText = await _nativeChannel.invokeMethod<String>('consumeSharedText');
+      if (sharedText != null && sharedText.trim().isNotEmpty) {
+        final String escaped = jsonEncode(sharedText.trim());
+        await _controller.runJavaScript(
+          "if (window.switchTab) { window.switchTab('knowledge'); } "
+          "setTimeout(function() { if (window.onReceiveSharedContent) window.onReceiveSharedContent($escaped); }, 350);",
+        );
+      }
+    } catch (_) {}
   }
 
   Future<String?> _saveToDownloadsFolder(String tempFilePath, String targetFileName) async {
@@ -414,6 +430,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
           },
           onPageFinished: (String url) {
             setState(() => _isLoading = false);
+            _checkAndForwardSharedIntentText();
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint('WebView Error: ${error.description}');
@@ -1095,6 +1112,9 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
         return [];
       });
     }
+
+    // Đăng ký cầu nối lưu trữ & tra cứu tri thức Chat (YouTube / GitHub / Web / Ghi chú)
+    ChatVaultNativeBridge(_controller).register();
 
     await _controller.loadFlutterAsset('assets/www/index.html');
   }

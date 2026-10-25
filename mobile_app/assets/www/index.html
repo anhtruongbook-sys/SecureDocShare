@@ -552,6 +552,11 @@
             </div>
         </div>
 
+        <!-- ==================== TAB 5: KHO TRI THỨC CHAT (YOUTUBE / LINK / GHI CHÚ) ==================== -->
+        <div id="tab-knowledge" class="tab-content" style="display: none;">
+            <div id="krypto-chat-vault-mount"></div>
+        </div>
+
         <!-- ==================== SESSION HISTORY CARD ==================== -->
         <div class="card history-card" id="history-card">
             <div class="history-header" onclick="toggleHistoryDrawer()">
@@ -579,7 +584,7 @@
             <p>Krypto Vault • Mật Mã Hậu Lượng Tử ML-KEM-768 • Offline 100%</p>
         </footer>
 
-        <!-- Bottom Navigation Bar (Flat 4 Tabs) -->
+        <!-- Bottom Navigation Bar (Flat 5 Tabs) -->
         <nav class="bottom-nav-bar" id="bottom-nav-bar">
             <button type="button" class="bottom-nav-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
                 <span class="nav-icon">🏠</span>
@@ -592,6 +597,10 @@
             <button type="button" class="bottom-nav-btn" id="tab-btn-audit" onclick="switchTab('audit')">
                 <span class="nav-icon">🔎</span>
                 <span class="nav-label">Pháp y</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-knowledge" onclick="switchTab('knowledge')">
+                <span class="nav-icon">🧠</span>
+                <span class="nav-label">Tri thức</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-vault" onclick="switchTab('vault')">
                 <span class="nav-icon">🛡️</span>
@@ -622,6 +631,14 @@
                 <div class="drawer-menu-text">
                     <div class="drawer-menu-name">Cài Đặt Két Sắt & Quản Trị</div>
                     <div class="drawer-menu-desc" id="drawer-vault-desc">Đổi PIN nhanh, Master Key PQC, Vân tay</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
+            <div class="drawer-menu-item" onclick="closeAppDrawer(); switchTab('knowledge')">
+                <span class="drawer-menu-icon">🧠</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Kho Tri Thức & Tra Cứu Chat</div>
+                    <div class="drawer-menu-desc">Lưu & tìm kiếm phụ đề YouTube [mm:ss], GitHub, Web</div>
                 </div>
                 <span class="drawer-menu-arrow">›</span>
             </div>
@@ -663,7 +680,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.7.6 PQC</strong>
+                    <strong id="drawer-app-version">v2.7.7 PQC + Vault</strong>
                 </div>
             </div>
 
@@ -792,6 +809,8 @@
     <script src="static/qrcode.min.js"></script>
     <script src="static/watermark_presets.js"></script>
     <script src="static/pqc_crypto_engine.js"></script>
+    <script src="static/chat_vault_engine.js"></script>
+    <script src="static/chat_vault_widget_adapter.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>

@@ -1,7 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Quyền truy cập lưu trữ cục bộ Offline 100% -->
+    <!-- Quyền truy cập lưu trữ cục bộ & truy xuất phụ đề YouTube / GitHub -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
@@ -9,6 +11,7 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
+        android:hasFragileUserData="true"
         android:usesCleartextTraffic="false"
         android:largeHeap="true">
         
@@ -28,6 +31,13 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <!-- Nhận chia sẻ liên kết trực tiếp từ Zalo, YouTube, Trình duyệt vào Tab Tri Thức -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
         

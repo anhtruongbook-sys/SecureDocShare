@@ -62,6 +62,28 @@ class MainActivity: FlutterFragmentActivity() {
     private val executor = Executors.newSingleThreadExecutor()
     private var pendingBiometricResult: MethodChannel.Result? = null
     private val REQUEST_CODE_BIOMETRIC = 9901
+    private var pendingSharedText: String? = null
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        extractSharedIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        extractSharedIntent(intent)
+    }
+
+    private fun extractSharedIntent(intent: Intent?) {
+        if (intent == null) return
+        if (Intent.ACTION_SEND == intent.action && intent.type?.startsWith("text/") == true) {
+            val shared = intent.getStringExtra(Intent.EXTRA_TEXT)
+            if (!shared.isNullOrBlank()) {
+                pendingSharedText = shared
+            }
+        }
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -76,6 +98,11 @@ class MainActivity: FlutterFragmentActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "consumeSharedText" -> {
+                    val txt = pendingSharedText
+                    pendingSharedText = null
+                    result.success(txt)
+                }
                 "encryptPdf" -> {
                     val srcPath = call.argument<String>("srcPath")
                     val destPath = call.argument<String>("destPath")

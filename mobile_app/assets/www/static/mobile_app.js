@@ -72,6 +72,28 @@ let currentSignatureMode = 'vault'; // 'vault' | 'custom-img' | 'p12'
 let customSignatureImageBase64 = '';
 let selectedAuditFile = null;
 let currentPinInput = '';
+let kryptoChatVaultInstance = null;
+
+async function ensureKryptoChatVaultMounted() {
+    if (kryptoChatVaultInstance) {
+        if (typeof kryptoChatVaultInstance.refreshList === 'function') {
+            await kryptoChatVaultInstance.refreshList();
+        }
+        return kryptoChatVaultInstance;
+    }
+    const mountEl = document.getElementById('krypto-chat-vault-mount');
+    if (mountEl && window.ChatVaultAdapter && typeof window.ChatVaultAdapter.mount === 'function') {
+        try {
+            kryptoChatVaultInstance = await window.ChatVaultAdapter.mount(mountEl, {
+                defaultSender: 'User',
+                defaultGroup: 'Zalo / R&D'
+            });
+        } catch (err) {
+            console.warn('ChatVaultAdapter mount error:', err);
+        }
+    }
+    return kryptoChatVaultInstance;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
@@ -80,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof updateDrawerVaultStatus === 'function') {
         updateDrawerVaultStatus();
     }
+    ensureKryptoChatVaultMounted();
 });
 initTheme();
 
@@ -284,6 +307,10 @@ function switchTab(tabName) {
             lockedView.style.display = 'flex';
             updateVaultPinDots();
         }
+    }
+
+    if (tabName === 'knowledge') {
+        ensureKryptoChatVaultMounted();
     }
 
     if (typeof updateDrawerVaultStatus === 'function') {

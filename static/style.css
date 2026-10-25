@@ -2464,10 +2464,11 @@ body:not(.dark-mode) .vault-auth-card .btn-pin-del {
     font-size: 10.5px;
     font-weight: 500;
     cursor: pointer;
-    padding: 4px 0;
+    padding: 4px 2px;
     border-radius: var(--radius-md);
     transition: all 0.18s ease;
     user-select: none;
+    white-space: nowrap;
 }
 
 .bottom-nav-btn .nav-icon {

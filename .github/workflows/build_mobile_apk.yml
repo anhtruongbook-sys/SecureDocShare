@@ -66,17 +66,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.6
-          name: "Krypto v2.7.6 - Tích Hợp Mật Mã Hậu Lượng Tử (ML-KEM-768 FIPS 203 + PQC Master Key)"
+          tag_name: v2.7.7
+          name: "Krypto v2.7.7 - Tích Hợp Kho Lưu Trữ & Tra Cứu Tri Thức Chat (YouTube / GitHub / Web / Ghi Chú)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.7.6 (Post-Quantum Cryptography ML-KEM-768 & Master Key Escrow)
-            - **Tích Hợp Thuật Toán Mật Mã Hậu Lượng Tử Tiên Tiến Nhất (NIST FIPS 203 ML-KEM-768)**:
-              + Tích hợp động cơ `PQCCryptoEngine` (`SECDOC_PQC_V2`) kết hợp bọc khóa lưới đa thức vành `R_q = Z_3329[X]/(X^256 + 1)` (`ML-KEM-768`) với `AES-256-GCM` xác thực toàn vẹn.
-              + **Cơ Chế Khóa Chủ Dự Phòng Hậu Lượng Tử (PQC Master Key Escrow)**: Mọi tệp PDF, Word, Excel, PowerPoint, ZIP và `.pqc` khi khóa đều tự động nhúng phong bì khóa chủ hậu lượng tử (`KD_PQC_ESCROW` / `KryptoPQCEscrow`), cho phép mở khóa cứu hộ độc lập bằng `Master Key PQC` mà không cần biết mật khẩu người dùng.
-              + Bổ sung nút 1 chạm **`🔑 Dùng Master Key PQC`** ngay tại Tab Mở Khóa để cứu hộ tệp tức thì.
-            - **Chuẩn Hóa Tên Ứng Dụng Ngắn Gọn `Krypto` (Chống Ẩn Chữ & Xuống Dòng 100%)**:
-              + Đặt tên ứng dụng ngắn gọn `Krypto` (6 ký tự) trên màn hình chính Android (`AndroidManifest.xml`), tiêu đề thanh điều hướng, thẻ trạng thái nổi và App Drawer, hiển thị trọn vẹn trên 1 dòng duy nhất ở mọi kích thước màn hình điện thoại.
-            - **Kế thừa toàn diện**: Bàn phím PIN chế độ Sáng tương phản cao, Bảng Pháp y số chuẩn Responsive thẻ đơn (Rule 14), Thủy vân số tàng hình 2 lớp, hoạt động độc lập Offline 100%.
+            ## Ứng dụng Di Động Krypto v2.7.7 (PQC ML-KEM-768 + Chat Knowledge Vault)
+            - **Tích Hợp Tab 5 `🧠 Tri thức` (Chat Knowledge Vault v1.1)**:
+              + Tự động bóc tách phụ đề video YouTube kèm mốc thời gian `[mm:ss]` qua giao thức Innertube Android (`com.google.android.youtube/20.10.38`) không cần API Key.
+              + Tự động tra cứu GitHub Repository (`README.md`, Stars, Ngôn ngữ), bài báo Web và ghi chú tin nhắn Chat.
+              + Chấm điểm `TF-IDF` bất đồng bộ (Chunked Non-blocking) để chắt lọc Ý tưởng cốt lõi (`Core Ideas`), Đúc kết sâu (`Key Insights`) và tự động gắn thẻ phân loại 6 chuyên ngành.
+              + Tìm kiếm toàn văn (`BM25` + khử dấu tiếng Việt) định vị chính xác câu nói tại mốc `[mm:ss]` trong video YouTube.
+              + **Kiến trúc Sao lưu 3 lớp (`Triple-Persistence`)**: Đồng bộ tự động giữa `IndexedDB`, bộ nhớ nội bộ ứng dụng và `/storage/emulated/0/Download/ChatKnowledgeVault/vault_master_backup.json` giúp giữ nguyên dữ liệu khi gỡ hoặc cài đặt lại APK.
+              + Hỗ trợ nhận chia sẻ đường dẫn trực tiếp từ Zalo, YouTube, Trình duyệt qua menu **Chia sẻ (Share) -> Krypto**.
+            - **Kế thừa toàn diện v2.7.6**: Mật mã Hậu lượng tử `ML-KEM-768` (FIPS 203) + `AES-256-GCM` + `PQC Master Key Escrow`, Bảng Responsive chuẩn thẻ đơn (Rule 14).
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk
