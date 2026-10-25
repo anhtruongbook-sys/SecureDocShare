@@ -124,6 +124,72 @@ class MainActivity: FlutterFragmentActivity() {
                     pendingSharedText = null
                     result.success(txt)
                 }
+                "saveFileToDownloads" -> {
+                    val srcPath = call.argument<String>("srcPath")
+                    val fileName = call.argument<String>("fileName") ?: "exported_file.txt"
+                    val mimeType = call.argument<String>("mimeType") ?: "text/plain"
+                    if (srcPath == null) {
+                        result.error("INVALID_ARGS", "Missing srcPath", null)
+                        return@setMethodCallHandler
+                    }
+                    executor.execute {
+                        try {
+                            val srcFile = File(srcPath)
+                            if (!srcFile.exists()) {
+                                runOnUiThread { result.error("FILE_NOT_FOUND", "Source file not found", null) }
+                                return@execute
+                            }
+                            var savedPath: String? = null
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                try {
+                                    val resolver = applicationContext.contentResolver
+                                    val contentValues = android.content.ContentValues().apply {
+                                        put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                                        put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                                        put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                                        put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+                                    }
+                                    val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                                    if (uri != null) {
+                                        resolver.openOutputStream(uri)?.use { outStream ->
+                                            FileInputStream(srcFile).use { inStream ->
+                                                inStream.copyTo(outStream)
+                                            }
+                                        }
+                                        contentValues.clear()
+                                        contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                                        resolver.update(uri, contentValues, null, null)
+                                        savedPath = "/storage/emulated/0/Download/$fileName"
+                                    }
+                                } catch (_: Exception) {}
+                            }
+                            if (savedPath == null) {
+                                val dlDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+                                if (!dlDir.exists()) dlDir.mkdirs()
+                                var destFile = File(dlDir, fileName)
+                                var idx = 1
+                                while (destFile.exists()) {
+                                    val dot = fileName.lastIndexOf('.')
+                                    val base = if (dot != -1) fileName.substring(0, dot) else fileName
+                                    val ext = if (dot != -1) fileName.substring(dot) else ""
+                                    destFile = File(dlDir, "${base}_$idx$ext")
+                                    idx++
+                                }
+                                srcFile.copyTo(destFile, overwrite = true)
+                                savedPath = destFile.absolutePath
+                                android.media.MediaScannerConnection.scanFile(
+                                    applicationContext,
+                                    arrayOf(destFile.absolutePath),
+                                    arrayOf(mimeType),
+                                    null
+                                )
+                            }
+                            runOnUiThread { result.success(savedPath) }
+                        } catch (e: Exception) {
+                            runOnUiThread { result.error("SAVE_ERROR", e.message, null) }
+                        }
+                    }
+                }
                 "encryptPdf" -> {
                     val srcPath = call.argument<String>("srcPath")
                     val destPath = call.argument<String>("destPath")

@@ -279,14 +279,37 @@
     }
   }
 
+  global.onVaultFileSaved = function (fileName, savedPath, tempPath) {
+    notifyUser(`✓ Đã lưu: ${fileName} vào mục Tải về (Downloads)`);
+    if (typeof global.showCyberDialog === 'function') {
+      global.showCyberDialog({
+        type: 'success',
+        icon: '📁',
+        title: 'Đã Lưu Tệp Thành Công',
+        message: `Tệp "${fileName}" đã được ghi vào bộ nhớ máy tại:\n• Bộ nhớ trong / Download / ${fileName}\n(Hiển thị trong mục "Tệp gần đây" và "Tải về" của ứng dụng File của bạn).\n\nBạn có muốn mở hoặc chia sẻ tệp này ngay qua Zalo / Notes / Drive không?`,
+        actionText: '📤 Mở / Chia Sẻ Ngay',
+        cancelText: 'Đóng',
+        onAction: function () {
+          if (global.FlutterBridge && typeof global.FlutterBridge.postMessage === 'function') {
+            global.FlutterBridge.postMessage(JSON.stringify({
+              action: 'share_temp_file',
+              name: fileName,
+              path: tempPath
+            }));
+          }
+        }
+      });
+    }
+  };
+
   function saveTextFileNativeOrWeb(fileName, contentStr, mimeType) {
     if (global.FlutterBridge && typeof global.FlutterBridge.postMessage === 'function') {
+      notifyUser(`⏳ Đang ghi tệp ${fileName} vào thư mục Download...`);
       global.FlutterBridge.postMessage(JSON.stringify({
         action: 'save',
         name: fileName,
         content: contentStr
       }));
-      notifyUser(`✓ Đã lưu tệp ${fileName} vào thư mục Downloads`);
       return;
     }
     const blob = new Blob([contentStr], { type: mimeType || 'text/plain;charset=utf-8' });

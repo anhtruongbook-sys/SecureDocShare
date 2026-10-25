@@ -66,15 +66,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.9
-          name: "Krypto v2.7.9 - Tổng Hợp Tri Thức Mạch Lạc Chuẩn v3 (YouTube Chapter Synthesis & GitHub README AST)"
+          tag_name: v2.8.0
+          name: "Krypto v2.8.0 - Xuất Tệp .MD / .JSON Chuẩn Android MediaStore Downloads & Mở/Chia Sẻ Ngay 1 Chạm"
           body: |
-            ## Ứng dụng Di Động Krypto v2.7.9 (PQC ML-KEM-768 + Chat Knowledge Vault v3.0)
-            - **Tổng Hợp Nội Dung Mạch Lạc & Có Cấu Trúc (`ChatVaultEngine v3.0`)**:
-              + **GitHub Repository (`extractGitHubRepoCard`)**: Gọi trực tiếp GitHub REST API kết hợp tải nguyên bản `README.md` (Markdown), phân tích cấu trúc từng đề mục (`# / ## / ###`), bảng biểu và nguyên lý thiết kế để tổng hợp **Thông điệp trọng tâm**, **Bức tranh tổng thể** và **Nội dung chính theo từng Mục** — loại bỏ hoàn toàn lỗi quét nhầm Menu giao diện và React JSON của trang GitHub.
-              + **YouTube Video (`extractYouTubeIdeaCard`)**: Tái tạo câu văn hoàn chỉnh từ phụ đề (không cắt ngang câu 30 giây), khử từ đệm hội thoại (`filler words`) và lọc bỏ link quảng cáo (`sponsor links`), tổng hợp mạch lạc **Nội dung cốt lõi theo từng Chương mục** và **Tổng quan toàn video**.
-              + **Tự động nâng cấp dữ liệu cũ (`Schema v3 Auto-Upgrade`)**: Tự động làm sạch và bóc tách lại các bản ghi rời rạc từ phiên bản cũ trong bộ nhớ thiết bị ngay khi mở ứng dụng, đồng thời bổ sung nút **`🔄 Tóm tắt lại`** trong trang Chi tiết.
-            - **Song Ngữ (`🇻🇳 Tiếng Việt` Mặc Định | Chuyển Đổi `🇬🇧 English`) & Tự Động Xử Lý Khi Chia Sẻ Link (`Share -> Krypto`)**.
+            ## Ứng dụng Di Động Krypto v2.8.0 (PQC ML-KEM-768 + Chat Knowledge Vault v3.0)
+            - **Lưu Tệp `.md` / `.json` Qua Chuẩn Android `MediaStore.Downloads` (`MainActivity.kt`)**:
+              + Sử dụng `ContentResolver` + `MediaStore.Downloads.EXTERNAL_CONTENT_URI` (Android 10–15 Scoped Storage) kết hợp `MediaScannerConnection.scanFile` để tệp `.md` và `.json` xuất ra hiển thị **ngay lập tức** ở đầu mục **Tệp gần đây (Recent)** và **Tải về (Downloads)** trong ứng dụng **File của bạn (My Files)** trên điện thoại Samsung/Android.
+              + Sau khi lưu thành công, hiển thị hộp thoại xác nhận đường dẫn chính xác kèm nút **`📤 Mở / Chia Sẻ Ngay`** để mở trực tiếp hoặc gửi qua Zalo, Samsung Notes, Google Drive chỉ với 1 chạm.
+            - **Kế thừa toàn diện v2.7.9**: Tổng hợp tri thức mạch lạc chuẩn v3 (YouTube Chapter Synthesis & GitHub README AST), Song ngữ Việt - Anh (`🇻🇳 Tiếng Việt` mặc định) và Tự động xử lý khi chia sẻ link (`Share -> Krypto`).
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk

@@ -434,7 +434,38 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
     }
   }
 
+  String _guessMimeType(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.md')) return 'text/markdown';
+    if (lower.endsWith('.json')) return 'application/json';
+    if (lower.endsWith('.txt')) return 'text/plain';
+    if (lower.endsWith('.html') || lower.endsWith('.htm')) return 'text/html';
+    if (lower.endsWith('.pdf')) return 'application/pdf';
+    if (lower.endsWith('.zip')) return 'application/zip';
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    return 'application/octet-stream';
+  }
+
   Future<String?> _saveToDownloadsFolder(String tempFilePath, String targetFileName) async {
+    if (Platform.isAndroid) {
+      try {
+        final String? mediaStorePath = await _nativeChannel.invokeMethod<String>(
+          'saveFileToDownloads',
+          {
+            'srcPath': tempFilePath,
+            'fileName': targetFileName,
+            'mimeType': _guessMimeType(targetFileName),
+          },
+        );
+        if (mediaStorePath != null && mediaStorePath.isNotEmpty) {
+          return mediaStorePath;
+        }
+      } catch (e) {
+        debugPrint('MediaStore saveFileToDownloads fallback: $e');
+      }
+    }
+
     final List<String> candidatePaths = [
       '/storage/emulated/0/Download',
       '/sdcard/Download',
@@ -1023,8 +1054,8 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
               final filePath = data['path'] as String?;
               if (filePath != null && await File(filePath).exists()) {
                 await Share.shareXFiles(
-                  [XFile(filePath)],
-                  text: 'Tài liệu bảo mật Adobe PDF: $fileName',
+                  [XFile(filePath, mimeType: _guessMimeType(fileName))],
+                  text: 'Tài liệu Krypto: $fileName',
                 );
               }
               return;
@@ -1050,18 +1081,25 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
               return;
             }
 
-            // CHỨC NĂNG 5: LƯU TỆP HTML WEB
+            // CHỨC NĂNG 5: LƯU TỆP MARKDOWN (.MD), JSON HOẶC HTML WEB VÀO DOWNLOADS (MEDIASTORE)
             if (action == 'save' || action == 'share') {
               final content = data['content'] as String? ?? '';
               final tempDir = await getTemporaryDirectory();
               final tempFile = File('${tempDir.path}/$fileName');
-              await tempFile.writeAsString(content);
+              await tempFile.writeAsString(content, flush: true);
 
               if (action == 'share') {
-                await Share.shareXFiles([XFile(tempFile.path)], text: 'Tài liệu bảo mật $fileName');
+                await Share.shareXFiles([XFile(tempFile.path)], text: 'Tài liệu Krypto: $fileName');
               } else {
-                await _saveToDownloadsFolder(tempFile.path, fileName);
+                final savedPath = await _saveToDownloadsFolder(tempFile.path, fileName);
+                final escName = jsonEncode(fileName);
+                final escSaved = jsonEncode(savedPath ?? '/storage/emulated/0/Download/$fileName');
+                final escTemp = jsonEncode(tempFile.path);
+                await _controller.runJavaScript(
+                  "if (window.onVaultFileSaved) { window.onVaultFileSaved($escName, $escSaved, $escTemp); }",
+                );
               }
+              return;
             }
 
             // -----------------------------------------------------------------
