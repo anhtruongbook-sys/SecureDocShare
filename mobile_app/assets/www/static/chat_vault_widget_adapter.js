@@ -497,12 +497,17 @@
 
         const ideasHtml = (wis.core_ideas || []).map(c => {
           const link = isYt ? `${baseUrl}&t=${c.seconds || 0}s` : baseUrl;
-          return `<li style="padding:5px 0; border-bottom:1px dashed var(--cv-border);"><a href="${escapeHtml(link)}" target="_blank" style="color:var(--cv-accent); font-family:monospace; font-weight:700;">[${escapeHtml(c.timestamp)}]</a> ${c.chapter ? `<strong>[${escapeHtml(c.chapter)}]</strong> ` : ''}${escapeHtml(c.content)}</li>`;
+          return `<li style="padding:7px 0; border-bottom:1px dashed var(--cv-border);"><a href="${escapeHtml(link)}" target="_blank" style="color:var(--cv-accent); font-family:monospace; font-weight:700;">[${escapeHtml(c.timestamp)}]</a> ${c.chapter ? `<strong style="color:var(--cv-text);">${escapeHtml(c.chapter)}:</strong> ` : ''}${escapeHtml(c.content)}</li>`;
         }).join('');
 
         const insightsHtml = (wis.key_insights || []).map(k => {
           const link = isYt ? `${baseUrl}&t=${k.seconds || 0}s` : baseUrl;
-          return `<li style="padding:4px 0;"><a href="${escapeHtml(link)}" target="_blank" style="color:var(--cv-accent); font-family:monospace; font-weight:700;">[${escapeHtml(k.timestamp)}]</a> ${escapeHtml(k.content)}</li>`;
+          return `<li style="padding:5px 0; border-bottom:1px dashed var(--cv-border);"><a href="${escapeHtml(link)}" target="_blank" style="color:var(--cv-accent); font-family:monospace; font-weight:700;">[${escapeHtml(k.timestamp)}]</a> ${escapeHtml(k.content)}</li>`;
+        }).join('');
+
+        const actionsHtml = (wis.actionable_steps || []).map(st => {
+          const link = isYt ? `${baseUrl}&t=${st.seconds || 0}s` : baseUrl;
+          return `<li style="padding:5px 0; border-bottom:1px dashed var(--cv-border);"><a href="${escapeHtml(link)}" target="_blank" style="color:var(--cv-accent); font-family:monospace; font-weight:700;">[${escapeHtml(st.timestamp)}]</a> ${escapeHtml(st.content)}</li>`;
         }).join('');
 
         const chaptersHtml = (tl.chapters || []).map(ch => {
@@ -514,8 +519,8 @@
         box.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
             <div style="flex:1; min-width:200px;">
-              <h4 style="margin:0; font-size:13.5px; color:var(--cv-text);">${escapeHtml(meta.title)}</h4>
-              <div style="font-size:11px; color:var(--cv-muted); margin-top:3px;">
+              <h4 style="margin:0; font-size:13.5px; color:var(--cv-text); line-height:1.4;">${escapeHtml(meta.title)}</h4>
+              <div style="font-size:11px; color:var(--cv-muted); margin-top:4px;">
                 Nguồn: <a href="${escapeHtml(baseUrl)}" target="_blank" style="color:var(--cv-accent); word-break:break-all;">${escapeHtml(baseUrl)}</a>
                 • Ghi chú: <em>"${escapeHtml(ctx.sender_note || '')}"</em>
               </div>
@@ -525,6 +530,7 @@
                 <button type="button" class="cv-lang-btn ${currentLang === 'vi' ? 'active' : ''}" id="cvDetailLangVi">🇻🇳 VI</button>
                 <button type="button" class="cv-lang-btn ${currentLang === 'en' ? 'active' : ''}" id="cvDetailLangEn">🇬🇧 EN</button>
               </div>
+              <button type="button" class="cv-btn cv-btn-outline" id="cvReSummarize" style="padding:5px 9px; font-size:11px;" title="Tóm tắt & dịch lại bản ghi này">🔄 Tóm tắt lại</button>
               <button type="button" class="cv-btn cv-btn-outline" id="cvCopyMd" style="padding:5px 9px; font-size:11px;">📋 Copy Thẻ</button>
               <button type="button" class="cv-btn cv-btn-outline" id="cvExportMd" style="padding:5px 9px; font-size:11px;">📝 Xuất (.md)</button>
               <button type="button" class="cv-btn cv-btn-danger" id="cvDeleteRecord" style="padding:5px 9px; font-size:11px;">🗑️ Xóa</button>
@@ -532,20 +538,42 @@
             </div>
           </div>
 
-          <p style="font-size:12px; line-height:1.5; margin:8px 0; color:var(--cv-text);">${escapeHtml(summ.executive_summary)}</p>
-
-          ${chaptersHtml ? `<div style="margin:8px 0;"><div style="font-size:11px; font-weight:700; color:var(--cv-muted); margin-bottom:4px;">⏱️ CHƯƠNG MỤC THỜI GIAN (CHẠM ĐỂ MỞ ĐÚNG GIÂY):</div>${chaptersHtml}</div>` : ''}
-
-          <div style="margin-top:8px;">
-            <div style="font-size:11px; font-weight:700; color:var(--cv-muted);">💡 LUẬN ĐIỂM CỐT LÕI (CORE IDEAS):</div>
-            <ul style="list-style:none; padding-left:0; margin:4px 0 0; font-size:12px; line-height:1.45;">${ideasHtml || '<li>(Không có dữ liệu)</li>'}</ul>
+          <div style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--cv-border);">
+            <div style="font-size:11px; font-weight:700; color:var(--cv-accent); margin-bottom:3px;">📌 THÔNG ĐIỆP TRỌNG TÂM (CORE THESIS):</div>
+            <div style="font-size:12.5px; font-weight:600; line-height:1.5; color:var(--cv-text);">${escapeHtml(summ.one_liner)}</div>
           </div>
 
-          ${insightsHtml ? `<div style="margin-top:8px;"><div style="font-size:11px; font-weight:700; color:var(--cv-muted);">🔑 ĐÚC KẾT SÂU (KEY INSIGHTS):</div><ul style="list-style:none; padding-left:0; margin:4px 0 0; font-size:12px; line-height:1.45;">${insightsHtml}</ul></div>` : ''}
+          <div style="margin-top:8px;">
+            <div style="font-size:11px; font-weight:700; color:var(--cv-accent); margin-bottom:3px;">🎯 BỨC TRANH TỔNG THỂ & Ý NGHĨA CHÍNH (EXECUTIVE OVERVIEW):</div>
+            <p style="font-size:12px; line-height:1.55; margin:0; color:var(--cv-text);">${escapeHtml(summ.executive_summary)}</p>
+          </div>
+
+          ${chaptersHtml ? `<div style="margin:10px 0;"><div style="font-size:11px; font-weight:700; color:var(--cv-muted); margin-bottom:4px;">⏱️ MỤC LỤC PHẦN / CHƯƠNG MỤC:</div>${chaptersHtml}</div>` : ''}
+
+          <div style="margin-top:10px;">
+            <div style="font-size:11px; font-weight:700; color:var(--cv-accent);">💡 NỘI DUNG CỐT LÕI THEO MẠCH PHẦN / CHƯƠNG MỤC:</div>
+            <ul style="list-style:none; padding-left:0; margin:4px 0 0; font-size:12px; line-height:1.5;">${ideasHtml || '<li>(Không có dữ liệu)</li>'}</ul>
+          </div>
+
+          ${insightsHtml ? `<div style="margin-top:10px;"><div style="font-size:11px; font-weight:700; color:var(--cv-accent);">🔑 NGUYÊN LÝ & ĐÚC KẾT SÂU (KEY INSIGHTS):</div><ul style="list-style:none; padding-left:0; margin:4px 0 0; font-size:12px; line-height:1.5;">${insightsHtml}</ul></div>` : ''}
+
+          ${actionsHtml ? `<div style="margin-top:10px;"><div style="font-size:11px; font-weight:700; color:var(--cv-accent);">🚀 KHUYẾN NGHỊ HÀNH ĐỘNG & ỨNG DỤNG (ACTIONABLE STEPS):</div><ul style="list-style:none; padding-left:0; margin:4px 0 0; font-size:12px; line-height:1.5;">${actionsHtml}</ul></div>` : ''}
         `;
 
         box.querySelector('#cvDetailLangVi').addEventListener('click', () => setLanguage('vi'));
         box.querySelector('#cvDetailLangEn').addEventListener('click', () => setLanguage('en'));
+
+        box.querySelector('#cvReSummarize').addEventListener('click', async () => {
+          if (!global.ChatVaultEngine.reExtractRecord) return;
+          notifyUser('⏳ Đang bóc tách & tổng hợp lại mạch nội dung chuẩn v3...');
+          const fresh = await global.ChatVaultEngine.reExtractRecord(item.id);
+          await refreshList();
+          if (fresh) {
+            const newIdx = currentResults.findIndex(x => x.id === fresh.id);
+            if (newIdx !== -1) showDetail(newIdx, false);
+            notifyUser('✓ Đã tổng hợp lại nội dung chính thành công!');
+          }
+        });
 
         box.querySelector('#cvCloseDetail').addEventListener('click', () => {
           box.style.display = 'none';

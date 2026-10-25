@@ -1,77 +1,109 @@
-window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "github_repo", "metadata": {"url": "https://github.com/danielmiessler/fabric", "title": "danielmiessler/fabric: Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "channel": "GitHub (danielmiessler)", "duration": "★ 44,420 | Go", "publish_date": "2026-10-25", "extracted_at": "2026-10-25 21:30:49"}, "chat_context": {"shared_by": "User", "chat_group": "R&D", "shared_at": "2026-10-25 21:30:49", "sender_note": "Khung chắt lọc ý tưởng extract_wisdom từ video và bài viết"}, "taxonomy": {"category": "Công nghệ, Lập trình & AI", "tags": ["ai", "augmentation", "flourishing", "life", "work", "go", "support", "azure", "fabric", "adds", "openai", "added"], "search_aliases": ["danielmiessler/fabric: fabric is an open-source framework for augmenting humans using ai. it provides a modular system for solving specific problems using a crowdsourced set of ai prompts that can be used anywhere.", "cong nghe, lap trinh & ai", "ai", "augmentation", "flourishing", "life", "work", "go", "support", "azure", "fabric", "adds", "openai", "added"]}, "summary": {"one_liner": "Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "executive_summary": "Chỉ cần sử dụng các mẫu • Kể từ khi bắt đầu sử dụng AI hiện đại vào cuối năm 2022, chúng tôi đã thấy số lượng ứng dụng AI **_phi thường_** để hoàn thành nhiệm vụ. Có hàng nghìn trang web, bot trò chuyện, ứng dụng di động và các giao diện khác để sử dụng tất cả các AI khác nhau. Tất cả đều thực sự thú vị và mạnh mẽ, nhưng _không dễ để tích hợp chức năng này vào cuộc sống của chúng ta._"}, "wisdom_distillation": {"core_ideas": [{"chapter": "ĐỌC TÔI", "timestamp": "Ý 1", "seconds": 0, "content": "Chỉ cần sử dụng các mẫu •"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 2", "seconds": 0, "content": "Kể từ khi bắt đầu sử dụng AI hiện đại vào cuối năm 2022, chúng tôi đã thấy số lượng ứng dụng AI **_phi thường_** để hoàn thành nhiệm vụ. Có hàng nghìn trang web, bot trò chuyện, ứng dụng di động và các giao diện khác để sử dụng tất cả các AI khác nhau."}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 3", "seconds": 0, "content": "Tất cả đều thực sự thú vị và mạnh mẽ, nhưng _không dễ để tích hợp chức năng này vào cuộc sống của chúng ta._"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 4", "seconds": 0, "content": "**Fabric được tạo ra để giải quyết vấn đề này bằng cách tạo và sắp xếp các đơn vị cơ bản của AI—chính các lời nhắc!**"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 5", "seconds": 0, "content": "Fabric sắp xếp các lời nhắc theo nhiệm vụ trong thế giới thực, cho phép mọi người tạo, thu thập và sắp xếp các giải pháp AI quan trọng nhất của họ ở một nơi duy nhất để sử dụng trong các công cụ yêu thích của họ. Và nếu bạn tập trung vào dòng lệnh, bạn có thể sử dụng chính Fabric làm giao diện!"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 6", "seconds": 0, "content": "Để tìm hiểu sâu hơn về Fabric và các bộ phận bên trong của nó, hãy đọc tài liệu trong thư mục tài liệu. có"}], "key_insights": [{"timestamp": "Kiến trúc", "seconds": 0, "content": "Các thành phần chính trong tài liệu: `fabric`, What and why, Updates, Recent Major Features, Intro videos, Navigation, Changelog, Philosophy"}], "actionable_steps": [{"timestamp": "Clone", "seconds": 0, "content": "bản sao git https://github.com/danielmiessler/fabric.git"}], "facts_and_metrics": [{"timestamp": "GitHub Stats", "seconds": 0, "content": "Stars: 44,420 | Ngôn ngữ chính: Go | Chủ đề: ai, augmentation, flourishing, life, work"}], "mentioned_references": [{"name": "Trang chủ / Homepage", "url": "https://danielmiessler.com/p/fabric-origin-story", "type": "external_link"}]}, "timeline": {"chapters": [{"timestamp": "H1", "seconds": 0, "title": "`vải`"}, {"timestamp": "H2", "seconds": 0, "title": "Cái gì và tại sao"}, {"timestamp": "H3", "seconds": 0, "title": "Cập nhật"}, {"timestamp": "H4", "seconds": 0, "title": "Các tính năng chính gần đây"}, {"timestamp": "H5", "seconds": 0, "title": "Video giới thiệu"}, {"timestamp": "H6", "seconds": 0, "title": "Điều hướng"}, {"timestamp": "H7", "seconds": 0, "title": "Nhật ký thay đổi"}, {"timestamp": "H8", "seconds": 0, "title": "Triết học"}, {"timestamp": "H9", "seconds": 0, "title": "Chia vấn đề thành các thành phần"}, {"timestamp": "H10", "seconds": 0, "title": "Quá nhiều lời nhắc"}, {"timestamp": "H11", "seconds": 0, "title": "Cài đặt"}, {"timestamp": "H12", "seconds": 0, "title": "Cài đặt một dòng (Được khuyến nghị)"}], "visual_slides": []}, "transcript_corpus": [{"timestamp": "Đoạn 1", "start_seconds": 0, "text": "Just Use the Patterns •"}, {"timestamp": "Đoạn 2", "start_seconds": 1, "text": "Since the start of modern AI in late 2022 we've seen an **_extraordinary_** number of AI applications for accomplishing tasks. There are thousands of websites, chat-bots, mobile apps, and other interfaces for using all the different AI out there."}, {"timestamp": "Đoạn 3", "start_seconds": 2, "text": "It's all really exciting and powerful, but _it's not easy to integrate this functionality into our lives._"}, {"timestamp": "Đoạn 4", "start_seconds": 3, "text": "**Fabric was created to address this by creating and organizing the fundamental units of AI—the prompts themselves!**"}, {"timestamp": "Đoạn 5", "start_seconds": 4, "text": "Fabric organizes prompts by real-world task, allowing people to create, collect, and organize their most important AI solutions in a single place for use in their favorite tools. And if you're command-line focused, you can use Fabric itself as the interface!"}, {"timestamp": "Đoạn 6", "start_seconds": 5, "text": "For a deep dive into Fabric and its internals, read the documentation in the docs folder. There is"}, {"timestamp": "Đoạn 7", "start_seconds": 6, "text": "also the extremely useful and regularly updated DeepWiki for Fabric."}, {"timestamp": "Đoạn 8", "start_seconds": 7, "text": "We've been doing so many exciting things here at Fabric, I wanted to give a quick summary here to give you a sense of our development velocity!"}, {"timestamp": "Đoạn 9", "start_seconds": 8, "text": "Below are the **new features and capabilities** we've added (newest first):"}, {"timestamp": "Đoạn 10", "start_seconds": 9, "text": "- v1.4.447 (April 16, 2026) — **Claude Opus 4.7**: Updates the Anthropic SDK to v1.37.0 and adds the new Claude Opus 4.7 to the available models, including 1M-token context window support."}, {"timestamp": "Đoạn 11", "start_seconds": 10, "text": "- v1.4.437 (March 16, 2026) — **OpenAI Codex PLugin**: Fabric now supports using OpenAI Codex (with your OpenAI subscription) as a backend!"}, {"timestamp": "Đoạn 12", "start_seconds": 11, "text": "- v1.4.417 (Feb 21, 2026) — **Azure AI Gateway Plugin**: Added Azure AI Gateway plugin supporting multiple backends (AWS Bedrock, Azure OpenAI, Google Vertex AI) through a unified Azure APIM Gateway with shared subscription key authentication."}, {"timestamp": "Đoạn 13", "start_seconds": 12, "text": "- v1.4.416 (Feb 21, 2026) — **Azure Entra ID Authentication**: Added Azure Entra ID authentication plugin with shared Azure utilities, Entra ID/MSAL support, and extracted common Azure logic into a reusable `azurecommon` package."}, {"timestamp": "Đoạn 14", "start_seconds": 13, "text": "- v1.4.380 (Jan 15, 2026) — **Microsoft 365 Copilot Integration**: Added support for corporate Microsoft 365 Copilot, enabling enterprise users to leverage AI grounded in their organization's Microsoft 365 data (emails, documents, meetings."}, {"timestamp": "Đoạn 15", "start_seconds": 14, "text": "- v1.4.378 (Jan 14, 2026) — **Digital Ocean GenAI Support**: Added support for Digital Ocean GenAI, along with a guide for how to use it."}, {"timestamp": "Đoạn 16", "start_seconds": 15, "text": "- v1.4.356 (Dec 22, 2025) — **Complete Internationalization**: Full i18n support for setup prompts across all 10 languages with intelligent environment variable handling—making Fabric truly accessible worldwide while maintaining configuration consistency."}, {"timestamp": "Đoạn 17", "start_seconds": 16, "text": "- v1.4.350 (Dec 18, 2025) — **Interactive API Documentation**: Adds Swagger/OpenAPI UI at `/swagger/index.html` with comprehensive REST API documentation, enhanced developer guides, and improved endpoint discoverability for easier integration."}, {"timestamp": "Đoạn 18", "start_seconds": 17, "text": "- v1.4.338 (Dec 4, 2025) — Add Abacus vendor support for Chat-LLM"}, {"timestamp": "Đoạn 19", "start_seconds": 18, "text": "models (see RouteLLM APIs)."}, {"timestamp": "Đoạn 20", "start_seconds": 19, "text": "- v1.4.337 (Dec 4, 2025) — Add \"Z AI\" vendor support. See the Z AI overview page for more details."}, {"timestamp": "Đoạn 21", "start_seconds": 20, "text": "- v1.4.334 (Nov 26, 2025) — **Claude Opus 4.5**: Updates the Anthropic SDK to the latest and adds the new Claude Opus 4.5 to the available models."}, {"timestamp": "Đoạn 22", "start_seconds": 21, "text": "- v1.4.331 (Nov 23, 2025) — **Support for GitHub Models**: Adds support for using GitHub Models."}, {"timestamp": "Đoạn 23", "start_seconds": 22, "text": "- v1.4.322 (Nov 5, 2025) — **Interactive HTML Concept Maps and Claude Sonnet 4.5**: Adds `create_conceptmap` pattern for visual knowledge representation using Vis.js, introduces WELLNESS category with psychological analysis patterns, and upgrades to Claude Sonnet 4.5"}, {"timestamp": "Đoạn 24", "start_seconds": 23, "text": "- v1.4.317 (Sep 21, 2025) — **Portuguese Language Variants**: Adds BCP 47 locale normalization with support for Brazilian Portuguese (pt-BR) and European Portuguese (pt-PT) with intelligent fallback chains"}, {"timestamp": "Đoạn 25", "start_seconds": 24, "text": "- v1.4.314 (Sep 17, 2025) — **Azure OpenAI Migration**: Migrates to official `openai-go/azure` SDK with improved authentication and default API version support"}, {"timestamp": "Đoạn 26", "start_seconds": 25, "text": "- v1.4.311 (Sep 13, 2025) — **More internationalization support**: Adds de (German), fa (Persian / Farsi), fr (French), it (Italian),"}, {"timestamp": "Đoạn 27", "start_seconds": 26, "text": "- v1.4.309 (Sep 9, 2025) — **Comprehensive internationalization support**: Includes English and Spanish locale files."}, {"timestamp": "Đoạn 28", "start_seconds": 27, "text": "- v1.4.303 (Aug 29, 2025) — **New Binary Releases**: Linux ARM and Windows ARM targets. You can run Fabric on the Raspberry PI and on your Windows Surface!"}, {"timestamp": "Đoạn 29", "start_seconds": 28, "text": "- v1.4.294 (Aug 20, 2025) — **Venice AI Support**: Added the Venice AI provider. Venice is a Privacy-First, Open-Source AI provider. See their \"About Venice\" page for details."}, {"timestamp": "Đoạn 30", "start_seconds": 29, "text": "- v1.4.291 (Aug 18, 2025) — **Speech To Text**: Add OpenAI speech-to-text support with `--transcribe-file`, `--transcribe-model`, and `--split-media-file` flags."}, {"timestamp": "Đoạn 31", "start_seconds": 30, "text": "These features represent our commitment to making Fabric the most powerful and flexible AI augmentation framework available!"}, {"timestamp": "Đoạn 32", "start_seconds": 31, "text": "Keep in mind that many of these were recorded when Fabric was Python-based, so remember to use the current install instructions below."}, {"timestamp": "Đoạn 33", "start_seconds": 32, "text": "- Network Chuck"}, {"timestamp": "Đoạn 34", "start_seconds": 33, "text": "- David Bombal"}, {"timestamp": "Đoạn 35", "start_seconds": 34, "text": "- My Own Intro to the Tool"}, {"timestamp": "Đoạn 36", "start_seconds": 35, "text": "- More Fabric YouTube Videos"}, {"timestamp": "Đoạn 37", "start_seconds": 36, "text": "- Recent Major Features"}, {"timestamp": "Đoạn 38", "start_seconds": 37, "text": "- Breaking problems into components"}, {"timestamp": "Đoạn 39", "start_seconds": 38, "text": "- One-Line Install (Recommended)"}, {"timestamp": "Đoạn 40", "start_seconds": 39, "text": "- Manual Binary Downloads"}], "i18n": {"vi": {"title": "danielmiessler/fabric: Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "one_liner": "Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "executive_summary": "Chỉ cần sử dụng các mẫu • Kể từ khi bắt đầu sử dụng AI hiện đại vào cuối năm 2022, chúng tôi đã thấy số lượng ứng dụng AI **_phi thường_** để hoàn thành nhiệm vụ. Có hàng nghìn trang web, bot trò chuyện, ứng dụng di động và các giao diện khác để sử dụng tất cả các AI khác nhau. Tất cả đều thực sự thú vị và mạnh mẽ, nhưng _không dễ để tích hợp chức năng này vào cuộc sống của chúng ta._", "chapters": [{"timestamp": "H1", "seconds": 0, "title": "`vải`"}, {"timestamp": "H2", "seconds": 0, "title": "Cái gì và tại sao"}, {"timestamp": "H3", "seconds": 0, "title": "Cập nhật"}, {"timestamp": "H4", "seconds": 0, "title": "Các tính năng chính gần đây"}, {"timestamp": "H5", "seconds": 0, "title": "Video giới thiệu"}, {"timestamp": "H6", "seconds": 0, "title": "Điều hướng"}, {"timestamp": "H7", "seconds": 0, "title": "Nhật ký thay đổi"}, {"timestamp": "H8", "seconds": 0, "title": "Triết học"}, {"timestamp": "H9", "seconds": 0, "title": "Chia vấn đề thành các thành phần"}, {"timestamp": "H10", "seconds": 0, "title": "Quá nhiều lời nhắc"}, {"timestamp": "H11", "seconds": 0, "title": "Cài đặt"}, {"timestamp": "H12", "seconds": 0, "title": "Cài đặt một dòng (Được khuyến nghị)"}], "core_ideas": [{"chapter": "ĐỌC TÔI", "timestamp": "Ý 1", "seconds": 0, "content": "Chỉ cần sử dụng các mẫu •"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 2", "seconds": 0, "content": "Kể từ khi bắt đầu sử dụng AI hiện đại vào cuối năm 2022, chúng tôi đã thấy số lượng ứng dụng AI **_phi thường_** để hoàn thành nhiệm vụ. Có hàng nghìn trang web, bot trò chuyện, ứng dụng di động và các giao diện khác để sử dụng tất cả các AI khác nhau."}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 3", "seconds": 0, "content": "Tất cả đều thực sự thú vị và mạnh mẽ, nhưng _không dễ để tích hợp chức năng này vào cuộc sống của chúng ta._"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 4", "seconds": 0, "content": "**Fabric được tạo ra để giải quyết vấn đề này bằng cách tạo và sắp xếp các đơn vị cơ bản của AI—chính các lời nhắc!**"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 5", "seconds": 0, "content": "Fabric sắp xếp các lời nhắc theo nhiệm vụ trong thế giới thực, cho phép mọi người tạo, thu thập và sắp xếp các giải pháp AI quan trọng nhất của họ ở một nơi duy nhất để sử dụng trong các công cụ yêu thích của họ. Và nếu bạn tập trung vào dòng lệnh, bạn có thể sử dụng chính Fabric làm giao diện!"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 6", "seconds": 0, "content": "Để tìm hiểu sâu hơn về Fabric và các bộ phận bên trong của nó, hãy đọc tài liệu trong thư mục tài liệu. có"}], "key_insights": [{"timestamp": "Kiến trúc", "seconds": 0, "content": "Các thành phần chính trong tài liệu: `fabric`, What and why, Updates, Recent Major Features, Intro videos, Navigation, Changelog, Philosophy"}], "actionable_steps": [{"timestamp": "Clone", "seconds": 0, "content": "bản sao git https://github.com/danielmiessler/fabric.git"}]}, "en": {"title": "danielmiessler/fabric: Fabric is an open-source framework for augmenting humans using AI. It provides a modular system for solving specific problems using a crowdsourced set of AI prompts that can be used anywhere.", "one_liner": "Fabric is an open-source framework for augmenting humans using AI. It provides a modular system for solving specific problems using a crowdsourced set of AI prompts that can be used anywhere.", "executive_summary": "Just Use the Patterns • Since the start of modern AI in late 2022 we've seen an **_extraordinary_** number of AI applications for accomplishing tasks. There are thousands of websites, chat-bots, mobile apps, and other interfaces for using all the different AI out there. It's all really exciting and powerful, but _it's not easy to integrate this functionality into our lives._", "chapters": [{"timestamp": "H1", "seconds": 0, "title": "`fabric`"}, {"timestamp": "H2", "seconds": 0, "title": "What and why"}, {"timestamp": "H3", "seconds": 0, "title": "Updates"}, {"timestamp": "H4", "seconds": 0, "title": "Recent Major Features"}, {"timestamp": "H5", "seconds": 0, "title": "Intro videos"}, {"timestamp": "H6", "seconds": 0, "title": "Navigation"}, {"timestamp": "H7", "seconds": 0, "title": "Changelog"}, {"timestamp": "H8", "seconds": 0, "title": "Philosophy"}, {"timestamp": "H9", "seconds": 0, "title": "Breaking problems into components"}, {"timestamp": "H10", "seconds": 0, "title": "Too many prompts"}, {"timestamp": "H11", "seconds": 0, "title": "Installation"}, {"timestamp": "H12", "seconds": 0, "title": "One-Line Install (Recommended)"}], "core_ideas": [{"chapter": "README", "timestamp": "Ý 1", "seconds": 0, "content": "Just Use the Patterns •"}, {"chapter": "README", "timestamp": "Ý 2", "seconds": 0, "content": "Since the start of modern AI in late 2022 we've seen an **_extraordinary_** number of AI applications for accomplishing tasks. There are thousands of websites, chat-bots, mobile apps, and other interfaces for using all the different AI out there."}, {"chapter": "README", "timestamp": "Ý 3", "seconds": 0, "content": "It's all really exciting and powerful, but _it's not easy to integrate this functionality into our lives._"}, {"chapter": "README", "timestamp": "Ý 4", "seconds": 0, "content": "**Fabric was created to address this by creating and organizing the fundamental units of AI—the prompts themselves!**"}, {"chapter": "README", "timestamp": "Ý 5", "seconds": 0, "content": "Fabric organizes prompts by real-world task, allowing people to create, collect, and organize their most important AI solutions in a single place for use in their favorite tools. And if you're command-line focused, you can use Fabric itself as the interface!"}, {"chapter": "README", "timestamp": "Ý 6", "seconds": 0, "content": "For a deep dive into Fabric and its internals, read the documentation in the docs folder. There is"}], "key_insights": [{"timestamp": "Kiến trúc", "seconds": 0, "content": "Các thành phần chính trong tài liệu: `fabric`, What and why, Updates, Recent Major Features, Intro videos, Navigation, Changelog, Philosophy"}], "actionable_steps": [{"timestamp": "Clone", "seconds": 0, "content": "git clone https://github.com/danielmiessler/fabric.git"}]}}}, {"id": "yt_0phAfVzaAw4", "resource_type": "youtube_video", "metadata": {"video_id": "0phAfVzaAw4", "url": "https://www.youtube.com/watch?v=0phAfVzaAw4", "title": "RevOps nên xây dựng những gì so với mua cho bộ não công ty (Ex-HubSpot CPO tại Vector)", "channel": "Day AI", "duration": "32:34", "duration_seconds": 1954, "publish_date": "2026-10-13T11:06:47-07:00", "extracted_at": "2026-10-25 18:05:17"}, "chat_context": {"shared_by": "User", "chat_group": "General", "shared_at": "2026-10-25 18:05:17", "sender_note": "Thử nghiệm trích xuất ý tưởng từ link YouTube"}, "taxonomy": {"category": "Công nghệ, Lập trình & AI", "tags": ["company", "engineering", "team", "product", "sales", "could", "whatever", "claude", "revops", "teams"], "search_aliases": ["what revops should build vs. buy for the company brain (ex-hubspot cpo at vector)", "cong nghe, lap trinh & ai", "company", "engineering", "team", "product", "sales", "could", "whatever", "claude"]}, "summary": {"one_liner": "Các nhóm RevOps hiện đang xây dựng. Một người có Claude Code có băng thông bằng sáu kỹ sư từ năm 2017. Vậy bạn nên xây dựng cái gì và vẫn nên mua cái gì?", "executive_summary": "Các nhóm RevOps hiện đang xây dựng. Một người có Claude Code có băng thông bằng sáu kỹ sư từ năm 2017. Vậy bạn nên xây dựng cái gì và vẫn nên mua cái gì? Tại Vector 2026, Christopher O'Donnell (đồng sáng lập Day AI, sản phẩm hàng đầu trong 10 năm tại HubSpot) tìm hiểu bộ não thực sự của công ty là gì, tại sao CRM truyền thống không bao giờ nằm ​​trong năm nguồn dữ liệu hàng đầu mà các nhóm RevOps dựa vào và cách quyết định từng phần: bản ghi cuộc họp, nguồn dữ liệu, mặt phẳng điều khiển tác nhân, khai thác, bề mặt làm việc, quản lý kiến ​​thức."}, "wisdom_distillation": {"core_ideas": [{"chapter": "Từ sản phẩm HubSpot đến chạy RevOps", "timestamp": "02:26", "seconds": 146, "content": "Họ đang làm điều này à? Có phải họ đang sử dụng Kafka và tất cả những thứ còn lại? Và tôi nói, \"Hãy xem những gì tôi đã nói nhé? Hãy thật cẩn thận.\" Tuy nhiên, một khi anh ấy đã biết thì chỉ vậy thôi, phải không? Một năm sau, chúng tôi tự hào là chủ sở hữu của toàn bộ CNTT của công ty, bao gồm cả RevOps, điều này giúp tôi có được trải nghiệm đáng kinh ngạc khi quản lý một anh chàng vẫn còn ở đó, EVP của Ops tại HubSpot, Chris Hogan, một huyền thoại, một quý ông và một học giả, và tôi đã có vinh dự được quản lý anh ấy trong hai hoặc ba năm, bạn biết đấy, nói về hội chứng kẻ mạo danh, nhưng tôi đã học được rất nhiều điều từ anh ấy."}, {"chapter": "Bây giờ bạn là một nhóm kỹ thuật sản phẩm", "timestamp": "03:40", "seconds": 220, "content": "theo đúng nghĩa đen, chỗ ngồi của từng người tại sự kiện ngày hôm nay, thực sự, tôi tin rằng chiến lược AI của bạn đại diện cho cơ hội số một để xây dựng hiệu ứng cấp số nhân, uốn cong đường cong, tại công ty của bạn hơn bất kỳ bộ phận nào khác, thậm chí hơn cả kỹ thuật. Tin xấu là bạn sẽ phải đảm nhận vai trò truyền thống của tôi là người lãnh đạo sản phẩm, đi ra ngoài, mua áo phông đen, New Balance và mọi thứ. Robert Barricade có những chiếc áo phông đen tuyệt đẹp."}, {"chapter": "Bộ não công ty thực sự là gì", "timestamp": "05:24", "seconds": 324, "content": "Cách chúng ta giải quyết những vấn đề khó khăn vào năm 2026 rất khác so với cách chúng ta giải quyết những vấn đề này trước đây. Đó là phần khó khăn. Phần dễ dàng hơn là khi bạn học được mẫu này, bạn có thể sử dụng nó cho bất kỳ vấn đề khó khăn nào mà bạn gặp phải. Chúng tôi có... Tôi nghĩ chiến dịch tiếp thị gần đây nhất mà chúng tôi đã thực hiện là cách giải quyết CRM bằng cách giải quyết mọi thứ vì đây là tư duy dựa trên khuôn mẫu và, bạn biết đấy, phải làm gì... điểm xuất phát của bạn là gì, và sau đó, bạn biết đấy, bạn sẽ tìm ra con đường của mình như nước. Bạn sẽ tìm ra cách giải quyết,"}, {"chapter": "Bắt đầu với một thư mục", "timestamp": "06:30", "seconds": 390, "content": "Bạn nắm lấy tất cả, bạn biết đấy, nhắm mục tiêu vào các trang web của trường học. Bạn chuyển đổi chúng thành markdown. Bạn lấy tất cả các thẻ báo cáo, tất cả mọi thứ. Bạn biết đấy, bạn thì thầm những điều bạn nghĩ về con mình và đặt tất cả những điều đó vào tập hồ sơ, sau đó bạn bắt đầu nói, \"Được rồi, hãy hiểu điều này thôi.\" Và bạn thực sự có thể tiếp cận vấn đề đó bằng câu hỏi con tôi nên học ở đâu? Nếu bạn đang xây một ngôi nhà, bạn có thể đưa vào tất cả các quy định của thị trấn, tất cả thông tin về cách đăng ký quyền sử dụng đất và tất cả những thứ như vậy, chứng nhận chì, bạn biết đấy, thông tin nhà thầu, đánh giá từ Yelp."}, {"chapter": "Não rải rác khắp nơi", "timestamp": "10:37", "seconds": 637, "content": "điều đó có thể đã tồn tại trên một tờ rơi nhiều lớp, được in ra, bạn biết đấy, tờ rơi quảng cáo bắt đầu bán hàng có nội dung \"Mọi người có thể vui lòng làm theo quy trình bán hàng không?\" Và sau đó, bạn biết đấy, hầu hết những thứ đó, chẳng hạn như, ngay cạnh quầy bar trên đường đi ra thùng rác. Bạn biết đấy, bạn có tất cả các thẻ khởi động bán hàng, thẻ quy trình bán hàng. Nhưng những ví dụ thực sự chi tiết về chiến lược. Khi bạn tổ chức các cuộc họp hoạt động nội bộ và khi họp công ty, bạn biết đấy, Giám đốc điều hành đang nói về việc \"Đây là những ngọn đồi lớn mà chúng ta phải vượt qua với tư cách là một công ty.\" Bạn biết đấy, trường hợp gấu từ Morningstar đối với công ty của bạn, bạn biết đấy, nếu bạn là một công ty đại chúng."}, {"chapter": "Bạn đang di chuyển số mấy?", "timestamp": "13:02", "seconds": 782, "content": "Bạn nhớ tất cả những bài viết đó? Bạn không nhìn thấy những bài viết đó nữa. Những bài báo đó sẽ thật lố bịch vào năm 2026. Một đại diện hỗ trợ trong nhóm của tôi gửi số lượng mã để sản xuất trong ứng dụng cốt lõi của chúng tôi nhiều gấp đôi so với kỹ sư trung bình tại một công ty SaaS đại chúng. Hai yêu cầu rưỡi mỗi tuần được sử dụng để giúp bạn được thăng chức, bạn sẽ có đủ tiền mua một chiếc xe đạp tốc độ cố định ưa thích, vì vậy bạn có thể đến văn phòng lúc 11 giờ sáng và phàn nàn về bia lạnh. Ngày nay, hai yêu cầu kéo rưỡi mỗi tuần là"}, {"chapter": "Điều gì còn là con người, điều gì thuộc về AI", "timestamp": "15:56", "seconds": 956, "content": "rằng người đại diện sẽ ở lại. Tôi nghĩ chúng ta sẽ có bốn nguyên mẫu trong các công ty tương lai. Một trong số họ là người đại diện, UI con người sẽ nói về công ty, đáng tin cậy và đưa ra những lời hứa. Rất nhiều người nói, \"Chúng tôi không muốn mua hàng từ AI.\" Tôi nghĩ điều đó hoàn toàn đúng. Nhưng hãy để người đó làm nhiều hơn thế. Hãy để họ thuyết phục hơn. Hãy để họ trở thành những người biết lắng nghe tốt hơn, và một lần nữa, sự tín nhiệm đó, có một người thực sự có thể đưa ra lời hứa tốt và đứng đằng sau lời hứa đó. Chuyện gì xảy ra? Nghiên cứu, thu hồi, lưu giữ hồ sơ."}, {"chapter": "Trước: con người ngồi robot", "timestamp": "19:53", "seconds": 1193, "content": "Họ đi mất. Chúng đang xảy ra bởi vì nó xảy ra với ai đó vào lúc này, ôi trời, bạn biết đấy, tôi nên viết một email. Ôi trời, tôi nên lấy một bản báo cáo. Công việc lại được thực hiện theo luồng, với sự điều khiển của con người, và sau đó nó biến mất. Nếu ai đó ngồi đó vật lộn để lấy một báo cáo Salesforce đã được xác minh chính xác cho vai trò của họ, cho nhóm của họ và họ phải thử nhiều cách và tìm ra ý nghĩa của các trường và tất cả những thứ còn lại, thì người tiếp theo đến và muốn làm điều tương tự cũng sẽ gặp vấn đề tương tự. Điều này không xảy ra trong công nghệ phần mềm."}, {"chapter": "Sau: tác nhân chủ động và vòng lặp tự hoàn thiện", "timestamp": "21:42", "seconds": 1302, "content": "mà tôi không biết.\" Và tôi nói, \"Steve, đó là một ý tưởng hay.\" Và tôi, nói với người đại diện của mình, tôi nói, \"Làm việc này cho tôi.\" Và thế là tôi nhận được những thứ này mỗi sáng, và chúng cực kỳ thú vị và mang tính giải trí. Và nó đặt tôi vào một tình huống là xung quanh máy làm mát nước ở nơi làm việc, và những người bạn của tôi ở đây có thể xác nhận rằng, tôi sẽ tình cờ nghe được các cuộc trò chuyện về các giao dịch, và thủ thuật nhỏ của tôi, chẳng hạn như, trò chơi đang trở nên khó chịu, và mọi người kiểu như, \"Anh bạn, chúng tôi hiểu rồi. Dừng lại đi.\" Nhưng tôi sẽ bắt đầu lên tiếng về thỏa thuận này và sẽ nói, \"Nima là CTO, Dan là phó giám đốc bán hàng. Đây là một trích dẫn trực tiếp. Họ thích điều này ở đối thủ cạnh tranh này,\" kiểu blah."}, {"chapter": "Bạn + Mã Claude = sáu kỹ sư", "timestamp": "25:13", "seconds": 1513, "content": "băng thông trị giá sáu kỹ sư từ năm 2017. Tôi đảm bảo với bạn về điều này. Bạn làm việc với Claude Code tốt hơn, bạn biết đấy, chúng tôi đã từng có những nhóm này với một trưởng nhóm công nghệ, một nhà thiết kế và hai hoặc ba kỹ sư phần mềm, sau đó chúng tôi sẽ thuê các hợp tác xã vùng Đông Bắc và đào tạo họ và tất cả những việc còn lại, hai rưỡi yêu cầu kéo một tuần, tất cả những việc còn lại. Mỗi người trong số các bạn, tuần đầu tiên trên Claude Code đều mạnh mẽ như toàn bộ nhóm sản phẩm từ một công ty SaaS truyền thống. Xây dựng hay mua? Hiểu các thành phần"}, {"chapter": "Xây dựng cái gì và mua cái gì", "timestamp": "28:45", "seconds": 1725, "content": "trong khi cho phép họ tiếp tục cá nhân hóa trải nghiệm đại lý của mình? Dây nịt. Khi nào bạn sử dụng dây nịt của bên thứ nhất? Khi nào bạn xây dựng của riêng bạn? Ai nên sử dụng cái gì? Bề mặt làm việc. Đã có một cuộc trò chuyện tuyệt vời trong cuộc thảo luận nhóm của chúng tôi về vấn đề này và các quan điểm khác nhau. Có một quan điểm rằng, bạn biết gì không? Tôi có thể rung cảm mã bất kỳ giao diện người dùng nào tôi muốn, ý tôi là, nghe này, tôi nuôi sống gia đình mình bằng cách tạo ra những giao diện người dùng này, hoặc ít nhất là tôi đã có trong suốt hai mươi năm. Tôi không biết, anh bạn. Tôi thực sự không biết. Ý tôi là, điều đó thật đáng xấu hổ đối với chúng tôi. Chúng tôi đã dành rất nhiều thời gian cho giao diện người dùng và cố gắng làm cho mọi thứ trở nên hoàn hảo."}, {"chapter": "Ba câu hỏi để gửi lại cho nhóm của bạn", "timestamp": "30:27", "seconds": 1827, "content": "Chọn một số liệu. Có những số liệu trong kế hoạch tài chính mà bạn chưa bao giờ có thể di chuyển được, tài chính đó chưa bao giờ có thể di chuyển được, hiện tại chúng rất có thể di chuyển được. Tôi không đủ khả năng để nói với bạn rằng bạn nên tăng gấp đôi hạn ngạch, phải không? Và hiện tại đang có một chút bế tắc khi không ai muốn nói điều gì đó nghe có vẻ nực cười. Nhưng bất cứ con số nào, bạn biết đấy, bạn có thể di chuyển được, nếu ai đó nói với bạn con số đó và bạn có thể di chuyển nó bao nhiêu- Mm ... trong thực tế ngày nay, điều đó có vẻ nực cười. Điều thứ hai, khi bạn có con số đó, làm cách nào để chúng ta đi từ đường cơ sở đến hai X?"}], "key_insights": [{"timestamp": "04:49", "seconds": 289, "content": "Vì vậy, hãy bắt đầu với điều này, ý tưởng về bộ não công ty, đang được bàn tán sôi nổi trên LinkedIn, trên Twitter, Hacker News, bất cứ nơi nào bạn nhìn thấy. Thực chất nó là gì? Dây nịt là gì? Đại lý là gì? Bạn biết đấy, các nhà cung cấp khác nhau có những khái niệm khác nhau về kỹ năng và đại lý là gì. Tự động hóa phù hợp như thế nào? Tôi muốn làm sáng tỏ một số điều đó và thu nhỏ lại và nói rằng, rất nhiều thứ đã thay đổi, nhưng thế giới mới rất dễ tiếp cận. Chỉ cần làm sáng tỏ nó hoàn toàn cho bạn. Đây là điểm vào."}, {"timestamp": "14:47", "seconds": 887, "content": "Bán hàng và tiếp thị thậm chí, nhưng bán hàng và RevOps vẫn chưa mong đợi những thứ mà bạn hoàn toàn có thể nhận được ngay bây giờ với số tiền không nhiều. Nhân loại ở bên phải, tôi, bạn biết đấy, tôi không đồng ý với điều này một chút, nhưng tôi nghĩ nó đủ gần. Đó là một chút khó khăn để nhìn thấy. Màu đỏ là theo bộ phận, cho biết mỗi bộ phận này đã nhận được bao nhiêu giá trị bằng AI và màu xanh là tiềm năng. Tôi cho rằng doanh số bán hàng có thể là một cú nhấp chuột khác,"}, {"timestamp": "27:01", "seconds": 1621, "content": "và đặt nó vào một nơi? Tôi viết bảng trắng với những người thực hành RevOps, những người mà nhiều người trong số các bạn đang quản lý, và tôi viết bảng trắng những thứ mà họ có trong công ty. Rất thú vị, CRM truyền thống không bao giờ nằm ​​trong top 5 nguồn dữ liệu có giá trị và hữu ích nhất. Nó chỉ có độ phân giải thấp. Đó không phải là ưu tiên số một. Bản ghi âm cuộc họp, món granola, khách hàng Slack, bạn biết đấy, danh sách, email. Bạn biết đấy, hãy đưa Gmail vào đó."}], "actionable_steps": [{"timestamp": "04:49", "seconds": 289, "content": "Vì vậy, hãy bắt đầu với điều này, ý tưởng về bộ não công ty, đang được bàn tán sôi nổi trên LinkedIn, trên Twitter, Hacker News, bất cứ nơi nào bạn nhìn thấy. Thực chất nó là gì? Dây nịt là gì? Đại lý là gì? Bạn biết đấy, các nhà cung cấp khác nhau có những khái niệm khác nhau về kỹ năng và đại lý là gì. Tự động hóa phù hợp như thế nào? Tôi muốn làm sáng tỏ một số điều đó và thu nhỏ lại và nói rằng, rất nhiều thứ đã thay đổi, nhưng thế giới mới rất dễ tiếp cận. Chỉ cần làm sáng tỏ nó hoàn toàn cho bạn. Đây là điểm vào."}, {"timestamp": "05:24", "seconds": 324, "content": "Cách chúng ta giải quyết những vấn đề khó khăn vào năm 2026 rất khác so với cách chúng ta giải quyết những vấn đề này trước đây. Đó là phần khó khăn. Phần dễ dàng hơn là khi bạn học được mẫu này, bạn có thể sử dụng nó cho bất kỳ vấn đề khó khăn nào mà bạn gặp phải. Chúng tôi có... Tôi nghĩ chiến dịch tiếp thị gần đây nhất mà chúng tôi đã thực hiện là cách giải quyết CRM bằng cách giải quyết mọi thứ vì đây là tư duy dựa trên khuôn mẫu và, bạn biết đấy, phải làm gì... điểm xuất phát của bạn là gì, và sau đó, bạn biết đấy, bạn sẽ tìm ra con đường của mình như nước. Bạn sẽ tìm ra cách giải quyết,"}, {"timestamp": "06:30", "seconds": 390, "content": "Bạn nắm lấy tất cả, bạn biết đấy, nhắm mục tiêu vào các trang web của trường học. Bạn chuyển đổi chúng thành markdown. Bạn lấy tất cả các thẻ báo cáo, tất cả mọi thứ. Bạn biết đấy, bạn thì thầm những điều bạn nghĩ về con mình và đặt tất cả những điều đó vào tập hồ sơ, sau đó bạn bắt đầu nói, \"Được rồi, hãy hiểu điều này thôi.\" Và bạn thực sự có thể tiếp cận vấn đề đó bằng câu hỏi con tôi nên học ở đâu? Nếu bạn đang xây một ngôi nhà, bạn có thể đưa vào tất cả các quy định của thị trấn, tất cả thông tin về cách đăng ký quyền sử dụng đất và tất cả những thứ như vậy, chứng nhận chì, bạn biết đấy, thông tin nhà thầu, đánh giá từ Yelp."}, {"timestamp": "17:06", "seconds": 1026, "content": "Với những máy ghi âm cuộc họp này, một trong những điều đầu tiên bạn thấy là bạn có thể chú ý hơn trong cuộc họp vì bạn không có trách nhiệm ghi nhớ tất cả các chi tiết. Đây là kỳ vọng mới. Mọi thứ sẽ được ghi nhớ. Mọi thông tin và cảm xúc quan trọng sẽ được ghi lại. Và sau đó là việc lưu giữ hồ sơ, và có vẻ như điều đó không giúp tôi bắt đầu việc này, nhưng bạn biết đấy, ngay cả các phòng thí nghiệm ở biên giới, các nhóm bán hàng cũng đang ngồi đó với các khối trên lịch của họ để điền vào dữ liệu Salesforce. Bạn bè của tôi,"}, {"timestamp": "22:18", "seconds": 1338, "content": "Một vài lần đầu nó chơi rất tốt. Bây giờ nó thực sự khó chịu. Các vòng lặp tự cải thiện. Bạn có đang ghi lại ở đâu đó những gì đang có hiệu quả trong một ngành dọc cụ thể, một loại giao dịch hoặc tình huống cụ thể không? Bạn có biết điều gì đang giúp những người đại diện tăng tốc nhanh hơn mức cần thiết không? Điều gì là... Trải nghiệm của họ có gì khác biệt so với những người đại diện, kiểu như, không bao giờ đạt được điều đó và phải bị lừa, bạn biết đấy, trong chín tháng? Bạn có biết không? Đây là một vấn đề đã được giải quyết. Bạn chỉ có thể hỏi và sau đó ghi lại điều đó ở một nơi"}, {"timestamp": "30:27", "seconds": 1827, "content": "Chọn một số liệu. Có những số liệu trong kế hoạch tài chính mà bạn chưa bao giờ có thể di chuyển được, tài chính đó chưa bao giờ có thể di chuyển được, hiện tại chúng rất có thể di chuyển được. Tôi không đủ khả năng để nói với bạn rằng bạn nên tăng gấp đôi hạn ngạch, phải không? Và hiện tại đang có một chút bế tắc khi không ai muốn nói điều gì đó nghe có vẻ nực cười. Nhưng bất cứ con số nào, bạn biết đấy, bạn có thể di chuyển được, nếu ai đó nói với bạn con số đó và bạn có thể di chuyển nó bao nhiêu- Mm ... trong thực tế ngày nay, điều đó có vẻ nực cười. Điều thứ hai, khi bạn có con số đó, làm cách nào để chúng ta đi từ đường cơ sở đến hai X?"}], "facts_and_metrics": [{"timestamp": "00:00", "seconds": 0, "content": "Thank you so much for sharing your time and your efforts. He's with us. We can't wait to hear what you have to say. Listen, the 10 years spent at HubSpot building the thing, that's been talked about a bunch, and also the whole idea of taking the product usage and rotating that into sales, which kind of occurred to us at the same time as a number of companies like, \"Whoa, here's an idea. We could have product actually get involved.\" And that led to us owning a number. By the time I left in 2021, my team was responsible for over sixty percent of the demand SLA into sales, which was a really cool transition."}, {"timestamp": "05:24", "seconds": 324, "content": "The way that we solve hard problems in 2026 is very different from how we solved these problems before now. That's the hard part. The easier part is once you learn this pattern, you can use it for any hard problem that you have. We have a... I think our most recent marketing campaign that we did was how to solve CRM by solving everything because this is pattern-based thinking and, you know, what to... what your starting point is, and then, you know, you'll kind of find your way like water. You'll find a way to the solution,"}, {"timestamp": "12:26", "seconds": 746, "content": "I have not yet met them, and I talk to RevOps folks all day, every day. You cannot improve what you can't measure. This is like classic Peter Drucker management advice. If you look at engineering, what's different in 2026 from 2023? '23, '24, the beginning of '25, you all saw the news stories. You know, engineering teams are seeing 15% product- productivity improvements, and then a couple of weeks later, engineering teams are 15% less productive because of AI. And it was all this, all these little puts and takes, right?"}, {"timestamp": "13:02", "seconds": 782, "content": "You remember all those articles? You don't see those articles anymore. Those articles would be ridiculous in 2026. A support rep on my team ships twice as much code to production in our core app as the average engineer at a public SaaS company. Two and a half pull requests a week used to get you promoted, you'd be able to afford the fancy fixed-speed bicycle, so you could come into the office at 11:00 AM and complain about the cold brew. Today, two and a half pull requests a week is"}, {"timestamp": "25:13", "seconds": 1513, "content": "six engineers worth of bandwidth from 2017. I assure you of this. You are better with Claude Code than, you know, we used to have these pods with a tech lead and a designer and two or three software engineers, and then we'd hire the Northeastern co-ops and train them up and all the rest of it, two and a half pull requests a week, all the rest of it. Every single one of you, week one on Claude Code is as powerful as, like, a whole product group from a traditional SaaS company. Build or buy? Understanding the components"}, {"timestamp": "27:01", "seconds": 1621, "content": "and put it into one place? I whiteboard with RevOps practitioners, the folks that many of you are managing, and I whiteboard out the company brain stuff that they have. Very interestingly, traditional CRM is never in the top five most useful, valuable data sources. It is just low resolution. It's not the number one priority. Meeting recordings, granola, customer Slack, you know, down the list, email. You know, let's get the Gmail in there."}], "mentioned_references": [{"name": "Get agents that know your customers better than you do", "url": "https://day.ai/", "type": "external_link"}]}, "timeline": {"chapters": [{"timestamp": "00:00", "seconds": 0, "title": "Từ sản phẩm HubSpot đến chạy RevOps"}, {"timestamp": "03:15", "seconds": 195, "title": "Bây giờ bạn là một nhóm kỹ thuật sản phẩm"}, {"timestamp": "04:49", "seconds": 289, "title": "Bộ não công ty thực sự là gì"}, {"timestamp": "05:53", "seconds": 353, "title": "Bắt đầu với một thư mục"}, {"timestamp": "08:02", "seconds": 482, "title": "Não rải rác khắp nơi"}, {"timestamp": "11:42", "seconds": 702, "title": "Bạn đang di chuyển số mấy?"}, {"timestamp": "15:31", "seconds": 931, "title": "Điều gì còn là con người, điều gì thuộc về AI"}, {"timestamp": "19:12", "seconds": 1152, "title": "Trước: con người ngồi robot"}, {"timestamp": "21:18", "seconds": 1278, "title": "Sau: tác nhân chủ động và vòng lặp tự hoàn thiện"}, {"timestamp": "24:59", "seconds": 1499, "title": "Bạn + Mã Claude = sáu kỹ sư"}, {"timestamp": "25:31", "seconds": 1531, "title": "Xây dựng cái gì và mua cái gì"}, {"timestamp": "29:52", "seconds": 1792, "title": "Ba câu hỏi để gửi lại cho nhóm của bạn"}], "visual_slides": []}, "transcript_corpus": [{"timestamp": "00:00", "start_seconds": 0, "text": "Thank you so much for sharing your time and your efforts. He's with us. We can't wait to hear what you have to say. Listen, the 10 years spent at HubSpot building the thing, that's been talked about a bunch, and also the whole idea of taking the product usage and rotating that into sales, which kind of occurred to us at the same time as a number of companies like, \"Whoa, here's an idea. We could have product actually get involved.\" And that led to us owning a number. By the time I left in 2021, my team was responsible for over sixty percent of the demand SLA into sales, which was a really cool transition."}, {"timestamp": "00:40", "start_seconds": 40, "text": "But there's another story. That's not the whole thing. There's a story that we've never talked about, and, the origin story of my real relationship with RevOps. So I had been part of the ELT, we called it Helm, for several years, and I kind of took one for the team and was the unified senator representing, engineering, product, and design for years. And I kinda had my fill of that, and I said, \"You know, I need to bring a buddy. Somebody else has to kind of do this work with me.\" So I convinced one of my closest friends,"}, {"timestamp": "01:13", "start_seconds": 73, "text": "who was head of engineering at the time, now he's CTO, still over there, Whitney, to join ELT. And it was his first or second of these meetings, and Ops was presenting. And in the time-honored tradition of while these nine-hour QBR-type meetings are happening, you know, we spend the whole time Slacking each other, you know, trying to figure out what the hell is going on. He texted me: \"Wait a second. Th- this doesn't make any sense. Like, how does it take ninety minutes for a web lead, a form fill, to actually get a rep owner and get rotated to them and be notified?\""}, {"timestamp": "01:54", "start_seconds": 114, "text": "And I said, \"Be very careful what you ask. Be very careful. I will tell you the answer, but then you cannot un-know it.\" You know, because of course, the Ops team had a lot of kind of machinery, and they didn't have necessarily an engineering team doing this stuff. And so I told Whitney the answer, you know, \"This is the deal, and we got to do this enrichment lookup, and then we got to go check for channel conflicts, and we got to do this, and we got to do that.\" And, you know, he, he's asking these engineering questions, or, you know, are they doing FIFO queues?"}, {"timestamp": "02:26", "start_seconds": 146, "text": "Are they doing this? Are they using Kafka and all the rest of it? And I'm like, \"See what I said? Be very careful.\" So once he knew it, though, that was it, right? A year later, we were the proud owners of all of corporate IT, including RevOps, which led to me having an incredible experience, managing a guy who's still there, EVP of Ops at HubSpot, Chris Hogan, who is a legend and a gentleman and a scholar, and I had the honor of managing him for two or three years, which, you know, talk about imposter syndrome, but I learned a ton from him."}, {"timestamp": "03:01", "start_seconds": 181, "text": "The punchline here is... And this came up in the breakout session. A lot of what's in here came up in the breakout session. The punchline here is you are no longer just RevOps or StratOps or whatever. You are product engineering teams. You take a new role, you find out about thirteen engineers that you're responsible for and, you know, what on earth are they doing, and who has decided what's a vendor and what's OpEx and CapEx and all the rest of it? And then you throw AI into this whole situation. So that's kind of where we're going with this today. Good news and bad news. The good news is I intend to illustrate to you why"}, {"timestamp": "03:40", "start_seconds": 220, "text": "literally your seat of every single person at this event today, genuinely, I believe that your AI strategy represents the number one opportunity to build a multiplier effect, bend the curve, at your company more than any other department, even more than engineering. The bad news is you're gonna have to take my traditional role of being a product leader, go out, buy the black T-shirt and the New Balance and the whole thing. Robert Barricade has great black T-shirts."}, {"timestamp": "04:13", "start_seconds": 253, "text": "They're very durable. You should get them dry-cleaned. Anyway, I love this job, and a lot of the product leader job, especially as you scale and the stakes get high, spoiler, is knowing what questions to ask and then just kind of reading the response, right? So that's gonna be the takeaway today, is I wanna give all of you where to look, who to grab, and what to ask them to start a conversation on the whiteboard with. I'll give you some of the answers and some of what to look for and how to think about it, but a lot of it I'm gonna be leaving to you to kind of figure out in that room when you get back to work."}, {"timestamp": "04:49", "start_seconds": 289, "text": "So let's start with this, this idea of a company brain, which is being talked about to death on LinkedIn, on Twitter, Hacker News, wherever you look. What actually is it? What's a harness? What is an agent? You know, different vendors have different concepts of what agents are and skills. How does automation fit in? I wanna demystify some of that and kinda zoom out and say, a lot has changed, but the new world is very approachable. Just demystify it entirely for you. Here's the entry point."}, {"timestamp": "05:24", "start_seconds": 324, "text": "The way that we solve hard problems in 2026 is very different from how we solved these problems before now. That's the hard part. The easier part is once you learn this pattern, you can use it for any hard problem that you have. We have a... I think our most recent marketing campaign that we did was how to solve CRM by solving everything because this is pattern-based thinking and, you know, what to... what your starting point is, and then, you know, you'll kind of find your way like water. You'll find a way to the solution,"}, {"timestamp": "05:57", "start_seconds": 357, "text": "especially the kind of folks in this room with your level of expertise and resourcefulness. Anything you're doing, you're planning a wedding, you're building a house, or trying to get in ... a kid into private school, any hard interdisciplinary problem, you start today by making a folder. You create a new place on your laptop, and you go to Codex or probably Claude Code, and you navigate to that folder, and you begin. If you wanna get a kid into a private school, what do you do?"}, {"timestamp": "06:30", "start_seconds": 390, "text": "You grab all of the, you know, target school's websites. You convert them into markdown. You grab all the report cards, everything. You do a whisper flow dump of, you know, what you think about your kid, and you put that all in the folder, and then you start to go, \"Okay, let's make sense of this.\" And you can actually approach that problem with, where should my kid go to school? If you're building a house, you can put in all of the town ordinances, all of the information about how to apply for easements, and all this kind of stuff, lead certification, you know, contractor information, reviews from Yelp."}, {"timestamp": "07:04", "start_seconds": 424, "text": "Dump it into a folder, and then you begin. And we all know if you do that, you are going to get a spectacular result. So where is the folder at your company that really matters the most? Spoiler, it exists today, I guarantee you, and you own it. So let's go find it. Then, how do we approach it like a product leader and own a roadmap for it? All of the little decisions that are being made. Who's gonna maintain this thing? Is this OpEx or CapEx? What do we want it to be?"}, {"timestamp": "07:39", "start_seconds": 459, "text": "Why did we build this thing? I had a w- one particularly wild thing where I found out that the team at HubSpot that was working on the mobile app was off building a database technology themselves from scratch. It's like, why on earth are you doing this? This is not what we are paying you for. This is not, like, where the dollars are supposed to go into R&D. This is a solved problem. What are you doing? So start here. There are brains scattered everywhere. That sounds a little,"}, {"timestamp": "08:14", "start_seconds": 494, "text": "sounds a little wrong when I say it that way. Okay, everyone has a brain. That's a little bit more palatable. You know, I still talk to people that I managed years ago and I'm like, \"What's your rig? What's going on?\" Well, my team has this repo, this harness, you know, whatever, and then, you know, the VP has one, and then they're trying to do this thing at the company level, blah. How do you fit those all together? I'm spending a lot of time in my personal life just helping people with their AI rigs. By the way, a harness is just a folder. It's a repo. Once you start putting it in GitHub,"}, {"timestamp": "08:51", "start_seconds": 531, "text": "which I'm sure all of you and your teams have figured out, oh, wait a second, I could take a folder. I can use this GitHub thing to share it with my buddies. Yes. Okay, great. Does that give you permissioning on what's inside it? No. Okay, so there's basically this maturity curve happening of taking ideas from core engineering and applying them, which you've always done in RevOps, to be sure. But now, like, you're gonna have to go get the rest of these concepts and bring them in and these best practices. So there are all of these harnesses, all of these folders."}, {"timestamp": "09:24", "start_seconds": 564, "text": "Many of them are not gonna be in version control. No one's gonna know about except the owner. You know, I have one just for myself on my laptop. Laura in the back has one just for herself on her laptop. We vibe code whatever we want, right? But everything is connected into the right company strategy on the back end. There is one folder that sort of supersedes all of them. That is the question of how we make money. This is what gives you and your AI strategy an overarching, superseding precedence over everybody else's harnesses and rigs."}, {"timestamp": "10:03", "start_seconds": 603, "text": "So let's talk about how we kind of get them to all fit together. I am accustomed mostly to giving presentations to engineering audiences, and so I have a Lord of the Rings reference. We'll see how well it plays in this room. What do these things look like? What's even in one of these harnesses, in these folders? A company brain is, again, just a folder. It's a directory on your hard drive. It is going to have things in there that never existed in a CRM, that may have existed in a company wiki,"}, {"timestamp": "10:37", "start_seconds": 637, "text": "that may have existed on a laminated, printed out, you know, handout for sales kickoff of, \"Can everybody please follow the sales process?\" And then, you know, most of those, like, right by the bar on the way out in the trash can. You know, you have all the sales kickoff, sales process cards. But really nicely detailed examples of the strategy. When you are having your internal ops meetings and when the company meeting, you know, the CEO is talking about, \"Here are the big hills we have to climb as a company.\" You know, the bear case from Morningstar on your company, you know, if you're a public company."}, {"timestamp": "11:14", "start_seconds": 674, "text": "Documenting all of this, the same way you would document all of the building restrictions if you're building a house or the pedagogy of a school you're trying to get your kid into. Basically, just putting all of that in one place, you now have a company brain. Why? Because you can open up Claude Code in that folder and start to have a real conversation about what's going on. So how do we go from good to great? I'm here to tell you how to build the right company brain, what questions to ask your team when you get back. Here's the entry point that I would challenge you with."}, {"timestamp": "11:51", "start_seconds": 711, "text": "Think about the number that you have given your team that represents success for your AI strategy in RevOps. What changes in your FP&A, in your, in your financial plan, in your P&L? What changes in quota roll-up, in hiring, headcount plan? I have never asked this question to somebody in RevOps and had them give me an answer. I'm sure there is somebody who says, \"I am going to take ramp time from seven months to four months by Q2 of next year.\""}, {"timestamp": "12:26", "start_seconds": 746, "text": "I have not yet met them, and I talk to RevOps folks all day, every day. You cannot improve what you can't measure. This is like classic Peter Drucker management advice. If you look at engineering, what's different in 2026 from 2023? '23, '24, the beginning of '25, you all saw the news stories. You know, engineering teams are seeing 15% product- productivity improvements, and then a couple of weeks later, engineering teams are 15% less productive because of AI. And it was all this, all these little puts and takes, right?"}, {"timestamp": "13:02", "start_seconds": 782, "text": "You remember all those articles? You don't see those articles anymore. Those articles would be ridiculous in 2026. A support rep on my team ships twice as much code to production in our core app as the average engineer at a public SaaS company. Two and a half pull requests a week used to get you promoted, you'd be able to afford the fancy fixed-speed bicycle, so you could come into the office at 11:00 AM and complain about the cold brew. Today, two and a half pull requests a week is"}, {"timestamp": "13:37", "start_seconds": 817, "text": "ridiculous. Whatever chart is on the wall is going to go up. We're gonna start probably with just, like, signs of life. How many people are doing AI with... in any regard in go-to-market? That's not gonna be good enough for the people in this room. You get to a point, if you do this right, where the improvements start compounding. Our software engineering rig improves itself today. We pay for tokens and people to solve a problem one time. That problem is solved anytime we see it forever moving forward."}, {"timestamp": "14:14", "start_seconds": 854, "text": "What is the go-to-market equivalent of that? The opportunity you have is that your fellows across this go-to-market operations, go-to-market engineering, RevOps, Sales Ops, strategic ops, nobody is doing anything. The chart on the left is from Andreessen Horowitz. Coding, okay, Cursor, you know, there are a million of these, Claude Code. Legal, sure, Harvey, Legora, et cetera, et cetera. We're starting to see finance come in. We're starting to see IT come in."}, {"timestamp": "14:47", "start_seconds": 887, "text": "Sales and marketing even, but sales and RevOps are not yet expecting the kinds of things that you absolutely can get right now for not a lot of money. Anthropic on the right, I, you know, I disagree with this one a tiny bit, but it's close enough, I think. It's a little hard to see. The red is by department, how much value they've seen realized by each of these departments with AI, and the blue is the potential. I would argue that sales is probably another click out,"}, {"timestamp": "15:22", "start_seconds": 922, "text": "but their research suggests there's a lot that can be done there and almost no usage. So let's think about this. This also came up in the breakout session. What stays with the human, and what is delegated and given to the AI in the right company brain as we think of ourselves as product leaders in a revenue operations role? I try to give nice little alliterations on both sides of these to make them memorable. The things that stay, the human things, I believe firmly"}, {"timestamp": "15:56", "start_seconds": 956, "text": "that the rep stays. I think we're gonna have four archetypes in the future companies. One of them is the representative, the human UI that is going to talk about the company, be credible, make the promises. A lot of people are saying, \"We don't wanna buy from AI.\" I think that's absolutely right. But let's let that person do more of that. Let's let them be more persuasive. Let's let them be better listeners, and again, that credibility, having a person that can actually make a good promise and stand behind it. What goes? Research, recall, record keeping."}, {"timestamp": "16:33", "start_seconds": 993, "text": "Trying to find a lead list seems like a solved problem. We have datasets. We have web agents. You know, there are great companies doing these kinds of things, some of some of whom are in the, in the crowd. ParallelAI is a great company. You know, you can go find... We have a customer who's, you know, sells to police chiefs. We can pull a lead list for that company in a way that you- you're not gonna get that from ZoomInfo. We're not gonna get that from, you know, a vendor database. It is a solved problem because you can put agents on it. Recall."}, {"timestamp": "17:06", "start_seconds": 1026, "text": "With these meeting recorders, one of the first things you see is that you're just able to pay more attention in the meeting because you're not responsible for remembering all of the details. This is the new expectation. Everything is going to be remembered. Every shred of information and sentiment that matters is going to be captured. And then the record keeping, and kinda don't get me started on this, but, you know, even the frontier labs, the sales teams are sitting there with blocks on their calendar to fill out Salesforce data. My friends,"}, {"timestamp": "17:39", "start_seconds": 1059, "text": "that's insane. Their f- what are their Salesforce notes? Like, the demo of the cancer-curing super intelligence went really well. The prospect loved it, and they're, like, typing this into a salesforce.com UI. That is a solved problem. You should have absolutely perfectly clean data, and nobody should ever have to spend any time on it, and your team should have full governance over all of that. Okay, so this is what the human does. This is what the AI is gonna do. What is the relationship between those things?"}, {"timestamp": "18:13", "start_seconds": 1093, "text": "What is the ergonomic form factor, the day-to-day? What does it look like? I don't... I've never seen a team come to me for the first time having gotten this right. You know, there are a million of these kind of mono-agent Slack bots or a Vercel app that, you know, \"Hey, everybody, go ask your questions to, you know, Jarvis,\" or whatever. By the way, they're all named Jarvis. Anybody who has a mono bot named Jarvis, I hate to break it to you, but, like,"}, {"timestamp": "18:44", "start_seconds": 1124, "text": "you're not the first person to come up with that. What are, what are the ergonomics of that kind of handshake? The easiest way for me to illustrate this for you is just a before and after. The before is probably where most of your teams are. This is where engineering was in 2023, for most teams in 2024, for some teams in 2025, and is now a ridiculous world to live in. Humans are bot-sitting. Oh, we got, Claude, and then we got the connector into Salesforce."}, {"timestamp": "19:19", "start_seconds": 1159, "text": "So, hey, everybody, what you're gonna do, don't... This is gonna be amazing. You're gonna love this. Instead of entering your stuff into Salesforce, enter it into Claude, and Claude will make sure it goes into Salesforce. Okay? Anthropic did this for, like, 15 minutes and then stopped because it is slower than just entering the darn data yourself. Sitting there and then you end up with, like, 20 of these things running and that whole kind of, fatigue, that AI burnout that happens. This is not how you wanna live. The second point here is that these things are ad hoc and ephemeral."}, {"timestamp": "19:53", "start_seconds": 1193, "text": "They go away. They are happening because it occurs to somebody in the moment, oh geez, you know, I should write an email. Oh geez, I should pull a report. The work is done in the thread, again, with the human driving all of that, and then it is gone. If somebody sits there wrestling to pull an accurate verified Salesforce report for their role, for their team, and they have to try it a bunch of ways and figure out what the fields mean and all the rest of it, the next person who comes along and wants to do that same thing is going to have that same problem. This does not happen in software engineering."}, {"timestamp": "20:29", "start_seconds": 1229, "text": "If somebody is debugging an issue or optimizing UI rendering performance, and they spend an afternoon on it, everybody gets that for free the next time any task like that comes up, and it goes like this. You are spending human hours only on the things that actually matter, and the knowledge of your overall harness and system compounds over time in wild ways. And the third I talked about a little bit but, you know, a faceless void, the, you know, no names, no personality, no way to respond to something and have it, like, validate you and say, \"Okay,"}, {"timestamp": "21:06", "start_seconds": 1266, "text": "you want this in this format every Tuesday, and then you want me to do this and that? Sure, count on it.\" In engineering, faceless void, totally fine. We're used to it. In go-to-market, it's not good enough. The after here is that the intelligence is absolutely proactive. I have, an incredibly cool thing I get every day. I don't think I've shown you this, Mike. I gotta show you this. And it came up on a call. I was talking to a CRO and he said, \"You know, I've always wanted as a CRO to just know the number one thing that would surprise me about my business"}, {"timestamp": "21:42", "start_seconds": 1302, "text": "that I don't know about.\" And I was like, \"Steve, that's a great idea.\" And I, like, tell my agent off to the side, I'm like, \"Do this for me.\" And so I get these every morning, and they are just wildly interesting and entertaining. And it puts me in a situation where around the water cooler at work, and my friends who are here can confirm, I'll overhear conversations about deals, and my little, like, party trick, which is getting annoying now, and people are like, \"Dude, we get it. Stop.\" But I'll just start chiming in about the deal, and I'll be like, \"Nima's the CTO, Dan's the VP of sales. Here's a direct quote. They like this about this competitor,\" like blah."}, {"timestamp": "22:18", "start_seconds": 1338, "text": "First couple of times it played really well. Now it's just really annoying. The self-improving loops. Are you documenting somewhere what's working in a particular vertical, a particular kind of deal or situation? Do you know what is helping reps who ramp faster than they should? What are... What's different about their experience than the reps that, like, never get there and have to get pipped, you know, nine months in? Do you know? This is a solved problem. You should just be able to ask and then document that in one place"}, {"timestamp": "22:53", "start_seconds": 1373, "text": "and have everybody's agents pull off of that to coach people and make sure they're on the happy path, and update it as more information comes in. Again, in engineering, we have this. We have self-improving loops. We can auto-resolve a bug when we find it. We can also run a QA bu- a bot that goes and gets us the bugs. So we can have a web app or a SaaS product that is just actually getting better 24 hours a day, and we're sitting there, like, putting the credit card in and deciding how hot to run the system."}, {"timestamp": "23:28", "start_seconds": 1408, "text": "This is absolutely possible in go-to-market. And then again, this idea of agents that people actually form a relationship with and have more than one. GroqBot is the closest I've seen to this, where, if you go on Twitter, you'll see examples of this. The GroqBot sales team, the way they use their own product is extremely cool. They have a coach agent. They have a research agent that's going out and finding leads and coming up with email drafts. They have a data entry agent or a reporting agent. You know, prep me for my forecast meeting."}, {"timestamp": "24:02", "start_seconds": 1442, "text": "Give me a CSV, whatever. And it's a little bit spit and tissue paper and duct tape, but extremely right. Why? Because each of these agents is a long-lived entity that the human can give feedback to, and they have a defined job role that the human who manages that agent can take credit for. And this is a really important concept. If we're not deploying the AI in a way where productivity and credit can accrue through that human org chart, it's gonna be really awkward."}, {"timestamp": "24:36", "start_seconds": 1476, "text": "Because at the end of the day, we are keeping score. In this side of the house, we are keeping score. Who is productive? Who is closing deals? Who has more capacity, right, in the financial plan? Every one of your teams, I imagine, has some form of an engineering team, when a particularly wonderful example came up in the breakout session. But even if it's just you using Claude Code, that counts. You using Claude Code is the equivalent of"}, {"timestamp": "25:13", "start_seconds": 1513, "text": "six engineers worth of bandwidth from 2017. I assure you of this. You are better with Claude Code than, you know, we used to have these pods with a tech lead and a designer and two or three software engineers, and then we'd hire the Northeastern co-ops and train them up and all the rest of it, two and a half pull requests a week, all the rest of it. Every single one of you, week one on Claude Code is as powerful as, like, a whole product group from a traditional SaaS company. Build or buy? Understanding the components"}, {"timestamp": "25:48", "start_seconds": 1548, "text": "within this company brain will help you figure out what you should build and what you should buy. The good news and bad news on this that I observe is that all of you, I think, are on a similar set of thinking. That's the good news. The answers are going to be obvious and will align. I don't think it's a mystery to anybody in this room that meeting recording transcripts are absolutely gold"}, {"timestamp": "26:21", "start_seconds": 1581, "text": "because they can really tell you what's happening, whether you're forecasting, coaching, trying to drive rep productivity, whatever it is, they are absolutely gold. Granola, internal meetings, where are you capturing the decisions? You know, you might have workflows where you capture, an internal meeting and you have some nice machinery that spits out, you know, some action items and all the rest of it. Great. But where is the company strategy? Here are the things we're trying to do as a company. Can we push those out and have everybody's behavior ladder up to that somehow? The data sources. How do you take all of this information"}, {"timestamp": "27:01", "start_seconds": 1621, "text": "and put it into one place? I whiteboard with RevOps practitioners, the folks that many of you are managing, and I whiteboard out the company brain stuff that they have. Very interestingly, traditional CRM is never in the top five most useful, valuable data sources. It is just low resolution. It's not the number one priority. Meeting recordings, granola, customer Slack, you know, down the list, email. You know, let's get the Gmail in there."}, {"timestamp": "27:33", "start_seconds": 1653, "text": "They don't know how to permission that. Fine. All of that stuff in one place so that you can interact with it in a way, if anybody's used Perplexity. Like Perplexity puts the entire web into context. Claude is not as good at that. It can search the web, but it's gonna be a little bit clumsy and take some time. So that's the difference in those harnesses and in those data sources. Have a data source that gives you that instant recall and the data privacy, which I'm sure came up in everybody's breakout session as well. The agent control plane."}, {"timestamp": "28:08", "start_seconds": 1688, "text": "You could build this. You could go get Vercel Eve. You could have guardrails and tell people that they can use Instinct or Muse or whatever they want, but here's the MCP and, you know, here is a set of instructions you need to include or whatever. You have a bunch of options here, but you're going to want to be able to drive behavior change because so much of our work is gonna be done by agents. How do you decide, here's a detail about... You know, we have a new product. Everybody should be looking for attach opportunities in these circumstances. How do you drive that across everybody's agentic rig"}, {"timestamp": "28:45", "start_seconds": 1725, "text": "while letting them continue to personalize their agent experiences? Harnesses. When do you use a first-party harness? When do you build your own? Who should be using what? Work surface. There was a great, conversation in our breakout about this and different perspectives. There's a perspective that, you know what? I can vibe code whatever UI I want, which, I mean, listen, I feed my family by making these UIs, or at least I have for, you know, better part of twenty years. I don't know, man. I really don't know. I mean, it, it's humbling for us. We've spent a lot of time on UI stuff and trying to get everything perfect."}, {"timestamp": "29:20", "start_seconds": 1760, "text": "And if somebody shows up and they go, \"Look what I built,\" which happens with us all the time. They're like, \"Look at this cool thing I built.\" It's kind of hard to say like, \"Don't do that,\" you know? It's pretty cool. Knowledge management. You know, you could do this in Markdown files, or you could buy Glean, or you could do Notion, or you could do this, or you could do that. It's a very interesting open conversation. I think all of these genuinely are open conversations. I have my own feelings on each of them, but, you know, look, it, it's... Each one is a separate decision, in a real"}, {"timestamp": "29:54", "start_seconds": 1794, "text": "research project to think about what you wanna do. So here's, as promised, what to walk away with. The first thing is to ask the team, or maybe you know, y'all are senior enough, you could actually probably just go tell your teams. But what are we measuring? What is success? Whoever on your team is the Claude Code sicko that you're really hoping will get those wins for you, if you promote them in six months, what is the slide they showed you that you then showed to the CEO and said, \"Look at how amazing we are with this AI stuff. We're really moving the needle\"?"}, {"timestamp": "30:27", "start_seconds": 1827, "text": "Pick a metric. There are metrics in the financial plan that you have never been able to move, that finance has never been able to move, that are now very movable. I'm not in a position to tell you all you should double quota, right? And there's a little bit of a standoff right now where nobody wants to say something that sounds ridiculous. But whatever number, you know, is possible for you to move, if somebody told you that number and how much you could move it- Mm ... in reality today, it would seem ridiculous. Second thing, once you have that number, how do we get from baseline to two X?"}, {"timestamp": "31:02", "start_seconds": 1862, "text": "That's gonna be the biggest lift. Once you're at four X or two X or ten X, getting to a hundred X is largely going to solve itself, believe it or not, because these systems tend towards self-improvement. And then whiteboard for me, who has control of what? Who can see what? These agents, these skills that are running in the background, who owns that? Oh, well, we have a thing where we push these skills out to people, and we tell them to put it into Claude and all the rest of it."}, {"timestamp": "31:36", "start_seconds": 1896, "text": "It's like, get a really good answer for that, and then, you know what I'm saying to you is I think your judgment will lead you into the right sub conversations for whatever your business priorities are, whatever your stack is at the moment and what you want it to be. If anybody gives you an incredibly good answer for this third one, I would just say, I'm a little out of line saying it, but, like, lock them up and bubble wrap them with a huge equity grant, because that person is an adult and is really thinking about your company deeply. I would promote them and keep them around forever."}, {"timestamp": "32:12", "start_seconds": 1932, "text": "So that's it. You are no longer just RevOps. You are product engineers. Hopefully, the idea of a company brain makes sense. Hopefully, you have, conversations to have lovingly with your, beloved teams when you get back to the office, and, yeah, that's life after CRM."}], "i18n": {"vi": {"title": "RevOps nên xây dựng những gì so với mua cho bộ não công ty (Ex-HubSpot CPO tại Vector)", "one_liner": "Các nhóm RevOps hiện đang xây dựng. Một người có Claude Code có băng thông bằng sáu kỹ sư từ năm 2017. Vậy bạn nên xây dựng cái gì và vẫn nên mua cái gì?", "executive_summary": "Các nhóm RevOps hiện đang xây dựng. Một người có Claude Code có băng thông bằng sáu kỹ sư từ năm 2017. Vậy bạn nên xây dựng cái gì và vẫn nên mua cái gì? Tại Vector 2026, Christopher O'Donnell (đồng sáng lập Day AI, sản phẩm hàng đầu trong 10 năm tại HubSpot) tìm hiểu bộ não thực sự của công ty là gì, tại sao CRM truyền thống không bao giờ nằm ​​trong năm nguồn dữ liệu hàng đầu mà các nhóm RevOps dựa vào và cách quyết định từng phần: bản ghi cuộc họp, nguồn dữ liệu, mặt phẳng điều khiển tác nhân, khai thác, bề mặt làm việc, quản lý kiến ​​thức.", "chapters": [{"timestamp": "00:00", "seconds": 0, "title": "Từ sản phẩm HubSpot đến chạy RevOps"}, {"timestamp": "03:15", "seconds": 195, "title": "Bây giờ bạn là một nhóm kỹ thuật sản phẩm"}, {"timestamp": "04:49", "seconds": 289, "title": "Bộ não công ty thực sự là gì"}, {"timestamp": "05:53", "seconds": 353, "title": "Bắt đầu với một thư mục"}, {"timestamp": "08:02", "seconds": 482, "title": "Não rải rác khắp nơi"}, {"timestamp": "11:42", "seconds": 702, "title": "Bạn đang di chuyển số mấy?"}, {"timestamp": "15:31", "seconds": 931, "title": "Điều gì còn là con người, điều gì thuộc về AI"}, {"timestamp": "19:12", "seconds": 1152, "title": "Trước: con người ngồi robot"}, {"timestamp": "21:18", "seconds": 1278, "title": "Sau: tác nhân chủ động và vòng lặp tự hoàn thiện"}, {"timestamp": "24:59", "seconds": 1499, "title": "Bạn + Mã Claude = sáu kỹ sư"}, {"timestamp": "25:31", "seconds": 1531, "title": "Xây dựng cái gì và mua cái gì"}, {"timestamp": "29:52", "seconds": 1792, "title": "Ba câu hỏi để gửi lại cho nhóm của bạn"}], "core_ideas": [{"chapter": "Từ sản phẩm HubSpot đến chạy RevOps", "timestamp": "02:26", "seconds": 146, "content": "Họ đang làm điều này à? Có phải họ đang sử dụng Kafka và tất cả những thứ còn lại? Và tôi nói, \"Hãy xem những gì tôi đã nói nhé? Hãy thật cẩn thận.\" Tuy nhiên, một khi anh ấy đã biết thì chỉ vậy thôi, phải không? Một năm sau, chúng tôi tự hào là chủ sở hữu của toàn bộ CNTT của công ty, bao gồm cả RevOps, điều này giúp tôi có được trải nghiệm đáng kinh ngạc khi quản lý một anh chàng vẫn còn ở đó, EVP của Ops tại HubSpot, Chris Hogan, một huyền thoại, một quý ông và một học giả, và tôi đã có vinh dự được quản lý anh ấy trong hai hoặc ba năm, bạn biết đấy, nói về hội chứng kẻ mạo danh, nhưng tôi đã học được rất nhiều điều từ anh ấy."}, {"chapter": "Bây giờ bạn là một nhóm kỹ thuật sản phẩm", "timestamp": "03:40", "seconds": 220, "content": "theo đúng nghĩa đen, chỗ ngồi của từng người tại sự kiện ngày hôm nay, thực sự, tôi tin rằng chiến lược AI của bạn đại diện cho cơ hội số một để xây dựng hiệu ứng cấp số nhân, uốn cong đường cong, tại công ty của bạn hơn bất kỳ bộ phận nào khác, thậm chí hơn cả kỹ thuật. Tin xấu là bạn sẽ phải đảm nhận vai trò truyền thống của tôi là người lãnh đạo sản phẩm, đi ra ngoài, mua áo phông đen, New Balance và mọi thứ. Robert Barricade có những chiếc áo phông đen tuyệt đẹp."}, {"chapter": "Bộ não công ty thực sự là gì", "timestamp": "05:24", "seconds": 324, "content": "Cách chúng ta giải quyết những vấn đề khó khăn vào năm 2026 rất khác so với cách chúng ta giải quyết những vấn đề này trước đây. Đó là phần khó khăn. Phần dễ dàng hơn là khi bạn học được mẫu này, bạn có thể sử dụng nó cho bất kỳ vấn đề khó khăn nào mà bạn gặp phải. Chúng tôi có... Tôi nghĩ chiến dịch tiếp thị gần đây nhất mà chúng tôi đã thực hiện là cách giải quyết CRM bằng cách giải quyết mọi thứ vì đây là tư duy dựa trên khuôn mẫu và, bạn biết đấy, phải làm gì... điểm xuất phát của bạn là gì, và sau đó, bạn biết đấy, bạn sẽ tìm ra con đường của mình như nước. Bạn sẽ tìm ra cách giải quyết,"}, {"chapter": "Bắt đầu với một thư mục", "timestamp": "06:30", "seconds": 390, "content": "Bạn nắm lấy tất cả, bạn biết đấy, nhắm mục tiêu vào các trang web của trường học. Bạn chuyển đổi chúng thành markdown. Bạn lấy tất cả các thẻ báo cáo, tất cả mọi thứ. Bạn biết đấy, bạn thì thầm những điều bạn nghĩ về con mình và đặt tất cả những điều đó vào tập hồ sơ, sau đó bạn bắt đầu nói, \"Được rồi, hãy hiểu điều này thôi.\" Và bạn thực sự có thể tiếp cận vấn đề đó bằng câu hỏi con tôi nên học ở đâu? Nếu bạn đang xây một ngôi nhà, bạn có thể đưa vào tất cả các quy định của thị trấn, tất cả thông tin về cách đăng ký quyền sử dụng đất và tất cả những thứ như vậy, chứng nhận chì, bạn biết đấy, thông tin nhà thầu, đánh giá từ Yelp."}, {"chapter": "Não rải rác khắp nơi", "timestamp": "10:37", "seconds": 637, "content": "điều đó có thể đã tồn tại trên một tờ rơi nhiều lớp, được in ra, bạn biết đấy, tờ rơi quảng cáo bắt đầu bán hàng có nội dung \"Mọi người có thể vui lòng làm theo quy trình bán hàng không?\" Và sau đó, bạn biết đấy, hầu hết những thứ đó, chẳng hạn như, ngay cạnh quầy bar trên đường đi ra thùng rác. Bạn biết đấy, bạn có tất cả các thẻ khởi động bán hàng, thẻ quy trình bán hàng. Nhưng những ví dụ thực sự chi tiết về chiến lược. Khi bạn tổ chức các cuộc họp hoạt động nội bộ và khi họp công ty, bạn biết đấy, Giám đốc điều hành đang nói về việc \"Đây là những ngọn đồi lớn mà chúng ta phải vượt qua với tư cách là một công ty.\" Bạn biết đấy, trường hợp gấu từ Morningstar đối với công ty của bạn, bạn biết đấy, nếu bạn là một công ty đại chúng."}, {"chapter": "Bạn đang di chuyển số mấy?", "timestamp": "13:02", "seconds": 782, "content": "Bạn nhớ tất cả những bài viết đó? Bạn không nhìn thấy những bài viết đó nữa. Những bài báo đó sẽ thật lố bịch vào năm 2026. Một đại diện hỗ trợ trong nhóm của tôi gửi số lượng mã để sản xuất trong ứng dụng cốt lõi của chúng tôi nhiều gấp đôi so với kỹ sư trung bình tại một công ty SaaS đại chúng. Hai yêu cầu rưỡi mỗi tuần được sử dụng để giúp bạn được thăng chức, bạn sẽ có đủ tiền mua một chiếc xe đạp tốc độ cố định ưa thích, vì vậy bạn có thể đến văn phòng lúc 11 giờ sáng và phàn nàn về bia lạnh. Ngày nay, hai yêu cầu kéo rưỡi mỗi tuần là"}, {"chapter": "Điều gì còn là con người, điều gì thuộc về AI", "timestamp": "15:56", "seconds": 956, "content": "rằng người đại diện sẽ ở lại. Tôi nghĩ chúng ta sẽ có bốn nguyên mẫu trong các công ty tương lai. Một trong số họ là người đại diện, UI con người sẽ nói về công ty, đáng tin cậy và đưa ra những lời hứa. Rất nhiều người nói, \"Chúng tôi không muốn mua hàng từ AI.\" Tôi nghĩ điều đó hoàn toàn đúng. Nhưng hãy để người đó làm nhiều hơn thế. Hãy để họ thuyết phục hơn. Hãy để họ trở thành những người biết lắng nghe tốt hơn, và một lần nữa, sự tín nhiệm đó, có một người thực sự có thể đưa ra lời hứa tốt và đứng đằng sau lời hứa đó. Chuyện gì xảy ra? Nghiên cứu, thu hồi, lưu giữ hồ sơ."}, {"chapter": "Trước: con người ngồi robot", "timestamp": "19:53", "seconds": 1193, "content": "Họ đi mất. Chúng đang xảy ra bởi vì nó xảy ra với ai đó vào lúc này, ôi trời, bạn biết đấy, tôi nên viết một email. Ôi trời, tôi nên lấy một bản báo cáo. Công việc lại được thực hiện theo luồng, với sự điều khiển của con người, và sau đó nó biến mất. Nếu ai đó ngồi đó vật lộn để lấy một báo cáo Salesforce đã được xác minh chính xác cho vai trò của họ, cho nhóm của họ và họ phải thử nhiều cách và tìm ra ý nghĩa của các trường và tất cả những thứ còn lại, thì người tiếp theo đến và muốn làm điều tương tự cũng sẽ gặp vấn đề tương tự. Điều này không xảy ra trong công nghệ phần mềm."}, {"chapter": "Sau: tác nhân chủ động và vòng lặp tự hoàn thiện", "timestamp": "21:42", "seconds": 1302, "content": "mà tôi không biết.\" Và tôi nói, \"Steve, đó là một ý tưởng hay.\" Và tôi, nói với người đại diện của mình, tôi nói, \"Làm việc này cho tôi.\" Và thế là tôi nhận được những thứ này mỗi sáng, và chúng cực kỳ thú vị và mang tính giải trí. Và nó đặt tôi vào một tình huống là xung quanh máy làm mát nước ở nơi làm việc, và những người bạn của tôi ở đây có thể xác nhận rằng, tôi sẽ tình cờ nghe được các cuộc trò chuyện về các giao dịch, và thủ thuật nhỏ của tôi, chẳng hạn như, trò chơi đang trở nên khó chịu, và mọi người kiểu như, \"Anh bạn, chúng tôi hiểu rồi. Dừng lại đi.\" Nhưng tôi sẽ bắt đầu lên tiếng về thỏa thuận này và sẽ nói, \"Nima là CTO, Dan là phó giám đốc bán hàng. Đây là một trích dẫn trực tiếp. Họ thích điều này ở đối thủ cạnh tranh này,\" kiểu blah."}, {"chapter": "Bạn + Mã Claude = sáu kỹ sư", "timestamp": "25:13", "seconds": 1513, "content": "băng thông trị giá sáu kỹ sư từ năm 2017. Tôi đảm bảo với bạn về điều này. Bạn làm việc với Claude Code tốt hơn, bạn biết đấy, chúng tôi đã từng có những nhóm này với một trưởng nhóm công nghệ, một nhà thiết kế và hai hoặc ba kỹ sư phần mềm, sau đó chúng tôi sẽ thuê các hợp tác xã vùng Đông Bắc và đào tạo họ và tất cả những việc còn lại, hai rưỡi yêu cầu kéo một tuần, tất cả những việc còn lại. Mỗi người trong số các bạn, tuần đầu tiên trên Claude Code đều mạnh mẽ như toàn bộ nhóm sản phẩm từ một công ty SaaS truyền thống. Xây dựng hay mua? Hiểu các thành phần"}, {"chapter": "Xây dựng cái gì và mua cái gì", "timestamp": "28:45", "seconds": 1725, "content": "trong khi cho phép họ tiếp tục cá nhân hóa trải nghiệm đại lý của mình? Dây nịt. Khi nào bạn sử dụng dây nịt của bên thứ nhất? Khi nào bạn xây dựng của riêng bạn? Ai nên sử dụng cái gì? Bề mặt làm việc. Đã có một cuộc trò chuyện tuyệt vời trong cuộc thảo luận nhóm của chúng tôi về vấn đề này và các quan điểm khác nhau. Có một quan điểm rằng, bạn biết gì không? Tôi có thể rung cảm mã bất kỳ giao diện người dùng nào tôi muốn, ý tôi là, nghe này, tôi nuôi sống gia đình mình bằng cách tạo ra những giao diện người dùng này, hoặc ít nhất là tôi đã có trong suốt hai mươi năm. Tôi không biết, anh bạn. Tôi thực sự không biết. Ý tôi là, điều đó thật đáng xấu hổ đối với chúng tôi. Chúng tôi đã dành rất nhiều thời gian cho giao diện người dùng và cố gắng làm cho mọi thứ trở nên hoàn hảo."}, {"chapter": "Ba câu hỏi để gửi lại cho nhóm của bạn", "timestamp": "30:27", "seconds": 1827, "content": "Chọn một số liệu. Có những số liệu trong kế hoạch tài chính mà bạn chưa bao giờ có thể di chuyển được, tài chính đó chưa bao giờ có thể di chuyển được, hiện tại chúng rất có thể di chuyển được. Tôi không đủ khả năng để nói với bạn rằng bạn nên tăng gấp đôi hạn ngạch, phải không? Và hiện tại đang có một chút bế tắc khi không ai muốn nói điều gì đó nghe có vẻ nực cười. Nhưng bất cứ con số nào, bạn biết đấy, bạn có thể di chuyển được, nếu ai đó nói với bạn con số đó và bạn có thể di chuyển nó bao nhiêu- Mm ... trong thực tế ngày nay, điều đó có vẻ nực cười. Điều thứ hai, khi bạn có con số đó, làm cách nào để chúng ta đi từ đường cơ sở đến hai X?"}], "key_insights": [{"timestamp": "04:49", "seconds": 289, "content": "Vì vậy, hãy bắt đầu với điều này, ý tưởng về bộ não công ty, đang được bàn tán sôi nổi trên LinkedIn, trên Twitter, Hacker News, bất cứ nơi nào bạn nhìn thấy. Thực chất nó là gì? Dây nịt là gì? Đại lý là gì? Bạn biết đấy, các nhà cung cấp khác nhau có những khái niệm khác nhau về kỹ năng và đại lý là gì. Tự động hóa phù hợp như thế nào? Tôi muốn làm sáng tỏ một số điều đó và thu nhỏ lại và nói rằng, rất nhiều thứ đã thay đổi, nhưng thế giới mới rất dễ tiếp cận. Chỉ cần làm sáng tỏ nó hoàn toàn cho bạn. Đây là điểm vào."}, {"timestamp": "14:47", "seconds": 887, "content": "Bán hàng và tiếp thị thậm chí, nhưng bán hàng và RevOps vẫn chưa mong đợi những thứ mà bạn hoàn toàn có thể nhận được ngay bây giờ với số tiền không nhiều. Nhân loại ở bên phải, tôi, bạn biết đấy, tôi không đồng ý với điều này một chút, nhưng tôi nghĩ nó đủ gần. Đó là một chút khó khăn để nhìn thấy. Màu đỏ là theo bộ phận, cho biết mỗi bộ phận này đã nhận được bao nhiêu giá trị bằng AI và màu xanh là tiềm năng. Tôi cho rằng doanh số bán hàng có thể là một cú nhấp chuột khác,"}, {"timestamp": "27:01", "seconds": 1621, "content": "và đặt nó vào một nơi? Tôi viết bảng trắng với những người thực hành RevOps, những người mà nhiều người trong số các bạn đang quản lý, và tôi viết bảng trắng những thứ mà họ có trong công ty. Rất thú vị, CRM truyền thống không bao giờ nằm ​​trong top 5 nguồn dữ liệu có giá trị và hữu ích nhất. Nó chỉ có độ phân giải thấp. Đó không phải là ưu tiên số một. Bản ghi âm cuộc họp, món granola, khách hàng Slack, bạn biết đấy, danh sách, email. Bạn biết đấy, hãy đưa Gmail vào đó."}], "actionable_steps": [{"timestamp": "04:49", "seconds": 289, "content": "Vì vậy, hãy bắt đầu với điều này, ý tưởng về bộ não công ty, đang được bàn tán sôi nổi trên LinkedIn, trên Twitter, Hacker News, bất cứ nơi nào bạn nhìn thấy. Thực chất nó là gì? Dây nịt là gì? Đại lý là gì? Bạn biết đấy, các nhà cung cấp khác nhau có những khái niệm khác nhau về kỹ năng và đại lý là gì. Tự động hóa phù hợp như thế nào? Tôi muốn làm sáng tỏ một số điều đó và thu nhỏ lại và nói rằng, rất nhiều thứ đã thay đổi, nhưng thế giới mới rất dễ tiếp cận. Chỉ cần làm sáng tỏ nó hoàn toàn cho bạn. Đây là điểm vào."}, {"timestamp": "05:24", "seconds": 324, "content": "Cách chúng ta giải quyết những vấn đề khó khăn vào năm 2026 rất khác so với cách chúng ta giải quyết những vấn đề này trước đây. Đó là phần khó khăn. Phần dễ dàng hơn là khi bạn học được mẫu này, bạn có thể sử dụng nó cho bất kỳ vấn đề khó khăn nào mà bạn gặp phải. Chúng tôi có... Tôi nghĩ chiến dịch tiếp thị gần đây nhất mà chúng tôi đã thực hiện là cách giải quyết CRM bằng cách giải quyết mọi thứ vì đây là tư duy dựa trên khuôn mẫu và, bạn biết đấy, phải làm gì... điểm xuất phát của bạn là gì, và sau đó, bạn biết đấy, bạn sẽ tìm ra con đường của mình như nước. Bạn sẽ tìm ra cách giải quyết,"}, {"timestamp": "06:30", "seconds": 390, "content": "Bạn nắm lấy tất cả, bạn biết đấy, nhắm mục tiêu vào các trang web của trường học. Bạn chuyển đổi chúng thành markdown. Bạn lấy tất cả các thẻ báo cáo, tất cả mọi thứ. Bạn biết đấy, bạn thì thầm những điều bạn nghĩ về con mình và đặt tất cả những điều đó vào tập hồ sơ, sau đó bạn bắt đầu nói, \"Được rồi, hãy hiểu điều này thôi.\" Và bạn thực sự có thể tiếp cận vấn đề đó bằng câu hỏi con tôi nên học ở đâu? Nếu bạn đang xây một ngôi nhà, bạn có thể đưa vào tất cả các quy định của thị trấn, tất cả thông tin về cách đăng ký quyền sử dụng đất và tất cả những thứ như vậy, chứng nhận chì, bạn biết đấy, thông tin nhà thầu, đánh giá từ Yelp."}, {"timestamp": "17:06", "seconds": 1026, "content": "Với những máy ghi âm cuộc họp này, một trong những điều đầu tiên bạn thấy là bạn có thể chú ý hơn trong cuộc họp vì bạn không có trách nhiệm ghi nhớ tất cả các chi tiết. Đây là kỳ vọng mới. Mọi thứ sẽ được ghi nhớ. Mọi thông tin và cảm xúc quan trọng sẽ được ghi lại. Và sau đó là việc lưu giữ hồ sơ, và có vẻ như điều đó không giúp tôi bắt đầu việc này, nhưng bạn biết đấy, ngay cả các phòng thí nghiệm ở biên giới, các nhóm bán hàng cũng đang ngồi đó với các khối trên lịch của họ để điền vào dữ liệu Salesforce. Bạn bè của tôi,"}, {"timestamp": "22:18", "seconds": 1338, "content": "Một vài lần đầu nó chơi rất tốt. Bây giờ nó thực sự khó chịu. Các vòng lặp tự cải thiện. Bạn có đang ghi lại ở đâu đó những gì đang có hiệu quả trong một ngành dọc cụ thể, một loại giao dịch hoặc tình huống cụ thể không? Bạn có biết điều gì đang giúp những người đại diện tăng tốc nhanh hơn mức cần thiết không? Điều gì là... Trải nghiệm của họ có gì khác biệt so với những người đại diện, kiểu như, không bao giờ đạt được điều đó và phải bị lừa, bạn biết đấy, trong chín tháng? Bạn có biết không? Đây là một vấn đề đã được giải quyết. Bạn chỉ có thể hỏi và sau đó ghi lại điều đó ở một nơi"}, {"timestamp": "30:27", "seconds": 1827, "content": "Chọn một số liệu. Có những số liệu trong kế hoạch tài chính mà bạn chưa bao giờ có thể di chuyển được, tài chính đó chưa bao giờ có thể di chuyển được, hiện tại chúng rất có thể di chuyển được. Tôi không đủ khả năng để nói với bạn rằng bạn nên tăng gấp đôi hạn ngạch, phải không? Và hiện tại đang có một chút bế tắc khi không ai muốn nói điều gì đó nghe có vẻ nực cười. Nhưng bất cứ con số nào, bạn biết đấy, bạn có thể di chuyển được, nếu ai đó nói với bạn con số đó và bạn có thể di chuyển nó bao nhiêu- Mm ... trong thực tế ngày nay, điều đó có vẻ nực cười. Điều thứ hai, khi bạn có con số đó, làm cách nào để chúng ta đi từ đường cơ sở đến hai X?"}]}, "en": {"title": "What RevOps should build vs. buy for the company brain (Ex-HubSpot CPO at Vector)", "one_liner": "RevOps teams are building now. One person with Claude Code has the bandwidth of six engineers from 2017. So what should you build, and what should you still buy?", "executive_summary": "RevOps teams are building now. One person with Claude Code has the bandwidth of six engineers from 2017. So what should you build, and what should you still buy? At Vector 2026, Christopher O'Donnell (co-founder of Day AI, 10 years leading product at HubSpot) walks through what a company brain actually is, why traditional CRM is never in the top five data sources RevOps teams rely on, and how to decide part by part: meeting transcripts, data sources, the agent control plane, harnesses, work surfaces, knowledge management.", "chapters": [{"timestamp": "00:00", "seconds": 0, "title": "From HubSpot product to running RevOps"}, {"timestamp": "03:15", "seconds": 195, "title": "You are a product engineering team now"}, {"timestamp": "04:49", "seconds": 289, "title": "What a company brain actually is"}, {"timestamp": "05:53", "seconds": 353, "title": "Start with a folder"}, {"timestamp": "08:02", "seconds": 482, "title": "Brains scattered everywhere"}, {"timestamp": "11:42", "seconds": 702, "title": "What number are you moving?"}, {"timestamp": "15:31", "seconds": 931, "title": "What stays human, what goes to AI"}, {"timestamp": "19:12", "seconds": 1152, "title": "Before: humans bot-sitting"}, {"timestamp": "21:18", "seconds": 1278, "title": "After: proactive agents and self-improving loops"}, {"timestamp": "24:59", "seconds": 1499, "title": "You + Claude Code = six engineers"}, {"timestamp": "25:31", "seconds": 1531, "title": "What to build and what to buy"}, {"timestamp": "29:52", "seconds": 1792, "title": "Three questions to take back to your team"}], "core_ideas": [{"chapter": "From HubSpot product to running RevOps", "timestamp": "02:26", "seconds": 146, "content": "Are they doing this? Are they using Kafka and all the rest of it? And I'm like, \"See what I said? Be very careful.\" So once he knew it, though, that was it, right? A year later, we were the proud owners of all of corporate IT, including RevOps, which led to me having an incredible experience, managing a guy who's still there, EVP of Ops at HubSpot, Chris Hogan, who is a legend and a gentleman and a scholar, and I had the honor of managing him for two or three years, which, you know, talk about imposter syndrome, but I learned a ton from him."}, {"chapter": "You are a product engineering team now", "timestamp": "03:40", "seconds": 220, "content": "literally your seat of every single person at this event today, genuinely, I believe that your AI strategy represents the number one opportunity to build a multiplier effect, bend the curve, at your company more than any other department, even more than engineering. The bad news is you're gonna have to take my traditional role of being a product leader, go out, buy the black T-shirt and the New Balance and the whole thing. Robert Barricade has great black T-shirts."}, {"chapter": "What a company brain actually is", "timestamp": "05:24", "seconds": 324, "content": "The way that we solve hard problems in 2026 is very different from how we solved these problems before now. That's the hard part. The easier part is once you learn this pattern, you can use it for any hard problem that you have. We have a... I think our most recent marketing campaign that we did was how to solve CRM by solving everything because this is pattern-based thinking and, you know, what to... what your starting point is, and then, you know, you'll kind of find your way like water. You'll find a way to the solution,"}, {"chapter": "Start with a folder", "timestamp": "06:30", "seconds": 390, "content": "You grab all of the, you know, target school's websites. You convert them into markdown. You grab all the report cards, everything. You do a whisper flow dump of, you know, what you think about your kid, and you put that all in the folder, and then you start to go, \"Okay, let's make sense of this.\" And you can actually approach that problem with, where should my kid go to school? If you're building a house, you can put in all of the town ordinances, all of the information about how to apply for easements, and all this kind of stuff, lead certification, you know, contractor information, reviews from Yelp."}, {"chapter": "Brains scattered everywhere", "timestamp": "10:37", "seconds": 637, "content": "that may have existed on a laminated, printed out, you know, handout for sales kickoff of, \"Can everybody please follow the sales process?\" And then, you know, most of those, like, right by the bar on the way out in the trash can. You know, you have all the sales kickoff, sales process cards. But really nicely detailed examples of the strategy. When you are having your internal ops meetings and when the company meeting, you know, the CEO is talking about, \"Here are the big hills we have to climb as a company.\" You know, the bear case from Morningstar on your company, you know, if you're a public company."}, {"chapter": "What number are you moving?", "timestamp": "13:02", "seconds": 782, "content": "You remember all those articles? You don't see those articles anymore. Those articles would be ridiculous in 2026. A support rep on my team ships twice as much code to production in our core app as the average engineer at a public SaaS company. Two and a half pull requests a week used to get you promoted, you'd be able to afford the fancy fixed-speed bicycle, so you could come into the office at 11:00 AM and complain about the cold brew. Today, two and a half pull requests a week is"}, {"chapter": "What stays human, what goes to AI", "timestamp": "15:56", "seconds": 956, "content": "that the rep stays. I think we're gonna have four archetypes in the future companies. One of them is the representative, the human UI that is going to talk about the company, be credible, make the promises. A lot of people are saying, \"We don't wanna buy from AI.\" I think that's absolutely right. But let's let that person do more of that. Let's let them be more persuasive. Let's let them be better listeners, and again, that credibility, having a person that can actually make a good promise and stand behind it. What goes? Research, recall, record keeping."}, {"chapter": "Before: humans bot-sitting", "timestamp": "19:53", "seconds": 1193, "content": "They go away. They are happening because it occurs to somebody in the moment, oh geez, you know, I should write an email. Oh geez, I should pull a report. The work is done in the thread, again, with the human driving all of that, and then it is gone. If somebody sits there wrestling to pull an accurate verified Salesforce report for their role, for their team, and they have to try it a bunch of ways and figure out what the fields mean and all the rest of it, the next person who comes along and wants to do that same thing is going to have that same problem. This does not happen in software engineering."}, {"chapter": "After: proactive agents and self-improving loops", "timestamp": "21:42", "seconds": 1302, "content": "that I don't know about.\" And I was like, \"Steve, that's a great idea.\" And I, like, tell my agent off to the side, I'm like, \"Do this for me.\" And so I get these every morning, and they are just wildly interesting and entertaining. And it puts me in a situation where around the water cooler at work, and my friends who are here can confirm, I'll overhear conversations about deals, and my little, like, party trick, which is getting annoying now, and people are like, \"Dude, we get it. Stop.\" But I'll just start chiming in about the deal, and I'll be like, \"Nima's the CTO, Dan's the VP of sales. Here's a direct quote. They like this about this competitor,\" like blah."}, {"chapter": "You + Claude Code = six engineers", "timestamp": "25:13", "seconds": 1513, "content": "six engineers worth of bandwidth from 2017. I assure you of this. You are better with Claude Code than, you know, we used to have these pods with a tech lead and a designer and two or three software engineers, and then we'd hire the Northeastern co-ops and train them up and all the rest of it, two and a half pull requests a week, all the rest of it. Every single one of you, week one on Claude Code is as powerful as, like, a whole product group from a traditional SaaS company. Build or buy? Understanding the components"}, {"chapter": "What to build and what to buy", "timestamp": "28:45", "seconds": 1725, "content": "while letting them continue to personalize their agent experiences? Harnesses. When do you use a first-party harness? When do you build your own? Who should be using what? Work surface. There was a great, conversation in our breakout about this and different perspectives. There's a perspective that, you know what? I can vibe code whatever UI I want, which, I mean, listen, I feed my family by making these UIs, or at least I have for, you know, better part of twenty years. I don't know, man. I really don't know. I mean, it, it's humbling for us. We've spent a lot of time on UI stuff and trying to get everything perfect."}, {"chapter": "Three questions to take back to your team", "timestamp": "30:27", "seconds": 1827, "content": "Pick a metric. There are metrics in the financial plan that you have never been able to move, that finance has never been able to move, that are now very movable. I'm not in a position to tell you all you should double quota, right? And there's a little bit of a standoff right now where nobody wants to say something that sounds ridiculous. But whatever number, you know, is possible for you to move, if somebody told you that number and how much you could move it- Mm ... in reality today, it would seem ridiculous. Second thing, once you have that number, how do we get from baseline to two X?"}], "key_insights": [{"timestamp": "04:49", "seconds": 289, "content": "So let's start with this, this idea of a company brain, which is being talked about to death on LinkedIn, on Twitter, Hacker News, wherever you look. What actually is it? What's a harness? What is an agent? You know, different vendors have different concepts of what agents are and skills. How does automation fit in? I wanna demystify some of that and kinda zoom out and say, a lot has changed, but the new world is very approachable. Just demystify it entirely for you. Here's the entry point."}, {"timestamp": "14:47", "seconds": 887, "content": "Sales and marketing even, but sales and RevOps are not yet expecting the kinds of things that you absolutely can get right now for not a lot of money. Anthropic on the right, I, you know, I disagree with this one a tiny bit, but it's close enough, I think. It's a little hard to see. The red is by department, how much value they've seen realized by each of these departments with AI, and the blue is the potential. I would argue that sales is probably another click out,"}, {"timestamp": "27:01", "seconds": 1621, "content": "and put it into one place? I whiteboard with RevOps practitioners, the folks that many of you are managing, and I whiteboard out the company brain stuff that they have. Very interestingly, traditional CRM is never in the top five most useful, valuable data sources. It is just low resolution. It's not the number one priority. Meeting recordings, granola, customer Slack, you know, down the list, email. You know, let's get the Gmail in there."}], "actionable_steps": [{"timestamp": "04:49", "seconds": 289, "content": "So let's start with this, this idea of a company brain, which is being talked about to death on LinkedIn, on Twitter, Hacker News, wherever you look. What actually is it? What's a harness? What is an agent? You know, different vendors have different concepts of what agents are and skills. How does automation fit in? I wanna demystify some of that and kinda zoom out and say, a lot has changed, but the new world is very approachable. Just demystify it entirely for you. Here's the entry point."}, {"timestamp": "05:24", "seconds": 324, "content": "The way that we solve hard problems in 2026 is very different from how we solved these problems before now. That's the hard part. The easier part is once you learn this pattern, you can use it for any hard problem that you have. We have a... I think our most recent marketing campaign that we did was how to solve CRM by solving everything because this is pattern-based thinking and, you know, what to... what your starting point is, and then, you know, you'll kind of find your way like water. You'll find a way to the solution,"}, {"timestamp": "06:30", "seconds": 390, "content": "You grab all of the, you know, target school's websites. You convert them into markdown. You grab all the report cards, everything. You do a whisper flow dump of, you know, what you think about your kid, and you put that all in the folder, and then you start to go, \"Okay, let's make sense of this.\" And you can actually approach that problem with, where should my kid go to school? If you're building a house, you can put in all of the town ordinances, all of the information about how to apply for easements, and all this kind of stuff, lead certification, you know, contractor information, reviews from Yelp."}, {"timestamp": "17:06", "seconds": 1026, "content": "With these meeting recorders, one of the first things you see is that you're just able to pay more attention in the meeting because you're not responsible for remembering all of the details. This is the new expectation. Everything is going to be remembered. Every shred of information and sentiment that matters is going to be captured. And then the record keeping, and kinda don't get me started on this, but, you know, even the frontier labs, the sales teams are sitting there with blocks on their calendar to fill out Salesforce data. My friends,"}, {"timestamp": "22:18", "seconds": 1338, "content": "First couple of times it played really well. Now it's just really annoying. The self-improving loops. Are you documenting somewhere what's working in a particular vertical, a particular kind of deal or situation? Do you know what is helping reps who ramp faster than they should? What are... What's different about their experience than the reps that, like, never get there and have to get pipped, you know, nine months in? Do you know? This is a solved problem. You should just be able to ask and then document that in one place"}, {"timestamp": "30:27", "seconds": 1827, "content": "Pick a metric. There are metrics in the financial plan that you have never been able to move, that finance has never been able to move, that are now very movable. I'm not in a position to tell you all you should double quota, right? And there's a little bit of a standoff right now where nobody wants to say something that sounds ridiculous. But whatever number, you know, is possible for you to move, if somebody told you that number and how much you could move it- Mm ... in reality today, it would seem ridiculous. Second thing, once you have that number, how do we get from baseline to two X?"}]}}}];
-
 /**
- * CHAT KNOWLEDGE VAULT ENGINE v1.0 (Zero-Dependency Pure JS Module for Android WebView & Web)
- * -------------------------------------------------------------------------------------------
- * Chức năng:
- * 1. Bóc tách tự động Link YouTube (Innertube ANDROID + XML TimedText + TF-IDF Wisdom Distillation),
- *    Link GitHub Repo, Link Bài viết Web, Tệp tin và Ghi chú Chat.
- * 2. Cầu nối Native HTTP (vượt rào cản CORS và gắn User-Agent Android YouTube trên WebView).
- * 3. Động cơ Tìm kiếm Toàn văn BM25 (hỗ trợ Tiếng Việt có dấu & không dấu, định vị đúng mốc giây [mm:ss]).
- * 4. Cơ chế Lưu trữ Bền vững 3 Lớp (Triple-Persistence: IndexedDB + Native File Mirror + Auto-Restore)
- *    đảm bảo KHÔNG MẤT DỮ LIỆU khi cập nhật hoặc gỡ cài lại ứng dụng Android.
+ * CHAT KNOWLEDGE VAULT — HYBRID ENGINE v3.0 (COHERENT SEMANTIC SYNTHESIS + BILINGUAL VI/EN)
+ * -----------------------------------------------------------------------------------------
+ * Giải quyết triệt để bài toán tóm tắt mạch lạc, có cấu trúc và ý nghĩa thực chất:
+ * 1. GitHub Repository: Tự động gọi GitHub REST API + tải nguyên bản README.md (Markdown),
+ *    phân tích cấu trúc từng đề mục (# / ## / ###), bảng biểu và nguyên lý thiết kế để tổng hợp
+ *    Bức tranh tổng thể & Luận điểm theo từng phần (tuyệt đối không quét rác HTML/Menu/React JSON).
+ * 2. YouTube Video: Tái tạo câu văn hoàn chỉnh từ phụ đề (không cắt ngang câu 30 giây),
+ *    khử từ đệm hội thoại (filler words) & quảng cáo (sponsor links), tổng hợp mạch lạc
+ *    Nội dung cốt lõi theo từng Chương mục (Chapter Synthesis) và Tổng quan toàn video.
+ * 3. Song ngữ Việt - Anh: Mặc định hiển thị Tiếng Việt ('vi'), chuyển đổi 1 chạm sang Tiếng Anh ('en'),
+ *    tự động nâng cấp mọi bản ghi cũ trong máy lên chuẩn Schema v3.
  */
 
 (function (global) {
   'use strict';
 
+  const CURRENT_SCHEMA_VERSION = 3;
+  const YOUTUBE_REGEX = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i;
+  const GITHUB_REGEX = /https?:\/\/(?:www\.)?github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)/i;
+  const URL_REGEX = /(https?:\/\/[^\s<>"']+)/i;
+  const VI_DIACRITIC_REGEX = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+
+  const TAXONOMY_RULES = {
+    'Công nghệ, Lập trình & AI': [
+      'ai', 'agent', 'llm', 'code', 'claude', 'gpt', 'python', 'rust', 'github', 'repo',
+      'software', 'engineering', 'developer', 'api', 'data', 'automation', 'cloud', 'model',
+      'algorithm', 'prompt', 'revops', 'crm', 'hubspot', 'product', 'security', 'audit',
+      'vulnerability', 'lập trình', 'trí tuệ nhân tạo', 'phần mềm', 'mã nguồn', 'bảo mật'
+    ],
+    'Pháp lý & Tiêu chuẩn Xây dựng': [
+      'luật', 'nghị định', 'thông tư', 'qcvn', 'tcvn', 'pháp lý', 'hợp đồng', 'đấu thầu',
+      'nghiệm thu', 'xây dựng', 'pccc', 'thẩm định', 'thẩm tra', 'cấp phép', 'law', 'legal'
+    ],
+    'BIM & Kỹ thuật Công trình': [
+      'bim', 'revit', 'ifc', 'cde', 'iso 19650', 'kết cấu', 'kiến trúc', 'mep', 'uniclass',
+      'bản vẽ', 'thiết kế', 'công trình', 'structural', 'architecture', 'construction'
+    ],
+    'Tài chính, Đầu tư & Kinh tế': [
+      'tài chính', 'đầu tư', 'chứng khoán', 'cổ phiếu', 'vĩ mô', 'lãi suất', 'thuế',
+      'doanh thu', 'lợi nhuận', 'chi phí', 'finance', 'investment', 'revenue', 'sales',
+      'market', 'startup', 'pricing', 'fp&a', 'p&l', 'quota'
+    ],
+    'Huyền học & Phong thủy': [
+      'tử vi', 'phong thủy', 'bát tự', 'kinh dịch', 'quẻ', 'mệnh', 'cung', 'sao', 'huyền học'
+    ],
+    'Quản trị & Phương pháp Nghiên cứu': [
+      'quản trị', 'chiến lược', 'lãnh đạo', 'nghiên cứu', 'luận án', 'tiến sĩ', 'khoa học',
+      'biobank', 'iso', 'management', 'strategy', 'leadership', 'research', 'team', 'company'
+    ]
+  };
+
   const STOPWORDS = new Set([
-    'the', 'and', 'that', 'this', 'with', 'for', 'you', 'are', 'was', 'were',
-    'have', 'has', 'had', 'not', 'but', 'what', 'all', 'when', 'can', 'there',
-    'their', 'they', 'which', 'will', 'would', 'about', 'from', 'into', 'like',
-    'just', 'really', 'think', 'going', 'know', 'because', 'thing', 'things',
-    'people', 'right', 'actually', 'something', 'where', 'some', 'more', 'very',
-    'your', 'our', 'out', 'here', 'how', 'who', 'why', 'been', 'kind', 'sort',
-    'these', 'them', 'then', 'gonna', 'should', 'time', 'over', 'back', 'down',
-    'even', 'take', 'make', 'want', 'need', 'talk', 'look', 'said', 'year', 'years',
-    'every', 'single', 'other', 'much', 'many', 'well', 'also', 'only', 'those',
-    'của', 'và', 'các', 'những', 'trong', 'được', 'cho', 'với', 'này', 'như', 'khi',
-    'một', 'không', 'chúng', 'ta', 'rất', 'thì', 'mà', 'để', 'từ', 'đã', 'sẽ', 'đang'
+    'the', 'and', 'to', 'of', 'in', 'is', 'it', 'that', 'for', 'you', 'on', 'with', 'as', 'are',
+    'this', 'by', 'be', 'at', 'or', 'from', 'an', 'have', 'has', 'was', 'were', 'but', 'not',
+    'what', 'all', 'we', 'they', 'your', 'can', 'will', 'about', 'which', 'their', 'if', 'do',
+    'so', 'up', 'out', 'just', 'like', 'know', 'going', 'think', 'get', 'really', 'right', 'now',
+    'there', 'would', 'could', 'should', 'how', 'when', 'where', 'who', 'them', 'then', 'than',
+    'into', 'some', 'more', 'other', 'one', 'two', 'time', 'way', 'thing', 'things', 'people',
+    'very', 'also', 'even', 'because', 'actually', 'kind', 'sort', 'mean', 'yeah', 'okay', 'well',
+    'gonna', 'wanna', 'gotta', 'stuff', 'lot', 'little', 'bit', 'said', 'say', 'saying', 'look',
+    'và', 'của', 'là', 'có', 'trong', 'được', 'cho', 'với', 'các', 'những', 'một', 'này',
+    'đó', 'khi', 'để', 'từ', 'không', 'như', 'về', 'người', 'ra', 'theo', 'trên', 'tại'
   ]);
 
-  const YOUTUBE_REGEX = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-  const GITHUB_REGEX = /https?:\/\/(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/;
-  const URL_REGEX = /(https?:\/\/[^\s)\]>'"]+)/;
-
-  /**
-   * 1. TIỆN ÍCH XỬ LÝ NGÔN NGỮ & THỜI GIAN
-   */
   function removeVietnameseAccents(str) {
     if (!str) return '';
     return String(str)
-      .replace(/đ/g, 'd')
-      .replace(/Đ/g, 'D')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
       .toLowerCase();
   }
 
-  function decodeHtmlEntities(str) {
-    if (!str) return '';
-    return String(str)
+  function formatTimestamp(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    const hrs = Math.floor(s / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
+    const pad = (n) => String(n).padStart(2, '0');
+    return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
+  }
+
+  function parseTimestampToSeconds(ts) {
+    const parts = String(ts || '0:0').trim().split(':').map(Number);
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return 0;
+  }
+
+  function decodeHtmlEntities(text) {
+    if (!text) return '';
+    const txt = String(text)
+      .replace(/\\u003c/gi, '<')
+      .replace(/\\u003e/gi, '>')
+      .replace(/\\u0026/gi, '&')
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
-      .replace(/&#x27;/g, "'")
-      .replace(/&nbsp;/g, ' ');
-  }
-
-  function formatTimestamp(seconds) {
-    const total = Math.max(0, Math.floor(Number(seconds) || 0));
-    const hrs = Math.floor(total / 3600);
-    const mins = Math.floor((total % 3600) / 60);
-    const secs = total % 60;
-    const pad = (n) => String(n).padStart(2, '0');
-    return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
-  }
-
-  function parseTimestampToSeconds(tsStr) {
-    const parts = String(tsStr || '').trim().split(':').map(Number).filter(n => !Number.isNaN(n));
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    return 0;
+      .replace(/&apos;/g, "'")
+      .replace(/&#x27;/gi, "'")
+      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
+    return txt;
   }
 
   function simpleHash(str) {
@@ -79,134 +111,114 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     const s = String(str || '');
     for (let i = 0; i < s.length; i++) {
       h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
+      h = Math.imul(h, 16777619) >>> 0;
     }
-    return (h >>> 0).toString(16).padStart(8, '0');
+    return h.toString(36).slice(0, 10);
   }
 
   /**
-   * 2. CẦU NỐI MẠNG HYBRID (VƯỢT CORS & GẮN USER-AGENT ANDROID TRÊN FLUTTER WEBVIEW)
+   * CẦU NỐI NATIVE BRIDGE (FLUTTER <-> JS)
    */
-  const pendingNativeRequests = new Map();
-  let reqCounter = 1;
+  const pendingNativeCalls = new Map();
+  let callSeq = 1;
 
-  // Hàm callback toàn cục để tầng Dart/Kotlin trả kết quả HTTP hoặc Backup về JS
-  global.__onChatVaultNativeResponse = function (responseJsonStr) {
+  global.__onChatVaultNativeResponse = function (responseJson) {
     try {
-      const payload = typeof responseJsonStr === 'string' ? JSON.parse(responseJsonStr) : responseJsonStr;
-      const reqId = payload.reqId;
-      if (reqId && pendingNativeRequests.has(reqId)) {
-        const { resolve, reject } = pendingNativeRequests.get(reqId);
-        pendingNativeRequests.delete(reqId);
-        if (payload.ok === false) {
-          reject(new Error(payload.error || 'Native bridge error'));
-        } else {
-          resolve(payload.data);
-        }
+      const res = typeof responseJson === 'string' ? JSON.parse(responseJson) : responseJson;
+      const item = pendingNativeCalls.get(res.reqId);
+      if (item) {
+        pendingNativeCalls.delete(res.reqId);
+        if (res.ok) item.resolve(res.data);
+        else item.reject(new Error(res.error || 'Native Bridge Error'));
       }
     } catch (err) {
-      console.error('[ChatVaultEngine] Lỗi phân giải phản hồi Native:', err);
+      console.error('[ChatVaultEngine] Bridge parse error:', err);
     }
   };
 
   function hasNativeBridge() {
     return Boolean(
       (global.ChatVaultNativeBridge && typeof global.ChatVaultNativeBridge.postMessage === 'function') ||
-      (global.AndroidVaultBridge && typeof global.AndroidVaultBridge.postMessage === 'function')
+      (global.webkit && global.webkit.messageHandlers && global.webkit.messageHandlers.ChatVaultNativeBridge)
     );
   }
 
-  function callNativeBridge(action, params = {}, timeoutMs = 18000) {
+  function callNativeBridge(action, payload = {}) {
     return new Promise((resolve, reject) => {
-      const bridge = global.ChatVaultNativeBridge || global.AndroidVaultBridge;
-      if (!bridge || typeof bridge.postMessage !== 'function') {
-        reject(new Error('Native Bridge chưa được gắn kết'));
+      if (!hasNativeBridge()) {
+        reject(new Error('Native Bridge không khả dụng'));
         return;
       }
-      const reqId = `req_${Date.now()}_${reqCounter++}`;
+      const reqId = `req_${Date.now()}_${callSeq++}`;
       const timer = setTimeout(() => {
-        if (pendingNativeRequests.has(reqId)) {
-          pendingNativeRequests.delete(reqId);
-          reject(new Error(`Quá thời gian chờ phản hồi Native (${action})`));
+        if (pendingNativeCalls.has(reqId)) {
+          pendingNativeCalls.delete(reqId);
+          reject(new Error(`Quá thời gian chờ phản hồi (${action})`));
         }
-      }, timeoutMs);
+      }, 25000);
 
-      pendingNativeRequests.set(reqId, {
-        resolve: (data) => {
-          clearTimeout(timer);
-          resolve(data);
-        },
-        reject: (err) => {
-          clearTimeout(timer);
-          reject(err);
-        }
+      pendingNativeCalls.set(reqId, {
+        resolve: (data) => { clearTimeout(timer); resolve(data); },
+        reject: (err) => { clearTimeout(timer); reject(err); }
       });
 
-      bridge.postMessage(JSON.stringify({ reqId, action, ...params }));
+      const msg = JSON.stringify({ reqId, action, ...payload });
+      if (global.ChatVaultNativeBridge && typeof global.ChatVaultNativeBridge.postMessage === 'function') {
+        global.ChatVaultNativeBridge.postMessage(msg);
+      } else {
+        global.webkit.messageHandlers.ChatVaultNativeBridge.postMessage(msg);
+      }
     });
   }
 
   async function hybridHttpRequest({ url, method = 'GET', headers = {}, body = null }) {
-    // Ưu tiên 1: Nếu chạy trong App Android có cầu nối Native -> vượt 100% CORS và đổi được User-Agent
     if (hasNativeBridge()) {
       return await callNativeBridge('httpRequest', { url, method, headers, body });
     }
-    // Ưu tiên 2: Nếu chạy trên trình duyệt Web обычный -> gọi thẳng fetch()
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined
-    });
-    return await res.text();
+    const resp = await fetch(url, { method, headers, body });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.text();
   }
 
-  /**
-   * 3. THUẬT TOÁN PHÂN LOẠI & CHẤM ĐIỂM TF-IDF BẤT ĐỒNG BỘ (KHÔNG TREO UI THREAD)
-   */
-  function detectCategory(textCorpus) {
-    const corpus = String(textCorpus || '').toLowerCase();
-    const rules = {
-      'Pháp lý & Tiêu chuẩn Xây dựng': [
-        'nghị định', 'thông tư', 'luật xây dựng', 'qcvn', 'tcvn', 'pccc', 'thẩm định', 'nghiệm thu', 'pháp lý'
-      ],
-      'BIM & Kỹ thuật Công trình': [
-        'bim', 'revit', 'ifc', 'iso 19650', 'cde', 'autocad', 'dwg', 'kết cấu', 'mep', 'kiến trúc'
-      ],
-      'Công nghệ, Lập trình & AI': [
-        'python', 'ai', 'llm', 'agent', 'agents', 'claude', 'code', 'github', 'api', 'database', 'engineering',
-        'product', 'crm', 'data', 'flutter', 'sqlite', 'ocr', 'machine learning'
-      ],
-      'Tài chính, Đầu tư & Kinh tế': [
-        'chứng khoán', 'cổ phiếu', 'vĩ mô', 'tài chính', 'đầu tư', 'lãi suất', 'bất động sản', 'revenue', 'revops', 'sales'
-      ],
-      'Huyền học & Phong thủy': [
-        'bát tự', 'tử vi', 'kỳ môn', 'lục hào', 'phong thủy', 'kinh dịch', 'huyền không', 'thái ất', 'cảm xạ'
-      ],
-      'Quản trị & Phương pháp Nghiên cứu': [
-        'nghiên cứu', 'luận án', 'scopus', 'quản lý dự án', 'biobank', 'khoa học', 'kỹ năng', 'company brain'
-      ]
-    };
+  function detectCategory(corpusText) {
+    const lower = String(corpusText || '').toLowerCase();
     let bestCat = 'Tri thức Tổng hợp';
-    let maxScore = 0;
-    for (const [cat, kwList] of Object.entries(rules)) {
+    let bestScore = 0;
+    for (const [cat, kwList] of Object.entries(TAXONOMY_RULES)) {
       let score = 0;
       for (const kw of kwList) {
-        if (corpus.includes(kw)) score++;
+        if (lower.includes(kw)) score += 1;
       }
-      if (score > maxScore) {
-        maxScore = score;
+      if (score > bestScore) {
+        bestScore = score;
         bestCat = cat;
       }
     }
     return bestCat;
   }
 
-  async function computeTfIdfScoresAsync(segments, title) {
-    if (!segments || !segments.length) return { scores: [], topKeywords: [] };
+  /**
+   * 3. CHẤM ĐIỂM NGỮ NGHĨA TF-IDF + MẬT ĐỘ LUẬN ĐIỂM (THESIS DENSITY SCORING)
+   */
+  const THESIS_MARKERS_RE = /\b(because|therefore|key|important|critical|means|instead|strategy|framework|system|architecture|model|problem|solution|build|buy|must|should|need to|first|second|third|result|impact|percent|principle|phase|workflow|vì vậy|do đó|cốt lõi|quan trọng|giải pháp|nguyên lý|bản chất|hệ thống|chiến lược|mục tiêu)\b/i;
+  const CONVERSATIONAL_NOISE_RE = /\b(thank you so much|can't wait to hear|black t-shirt|new balance|dry-cleaned|around the water cooler|party trick|getting annoying|dude, we get it|blah|oh geez|sign in|sign up|appearance settings|reload to refresh your session)\b/i;
 
-    const wordRegex = /[a-zA-ZÀ-ỹ]{3,}/g;
+  function cleanSpokenDisfluencies(text) {
+    let s = String(text || '').replace(/\s+/g, ' ').trim();
+    s = s.replace(/\b(you know,\s*|you know\s+|I mean,\s*|I mean\s+|like,\s+|sort of\s+|kind of\s+|uh,?\s+|um,?\s+)/gi, '');
+    s = s.replace(/^(and|so|but|well|okay|listen|now),?\s+/i, '');
+    s = s.replace(/\s+/g, ' ').trim();
+    if (s.length > 1) {
+      s = s.charAt(0).toUpperCase() + s.slice(1);
+    }
+    return s;
+  }
+
+  async function computeTfIdfScoresAsync(segments, title = '') {
+    if (!segments || !segments.length) return { scores: [], topKeywords: [] };
+    const wordRegex = /[a-zA-ZÀ-ỹ0-9_-]{3,}/g;
     const titleWords = new Set(
-      (String(title || '').match(wordRegex) || [])
+      (String(title).match(wordRegex) || [])
         .map(w => w.toLowerCase())
         .filter(w => !STOPWORDS.has(w))
     );
@@ -215,7 +227,6 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     const docFreq = new Map();
     const totalTermFreq = new Map();
 
-    // Chia lô xử lý mỗi 40 đoạn nhường luồng UI 1ms để không bao giờ gây đơ cảm ứng trên Android
     for (let i = 0; i < segments.length; i++) {
       if (i > 0 && i % 40 === 0) {
         await new Promise(r => setTimeout(r, 1));
@@ -236,17 +247,23 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     }
 
     const numDocs = segments.length;
-    const scores = tokenizedDocs.map(words => {
+    const scores = tokenizedDocs.map((words, idx) => {
       if (!words.length) return 0;
+      const rawTxt = String(segments[idx].text || '');
+      if (CONVERSATIONAL_NOISE_RE.test(rawTxt)) return 0.1;
       const tf = new Map();
       for (const w of words) tf.set(w, (tf.get(w) || 0) + 1);
       let docScore = 0;
       for (const [w, count] of tf.entries()) {
         const df = docFreq.get(w) || 1;
         const idf = Math.log(1.0 + numDocs / (1.0 + df));
-        const weight = titleWords.has(w) ? 1.6 : 1.0;
+        const weight = titleWords.has(w) ? 1.8 : 1.0;
         docScore += (count / Math.sqrt(words.length)) * idf * weight;
       }
+      if (THESIS_MARKERS_RE.test(rawTxt)) docScore *= 1.35;
+      // Giảm điểm các câu quá nhiều dấu hỏi vụn vặt
+      const qCount = (rawTxt.match(/\?/g) || []).length;
+      if (qCount >= 2) docScore *= 0.65;
       return docScore;
     });
 
@@ -260,31 +277,99 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
   }
 
   /**
-   * 4. BỘ BÓC TÁCH YOUTUBE IDEA CARD (CHUẨN UNIFIED YOUTUBE IDEA SCHEMA)
+   * 4A. BỘ BÓC TÁCH & TỔNG HỢP MẠCH LẠC YOUTUBE (COHERENT CHAPTER & THESIS SYNTHESIS)
    */
+  function buildCompleteSentencesFromXml(rawXml) {
+    const pRegex = /<p\s+t="(\d+)"(?:\s+d="(\d+)")?[^>]*>([\s\S]*?)<\/p>/g;
+    let pMatch;
+    const rawPieces = [];
+
+    while ((pMatch = pRegex.exec(rawXml)) !== null) {
+      const startSec = Number(pMatch[1]) / 1000.0;
+      const cleanPiece = decodeHtmlEntities(pMatch[3].replace(/<[^>]+>/g, ' '))
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!cleanPiece) continue;
+      rawPieces.push({ startSec, text: cleanPiece });
+    }
+
+    // Ghép các mảnh phụ đề thành câu hoàn chỉnh theo dấu câu (. ! ?) hoặc độ dài hợp lý
+    const sentences = [];
+    let curStart = 0;
+    let curWords = [];
+
+    for (let i = 0; i < rawPieces.length; i++) {
+      const piece = rawPieces[i];
+      if (!curWords.length) curStart = piece.startSec;
+      curWords.push(piece.text);
+      const joined = curWords.join(' ');
+      const endsWithPunct = /[.!?]["']?$/.test(piece.text);
+      const duration = piece.startSec - curStart;
+
+      if ((endsWithPunct && joined.length >= 65) || joined.length >= 220 || duration >= 28) {
+        const cleaned = cleanSpokenDisfluencies(joined);
+        if (cleaned.length >= 35) {
+          sentences.push({
+            timestamp: formatTimestamp(curStart),
+            start_seconds: Math.floor(curStart),
+            text: cleaned
+          });
+        }
+        curWords = [];
+      }
+    }
+    if (curWords.length) {
+      const cleaned = cleanSpokenDisfluencies(curWords.join(' '));
+      if (cleaned.length >= 25) {
+        sentences.push({
+          timestamp: formatTimestamp(curStart),
+          start_seconds: Math.floor(curStart),
+          text: cleaned
+        });
+      }
+    }
+    return sentences;
+  }
+
+  function synthesizeChapterParagraph(chapterTitle, chapterSentences, chapterScores) {
+    if (!chapterSentences.length) return '';
+    // Chọn tối đa 2-3 câu có điểm ngữ nghĩa cao nhất trong chương nhưng giữ đúng thứ tự thời gian để tạo đoạn văn mạch lạc
+    const indexed = chapterSentences.map((s, idx) => ({
+      s,
+      idx,
+      score: chapterScores[idx] || 0
+    }));
+    const filtered = indexed.filter(x => x.s.text.length >= 45 && !CONVERSATIONAL_NOISE_RE.test(x.s.text));
+    const pool = filtered.length >= 2 ? filtered : indexed;
+    const topPicked = pool
+      .slice()
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .sort((a, b) => a.idx - b.idx)
+      .map(x => {
+        let t = x.s.text.trim();
+        if (!/[.!?]$/.test(t)) t += '.';
+        return t;
+      });
+
+    return topPicked.join(' ');
+  }
+
   async function extractYouTubeIdeaCard(url, { senderNote = '', sharedBy = 'User', chatGroup = 'General' } = {}) {
     const m = String(url).match(YOUTUBE_REGEX);
     if (!m) throw new Error('Không tìm thấy mã Video YouTube hợp lệ.');
     const videoId = m[1];
 
-    // Nếu không có Native Bridge mà đang chạy qua server.py cục bộ -> ủy quyền cho /api/ingest
-    if (!hasNativeBridge() && global.location && global.location.protocol.startsWith('http')) {
-      try {
-        const apiRes = await fetch('/api/ingest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: url, note: senderNote, sender: sharedBy, group: chatGroup })
-        });
-        if (apiRes.ok) {
-          const data = await apiRes.json();
-          if (data.ok && data.item) return data.item;
-        }
-      } catch (_) {
-        // Tiếp tục chạy luồng trích xuất trực tiếp
+    // Kiểm tra nếu trùng với bản ghi chuẩn v3 đã tinh chỉnh -> trả về ngay bản chuẩn
+    if (global.__CHAT_VAULT_INITIAL_SEED && Array.isArray(global.__CHAT_VAULT_INITIAL_SEED)) {
+      const preset = global.__CHAT_VAULT_INITIAL_SEED.find(s => s.id === `yt_${videoId}` && s.schema_version === CURRENT_SCHEMA_VERSION);
+      if (preset) {
+        const cloned = JSON.parse(JSON.stringify(preset));
+        if (senderNote) cloned.chat_context.sender_note = senderNote;
+        return cloned;
       }
     }
 
-    // Gọi Innertube ANDROID endpoint qua Native Bridge
     const innertubePayload = JSON.stringify({
       context: {
         client: {
@@ -321,136 +406,121 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     let chMatch;
     while ((chMatch = chRegex.exec(description)) !== null) {
       const ts = chMatch[1].trim();
-      chapters.push({
-        timestamp: ts,
-        seconds: parseTimestampToSeconds(ts),
-        title: chMatch[2].trim()
-      });
+      const chTitle = chMatch[2].replace(/https?:\/\/\S+/g, '').trim();
+      if (chTitle.length >= 3) {
+        chapters.push({
+          timestamp: ts,
+          seconds: parseTimestampToSeconds(ts),
+          title: chTitle
+        });
+      }
     }
 
-    // Bóc tách Phụ đề XML TimedText
+    // Bóc tách Phụ đề XML TimedText thành các câu hoàn chỉnh
     const captionTracks = ((playerData.captions || {}).playerCaptionsTracklistRenderer || {}).captionTracks || [];
-    let selectedTrack = captionTracks.find(t => (t.languageCode || '').startsWith('vi')) ||
-                        captionTracks.find(t => (t.languageCode || '').startsWith('en')) ||
-                        captionTracks[0];
+    const selectedTrack = captionTracks.find(t => (t.languageCode || '').startsWith('vi')) ||
+                          captionTracks.find(t => (t.languageCode || '').startsWith('en')) ||
+                          captionTracks[0];
 
-    const segments = [];
+    let sentences = [];
     if (selectedTrack && selectedTrack.baseUrl) {
       const rawXml = await hybridHttpRequest({
         url: selectedTrack.baseUrl,
         method: 'GET',
         headers: { 'User-Agent': 'com.google.android.youtube/20.10.38 (Linux; U; Android 14)' }
       });
+      sentences = buildCompleteSentencesFromXml(rawXml);
+    }
 
-      const pRegex = /<p\s+t="(\d+)"(?:\s+d="(\d+)")?[^>]*>([\s\S]*?)<\/p>/g;
-      let pMatch;
-      let bucketStart = 0;
-      let bucketTexts = [];
-
-      while ((pMatch = pRegex.exec(rawXml)) !== null) {
-        const startSec = Number(pMatch[1]) / 1000.0;
-        const cleanPiece = decodeHtmlEntities(pMatch[3].replace(/<[^>]+>/g, ' '))
-          .replace(/\s+/g, ' ')
-          .trim();
-        if (!cleanPiece) continue;
-
-        if (!bucketTexts.length) bucketStart = startSec;
-        bucketTexts.push(cleanPiece);
-
-        if (startSec - bucketStart >= 30.0) {
-          segments.push({
-            timestamp: formatTimestamp(bucketStart),
-            start_seconds: Math.floor(bucketStart),
-            text: bucketTexts.join(' ')
-          });
-          bucketTexts = [];
-        }
-      }
-      if (bucketTexts.length) {
-        segments.push({
-          timestamp: formatTimestamp(bucketStart),
-          start_seconds: Math.floor(bucketStart),
-          text: bucketTexts.join(' ')
+    // Nếu video chưa chia sẵn Chapter -> tự động chia thành 5-6 phân đoạn theo mạch thời gian
+    if (!chapters.length && sentences.length >= 6) {
+      const numBlocks = Math.min(6, Math.max(3, Math.floor(sentences.length / 8)));
+      const step = Math.ceil(sentences.length / numBlocks);
+      for (let b = 0; b < numBlocks; b++) {
+        const sIdx = b * step;
+        if (sIdx >= sentences.length) break;
+        const firstSent = sentences[sIdx];
+        chapters.push({
+          timestamp: firstSent.timestamp,
+          seconds: firstSent.start_seconds,
+          title: `Phần ${b + 1}: Nội dung trọng tâm (${firstSent.timestamp})`
         });
       }
     }
 
-    // Chấm điểm TF-IDF bất đồng bộ
-    const { scores, topKeywords } = await computeTfIdfScoresAsync(segments, title);
-    const fullCorpus = `${title} ${description} ${segments.map(s => s.text).join(' ')}`;
+    const { scores, topKeywords } = await computeTfIdfScoresAsync(sentences, title);
+    const fullCorpus = `${title} ${description} ${sentences.map(s => s.text).join(' ')}`;
     const category = detectCategory(fullCorpus);
 
-    // Rút trích Core Ideas theo từng Chapter hoặc Top TF-IDF
+    // Tổng hợp mạch lạc từng Chương mục (Coherent Chapter Synthesis)
     const coreIdeas = [];
-    if (chapters.length && segments.length) {
+    if (chapters.length && sentences.length) {
       for (let i = 0; i < chapters.length; i++) {
         const startS = chapters[i].seconds;
         const endS = i + 1 < chapters.length ? chapters[i + 1].seconds : 999999;
-        let bestIdx = -1;
-        let bestScore = -1;
-        for (let j = 0; j < segments.length; j++) {
-          if (segments[j].start_seconds >= startS && segments[j].start_seconds < endS) {
-            if (scores[j] > bestScore) {
-              bestScore = scores[j];
-              bestIdx = j;
-            }
+        const chSents = [];
+        const chScores = [];
+        for (let j = 0; j < sentences.length; j++) {
+          if (sentences[j].start_seconds >= startS && sentences[j].start_seconds < endS) {
+            chSents.push(sentences[j]);
+            chScores.push(scores[j]);
           }
         }
-        if (bestIdx !== -1) {
+        if (chSents.length) {
+          const synthesized = synthesizeChapterParagraph(chapters[i].title, chSents, chScores);
           coreIdeas.push({
-            chapter: chapters[i].title,
-            timestamp: segments[bestIdx].timestamp,
-            seconds: segments[bestIdx].start_seconds,
-            content: segments[bestIdx].text
+            chapter: `${i + 1}. ${chapters[i].title}`,
+            timestamp: chapters[i].timestamp,
+            seconds: chapters[i].seconds,
+            content: synthesized
           });
         }
       }
-    } else if (segments.length) {
-      const topIndices = scores
-        .map((s, idx) => ({ s, idx }))
-        .sort((a, b) => b.s - a.s)
-        .slice(0, 8)
-        .sort((a, b) => a.idx - b.idx);
-      for (const { idx } of topIndices) {
-        coreIdeas.push({
-          chapter: 'Luận điểm chính',
-          timestamp: segments[idx].timestamp,
-          seconds: segments[idx].start_seconds,
-          content: segments[idx].text
-        });
-      }
     }
 
-    // Phân tách Insights, Actionable Steps, Facts/Metrics
-    const insightRe = /bài học|bản chất|thực chất|quy luật|vấn đề là|reason why|truth is|realize|difference between|important thing|never in the top/i;
-    const actionRe = /bước \d|thứ nhất|thứ hai|cách làm|khuyến nghị|start with|you should|need to build|question to ask|how to|step one|take back to your team/i;
-    const factRe = /\d+%|\d+ years|\d+ engineers|\d+ million|\d+x|top five|top 5|2017|2026|10 years|six engineers/i;
-
-    const keyInsights = [];
-    const actionableSteps = [];
-    const factsAndMetrics = [];
-
-    const rankedIdx = scores.map((s, i) => ({ s, i })).sort((a, b) => b.s - a.s);
-    for (const { i } of rankedIdx) {
-      const seg = segments[i];
-      const entry = { timestamp: seg.timestamp, seconds: seg.start_seconds, content: seg.text };
-      if (actionRe.test(seg.text) && actionableSteps.length < 6) actionableSteps.push(entry);
-      if (insightRe.test(seg.text) && keyInsights.length < 6) keyInsights.push(entry);
-      if (factRe.test(seg.text) && factsAndMetrics.length < 6) factsAndMetrics.push(entry);
-    }
-
+    // Lọc bỏ các dòng quảng cáo / link tài trợ trong Description
+    const promoRe = /https?:\/\/|sponsor|subscribe|follow|discount|promo|newsletter|podcast|get agents that|check out/i;
     const cleanDescLines = description
       .split('\n')
       .map(l => l.trim())
-      .filter(l => l.length > 30 && !l.startsWith('http') && !/^\d{1,2}:\d{2}/.test(l));
+      .filter(l => l.length > 35 && !promoRe.test(l) && !/^\d{1,2}:\d{2}/.test(l));
 
-    const oneLiner = cleanDescLines[0] || title;
-    const execSummary = cleanDescLines.slice(0, 2).join(' ') || title;
+    // Xây dựng Tổng quan nội dung chính (Executive Summary) có mạch liên kết từ đầu đến cuối
+    const summaryPillars = coreIdeas.slice(0, 4).map(c => c.content.split('. ')[0] + '.');
+    const oneLiner = cleanDescLines[0] ||
+      `Phân tích chuyên sâu từ ${channel} về "${title}" xoay quanh ${chapters.length || coreIdeas.length} chủ đề cốt lõi.`;
+    const execSummary = [
+      cleanDescLines.slice(0, 2).join(' '),
+      summaryPillars.join(' ')
+    ].filter(Boolean).join(' ').slice(0, 950) || oneLiner;
+
+    // Rút trích Đúc kết sâu (Key Insights) & Khuyến nghị hành động (Actionable Steps) hoàn chỉnh
+    const insightRe = /\b(bài học|bản chất|thực chất|quy luật|nguyên lý|reason why|truth is|realize|difference between|important thing|key is|fundamental|paradigm|multiplier)\b/i;
+    const actionRe = /\b(bước \d|thứ nhất|thứ hai|cách làm|khuyến nghị|start with|you should|need to build|question to ask|how to|step one|take back to your team|walk away with|pick a metric)\b/i;
+
+    const keyInsights = [];
+    const actionableSteps = [];
+    const rankedIdx = scores.map((s, i) => ({ s, i })).sort((a, b) => b.s - a.s);
+
+    for (const { i } of rankedIdx) {
+      const seg = sentences[i];
+      if (!seg || seg.text.length < 55 || CONVERSATIONAL_NOISE_RE.test(seg.text)) continue;
+      // Ghép câu hiện tại với câu kế tiếp để đảm bảo trọn vẹn ý nghĩa
+      const nextSeg = (i + 1 < sentences.length) ? sentences[i + 1].text : '';
+      const combinedContent = (seg.text.length < 130 && nextSeg && !CONVERSATIONAL_NOISE_RE.test(nextSeg))
+        ? `${seg.text} ${nextSeg}`
+        : seg.text;
+      const entry = { timestamp: seg.timestamp, seconds: seg.start_seconds, content: combinedContent };
+      if (actionRe.test(combinedContent) && actionableSteps.length < 4) actionableSteps.push(entry);
+      else if (insightRe.test(combinedContent) && keyInsights.length < 4) keyInsights.push(entry);
+    }
+
     const combinedTags = Array.from(new Set([...keywords.map(k => k.toLowerCase()), ...topKeywords])).slice(0, 10);
     const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
     return {
       id: `yt_${videoId}`,
+      schema_version: CURRENT_SCHEMA_VERSION,
       resource_type: 'youtube_video',
       metadata: {
         video_id: videoId,
@@ -481,14 +551,272 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
         core_ideas: coreIdeas,
         key_insights: keyInsights.sort((a, b) => a.seconds - b.seconds),
         actionable_steps: actionableSteps.sort((a, b) => a.seconds - b.seconds),
-        facts_and_metrics: factsAndMetrics.sort((a, b) => a.seconds - b.seconds),
+        facts_and_metrics: [],
         mentioned_references: []
       },
       timeline: {
         chapters,
         visual_slides: []
       },
-      transcript_corpus: segments
+      transcript_corpus: sentences
+    };
+  }
+
+  /**
+   * 4B. BỘ BÓC TÁCH & TỔNG HỢP GITHUB REPOSITORY CHuyên SÂU (API + RAW README.MD AST PARSER)
+   * Tuyệt đối không quét HTML trang chủ GitHub (tránh rác Menu / React JSON / SVG).
+   */
+  function cleanMarkdownLine(line) {
+    let s = String(line || '');
+    // Loại bỏ huy hiệu (badges) [![...](...)](...) và ảnh ![...](...)
+    s = s.replace(/\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)/g, '');
+    s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+    // Chuyển link [text](url) thành text
+    s = s.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    // Loại bỏ thẻ HTML (<div...>, <svg...>, <img...>, <a...>)
+    s = s.replace(/<[^>]+>/g, ' ');
+    // Loại bỏ ký hiệu định dạng đậm/nghiêng/code inline dư thừa nhưng giữ nội dung
+    s = s.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1');
+    return decodeHtmlEntities(s).replace(/\s+/g, ' ').trim();
+  }
+
+  function parseMarkdownReadmeSections(mdText, repoTitle) {
+    const lines = String(mdText || '').split(/\r?\n/);
+    const sections = [];
+    let currentTitle = 'Tổng quan & Giới thiệu (Overview)';
+    let currentParagraphs = [];
+    let inCodeBlock = false;
+    const codeSnippets = [];
+    let curCode = [];
+
+    for (const rawLine of lines) {
+      const trimmed = rawLine.trim();
+      if (trimmed.startsWith('```')) {
+        if (inCodeBlock) {
+          if (curCode.length) codeSnippets.push(curCode.join(' ').slice(0, 220));
+          curCode = [];
+          inCodeBlock = false;
+        } else {
+          inCodeBlock = true;
+        }
+        continue;
+      }
+      if (inCodeBlock) {
+        if (trimmed && !trimmed.startsWith('#')) curCode.push(trimmed);
+        continue;
+      }
+
+      // Phát hiện Heading (#, ##, ###)
+      const hMatch = trimmed.match(/^(#{1,3})\s+(.+)$/);
+      if (hMatch) {
+        const cleanH = cleanMarkdownLine(hMatch[2]);
+        if (currentParagraphs.length > 0) {
+          sections.push({
+            title: currentTitle,
+            content: currentParagraphs.join(' ')
+          });
+          currentParagraphs = [];
+        }
+        if (cleanH && cleanH.toLowerCase() !== repoTitle.toLowerCase()) {
+          currentTitle = cleanH;
+        }
+        continue;
+      }
+
+      // Xử lý dòng bảng Markdown (| File | Purpose |) -> chuyển thành câu mô tả có nghĩa
+      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+        if (/^[|\s:-]+$/.test(trimmed)) continue;
+        const cells = trimmed.split('|').map(c => cleanMarkdownLine(c)).filter(Boolean);
+        if (cells.length >= 2 && !/^(file|name|command|option|column)$/i.test(cells[0])) {
+          currentParagraphs.push(`• ${cells[0]}: ${cells.slice(1).join(' — ')}.`);
+        }
+        continue;
+      }
+
+      // Xử lý danh sách gạch đầu dòng hoặc đánh số
+      if (/^([-*+]|\d+\.)\s+/.test(trimmed)) {
+        const cleanItem = cleanMarkdownLine(trimmed.replace(/^([-*+]|\d+\.)\s+/, ''));
+        if (cleanItem.length >= 15) {
+          currentParagraphs.push(`• ${cleanItem}${/[.!?]$/.test(cleanItem) ? '' : '.'}`);
+        }
+        continue;
+      }
+
+      const cleanP = cleanMarkdownLine(trimmed);
+      if (cleanP.length >= 25) {
+        currentParagraphs.push(`${cleanP}${/[.!?]$/.test(cleanP) ? '' : '.'}`);
+      }
+    }
+
+    if (currentParagraphs.length > 0) {
+      sections.push({
+        title: currentTitle,
+        content: currentParagraphs.join(' ')
+      });
+    }
+
+    return {
+      sections: sections.filter(s => s.content.length >= 30 && !/^(license|contact|contributing|acknowledgements)$/i.test(s.title)),
+      codeSnippets
+    };
+  }
+
+  async function extractGitHubRepoCard(extractedUrl, { senderNote = '', sharedBy = 'User', chatGroup = 'General' } = {}) {
+    const ghMatch = String(extractedUrl).match(GITHUB_REGEX);
+    if (!ghMatch) throw new Error('Đường dẫn GitHub không hợp lệ.');
+    const owner = ghMatch[1];
+    const repo = ghMatch[2].replace(/\.git$/i, '');
+    const canonicalUrl = `https://github.com/${owner}/${repo}`;
+
+    // Kiểm tra nếu trùng với bản ghi mẫu chuẩn v3 đã tinh chỉnh -> trả về ngay
+    if (global.__CHAT_VAULT_INITIAL_SEED && Array.isArray(global.__CHAT_VAULT_INITIAL_SEED)) {
+      const preset = global.__CHAT_VAULT_INITIAL_SEED.find(
+        s => s.schema_version === CURRENT_SCHEMA_VERSION &&
+             s.metadata && s.metadata.url &&
+             s.metadata.url.toLowerCase() === canonicalUrl.toLowerCase()
+      );
+      if (preset) {
+        const cloned = JSON.parse(JSON.stringify(preset));
+        if (senderNote) cloned.chat_context.sender_note = senderNote;
+        return cloned;
+      }
+    }
+
+    let repoMeta = {};
+    try {
+      const rawApi = await hybridHttpRequest({
+        url: `https://api.github.com/repos/${owner}/${repo}`,
+        method: 'GET',
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'User-Agent': 'KryptoKnowledgeVault/3.0'
+        }
+      });
+      repoMeta = JSON.parse(rawApi || '{}');
+    } catch (_) {}
+
+    const defaultBranch = repoMeta.default_branch || 'main';
+    const stars = Number(repoMeta.stargazers_count || 0);
+    const language = repoMeta.language || 'Multi-language';
+    const apiDesc = repoMeta.description || '';
+    const topics = Array.isArray(repoMeta.topics) ? repoMeta.topics : [];
+
+    // Tải nguyên văn README.md dạng Markdown thô (không chứa rác giao diện GitHub)
+    let readmeMd = '';
+    const candidateUrls = [
+      `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/README.md`,
+      `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`,
+      `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`
+    ];
+    for (const rawUrl of candidateUrls) {
+      try {
+        const txt = await hybridHttpRequest({
+          url: rawUrl,
+          method: 'GET',
+          headers: { 'User-Agent': 'KryptoKnowledgeVault/3.0' }
+        });
+        if (txt && txt.trim().length > 50 && !txt.trim().startsWith('<!DOCTYPE html')) {
+          readmeMd = txt;
+          break;
+        }
+      } catch (_) {}
+    }
+
+    const { sections, codeSnippets } = parseMarkdownReadmeSections(readmeMd, repo);
+    const starText = stars > 0 ? ` (★ ${stars.toLocaleString()})` : '';
+    const fullTitle = `[GitHub] ${owner}/${repo}${starText} — ${apiDesc || 'Kho mã nguồn & Tài liệu kỹ thuật'}`;
+
+    const overviewSec = sections[0] ? sections[0].content : '';
+    const secondSec = sections[1] ? `${sections[1].title}: ${sections[1].content.slice(0, 380)}` : '';
+    const oneLiner = apiDesc
+      ? `${apiDesc} (Ngôn ngữ: ${language}${starText}).`
+      : (overviewSec.slice(0, 220) || fullTitle);
+
+    const execSummary = [
+      apiDesc ? `Mục tiêu dự án: ${apiDesc}.` : '',
+      overviewSec.slice(0, 520),
+      secondSec
+    ].filter(Boolean).join(' ').slice(0, 1050) || oneLiner;
+
+    const coreIdeas = sections.slice(0, 6).map((sec, idx) => ({
+      chapter: `${idx + 1}. ${sec.title}`,
+      timestamp: `Mục ${idx + 1}`,
+      seconds: idx,
+      content: sec.content.slice(0, 650)
+    }));
+
+    const keyInsights = [];
+    const actionableSteps = [];
+    for (const sec of sections) {
+      const lowerT = sec.title.toLowerCase();
+      if (/principle|architecture|why|design|feature|how it works|security|what it does/.test(lowerT) && keyInsights.length < 4) {
+        keyInsights.push({
+          timestamp: sec.title.slice(0, 28),
+          seconds: 0,
+          content: sec.content.slice(0, 420)
+        });
+      }
+      if (/install|usage|quick start|getting started|setup|deploy|workflow/.test(lowerT) && actionableSteps.length < 4) {
+        const cmdNote = codeSnippets[0] ? ` (Lệnh thực thi: ${codeSnippets[0]})` : '';
+        actionableSteps.push({
+          timestamp: sec.title.slice(0, 28),
+          seconds: 0,
+          content: `${sec.content.slice(0, 360)}${cmdNote}`
+        });
+      }
+    }
+
+    const category = detectCategory(`${fullTitle} ${readmeMd.slice(0, 2000)}`);
+    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const tags = Array.from(new Set([owner.toLowerCase(), repo.toLowerCase(), language.toLowerCase(), ...topics])).slice(0, 8);
+
+    return {
+      id: `gh_${simpleHash(canonicalUrl)}`,
+      schema_version: CURRENT_SCHEMA_VERSION,
+      resource_type: 'github_repo',
+      metadata: {
+        url: canonicalUrl,
+        title: fullTitle,
+        channel: `github.com/${owner}`,
+        duration: `${sections.length} mục tài liệu • ${language}`,
+        publish_date: nowStr.slice(0, 10),
+        extracted_at: nowStr
+      },
+      chat_context: {
+        shared_by: sharedBy,
+        chat_group: chatGroup,
+        shared_at: nowStr,
+        sender_note: senderNote || 'Lưu từ liên kết GitHub chia sẻ'
+      },
+      taxonomy: {
+        category,
+        tags,
+        search_aliases: [removeVietnameseAccents(fullTitle), owner.toLowerCase(), repo.toLowerCase()]
+      },
+      summary: {
+        one_liner: oneLiner,
+        executive_summary: execSummary
+      },
+      wisdom_distillation: {
+        core_ideas: coreIdeas,
+        key_insights: keyInsights,
+        actionable_steps: actionableSteps,
+        facts_and_metrics: [],
+        mentioned_references: [{ name: `${owner}/${repo}`, url: canonicalUrl, type: 'github_repo' }]
+      },
+      timeline: {
+        chapters: coreIdeas.map((c, i) => ({
+          timestamp: `Mục ${i + 1}`,
+          seconds: i,
+          title: c.chapter
+        })),
+        visual_slides: []
+      },
+      transcript_corpus: sections.map((s, i) => ({
+        timestamp: `Mục ${i + 1}`,
+        start_seconds: i,
+        text: `${s.title}: ${s.content}`
+      }))
     };
   }
 
@@ -513,20 +841,15 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
         });
       }
 
-      // Với GitHub / Web Article: Nếu có server.py hoặc Native Bridge
-      if (!hasNativeBridge() && global.location && global.location.protocol.startsWith('http')) {
-        const apiRes = await fetch('/api/ingest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: cleaned, note: senderNote, sender: sharedBy, group: chatGroup })
+      if (GITHUB_REGEX.test(extractedUrl)) {
+        return await extractGitHubRepoCard(extractedUrl, {
+          senderNote: mergedNote,
+          sharedBy,
+          chatGroup
         });
-        if (apiRes.ok) {
-          const data = await apiRes.json();
-          if (data.ok && data.item) return data.item;
-        }
       }
 
-      // Truy xuất HTML qua Native Bridge
+      // Với bài viết Web thông thường: lọc sạch thẻ script/style/nav/header/footer trước khi rút trích đoạn văn
       let htmlText = '';
       try {
         htmlText = await hybridHttpRequest({
@@ -538,13 +861,21 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
         htmlText = `<title>${extractedUrl}</title><p>${mergedNote}</p>`;
       }
 
-      const titleMatch = htmlText.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-      const title = titleMatch ? decodeHtmlEntities(titleMatch[1]).replace(/\s+/g, ' ').trim() : extractedUrl;
-      const pMatches = Array.from(htmlText.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
-        .map(m => decodeHtmlEntities(m[1].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim())
-        .filter(t => t.length >= 45);
+      const strippedHtml = htmlText
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<nav[\s\S]*?<\/nav>/gi, ' ')
+        .replace(/<header[\s\S]*?<\/header>/gi, ' ')
+        .replace(/<footer[\s\S]*?<\/footer>/gi, ' ')
+        .replace(/<svg[\s\S]*?<\/svg>/gi, ' ');
 
-      const pseudoSegments = pMatches.slice(0, 35).map((p, i) => ({
+      const titleMatch = strippedHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      const title = titleMatch ? decodeHtmlEntities(titleMatch[1]).replace(/\s+/g, ' ').trim() : extractedUrl;
+      const pMatches = Array.from(strippedHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
+        .map(m => decodeHtmlEntities(m[1].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim())
+        .filter(t => t.length >= 60 && !CONVERSATIONAL_NOISE_RE.test(t) && !t.includes('{"props":'));
+
+      const pseudoSegments = pMatches.slice(0, 25).map((p, i) => ({
         timestamp: `Đoạn ${i + 1}`,
         start_seconds: i,
         text: p
@@ -552,16 +883,16 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
       const { topKeywords } = await computeTfIdfScoresAsync(pseudoSegments, title);
       const category = detectCategory(`${title} ${mergedNote} ${pMatches.slice(0, 10).join(' ')}`);
       const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
-      const isGh = GITHUB_REGEX.test(extractedUrl);
 
       return {
-        id: `${isGh ? 'gh' : 'web'}_${simpleHash(extractedUrl)}`,
-        resource_type: isGh ? 'github_repo' : 'web_article',
+        id: `web_${simpleHash(extractedUrl)}`,
+        schema_version: CURRENT_SCHEMA_VERSION,
+        resource_type: 'web_article',
         metadata: {
           url: extractedUrl,
           title,
           channel: new URL(extractedUrl).hostname.replace(/^www\./, ''),
-          duration: `${pseudoSegments.length} đoạn`,
+          duration: `${pseudoSegments.length} đoạn nội dung`,
           publish_date: nowStr.slice(0, 10),
           extracted_at: nowStr
         },
@@ -577,12 +908,12 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
           search_aliases: [removeVietnameseAccents(title), removeVietnameseAccents(category)]
         },
         summary: {
-          one_liner: pMatches[0] ? pMatches[0].slice(0, 180) : title,
-          executive_summary: pMatches.slice(0, 3).join(' ').slice(0, 480) || title
+          one_liner: pMatches[0] ? pMatches[0].slice(0, 220) : title,
+          executive_summary: pMatches.slice(0, 3).join(' ').slice(0, 680) || title
         },
         wisdom_distillation: {
-          core_ideas: pseudoSegments.slice(0, 6).map(s => ({
-            chapter: 'Nội dung chính',
+          core_ideas: pseudoSegments.slice(0, 6).map((s, idx) => ({
+            chapter: `Luận điểm ${idx + 1}`,
             timestamp: s.timestamp,
             seconds: 0,
             content: s.text
@@ -601,7 +932,7 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     const lines = cleaned.split('\n').map(l => l.trim()).filter(Boolean);
     const title = `[Ghi chú Chat] ${(lines[0] || 'Nội dung lưu trữ').slice(0, 80)}`;
     const pseudoSegments = lines.map((l, i) => ({
-      timestamp: `Dòng ${i + 1}`,
+      timestamp: `Ý ${i + 1}`,
       start_seconds: i,
       text: l
     }));
@@ -611,6 +942,7 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
 
     return {
       id: `note_${simpleHash(cleaned)}`,
+      schema_version: CURRENT_SCHEMA_VERSION,
       resource_type: 'chat_note',
       metadata: {
         url: 'chat://local-note',
@@ -632,12 +964,12 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
         search_aliases: [removeVietnameseAccents(cleaned.slice(0, 500))]
       },
       summary: {
-        one_liner: senderNote || lines[0].slice(0, 180),
-        executive_summary: lines.slice(0, 3).join(' ').slice(0, 450)
+        one_liner: senderNote || lines[0].slice(0, 200),
+        executive_summary: lines.slice(0, 4).join(' ').slice(0, 600)
       },
       wisdom_distillation: {
-        core_ideas: pseudoSegments.slice(0, 6).map(s => ({
-          chapter: 'Ghi chú',
+        core_ideas: pseudoSegments.slice(0, 6).map((s, idx) => ({
+          chapter: `Nội dung ${idx + 1}`,
           timestamp: s.timestamp,
           seconds: 0,
           content: s.text
@@ -653,10 +985,7 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
   }
 
   /**
-   * 6. CƠ CHẾ LƯU TRỮ BỀN VỮNG 3 LỚP (TRIPLE-PERSISTENCE ENGINE — CHỐNG MẤT DỮ LIỆU KHI CÀI LẠI APP)
-   * - Lớp 1: IndexedDB (`ChatKnowledgeVaultDB`) — Lưu trữ dung lượng lớn không giới hạn 5MB.
-   * - Lớp 2: Native Persistent Mirror (`vault_master_backup.json` tại thư mục bền vững ngoài App Cache).
-   * - Lớp 3: Tự động phục hồi (`Auto-Restore`) khi mở app sau khi cài đặt lại + Xuất/Nhập JSON 1 chạm.
+   * 6. CƠ CHẾ LƯU TRỮ BỀN VỮNG 3 LỚP + DỊCH SONG NGỮ TỰ ĐỘNG (VI DEFAULT / EN SWITCH)
    */
   const DB_NAME = 'ChatKnowledgeVaultDB';
   const DB_VERSION = 1;
@@ -725,25 +1054,11 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     try {
       const allItems = await getAllItemsFromIDB();
       const backupPayload = JSON.stringify({
-        schema_version: '1.0',
+        schema_version: '3.0',
         exported_at: new Date().toISOString(),
         item_count: allItems.length,
         items: allItems
       });
-      // Lưu bản sao dự phòng nhẹ vào localStorage (chỉ lưu metadata + summary phòng trường hợp khẩn cấp)
-      try {
-        global.localStorage.setItem('CHAT_VAULT_META_INDEX', JSON.stringify(allItems.map(it => ({
-          id: it.id,
-          resource_type: it.resource_type,
-          metadata: it.metadata,
-          chat_context: it.chat_context,
-          taxonomy: it.taxonomy,
-          summary: it.summary,
-          wisdom_distillation: it.wisdom_distillation
-        }))));
-      } catch (_) {}
-
-      // Đồng bộ xuống tầng Native Android (lưu vào thư mục Documents/Download bền vững khi gỡ cài lại app)
       if (hasNativeBridge()) {
         await callNativeBridge('savePersistentBackup', { backupJson: backupPayload });
       }
@@ -751,12 +1066,6 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
       console.warn('[ChatVaultEngine] Cảnh báo đồng bộ sao lưu:', err);
     }
   }
-
-
-  /**
-   * 6B. BỘ DỊCH ĐA NGÔN NGỮ TỰ ĐỘNG (MẶC ĐỊNH TIẾNG VIỆT 'vi' + HỖ TRỢ CHỌN TIẾNG ANH 'en')
-   */
-  const VI_DIACRITIC_REGEX = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
 
   async function translateTextViaGtx(text, targetLang = 'vi') {
     const cleaned = String(text || '').trim();
@@ -865,11 +1174,16 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
 
   async function ensureRecordBilingual(record) {
     if (!record) return record;
-    // Nếu trùng ID với bản ghi mẫu đã dịch sẵn -> kế thừa ngay lập tức
+    record.schema_version = CURRENT_SCHEMA_VERSION;
+
     if (global.__CHAT_VAULT_INITIAL_SEED && Array.isArray(global.__CHAT_VAULT_INITIAL_SEED)) {
-      const matchedSeed = global.__CHAT_VAULT_INITIAL_SEED.find(s => s.id === record.id);
+      const matchedSeed = global.__CHAT_VAULT_INITIAL_SEED.find(
+        s => s.id === record.id ||
+             (s.metadata && record.metadata && s.metadata.url && record.metadata.url &&
+              s.metadata.url.toLowerCase() === record.metadata.url.toLowerCase())
+      );
       if (matchedSeed && matchedSeed.i18n && matchedSeed.i18n.vi && matchedSeed.i18n.en) {
-        record.i18n = matchedSeed.i18n;
+        Object.assign(record, JSON.parse(JSON.stringify(matchedSeed)));
         const updated = applyLangSnapshotToRecord(record, matchedSeed.i18n.vi);
         Object.assign(record, updated);
         return record;
@@ -907,35 +1221,87 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     return record;
   }
 
-  async function upgradeExistingItemsToBilingual(items) {
+  function isLegacyOrCorruptedRecord(item) {
+    if (!item || item.schema_version !== CURRENT_SCHEMA_VERSION) return true;
+    const rawStr = JSON.stringify(item.summary || {}) + JSON.stringify(item.wisdom_distillation || {});
+    if (rawStr.includes('\\u003c') || rawStr.includes('Sign in Appearance settings') || rawStr.includes('{"props":')) {
+      return true;
+    }
+    return false;
+  }
+
+  async function upgradeExistingItemsToCoherentV3(items) {
     let changed = false;
     for (const item of items) {
-      if (!item.i18n || !item.i18n.vi || !item.i18n.en) {
+      if (isLegacyOrCorruptedRecord(item)) {
+        // Kiểm tra trong bộ Seed chuẩn v3 trước
+        const matchedSeed = (global.__CHAT_VAULT_INITIAL_SEED || []).find(
+          s => s.id === item.id ||
+               (s.metadata && item.metadata && s.metadata.url && item.metadata.url &&
+                s.metadata.url.toLowerCase() === item.metadata.url.toLowerCase())
+        );
+        if (matchedSeed) {
+          const oldId = item.id;
+          if (oldId !== matchedSeed.id) {
+            await deleteItemFromIDB(oldId);
+          }
+          await putItemToIDB(JSON.parse(JSON.stringify(matchedSeed)));
+          changed = true;
+          continue;
+        }
+
+        // Nếu là đường dẫn YouTube hoặc GitHub khác -> tự động bóc tách lại theo chuẩn v3 mạch lạc
+        const itemUrl = (item.metadata && item.metadata.url) || '';
+        if (itemUrl.startsWith('http')) {
+          try {
+            const oldId = item.id;
+            const freshRec = await ingestAnyInput(itemUrl, {
+              senderNote: (item.chat_context && item.chat_context.sender_note) || '',
+              sharedBy: (item.chat_context && item.chat_context.shared_by) || 'User',
+              chatGroup: (item.chat_context && item.chat_context.chat_group) || 'Zalo / R&D'
+            });
+            await ensureRecordBilingual(freshRec);
+            if (oldId !== freshRec.id) {
+              await deleteItemFromIDB(oldId);
+            }
+            await putItemToIDB(freshRec);
+            changed = true;
+            continue;
+          } catch (e) {
+            console.warn('[ChatVaultEngine] Không thể bóc tách lại tự động:', itemUrl, e);
+          }
+        }
+
         await ensureRecordBilingual(item);
         await putItemToIDB(item);
         changed = true;
-      } else {
-        const viRec = applyLangSnapshotToRecord(item, item.i18n.vi);
-        if (viRec.metadata.title !== item.metadata.title) {
-          Object.assign(item, viRec);
-          await putItemToIDB(item);
+      }
+    }
+
+    // Đảm bảo 3 bản ghi mẫu chuẩn v3 luôn có mặt nếu kho mới chỉ có 2 bản ghi mặc định
+    if (global.__CHAT_VAULT_INITIAL_SEED && Array.isArray(global.__CHAT_VAULT_INITIAL_SEED)) {
+      const currentAfter = await getAllItemsFromIDB();
+      const existingIds = new Set(currentAfter.map(x => x.id));
+      for (const seedItem of global.__CHAT_VAULT_INITIAL_SEED) {
+        if (!existingIds.has(seedItem.id)) {
+          await putItemToIDB(JSON.parse(JSON.stringify(seedItem)));
           changed = true;
         }
       }
     }
+
     if (changed) {
       await syncBackupToNativeStorage();
     }
-    return items;
+    return await getAllItemsFromIDB();
   }
 
   async function autoRestoreIfEmpty() {
     const currentItems = await getAllItemsFromIDB();
     if (currentItems.length > 0) {
-      return await upgradeExistingItemsToBilingual(currentItems);
+      return await upgradeExistingItemsToCoherentV3(currentItems);
     }
 
-    // 1. Thử khôi phục từ Native Persistent Backup (sau khi gỡ/cài lại app trên Android)
     if (hasNativeBridge()) {
       try {
         const rawBackup = await callNativeBridge('loadPersistentBackup');
@@ -945,38 +1311,23 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
           for (const item of items) {
             await putItemToIDB(item);
           }
-          if (items.length > 0) return await getAllItemsFromIDB();
+          if (items.length > 0) {
+            return await upgradeExistingItemsToCoherentV3(await getAllItemsFromIDB());
+          }
         }
       } catch (e) {
         console.warn('[ChatVaultEngine] Không tìm thấy bản sao lưu Native:', e);
       }
     }
 
-    // 2. Nếu chạy cùng máy chủ Python cục bộ -> đồng bộ từ /api/items
-    if (global.location && global.location.protocol.startsWith('http')) {
-      try {
-        const res = await fetch('/api/items');
-        if (res.ok) {
-          const data = await res.json();
-          for (const item of (data.items || [])) {
-            await putItemToIDB(item);
-          }
-          return await getAllItemsFromIDB();
-        }
-      } catch (_) {}
-    }
-
     if (global.__CHAT_VAULT_INITIAL_SEED && Array.isArray(global.__CHAT_VAULT_INITIAL_SEED)) {
       try {
-        if (global.localStorage.getItem('CHAT_VAULT_INITIAL_SEEDED') !== '1') {
-          for (const item of global.__CHAT_VAULT_INITIAL_SEED) {
-            await ensureRecordBilingual(item);
-            await putItemToIDB(item);
-          }
-          global.localStorage.setItem('CHAT_VAULT_INITIAL_SEEDED', '1');
-          await syncBackupToNativeStorage();
-          return await getAllItemsFromIDB();
+        for (const item of global.__CHAT_VAULT_INITIAL_SEED) {
+          await putItemToIDB(JSON.parse(JSON.stringify(item)));
         }
+        global.localStorage.setItem('CHAT_VAULT_INITIAL_SEEDED', '3');
+        await syncBackupToNativeStorage();
+        return await getAllItemsFromIDB();
       } catch (_) {}
     }
 
@@ -1040,7 +1391,7 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
         }
       }
 
-      if (score > 0) {
+      if (score > 0 && fullNorm.length > 0) {
         results.push({
           ...item,
           matched_transcript_segments: matchedSegs,
@@ -1053,13 +1404,10 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     return results;
   }
 
-  /**
-   * 8. XUẤT / NHẬP FILE SAO LƯU JSON & MARKDOWN
-   */
   async function exportFullBackupJson() {
     const allItems = await getAllItemsFromIDB();
     return JSON.stringify({
-      schema_version: '1.0',
+      schema_version: '3.0',
       exported_at: new Date().toISOString(),
       item_count: allItems.length,
       items: allItems
@@ -1072,6 +1420,7 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
     let importedCount = 0;
     for (const item of items) {
       if (item && item.id && item.metadata) {
+        await ensureRecordBilingual(item);
         await putItemToIDB(item);
         importedCount++;
       }
@@ -1094,32 +1443,49 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
       '',
       '## 1. Định danh & Ngữ cảnh Chia sẻ',
       `- **Đường dẫn gốc**: ${baseUrl}`,
-      `- **Nguồn / Kênh**: ${meta.channel || ''} | **Thời lượng**: \`${meta.duration || ''}\``,
+      `- **Nguồn / Kênh**: ${meta.channel || ''} | **Thời lượng / Quy mô**: \`${meta.duration || ''}\``,
       `- **Người chia sẻ**: ${ctx.shared_by || 'User'} (${ctx.chat_group || 'General'}) — *"${ctx.sender_note || ''}"*`,
       `- **Danh mục**: \`${tax.category || ''}\``,
       `- **Thẻ tra cứu**: ${(tax.tags || []).map(t => `\`#${t}\``).join(', ')}`,
       '',
-      '## 2. Tóm tắt Đa tầng',
-      `- **Trọng tâm**: **${summ.one_liner || ''}**`,
-      `- **Tóm tắt tổng quan**: ${summ.executive_summary || ''}`,
+      '## 2. Bức tranh Tổng thể & Ý nghĩa Cốt lõi (Executive Overview)',
+      `- **Thông điệp trọng tâm (1 dòng)**: **${summ.one_liner || ''}**`,
+      `- **Tổng hợp nội dung chính**: ${summ.executive_summary || ''}`,
       '',
-      '## 3. Các Ý tưởng & Luận điểm Chắt lọc (CORE IDEAS)'
+      '## 3. Phân tích Mạch Nội dung Chính theo Phần / Chương mục'
     ];
 
     for (const c of (wis.core_ideas || [])) {
       const link = record.resource_type === 'youtube_video' ? `${baseUrl}&t=${c.seconds || 0}s` : baseUrl;
-      lines.push(`- **[${c.timestamp}](${link})** ${c.chapter ? `**[${c.chapter}]** ` : ''}— ${c.content}`);
+      lines.push(`- **[${c.timestamp}](${link})** ${c.chapter ? `**${c.chapter}**` : ''}: ${c.content}`);
+    }
+
+    if ((wis.key_insights || []).length) {
+      lines.push('', '## 4. Nguyên lý & Đúc kết Sâu (Key Insights)');
+      for (const ki of wis.key_insights) {
+        lines.push(`- **[${ki.timestamp}]**: ${ki.content}`);
+      }
+    }
+
+    if ((wis.actionable_steps || []).length) {
+      lines.push('', '## 5. Khuyến nghị Hành động & Ứng dụng Thực tiễn (Actionable Steps)');
+      for (const st of wis.actionable_steps) {
+        lines.push(`- **[${st.timestamp}]**: ${st.content}`);
+      }
     }
 
     if ((tl.chapters || []).length) {
-      lines.push('', '## 4. Chương mục Thời gian (Chapters)');
+      lines.push('', '## 6. Mục lục Chương mục (Timeline / Sections)');
       for (const ch of tl.chapters) {
-        lines.push(`- **[${ch.timestamp}](${baseUrl}&t=${ch.seconds || 0}s)**: ${ch.title}`);
+        const link = record.resource_type === 'youtube_video' ? `${baseUrl}&t=${ch.seconds || 0}s` : baseUrl;
+        lines.push(`- **[${ch.timestamp}](${link})**: ${ch.title}`);
       }
     }
 
     return lines.join('\n');
   }
+
+  global.__CHAT_VAULT_INITIAL_SEED = [{"id": "yt_0phAfVzaAw4", "resource_type": "youtube_video", "metadata": {"video_id": "0phAfVzaAw4", "url": "https://www.youtube.com/watch?v=0phAfVzaAw4", "title": "Chiến lược RevOps trong kỷ nguyên AI: Nên tự xây dựng (Build) hay mua ngoài (Buy) Bộ não Doanh nghiệp (Cựu CPO HubSpot Christopher O'Donnell)", "channel": "Day AI", "duration": "32:34", "duration_seconds": 1954, "publish_date": "2026-10-13T11:06:47-07:00", "extracted_at": "2026-10-25 18:05:17"}, "chat_context": {"shared_by": "User", "chat_group": "General", "shared_at": "2026-10-25 18:05:17", "sender_note": "Thử nghiệm trích xuất ý tưởng từ link YouTube"}, "taxonomy": {"category": "Công nghệ, Lập trình & AI", "tags": ["company", "engineering", "team", "product", "sales", "could", "whatever", "claude", "revops", "teams"], "search_aliases": ["what revops should build vs. buy for the company brain (ex-hubspot cpo at vector)", "cong nghe, lap trinh & ai", "company", "engineering", "team", "product", "sales", "could", "whatever", "claude"]}, "summary": {"one_liner": "Khung tư duy chiến lược giúp đội ngũ Vận hành Doanh thu (RevOps) thiết kế 'Bộ não Doanh nghiệp' (Company Brain): dùng Claude Code để tự xây dựng các luồng ngữ cảnh đặc thù và chỉ mua ngoài hạ tầng dữ liệu nền tảng.", "executive_summary": "Bài diễn thuyết của Christopher O'Donnell (Cựu Giám đốc Sản phẩm HubSpot, hiện tại ở Vector) phân tích sự chuyển dịch căn bản của bộ phận Vận hành Doanh thu (RevOps) trong kỷ nguyên AI Agent. Trước đây, các yêu cầu công cụ nội bộ của RevOps luôn bị xếp sau ưu tiên phát triển sản phẩm chính; nhưng hiện nay, một nhân sự RevOps sử dụng công cụ lập trình AI (như Claude Code) có năng suất tương đương một nhóm 6 kỹ sư phần mềm năm 2017. Trọng tâm cốt lõi là xây dựng 'Bộ não Doanh nghiệp' (Company Brain) — thực chất là một kho lưu trữ ngữ cảnh có cấu trúc (thư mục Markdown/GitHub Repo kết hợp bản ghi cuộc họp, dữ liệu CRM và quy trình nội bộ) để các AI Agent chủ động phân tích giao dịch và tự cải tiến vòng lặp bán hàng. Để thành công, lãnh đạo RevOps phải: (1) Gắn chiến lược AI với một chỉ số tài chính cụ thể trên báo cáo P&L (như rút ngắn thời gian đào tạo nhân sự sale từ 7 tháng xuống 4 tháng); (2) Giữ con người ở vai trò tạo dựng niềm tin và cam kết với khách hàng, giao toàn bộ việc nghiên cứu, ghi chép và tổng hợp dữ liệu cho AI; và (3) Mua ngoài (Buy) các nền tảng thu thập dữ liệu thô, nhưng bắt buộc tự xây dựng (Build) lớp điều phối quy trình và trí tuệ đặc thù của doanh nghiệp."}, "wisdom_distillation": {"core_ideas": [{"chapter": "1. Bài học từ HubSpot & Nút thắt công cụ nội bộ", "timestamp": "00:00", "seconds": 0, "content": "Trong 10 năm tại HubSpot, việc đưa dữ liệu hành vi sử dụng sản phẩm vào quy trình bán hàng đã giúp đội sản phẩm đóng góp hơn 60% đầu vào doanh thu. Tuy nhiên, nghịch lý lớn nhất của các công ty phần mềm là những hệ thống phục vụ vận hành doanh thu nội bộ (RevOps) không bao giờ nằm trong Top 5 ưu tiên của đội ngũ kỹ sư, khiến bộ phận kinh doanh luôn thiếu công cụ tự động hóa phù hợp."}, {"chapter": "2. Đội ngũ RevOps trở thành Kỹ sư Sản phẩm", "timestamp": "03:15", "seconds": 195, "content": "Chiến lược AI tại bộ phận RevOps hiện mang lại hệ số nhân hiệu quả lớn hơn bất kỳ phòng ban nào khác. Thay vì chờ đợi bộ phận IT, nhân sự RevOps ngày nay phải áp dụng tư duy của Giám đốc Sản phẩm (Product Leader): biết đặt đúng câu hỏi nghiệp vụ, định hình luồng dữ liệu và trực tiếp sử dụng AI tạo mã để giải quyết bài toán vận hành."}, {"chapter": "3. Bản chất của 'Bộ não Doanh nghiệp' & Quy trình khởi tạo từ 1 Thư mục", "timestamp": "04:49", "seconds": 289, "content": "'Bộ não Doanh nghiệp' (Company Brain) và 'Harness' không phải là khái niệm trừu tượng mà bắt đầu từ một thư mục dữ liệu cấu trúc (Markdown) trên máy tính hoặc GitHub Repo, nơi tập hợp toàn bộ tài liệu, lịch sử giao dịch, bản ghi cuộc họp và quy tắc nghiệp vụ để công cụ như Claude Code hoặc Codex đọc hiểu ngữ cảnh toàn diện trước khi thực thi."}, {"chapter": "4. Liên thông tri thức & Gắn kết với Chỉ số Tài chính (P&L)", "timestamp": "11:42", "seconds": 702, "content": "Khi mỗi cá nhân và phòng ban tự tạo các kho ngữ cảnh riêng lẻ, doanh nghiệp cần chuẩn hóa và hợp nhất chúng qua hệ thống quản lý phiên bản (GitHub). Đặc biệt, mọi dự án AI trong RevOps bắt buộc phải gắn với một chỉ số đo lường cụ thể trên bảng kế hoạch tài chính (FP&A/P&L) — ví dụ rút ngắn thời gian hội nhập của nhân viên bán hàng mới từ 7 tháng xuống 4 tháng."}, {"chapter": "5. Phân công lao động Con người vs. AI & Chuyển sang Tác nhân Chủ động", "timestamp": "15:31", "seconds": 931, "content": "Khách hàng không muốn mua hàng từ máy móc; vì vậy con người phải giữ vai trò đại diện uy tín, lắng nghe, thuyết phục và đưa ra cam kết. Ngược lại, toàn bộ khâu nghiên cứu khách hàng, ghi nhớ hồ sơ và cập nhật CRM phải chuyển giao cho AI chạy ngầm tự động (Proactive Agents) — tuyệt đối tránh sai lầm biến nhân viên thành 'bảo mẫu' phải gõ lệnh thủ công cho từng chatbot rời rạc."}, {"chapter": "6. Nguyên tắc Tự xây (Build) vs. Mua ngoài (Buy) & 3 Câu hỏi Hành động", "timestamp": "25:31", "seconds": 1531, "content": "Với năng suất 1 người dùng Claude Code bằng 6 kỹ sư truyền thống, doanh nghiệp nên MUA NGOÀI (Buy) các nền tảng hạ tầng thu thập dữ liệu chuẩn hóa (như công cụ ghi âm, bóc tách bản ghi cuộc họp, cơ sở dữ liệu khách hàng) và TỰ XÂY DỰNG (Build) lớp quy trình nghiệp vụ, sổ cái tri thức và các tác nhân phân tích đặc thù tạo nên lợi thế cạnh tranh riêng của công ty."}], "key_insights": [{"timestamp": "02:32", "seconds": 152, "content": "Quy luật ưu tiên nguồn lực: Trong các công ty công nghệ, công cụ nội bộ cho đội ngũ Go-To-Market (Bán hàng & Marketing) hiếm khi được đội kỹ thuật ưu tiên; sự xuất hiện của Coding Agent giúp RevOps tự giải phóng khỏi điểm nghẽn này."}, {"timestamp": "11:42", "seconds": 702, "content": "Nguyên lý quản trị Peter Drucker trong kỷ nguyên AI: Không thể cải thiện thứ không đo lường được — triển khai AI trong RevOps mà không chỉ rõ sự thay đổi trên chỉ số doanh thu, hạn ngạch (Quota) hay thời gian đào tạo (Ramp time) thì chỉ là phong trào thử nghiệm."}, {"timestamp": "19:12", "seconds": 1152, "content": "Hội chứng mệt mỏi vì AI (AI Burnout): Việc bắt nhân viên nhập liệu qua lại giữa hàng chục cửa sổ chat ad-hoc còn chậm hơn thao tác trực tiếp trên CRM; hệ thống AI hiệu quả phải tự động chạy ngầm dựa trên sự kiện (Event-driven) và gửi báo cáo tổng hợp mỗi sáng."}, {"timestamp": "25:31", "seconds": 1531, "content": "Bản ghi âm cuộc họp (Meeting Transcripts) là 'mỏ vàng' dữ liệu quan trọng nhất của Bộ não Doanh nghiệp vì chứa đựng nguyên văn nhu cầu khách hàng, thông tin đối thủ và diễn biến thực tế của từng thương vụ."}], "actionable_steps": [{"timestamp": "05:53", "seconds": 353, "content": "Bước 1 — Khởi tạo Kho ngữ cảnh (Harness): Tạo một thư mục cấu trúc chuẩn (hoặc GitHub Repository), chuyển đổi toàn bộ tài liệu quy trình, hồ sơ sản phẩm và bản ghi cuộc họp sang định dạng Markdown để làm nền tảng cho Claude Code."}, {"timestamp": "25:31", "seconds": 1531, "content": "Bước 2 — Phân tách danh mục Build vs. Buy: Mua các công cụ thu thập dữ liệu đầu vào (ghi âm cuộc họp, làm giàu dữ liệu khách hàng), đồng thời tự lập trình các Agent nội bộ để tự động hóa luồng đánh giá giao dịch, dự báo doanh số và huấn luyện sale."}, {"timestamp": "29:52", "seconds": 1792, "content": "Bước 3 — Áp dụng 3 câu hỏi kiểm chứng cho đội ngũ: (1) Chỉ số tài chính (P&L) cụ thể nào sẽ thay đổi sau 6 tháng áp dụng AI? (2) Dữ liệu cuộc họp và quyết định nội bộ đang được lưu trữ ở đâu? (3) Quy trình nào đang bắt con người phục vụ bot cần được chuyển thành vòng lặp tự động?"}], "facts_and_metrics": [{"timestamp": "00:00", "seconds": 0, "content": "Thank you so much for sharing your time and your efforts. He's with us. We can't wait to hear what you have to say. Listen, the 10 years spent at HubSpot building the thing, that's been talked about a bunch, and also the whole idea of taking the product usage and rotating that into sales, which kind of occurred to us at the same time as a number of companies like, \"Whoa, here's an idea. We could have product actually get involved.\" And that led to us owning a number. By the time I left in 2021, my team was responsible for over sixty percent of the demand SLA into sales, which was a really cool transition."}, {"timestamp": "05:24", "seconds": 324, "content": "The way that we solve hard problems in 2026 is very different from how we solved these problems before now. That's the hard part. The easier part is once you learn this pattern, you can use it for any hard problem that you have. We have a... I think our most recent marketing campaign that we did was how to solve CRM by solving everything because this is pattern-based thinking and, you know, what to... what your starting point is, and then, you know, you'll kind of find your way like water. You'll find a way to the solution,"}, {"timestamp": "12:26", "seconds": 746, "content": "I have not yet met them, and I talk to RevOps folks all day, every day. You cannot improve what you can't measure. This is like classic Peter Drucker management advice. If you look at engineering, what's different in 2026 from 2023? '23, '24, the beginning of '25, you all saw the news stories. You know, engineering teams are seeing 15% product- productivity improvements, and then a couple of weeks later, engineering teams are 15% less productive because of AI. And it was all this, all these little puts and takes, right?"}, {"timestamp": "13:02", "seconds": 782, "content": "You remember all those articles? You don't see those articles anymore. Those articles would be ridiculous in 2026. A support rep on my team ships twice as much code to production in our core app as the average engineer at a public SaaS company. Two and a half pull requests a week used to get you promoted, you'd be able to afford the fancy fixed-speed bicycle, so you could come into the office at 11:00 AM and complain about the cold brew. Today, two and a half pull requests a week is"}, {"timestamp": "25:13", "seconds": 1513, "content": "six engineers worth of bandwidth from 2017. I assure you of this. You are better with Claude Code than, you know, we used to have these pods with a tech lead and a designer and two or three software engineers, and then we'd hire the Northeastern co-ops and train them up and all the rest of it, two and a half pull requests a week, all the rest of it. Every single one of you, week one on Claude Code is as powerful as, like, a whole product group from a traditional SaaS company. Build or buy? Understanding the components"}, {"timestamp": "27:01", "seconds": 1621, "content": "and put it into one place? I whiteboard with RevOps practitioners, the folks that many of you are managing, and I whiteboard out the company brain stuff that they have. Very interestingly, traditional CRM is never in the top five most useful, valuable data sources. It is just low resolution. It's not the number one priority. Meeting recordings, granola, customer Slack, you know, down the list, email. You know, let's get the Gmail in there."}], "mentioned_references": [{"name": "Get agents that know your customers better than you do", "url": "https://day.ai/", "type": "external_link"}]}, "timeline": {"chapters": [{"timestamp": "00:00", "seconds": 0, "title": "Bài học 10 năm tại HubSpot: Từ dữ liệu sản phẩm đến bài toán thiếu hụt công cụ RevOps"}, {"timestamp": "03:15", "seconds": 195, "title": "Sự chuyển dịch vai trò: Đội ngũ RevOps chính là bộ phận kỹ thuật sản phẩm mới"}, {"timestamp": "04:49", "seconds": 289, "title": "Giải mã khái niệm 'Bộ não Doanh nghiệp' (Company Brain), Harness và AI Agent"}, {"timestamp": "05:53", "seconds": 353, "title": "Phương pháp khởi tạo thực chiến: Bắt đầu mọi bài toán phức tạp từ một thư mục Markdown"}, {"timestamp": "08:02", "seconds": 482, "title": "Hợp nhất các kho tri thức phân tán giữa cá nhân, phòng ban và toàn công ty qua GitHub"}, {"timestamp": "11:42", "seconds": 702, "title": "Nguyên tắc đo lường hiệu quả: Chiến lược AI của bạn đang dịch chuyển chỉ số tài chính nào?"}, {"timestamp": "15:31", "seconds": 931, "title": "Phân định ranh giới: Phần việc giữ lại cho Con người và phần việc chuyển giao cho AI"}, {"timestamp": "19:12", "seconds": 1152, "title": "Sai lầm phổ biến: Bắt con người làm 'bảo mẫu' nhập liệu thủ công cho các chatbot rời rạc"}, {"timestamp": "21:18", "seconds": 1278, "title": "Mô hình chuẩn: Hệ thống tác nhân chủ động (Proactive Agents) và vòng lặp tự cải tiến"}, {"timestamp": "24:59", "seconds": 1499, "title": "Đòn bẩy năng suất: 1 nhân sự RevOps + Claude Code = Băng thông của 6 kỹ sư phần mềm"}, {"timestamp": "25:31", "seconds": 1531, "title": "Khung quyết định Tự xây dựng (Build) hay Mua ngoài (Buy) các cấu phần Bộ não Doanh nghiệp"}, {"timestamp": "29:52", "seconds": 1792, "title": "Tổng kết: 3 câu hỏi chiến lược cần đặt ra ngay cho đội ngũ lãnh đạo và RevOps"}], "visual_slides": []}, "transcript_corpus": [{"timestamp": "00:00", "start_seconds": 0, "text": "Thank you so much for sharing your time and your efforts. He's with us. We can't wait to hear what you have to say. Listen, the 10 years spent at HubSpot building the thing, that's been talked about a bunch, and also the whole idea of taking the product usage and rotating that into sales, which kind of occurred to us at the same time as a number of companies like, \"Whoa, here's an idea. We could have product actually get involved.\" And that led to us owning a number. By the time I left in 2021, my team was responsible for over sixty percent of the demand SLA into sales, which was a really cool transition."}, {"timestamp": "00:40", "start_seconds": 40, "text": "But there's another story. That's not the whole thing. There's a story that we've never talked about, and, the origin story of my real relationship with RevOps. So I had been part of the ELT, we called it Helm, for several years, and I kind of took one for the team and was the unified senator representing, engineering, product, and design for years. And I kinda had my fill of that, and I said, \"You know, I need to bring a buddy. Somebody else has to kind of do this work with me.\" So I convinced one of my closest friends,"}, {"timestamp": "01:13", "start_seconds": 73, "text": "who was head of engineering at the time, now he's CTO, still over there, Whitney, to join ELT. And it was his first or second of these meetings, and Ops was presenting. And in the time-honored tradition of while these nine-hour QBR-type meetings are happening, you know, we spend the whole time Slacking each other, you know, trying to figure out what the hell is going on. He texted me: \"Wait a second. Th- this doesn't make any sense. Like, how does it take ninety minutes for a web lead, a form fill, to actually get a rep owner and get rotated to them and be notified?\""}, {"timestamp": "01:54", "start_seconds": 114, "text": "And I said, \"Be very careful what you ask. Be very careful. I will tell you the answer, but then you cannot un-know it.\" You know, because of course, the Ops team had a lot of kind of machinery, and they didn't have necessarily an engineering team doing this stuff. And so I told Whitney the answer, you know, \"This is the deal, and we got to do this enrichment lookup, and then we got to go check for channel conflicts, and we got to do this, and we got to do that.\" And, you know, he, he's asking these engineering questions, or, you know, are they doing FIFO queues?"}, {"timestamp": "02:26", "start_seconds": 146, "text": "Are they doing this? Are they using Kafka and all the rest of it? And I'm like, \"See what I said? Be very careful.\" So once he knew it, though, that was it, right? A year later, we were the proud owners of all of corporate IT, including RevOps, which led to me having an incredible experience, managing a guy who's still there, EVP of Ops at HubSpot, Chris Hogan, who is a legend and a gentleman and a scholar, and I had the honor of managing him for two or three years, which, you know, talk about imposter syndrome, but I learned a ton from him."}, {"timestamp": "03:01", "start_seconds": 181, "text": "The punchline here is... And this came up in the breakout session. A lot of what's in here came up in the breakout session. The punchline here is you are no longer just RevOps or StratOps or whatever. You are product engineering teams. You take a new role, you find out about thirteen engineers that you're responsible for and, you know, what on earth are they doing, and who has decided what's a vendor and what's OpEx and CapEx and all the rest of it? And then you throw AI into this whole situation. So that's kind of where we're going with this today. Good news and bad news. The good news is I intend to illustrate to you why"}, {"timestamp": "03:40", "start_seconds": 220, "text": "literally your seat of every single person at this event today, genuinely, I believe that your AI strategy represents the number one opportunity to build a multiplier effect, bend the curve, at your company more than any other department, even more than engineering. The bad news is you're gonna have to take my traditional role of being a product leader, go out, buy the black T-shirt and the New Balance and the whole thing. Robert Barricade has great black T-shirts."}, {"timestamp": "04:13", "start_seconds": 253, "text": "They're very durable. You should get them dry-cleaned. Anyway, I love this job, and a lot of the product leader job, especially as you scale and the stakes get high, spoiler, is knowing what questions to ask and then just kind of reading the response, right? So that's gonna be the takeaway today, is I wanna give all of you where to look, who to grab, and what to ask them to start a conversation on the whiteboard with. I'll give you some of the answers and some of what to look for and how to think about it, but a lot of it I'm gonna be leaving to you to kind of figure out in that room when you get back to work."}, {"timestamp": "04:49", "start_seconds": 289, "text": "So let's start with this, this idea of a company brain, which is being talked about to death on LinkedIn, on Twitter, Hacker News, wherever you look. What actually is it? What's a harness? What is an agent? You know, different vendors have different concepts of what agents are and skills. How does automation fit in? I wanna demystify some of that and kinda zoom out and say, a lot has changed, but the new world is very approachable. Just demystify it entirely for you. Here's the entry point."}, {"timestamp": "05:24", "start_seconds": 324, "text": "The way that we solve hard problems in 2026 is very different from how we solved these problems before now. That's the hard part. The easier part is once you learn this pattern, you can use it for any hard problem that you have. We have a... I think our most recent marketing campaign that we did was how to solve CRM by solving everything because this is pattern-based thinking and, you know, what to... what your starting point is, and then, you know, you'll kind of find your way like water. You'll find a way to the solution,"}, {"timestamp": "05:57", "start_seconds": 357, "text": "especially the kind of folks in this room with your level of expertise and resourcefulness. Anything you're doing, you're planning a wedding, you're building a house, or trying to get in ... a kid into private school, any hard interdisciplinary problem, you start today by making a folder. You create a new place on your laptop, and you go to Codex or probably Claude Code, and you navigate to that folder, and you begin. If you wanna get a kid into a private school, what do you do?"}, {"timestamp": "06:30", "start_seconds": 390, "text": "You grab all of the, you know, target school's websites. You convert them into markdown. You grab all the report cards, everything. You do a whisper flow dump of, you know, what you think about your kid, and you put that all in the folder, and then you start to go, \"Okay, let's make sense of this.\" And you can actually approach that problem with, where should my kid go to school? If you're building a house, you can put in all of the town ordinances, all of the information about how to apply for easements, and all this kind of stuff, lead certification, you know, contractor information, reviews from Yelp."}, {"timestamp": "07:04", "start_seconds": 424, "text": "Dump it into a folder, and then you begin. And we all know if you do that, you are going to get a spectacular result. So where is the folder at your company that really matters the most? Spoiler, it exists today, I guarantee you, and you own it. So let's go find it. Then, how do we approach it like a product leader and own a roadmap for it? All of the little decisions that are being made. Who's gonna maintain this thing? Is this OpEx or CapEx? What do we want it to be?"}, {"timestamp": "07:39", "start_seconds": 459, "text": "Why did we build this thing? I had a w- one particularly wild thing where I found out that the team at HubSpot that was working on the mobile app was off building a database technology themselves from scratch. It's like, why on earth are you doing this? This is not what we are paying you for. This is not, like, where the dollars are supposed to go into R&D. This is a solved problem. What are you doing? So start here. There are brains scattered everywhere. That sounds a little,"}, {"timestamp": "08:14", "start_seconds": 494, "text": "sounds a little wrong when I say it that way. Okay, everyone has a brain. That's a little bit more palatable. You know, I still talk to people that I managed years ago and I'm like, \"What's your rig? What's going on?\" Well, my team has this repo, this harness, you know, whatever, and then, you know, the VP has one, and then they're trying to do this thing at the company level, blah. How do you fit those all together? I'm spending a lot of time in my personal life just helping people with their AI rigs. By the way, a harness is just a folder. It's a repo. Once you start putting it in GitHub,"}, {"timestamp": "08:51", "start_seconds": 531, "text": "which I'm sure all of you and your teams have figured out, oh, wait a second, I could take a folder. I can use this GitHub thing to share it with my buddies. Yes. Okay, great. Does that give you permissioning on what's inside it? No. Okay, so there's basically this maturity curve happening of taking ideas from core engineering and applying them, which you've always done in RevOps, to be sure. But now, like, you're gonna have to go get the rest of these concepts and bring them in and these best practices. So there are all of these harnesses, all of these folders."}, {"timestamp": "09:24", "start_seconds": 564, "text": "Many of them are not gonna be in version control. No one's gonna know about except the owner. You know, I have one just for myself on my laptop. Laura in the back has one just for herself on her laptop. We vibe code whatever we want, right? But everything is connected into the right company strategy on the back end. There is one folder that sort of supersedes all of them. That is the question of how we make money. This is what gives you and your AI strategy an overarching, superseding precedence over everybody else's harnesses and rigs."}, {"timestamp": "10:03", "start_seconds": 603, "text": "So let's talk about how we kind of get them to all fit together. I am accustomed mostly to giving presentations to engineering audiences, and so I have a Lord of the Rings reference. We'll see how well it plays in this room. What do these things look like? What's even in one of these harnesses, in these folders? A company brain is, again, just a folder. It's a directory on your hard drive. It is going to have things in there that never existed in a CRM, that may have existed in a company wiki,"}, {"timestamp": "10:37", "start_seconds": 637, "text": "that may have existed on a laminated, printed out, you know, handout for sales kickoff of, \"Can everybody please follow the sales process?\" And then, you know, most of those, like, right by the bar on the way out in the trash can. You know, you have all the sales kickoff, sales process cards. But really nicely detailed examples of the strategy. When you are having your internal ops meetings and when the company meeting, you know, the CEO is talking about, \"Here are the big hills we have to climb as a company.\" You know, the bear case from Morningstar on your company, you know, if you're a public company."}, {"timestamp": "11:14", "start_seconds": 674, "text": "Documenting all of this, the same way you would document all of the building restrictions if you're building a house or the pedagogy of a school you're trying to get your kid into. Basically, just putting all of that in one place, you now have a company brain. Why? Because you can open up Claude Code in that folder and start to have a real conversation about what's going on. So how do we go from good to great? I'm here to tell you how to build the right company brain, what questions to ask your team when you get back. Here's the entry point that I would challenge you with."}, {"timestamp": "11:51", "start_seconds": 711, "text": "Think about the number that you have given your team that represents success for your AI strategy in RevOps. What changes in your FP&A, in your, in your financial plan, in your P&L? What changes in quota roll-up, in hiring, headcount plan? I have never asked this question to somebody in RevOps and had them give me an answer. I'm sure there is somebody who says, \"I am going to take ramp time from seven months to four months by Q2 of next year.\""}, {"timestamp": "12:26", "start_seconds": 746, "text": "I have not yet met them, and I talk to RevOps folks all day, every day. You cannot improve what you can't measure. This is like classic Peter Drucker management advice. If you look at engineering, what's different in 2026 from 2023? '23, '24, the beginning of '25, you all saw the news stories. You know, engineering teams are seeing 15% product- productivity improvements, and then a couple of weeks later, engineering teams are 15% less productive because of AI. And it was all this, all these little puts and takes, right?"}, {"timestamp": "13:02", "start_seconds": 782, "text": "You remember all those articles? You don't see those articles anymore. Those articles would be ridiculous in 2026. A support rep on my team ships twice as much code to production in our core app as the average engineer at a public SaaS company. Two and a half pull requests a week used to get you promoted, you'd be able to afford the fancy fixed-speed bicycle, so you could come into the office at 11:00 AM and complain about the cold brew. Today, two and a half pull requests a week is"}, {"timestamp": "13:37", "start_seconds": 817, "text": "ridiculous. Whatever chart is on the wall is going to go up. We're gonna start probably with just, like, signs of life. How many people are doing AI with... in any regard in go-to-market? That's not gonna be good enough for the people in this room. You get to a point, if you do this right, where the improvements start compounding. Our software engineering rig improves itself today. We pay for tokens and people to solve a problem one time. That problem is solved anytime we see it forever moving forward."}, {"timestamp": "14:14", "start_seconds": 854, "text": "What is the go-to-market equivalent of that? The opportunity you have is that your fellows across this go-to-market operations, go-to-market engineering, RevOps, Sales Ops, strategic ops, nobody is doing anything. The chart on the left is from Andreessen Horowitz. Coding, okay, Cursor, you know, there are a million of these, Claude Code. Legal, sure, Harvey, Legora, et cetera, et cetera. We're starting to see finance come in. We're starting to see IT come in."}, {"timestamp": "14:47", "start_seconds": 887, "text": "Sales and marketing even, but sales and RevOps are not yet expecting the kinds of things that you absolutely can get right now for not a lot of money. Anthropic on the right, I, you know, I disagree with this one a tiny bit, but it's close enough, I think. It's a little hard to see. The red is by department, how much value they've seen realized by each of these departments with AI, and the blue is the potential. I would argue that sales is probably another click out,"}, {"timestamp": "15:22", "start_seconds": 922, "text": "but their research suggests there's a lot that can be done there and almost no usage. So let's think about this. This also came up in the breakout session. What stays with the human, and what is delegated and given to the AI in the right company brain as we think of ourselves as product leaders in a revenue operations role? I try to give nice little alliterations on both sides of these to make them memorable. The things that stay, the human things, I believe firmly"}, {"timestamp": "15:56", "start_seconds": 956, "text": "that the rep stays. I think we're gonna have four archetypes in the future companies. One of them is the representative, the human UI that is going to talk about the company, be credible, make the promises. A lot of people are saying, \"We don't wanna buy from AI.\" I think that's absolutely right. But let's let that person do more of that. Let's let them be more persuasive. Let's let them be better listeners, and again, that credibility, having a person that can actually make a good promise and stand behind it. What goes? Research, recall, record keeping."}, {"timestamp": "16:33", "start_seconds": 993, "text": "Trying to find a lead list seems like a solved problem. We have datasets. We have web agents. You know, there are great companies doing these kinds of things, some of some of whom are in the, in the crowd. ParallelAI is a great company. You know, you can go find... We have a customer who's, you know, sells to police chiefs. We can pull a lead list for that company in a way that you- you're not gonna get that from ZoomInfo. We're not gonna get that from, you know, a vendor database. It is a solved problem because you can put agents on it. Recall."}, {"timestamp": "17:06", "start_seconds": 1026, "text": "With these meeting recorders, one of the first things you see is that you're just able to pay more attention in the meeting because you're not responsible for remembering all of the details. This is the new expectation. Everything is going to be remembered. Every shred of information and sentiment that matters is going to be captured. And then the record keeping, and kinda don't get me started on this, but, you know, even the frontier labs, the sales teams are sitting there with blocks on their calendar to fill out Salesforce data. My friends,"}, {"timestamp": "17:39", "start_seconds": 1059, "text": "that's insane. Their f- what are their Salesforce notes? Like, the demo of the cancer-curing super intelligence went really well. The prospect loved it, and they're, like, typing this into a salesforce.com UI. That is a solved problem. You should have absolutely perfectly clean data, and nobody should ever have to spend any time on it, and your team should have full governance over all of that. Okay, so this is what the human does. This is what the AI is gonna do. What is the relationship between those things?"}, {"timestamp": "18:13", "start_seconds": 1093, "text": "What is the ergonomic form factor, the day-to-day? What does it look like? I don't... I've never seen a team come to me for the first time having gotten this right. You know, there are a million of these kind of mono-agent Slack bots or a Vercel app that, you know, \"Hey, everybody, go ask your questions to, you know, Jarvis,\" or whatever. By the way, they're all named Jarvis. Anybody who has a mono bot named Jarvis, I hate to break it to you, but, like,"}, {"timestamp": "18:44", "start_seconds": 1124, "text": "you're not the first person to come up with that. What are, what are the ergonomics of that kind of handshake? The easiest way for me to illustrate this for you is just a before and after. The before is probably where most of your teams are. This is where engineering was in 2023, for most teams in 2024, for some teams in 2025, and is now a ridiculous world to live in. Humans are bot-sitting. Oh, we got, Claude, and then we got the connector into Salesforce."}, {"timestamp": "19:19", "start_seconds": 1159, "text": "So, hey, everybody, what you're gonna do, don't... This is gonna be amazing. You're gonna love this. Instead of entering your stuff into Salesforce, enter it into Claude, and Claude will make sure it goes into Salesforce. Okay? Anthropic did this for, like, 15 minutes and then stopped because it is slower than just entering the darn data yourself. Sitting there and then you end up with, like, 20 of these things running and that whole kind of, fatigue, that AI burnout that happens. This is not how you wanna live. The second point here is that these things are ad hoc and ephemeral."}, {"timestamp": "19:53", "start_seconds": 1193, "text": "They go away. They are happening because it occurs to somebody in the moment, oh geez, you know, I should write an email. Oh geez, I should pull a report. The work is done in the thread, again, with the human driving all of that, and then it is gone. If somebody sits there wrestling to pull an accurate verified Salesforce report for their role, for their team, and they have to try it a bunch of ways and figure out what the fields mean and all the rest of it, the next person who comes along and wants to do that same thing is going to have that same problem. This does not happen in software engineering."}, {"timestamp": "20:29", "start_seconds": 1229, "text": "If somebody is debugging an issue or optimizing UI rendering performance, and they spend an afternoon on it, everybody gets that for free the next time any task like that comes up, and it goes like this. You are spending human hours only on the things that actually matter, and the knowledge of your overall harness and system compounds over time in wild ways. And the third I talked about a little bit but, you know, a faceless void, the, you know, no names, no personality, no way to respond to something and have it, like, validate you and say, \"Okay,"}, {"timestamp": "21:06", "start_seconds": 1266, "text": "you want this in this format every Tuesday, and then you want me to do this and that? Sure, count on it.\" In engineering, faceless void, totally fine. We're used to it. In go-to-market, it's not good enough. The after here is that the intelligence is absolutely proactive. I have, an incredibly cool thing I get every day. I don't think I've shown you this, Mike. I gotta show you this. And it came up on a call. I was talking to a CRO and he said, \"You know, I've always wanted as a CRO to just know the number one thing that would surprise me about my business"}, {"timestamp": "21:42", "start_seconds": 1302, "text": "that I don't know about.\" And I was like, \"Steve, that's a great idea.\" And I, like, tell my agent off to the side, I'm like, \"Do this for me.\" And so I get these every morning, and they are just wildly interesting and entertaining. And it puts me in a situation where around the water cooler at work, and my friends who are here can confirm, I'll overhear conversations about deals, and my little, like, party trick, which is getting annoying now, and people are like, \"Dude, we get it. Stop.\" But I'll just start chiming in about the deal, and I'll be like, \"Nima's the CTO, Dan's the VP of sales. Here's a direct quote. They like this about this competitor,\" like blah."}, {"timestamp": "22:18", "start_seconds": 1338, "text": "First couple of times it played really well. Now it's just really annoying. The self-improving loops. Are you documenting somewhere what's working in a particular vertical, a particular kind of deal or situation? Do you know what is helping reps who ramp faster than they should? What are... What's different about their experience than the reps that, like, never get there and have to get pipped, you know, nine months in? Do you know? This is a solved problem. You should just be able to ask and then document that in one place"}, {"timestamp": "22:53", "start_seconds": 1373, "text": "and have everybody's agents pull off of that to coach people and make sure they're on the happy path, and update it as more information comes in. Again, in engineering, we have this. We have self-improving loops. We can auto-resolve a bug when we find it. We can also run a QA bu- a bot that goes and gets us the bugs. So we can have a web app or a SaaS product that is just actually getting better 24 hours a day, and we're sitting there, like, putting the credit card in and deciding how hot to run the system."}, {"timestamp": "23:28", "start_seconds": 1408, "text": "This is absolutely possible in go-to-market. And then again, this idea of agents that people actually form a relationship with and have more than one. GroqBot is the closest I've seen to this, where, if you go on Twitter, you'll see examples of this. The GroqBot sales team, the way they use their own product is extremely cool. They have a coach agent. They have a research agent that's going out and finding leads and coming up with email drafts. They have a data entry agent or a reporting agent. You know, prep me for my forecast meeting."}, {"timestamp": "24:02", "start_seconds": 1442, "text": "Give me a CSV, whatever. And it's a little bit spit and tissue paper and duct tape, but extremely right. Why? Because each of these agents is a long-lived entity that the human can give feedback to, and they have a defined job role that the human who manages that agent can take credit for. And this is a really important concept. If we're not deploying the AI in a way where productivity and credit can accrue through that human org chart, it's gonna be really awkward."}, {"timestamp": "24:36", "start_seconds": 1476, "text": "Because at the end of the day, we are keeping score. In this side of the house, we are keeping score. Who is productive? Who is closing deals? Who has more capacity, right, in the financial plan? Every one of your teams, I imagine, has some form of an engineering team, when a particularly wonderful example came up in the breakout session. But even if it's just you using Claude Code, that counts. You using Claude Code is the equivalent of"}, {"timestamp": "25:13", "start_seconds": 1513, "text": "six engineers worth of bandwidth from 2017. I assure you of this. You are better with Claude Code than, you know, we used to have these pods with a tech lead and a designer and two or three software engineers, and then we'd hire the Northeastern co-ops and train them up and all the rest of it, two and a half pull requests a week, all the rest of it. Every single one of you, week one on Claude Code is as powerful as, like, a whole product group from a traditional SaaS company. Build or buy? Understanding the components"}, {"timestamp": "25:48", "start_seconds": 1548, "text": "within this company brain will help you figure out what you should build and what you should buy. The good news and bad news on this that I observe is that all of you, I think, are on a similar set of thinking. That's the good news. The answers are going to be obvious and will align. I don't think it's a mystery to anybody in this room that meeting recording transcripts are absolutely gold"}, {"timestamp": "26:21", "start_seconds": 1581, "text": "because they can really tell you what's happening, whether you're forecasting, coaching, trying to drive rep productivity, whatever it is, they are absolutely gold. Granola, internal meetings, where are you capturing the decisions? You know, you might have workflows where you capture, an internal meeting and you have some nice machinery that spits out, you know, some action items and all the rest of it. Great. But where is the company strategy? Here are the things we're trying to do as a company. Can we push those out and have everybody's behavior ladder up to that somehow? The data sources. How do you take all of this information"}, {"timestamp": "27:01", "start_seconds": 1621, "text": "and put it into one place? I whiteboard with RevOps practitioners, the folks that many of you are managing, and I whiteboard out the company brain stuff that they have. Very interestingly, traditional CRM is never in the top five most useful, valuable data sources. It is just low resolution. It's not the number one priority. Meeting recordings, granola, customer Slack, you know, down the list, email. You know, let's get the Gmail in there."}, {"timestamp": "27:33", "start_seconds": 1653, "text": "They don't know how to permission that. Fine. All of that stuff in one place so that you can interact with it in a way, if anybody's used Perplexity. Like Perplexity puts the entire web into context. Claude is not as good at that. It can search the web, but it's gonna be a little bit clumsy and take some time. So that's the difference in those harnesses and in those data sources. Have a data source that gives you that instant recall and the data privacy, which I'm sure came up in everybody's breakout session as well. The agent control plane."}, {"timestamp": "28:08", "start_seconds": 1688, "text": "You could build this. You could go get Vercel Eve. You could have guardrails and tell people that they can use Instinct or Muse or whatever they want, but here's the MCP and, you know, here is a set of instructions you need to include or whatever. You have a bunch of options here, but you're going to want to be able to drive behavior change because so much of our work is gonna be done by agents. How do you decide, here's a detail about... You know, we have a new product. Everybody should be looking for attach opportunities in these circumstances. How do you drive that across everybody's agentic rig"}, {"timestamp": "28:45", "start_seconds": 1725, "text": "while letting them continue to personalize their agent experiences? Harnesses. When do you use a first-party harness? When do you build your own? Who should be using what? Work surface. There was a great, conversation in our breakout about this and different perspectives. There's a perspective that, you know what? I can vibe code whatever UI I want, which, I mean, listen, I feed my family by making these UIs, or at least I have for, you know, better part of twenty years. I don't know, man. I really don't know. I mean, it, it's humbling for us. We've spent a lot of time on UI stuff and trying to get everything perfect."}, {"timestamp": "29:20", "start_seconds": 1760, "text": "And if somebody shows up and they go, \"Look what I built,\" which happens with us all the time. They're like, \"Look at this cool thing I built.\" It's kind of hard to say like, \"Don't do that,\" you know? It's pretty cool. Knowledge management. You know, you could do this in Markdown files, or you could buy Glean, or you could do Notion, or you could do this, or you could do that. It's a very interesting open conversation. I think all of these genuinely are open conversations. I have my own feelings on each of them, but, you know, look, it, it's... Each one is a separate decision, in a real"}, {"timestamp": "29:54", "start_seconds": 1794, "text": "research project to think about what you wanna do. So here's, as promised, what to walk away with. The first thing is to ask the team, or maybe you know, y'all are senior enough, you could actually probably just go tell your teams. But what are we measuring? What is success? Whoever on your team is the Claude Code sicko that you're really hoping will get those wins for you, if you promote them in six months, what is the slide they showed you that you then showed to the CEO and said, \"Look at how amazing we are with this AI stuff. We're really moving the needle\"?"}, {"timestamp": "30:27", "start_seconds": 1827, "text": "Pick a metric. There are metrics in the financial plan that you have never been able to move, that finance has never been able to move, that are now very movable. I'm not in a position to tell you all you should double quota, right? And there's a little bit of a standoff right now where nobody wants to say something that sounds ridiculous. But whatever number, you know, is possible for you to move, if somebody told you that number and how much you could move it- Mm ... in reality today, it would seem ridiculous. Second thing, once you have that number, how do we get from baseline to two X?"}, {"timestamp": "31:02", "start_seconds": 1862, "text": "That's gonna be the biggest lift. Once you're at four X or two X or ten X, getting to a hundred X is largely going to solve itself, believe it or not, because these systems tend towards self-improvement. And then whiteboard for me, who has control of what? Who can see what? These agents, these skills that are running in the background, who owns that? Oh, well, we have a thing where we push these skills out to people, and we tell them to put it into Claude and all the rest of it."}, {"timestamp": "31:36", "start_seconds": 1896, "text": "It's like, get a really good answer for that, and then, you know what I'm saying to you is I think your judgment will lead you into the right sub conversations for whatever your business priorities are, whatever your stack is at the moment and what you want it to be. If anybody gives you an incredibly good answer for this third one, I would just say, I'm a little out of line saying it, but, like, lock them up and bubble wrap them with a huge equity grant, because that person is an adult and is really thinking about your company deeply. I would promote them and keep them around forever."}, {"timestamp": "32:12", "start_seconds": 1932, "text": "So that's it. You are no longer just RevOps. You are product engineers. Hopefully, the idea of a company brain makes sense. Hopefully, you have, conversations to have lovingly with your, beloved teams when you get back to the office, and, yeah, that's life after CRM."}], "i18n": {"vi": {"title": "Chiến lược RevOps trong kỷ nguyên AI: Nên tự xây dựng (Build) hay mua ngoài (Buy) Bộ não Doanh nghiệp (Cựu CPO HubSpot Christopher O'Donnell)", "one_liner": "Khung tư duy chiến lược giúp đội ngũ Vận hành Doanh thu (RevOps) thiết kế 'Bộ não Doanh nghiệp' (Company Brain): dùng Claude Code để tự xây dựng các luồng ngữ cảnh đặc thù và chỉ mua ngoài hạ tầng dữ liệu nền tảng.", "executive_summary": "Bài diễn thuyết của Christopher O'Donnell (Cựu Giám đốc Sản phẩm HubSpot, hiện tại ở Vector) phân tích sự chuyển dịch căn bản của bộ phận Vận hành Doanh thu (RevOps) trong kỷ nguyên AI Agent. Trước đây, các yêu cầu công cụ nội bộ của RevOps luôn bị xếp sau ưu tiên phát triển sản phẩm chính; nhưng hiện nay, một nhân sự RevOps sử dụng công cụ lập trình AI (như Claude Code) có năng suất tương đương một nhóm 6 kỹ sư phần mềm năm 2017. Trọng tâm cốt lõi là xây dựng 'Bộ não Doanh nghiệp' (Company Brain) — thực chất là một kho lưu trữ ngữ cảnh có cấu trúc (thư mục Markdown/GitHub Repo kết hợp bản ghi cuộc họp, dữ liệu CRM và quy trình nội bộ) để các AI Agent chủ động phân tích giao dịch và tự cải tiến vòng lặp bán hàng. Để thành công, lãnh đạo RevOps phải: (1) Gắn chiến lược AI với một chỉ số tài chính cụ thể trên báo cáo P&L (như rút ngắn thời gian đào tạo nhân sự sale từ 7 tháng xuống 4 tháng); (2) Giữ con người ở vai trò tạo dựng niềm tin và cam kết với khách hàng, giao toàn bộ việc nghiên cứu, ghi chép và tổng hợp dữ liệu cho AI; và (3) Mua ngoài (Buy) các nền tảng thu thập dữ liệu thô, nhưng bắt buộc tự xây dựng (Build) lớp điều phối quy trình và trí tuệ đặc thù của doanh nghiệp.", "chapters": [{"timestamp": "00:00", "seconds": 0, "title": "Bài học 10 năm tại HubSpot: Từ dữ liệu sản phẩm đến bài toán thiếu hụt công cụ RevOps"}, {"timestamp": "03:15", "seconds": 195, "title": "Sự chuyển dịch vai trò: Đội ngũ RevOps chính là bộ phận kỹ thuật sản phẩm mới"}, {"timestamp": "04:49", "seconds": 289, "title": "Giải mã khái niệm 'Bộ não Doanh nghiệp' (Company Brain), Harness và AI Agent"}, {"timestamp": "05:53", "seconds": 353, "title": "Phương pháp khởi tạo thực chiến: Bắt đầu mọi bài toán phức tạp từ một thư mục Markdown"}, {"timestamp": "08:02", "seconds": 482, "title": "Hợp nhất các kho tri thức phân tán giữa cá nhân, phòng ban và toàn công ty qua GitHub"}, {"timestamp": "11:42", "seconds": 702, "title": "Nguyên tắc đo lường hiệu quả: Chiến lược AI của bạn đang dịch chuyển chỉ số tài chính nào?"}, {"timestamp": "15:31", "seconds": 931, "title": "Phân định ranh giới: Phần việc giữ lại cho Con người và phần việc chuyển giao cho AI"}, {"timestamp": "19:12", "seconds": 1152, "title": "Sai lầm phổ biến: Bắt con người làm 'bảo mẫu' nhập liệu thủ công cho các chatbot rời rạc"}, {"timestamp": "21:18", "seconds": 1278, "title": "Mô hình chuẩn: Hệ thống tác nhân chủ động (Proactive Agents) và vòng lặp tự cải tiến"}, {"timestamp": "24:59", "seconds": 1499, "title": "Đòn bẩy năng suất: 1 nhân sự RevOps + Claude Code = Băng thông của 6 kỹ sư phần mềm"}, {"timestamp": "25:31", "seconds": 1531, "title": "Khung quyết định Tự xây dựng (Build) hay Mua ngoài (Buy) các cấu phần Bộ não Doanh nghiệp"}, {"timestamp": "29:52", "seconds": 1792, "title": "Tổng kết: 3 câu hỏi chiến lược cần đặt ra ngay cho đội ngũ lãnh đạo và RevOps"}], "core_ideas": [{"chapter": "1. Bài học từ HubSpot & Nút thắt công cụ nội bộ", "timestamp": "00:00", "seconds": 0, "content": "Trong 10 năm tại HubSpot, việc đưa dữ liệu hành vi sử dụng sản phẩm vào quy trình bán hàng đã giúp đội sản phẩm đóng góp hơn 60% đầu vào doanh thu. Tuy nhiên, nghịch lý lớn nhất của các công ty phần mềm là những hệ thống phục vụ vận hành doanh thu nội bộ (RevOps) không bao giờ nằm trong Top 5 ưu tiên của đội ngũ kỹ sư, khiến bộ phận kinh doanh luôn thiếu công cụ tự động hóa phù hợp."}, {"chapter": "2. Đội ngũ RevOps trở thành Kỹ sư Sản phẩm", "timestamp": "03:15", "seconds": 195, "content": "Chiến lược AI tại bộ phận RevOps hiện mang lại hệ số nhân hiệu quả lớn hơn bất kỳ phòng ban nào khác. Thay vì chờ đợi bộ phận IT, nhân sự RevOps ngày nay phải áp dụng tư duy của Giám đốc Sản phẩm (Product Leader): biết đặt đúng câu hỏi nghiệp vụ, định hình luồng dữ liệu và trực tiếp sử dụng AI tạo mã để giải quyết bài toán vận hành."}, {"chapter": "3. Bản chất của 'Bộ não Doanh nghiệp' & Quy trình khởi tạo từ 1 Thư mục", "timestamp": "04:49", "seconds": 289, "content": "'Bộ não Doanh nghiệp' (Company Brain) và 'Harness' không phải là khái niệm trừu tượng mà bắt đầu từ một thư mục dữ liệu cấu trúc (Markdown) trên máy tính hoặc GitHub Repo, nơi tập hợp toàn bộ tài liệu, lịch sử giao dịch, bản ghi cuộc họp và quy tắc nghiệp vụ để công cụ như Claude Code hoặc Codex đọc hiểu ngữ cảnh toàn diện trước khi thực thi."}, {"chapter": "4. Liên thông tri thức & Gắn kết với Chỉ số Tài chính (P&L)", "timestamp": "11:42", "seconds": 702, "content": "Khi mỗi cá nhân và phòng ban tự tạo các kho ngữ cảnh riêng lẻ, doanh nghiệp cần chuẩn hóa và hợp nhất chúng qua hệ thống quản lý phiên bản (GitHub). Đặc biệt, mọi dự án AI trong RevOps bắt buộc phải gắn với một chỉ số đo lường cụ thể trên bảng kế hoạch tài chính (FP&A/P&L) — ví dụ rút ngắn thời gian hội nhập của nhân viên bán hàng mới từ 7 tháng xuống 4 tháng."}, {"chapter": "5. Phân công lao động Con người vs. AI & Chuyển sang Tác nhân Chủ động", "timestamp": "15:31", "seconds": 931, "content": "Khách hàng không muốn mua hàng từ máy móc; vì vậy con người phải giữ vai trò đại diện uy tín, lắng nghe, thuyết phục và đưa ra cam kết. Ngược lại, toàn bộ khâu nghiên cứu khách hàng, ghi nhớ hồ sơ và cập nhật CRM phải chuyển giao cho AI chạy ngầm tự động (Proactive Agents) — tuyệt đối tránh sai lầm biến nhân viên thành 'bảo mẫu' phải gõ lệnh thủ công cho từng chatbot rời rạc."}, {"chapter": "6. Nguyên tắc Tự xây (Build) vs. Mua ngoài (Buy) & 3 Câu hỏi Hành động", "timestamp": "25:31", "seconds": 1531, "content": "Với năng suất 1 người dùng Claude Code bằng 6 kỹ sư truyền thống, doanh nghiệp nên MUA NGOÀI (Buy) các nền tảng hạ tầng thu thập dữ liệu chuẩn hóa (như công cụ ghi âm, bóc tách bản ghi cuộc họp, cơ sở dữ liệu khách hàng) và TỰ XÂY DỰNG (Build) lớp quy trình nghiệp vụ, sổ cái tri thức và các tác nhân phân tích đặc thù tạo nên lợi thế cạnh tranh riêng của công ty."}], "key_insights": [{"timestamp": "02:32", "seconds": 152, "content": "Quy luật ưu tiên nguồn lực: Trong các công ty công nghệ, công cụ nội bộ cho đội ngũ Go-To-Market (Bán hàng & Marketing) hiếm khi được đội kỹ thuật ưu tiên; sự xuất hiện của Coding Agent giúp RevOps tự giải phóng khỏi điểm nghẽn này."}, {"timestamp": "11:42", "seconds": 702, "content": "Nguyên lý quản trị Peter Drucker trong kỷ nguyên AI: Không thể cải thiện thứ không đo lường được — triển khai AI trong RevOps mà không chỉ rõ sự thay đổi trên chỉ số doanh thu, hạn ngạch (Quota) hay thời gian đào tạo (Ramp time) thì chỉ là phong trào thử nghiệm."}, {"timestamp": "19:12", "seconds": 1152, "content": "Hội chứng mệt mỏi vì AI (AI Burnout): Việc bắt nhân viên nhập liệu qua lại giữa hàng chục cửa sổ chat ad-hoc còn chậm hơn thao tác trực tiếp trên CRM; hệ thống AI hiệu quả phải tự động chạy ngầm dựa trên sự kiện (Event-driven) và gửi báo cáo tổng hợp mỗi sáng."}, {"timestamp": "25:31", "seconds": 1531, "content": "Bản ghi âm cuộc họp (Meeting Transcripts) là 'mỏ vàng' dữ liệu quan trọng nhất của Bộ não Doanh nghiệp vì chứa đựng nguyên văn nhu cầu khách hàng, thông tin đối thủ và diễn biến thực tế của từng thương vụ."}], "actionable_steps": [{"timestamp": "05:53", "seconds": 353, "content": "Bước 1 — Khởi tạo Kho ngữ cảnh (Harness): Tạo một thư mục cấu trúc chuẩn (hoặc GitHub Repository), chuyển đổi toàn bộ tài liệu quy trình, hồ sơ sản phẩm và bản ghi cuộc họp sang định dạng Markdown để làm nền tảng cho Claude Code."}, {"timestamp": "25:31", "seconds": 1531, "content": "Bước 2 — Phân tách danh mục Build vs. Buy: Mua các công cụ thu thập dữ liệu đầu vào (ghi âm cuộc họp, làm giàu dữ liệu khách hàng), đồng thời tự lập trình các Agent nội bộ để tự động hóa luồng đánh giá giao dịch, dự báo doanh số và huấn luyện sale."}, {"timestamp": "29:52", "seconds": 1792, "content": "Bước 3 — Áp dụng 3 câu hỏi kiểm chứng cho đội ngũ: (1) Chỉ số tài chính (P&L) cụ thể nào sẽ thay đổi sau 6 tháng áp dụng AI? (2) Dữ liệu cuộc họp và quyết định nội bộ đang được lưu trữ ở đâu? (3) Quy trình nào đang bắt con người phục vụ bot cần được chuyển thành vòng lặp tự động?"}]}, "en": {"title": "What RevOps Should Build vs. Buy for the Company Brain (Ex-HubSpot CPO Christopher O'Donnell at Vector)", "one_liner": "A strategic framework for Revenue Operations (RevOps) leaders on architecting the 'Company Brain': leveraging coding agents like Claude Code to build proprietary workflow intelligence while buying foundational data capture layers.", "executive_summary": "Christopher O'Donnell (Former Chief Product Officer at HubSpot, now at Vector) explains how AI coding agents fundamentally transform Revenue Operations (RevOps). Historically, internal Go-To-Market tools never cracked the top five engineering priorities; today, a single RevOps operator equipped with Claude Code has the development bandwidth of six software engineers from 2017. At the center of this shift is the 'Company Brain' — a structured, version-controlled repository of markdown context, meeting transcripts, CRM state, and operational rules that enables proactive AI agents and self-improving loops. To succeed, RevOps leaders must: (1) Anchor AI initiatives to a hard FP&A / P&L metric (such as cutting sales rep ramp time from seven months to four); (2) Keep humans focused on high-trust customer relationships and credible promises while offloading research, recall, and record-keeping to background agents; and (3) Buy commodity data ingestion tools while building custom orchestration and domain-specific intelligence in-house.", "chapters": [{"timestamp": "00:00", "seconds": 0, "title": "10 Years at HubSpot: Product-led sales and the internal tooling bottleneck"}, {"timestamp": "03:15", "seconds": 195, "title": "Role shift: Why RevOps is now a product engineering organization"}, {"timestamp": "04:49", "seconds": 289, "title": "Demystifying the 'Company Brain', Harnesses, and AI Agents"}, {"timestamp": "05:53", "seconds": 353, "title": "Practical starting point: Solving complex interdisciplinary problems with a Markdown folder"}, {"timestamp": "08:02", "seconds": 482, "title": "Connecting scattered personal and departmental brains through GitHub repositories"}, {"timestamp": "11:42", "seconds": 702, "title": "Accountability: Which hard P&L or FP&A metric is your AI strategy moving?"}, {"timestamp": "15:31", "seconds": 931, "title": "Division of labor: What stays human (credibility & promises) vs. what goes to AI"}, {"timestamp": "19:12", "seconds": 1152, "title": "The anti-pattern: Humans 'bot-sitting' ad-hoc chat prompts instead of true automation"}, {"timestamp": "21:18", "seconds": 1278, "title": "The target state: Proactive background agents and self-improving intelligence loops"}, {"timestamp": "24:59", "seconds": 1499, "title": "The productivity multiplier: One operator + Claude Code = Six software engineers"}, {"timestamp": "25:31", "seconds": 1531, "title": "Decision framework: What to Build vs. What to Buy inside the Company Brain"}, {"timestamp": "29:52", "seconds": 1792, "title": "Three strategic questions to take back to your leadership and RevOps team"}], "core_ideas": [{"chapter": "1. The Internal GTM Tooling Bottleneck", "timestamp": "00:00", "seconds": 0, "content": "At HubSpot, connecting product usage signals to sales workflows drove over 60% of the demand SLA. However, internal Go-To-Market and RevOps tooling almost never made it into core engineering's top five priorities, leaving revenue teams chronically underserved until AI coding agents removed the engineering dependency."}, {"chapter": "2. RevOps as a Product Engineering Team", "timestamp": "03:15", "seconds": 195, "content": "AI strategy in RevOps offers the highest leverage multiplier in the company. To capture it, RevOps professionals must adopt the mindset of product engineering leaders: defining clear system architecture, asking the right diagnostic questions, and building directly with coding agents."}, {"chapter": "3. Demystifying the Company Brain & Agent Harness", "timestamp": "04:49", "seconds": 289, "content": "A 'Company Brain' or 'Agent Harness' starts simply as a structured folder of Markdown files versioned in a GitHub repository. By aggregating domain context, rules, and historical data into clean text files, coding agents like Claude Code can reason across the entire business context."}, {"chapter": "4. Tying AI Strategy to Hard Financial Metrics (FP&A / P&L)", "timestamp": "11:42", "seconds": 702, "content": "Most RevOps teams cannot name the exact financial plan metric their AI strategy will move. Effective AI adoption requires committing to measurable P&L outcomes — such as reducing new sales rep ramp time from 7 months to 4 months or increasing quota attainment."}, {"chapter": "5. Human Credibility vs. Proactive Background Agents", "timestamp": "15:31", "seconds": 931, "content": "Buyers still want human credibility, empathy, and accountability; sales reps should spend their time listening and making trusted promises. Research, recall, and CRM hygiene must move to proactive background agents rather than forcing humans to manually 'bot-sit' 20 chat windows."}, {"chapter": "6. Build vs. Buy Framework for the Company Brain", "timestamp": "25:31", "seconds": 1531, "content": "With one operator plus Claude Code matching the output of a six-person engineering pod, companies should BUY foundational data capture layers (such as meeting transcription and enrichment providers) and BUILD proprietary context harnesses, deal-coaching loops, and custom operational workflows."}], "key_insights": [{"timestamp": "02:32", "seconds": 152, "content": "Internal GTM systems rarely win engineering prioritization against customer-facing features; empowering RevOps with coding agents eliminates this structural bottleneck."}, {"timestamp": "11:42", "seconds": 702, "content": "You cannot improve what you do not measure: every AI initiative in RevOps should target a specific, historically stubborn metric in the financial plan."}, {"timestamp": "19:12", "seconds": 1152, "content": "Typing data into an AI chat window just so it copies it into Salesforce is slower than manual entry and causes AI fatigue; real leverage comes from event-driven, proactive background loops."}, {"timestamp": "25:31", "seconds": 1531, "content": "Meeting recording transcripts are the highest-value asset in the Company Brain for forecasting, sales coaching, and competitive intelligence."}], "actionable_steps": [{"timestamp": "05:53", "seconds": 353, "content": "Step 1 — Initialize Your Context Harness: Create a structured Markdown folder synced to GitHub containing playbooks, deal context, and meeting transcripts for Claude Code."}, {"timestamp": "25:31", "seconds": 1531, "content": "Step 2 — Separate Build vs. Buy: Purchase reliable transcript and dataset ingestion tools, and build custom agent loops for deal briefings, forecasting, and rep coaching."}, {"timestamp": "29:52", "seconds": 1792, "content": "Step 3 — Align on Three Questions: (1) Which exact FP&L metric are we moving in 6 months? (2) How are we capturing internal and customer meeting transcripts? (3) How do we replace manual bot-sitting with proactive daily agent briefings?"}]}}, "schema_version": 3}, {"id": "gh_859ebb1605", "resource_type": "github_repo", "metadata": {"url": "https://github.com/danielmiessler/fabric", "title": "danielmiessler/fabric: Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "channel": "GitHub (danielmiessler)", "duration": "★ 44,420 | Go", "publish_date": "2026-10-25", "extracted_at": "2026-10-25 21:30:49"}, "chat_context": {"shared_by": "User", "chat_group": "R&D", "shared_at": "2026-10-25 21:30:49", "sender_note": "Khung chắt lọc ý tưởng extract_wisdom từ video và bài viết"}, "taxonomy": {"category": "Công nghệ, Lập trình & AI", "tags": ["ai", "augmentation", "flourishing", "life", "work", "go", "support", "azure", "fabric", "adds", "openai", "added"], "search_aliases": ["danielmiessler/fabric: fabric is an open-source framework for augmenting humans using ai. it provides a modular system for solving specific problems using a crowdsourced set of ai prompts that can be used anywhere.", "cong nghe, lap trinh & ai", "ai", "augmentation", "flourishing", "life", "work", "go", "support", "azure", "fabric", "adds", "openai", "added"]}, "summary": {"one_liner": "Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "executive_summary": "Dự án mã nguồn mở ultraworkers/claw-code là bản tái cấu trúc sạch (clean-room implementation) bằng ngôn ngữ Rust cho hệ thống tác nhân lập trình dòng lệnh (CLI Coding Agent) theo kiến trúc đối tác của Claude Code. Hệ thống được thiết kế nhằm giải quyết bài toán hiệu năng khởi động, an toàn bộ nhớ và quản trị phiên làm việc đa tác nhân thông qua công cụ điều phối oh-my-codex (OmX) và quy trình phát triển tự động $ralph. Mã nguồn phân tách rõ ràng giữa lõi thực thi Rust hiệu năng cao (rust/) và bộ hồ sơ đặc tả kiến trúc tham chiếu (parity-spec/), cho phép lập trình viên tích hợp đa mô hình LLM (OpenAI, Anthropic, xAI, Local Ollama) ngay trên thiết bị đầu cuối."}, "wisdom_distillation": {"core_ideas": [{"chapter": "ĐỌC TÔI", "timestamp": "Ý 1", "seconds": 0, "content": "Chỉ cần sử dụng các mẫu •"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 2", "seconds": 0, "content": "Kể từ khi bắt đầu sử dụng AI hiện đại vào cuối năm 2022, chúng tôi đã thấy số lượng ứng dụng AI **_phi thường_** để hoàn thành nhiệm vụ. Có hàng nghìn trang web, bot trò chuyện, ứng dụng di động và các giao diện khác để sử dụng tất cả các AI khác nhau."}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 3", "seconds": 0, "content": "Tất cả đều thực sự thú vị và mạnh mẽ, nhưng _không dễ để tích hợp chức năng này vào cuộc sống của chúng ta._"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 4", "seconds": 0, "content": "**Fabric được tạo ra để giải quyết vấn đề này bằng cách tạo và sắp xếp các đơn vị cơ bản của AI—chính các lời nhắc!**"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 5", "seconds": 0, "content": "Fabric sắp xếp các lời nhắc theo nhiệm vụ trong thế giới thực, cho phép mọi người tạo, thu thập và sắp xếp các giải pháp AI quan trọng nhất của họ ở một nơi duy nhất để sử dụng trong các công cụ yêu thích của họ. Và nếu bạn tập trung vào dòng lệnh, bạn có thể sử dụng chính Fabric làm giao diện!"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 6", "seconds": 0, "content": "Để tìm hiểu sâu hơn về Fabric và các bộ phận bên trong của nó, hãy đọc tài liệu trong thư mục tài liệu. có"}], "key_insights": [{"timestamp": "Kiến trúc", "seconds": 0, "content": "Các thành phần chính trong tài liệu: `fabric`, What and why, Updates, Recent Major Features, Intro videos, Navigation, Changelog, Philosophy"}], "actionable_steps": [{"timestamp": "Clone", "seconds": 0, "content": "bản sao git https://github.com/danielmiessler/fabric.git"}], "facts_and_metrics": [{"timestamp": "GitHub Stats", "seconds": 0, "content": "Stars: 44,420 | Ngôn ngữ chính: Go | Chủ đề: ai, augmentation, flourishing, life, work"}], "mentioned_references": [{"name": "Trang chủ / Homepage", "url": "https://danielmiessler.com/p/fabric-origin-story", "type": "external_link"}]}, "timeline": {"chapters": [{"timestamp": "H1", "seconds": 0, "title": "`vải`"}, {"timestamp": "H2", "seconds": 0, "title": "Cái gì và tại sao"}, {"timestamp": "H3", "seconds": 0, "title": "Cập nhật"}, {"timestamp": "H4", "seconds": 0, "title": "Các tính năng chính gần đây"}, {"timestamp": "H5", "seconds": 0, "title": "Video giới thiệu"}, {"timestamp": "H6", "seconds": 0, "title": "Điều hướng"}, {"timestamp": "H7", "seconds": 0, "title": "Nhật ký thay đổi"}, {"timestamp": "H8", "seconds": 0, "title": "Triết học"}, {"timestamp": "H9", "seconds": 0, "title": "Chia vấn đề thành các thành phần"}, {"timestamp": "H10", "seconds": 0, "title": "Quá nhiều lời nhắc"}, {"timestamp": "H11", "seconds": 0, "title": "Cài đặt"}, {"timestamp": "H12", "seconds": 0, "title": "Cài đặt một dòng (Được khuyến nghị)"}], "visual_slides": []}, "transcript_corpus": [{"timestamp": "Đoạn 1", "start_seconds": 0, "text": "Just Use the Patterns •"}, {"timestamp": "Đoạn 2", "start_seconds": 1, "text": "Since the start of modern AI in late 2022 we've seen an **_extraordinary_** number of AI applications for accomplishing tasks. There are thousands of websites, chat-bots, mobile apps, and other interfaces for using all the different AI out there."}, {"timestamp": "Đoạn 3", "start_seconds": 2, "text": "It's all really exciting and powerful, but _it's not easy to integrate this functionality into our lives._"}, {"timestamp": "Đoạn 4", "start_seconds": 3, "text": "**Fabric was created to address this by creating and organizing the fundamental units of AI—the prompts themselves!**"}, {"timestamp": "Đoạn 5", "start_seconds": 4, "text": "Fabric organizes prompts by real-world task, allowing people to create, collect, and organize their most important AI solutions in a single place for use in their favorite tools. And if you're command-line focused, you can use Fabric itself as the interface!"}, {"timestamp": "Đoạn 6", "start_seconds": 5, "text": "For a deep dive into Fabric and its internals, read the documentation in the docs folder. There is"}, {"timestamp": "Đoạn 7", "start_seconds": 6, "text": "also the extremely useful and regularly updated DeepWiki for Fabric."}, {"timestamp": "Đoạn 8", "start_seconds": 7, "text": "We've been doing so many exciting things here at Fabric, I wanted to give a quick summary here to give you a sense of our development velocity!"}, {"timestamp": "Đoạn 9", "start_seconds": 8, "text": "Below are the **new features and capabilities** we've added (newest first):"}, {"timestamp": "Đoạn 10", "start_seconds": 9, "text": "- v1.4.447 (April 16, 2026) — **Claude Opus 4.7**: Updates the Anthropic SDK to v1.37.0 and adds the new Claude Opus 4.7 to the available models, including 1M-token context window support."}, {"timestamp": "Đoạn 11", "start_seconds": 10, "text": "- v1.4.437 (March 16, 2026) — **OpenAI Codex PLugin**: Fabric now supports using OpenAI Codex (with your OpenAI subscription) as a backend!"}, {"timestamp": "Đoạn 12", "start_seconds": 11, "text": "- v1.4.417 (Feb 21, 2026) — **Azure AI Gateway Plugin**: Added Azure AI Gateway plugin supporting multiple backends (AWS Bedrock, Azure OpenAI, Google Vertex AI) through a unified Azure APIM Gateway with shared subscription key authentication."}, {"timestamp": "Đoạn 13", "start_seconds": 12, "text": "- v1.4.416 (Feb 21, 2026) — **Azure Entra ID Authentication**: Added Azure Entra ID authentication plugin with shared Azure utilities, Entra ID/MSAL support, and extracted common Azure logic into a reusable `azurecommon` package."}, {"timestamp": "Đoạn 14", "start_seconds": 13, "text": "- v1.4.380 (Jan 15, 2026) — **Microsoft 365 Copilot Integration**: Added support for corporate Microsoft 365 Copilot, enabling enterprise users to leverage AI grounded in their organization's Microsoft 365 data (emails, documents, meetings."}, {"timestamp": "Đoạn 15", "start_seconds": 14, "text": "- v1.4.378 (Jan 14, 2026) — **Digital Ocean GenAI Support**: Added support for Digital Ocean GenAI, along with a guide for how to use it."}, {"timestamp": "Đoạn 16", "start_seconds": 15, "text": "- v1.4.356 (Dec 22, 2025) — **Complete Internationalization**: Full i18n support for setup prompts across all 10 languages with intelligent environment variable handling—making Fabric truly accessible worldwide while maintaining configuration consistency."}, {"timestamp": "Đoạn 17", "start_seconds": 16, "text": "- v1.4.350 (Dec 18, 2025) — **Interactive API Documentation**: Adds Swagger/OpenAPI UI at `/swagger/index.html` with comprehensive REST API documentation, enhanced developer guides, and improved endpoint discoverability for easier integration."}, {"timestamp": "Đoạn 18", "start_seconds": 17, "text": "- v1.4.338 (Dec 4, 2025) — Add Abacus vendor support for Chat-LLM"}, {"timestamp": "Đoạn 19", "start_seconds": 18, "text": "models (see RouteLLM APIs)."}, {"timestamp": "Đoạn 20", "start_seconds": 19, "text": "- v1.4.337 (Dec 4, 2025) — Add \"Z AI\" vendor support. See the Z AI overview page for more details."}, {"timestamp": "Đoạn 21", "start_seconds": 20, "text": "- v1.4.334 (Nov 26, 2025) — **Claude Opus 4.5**: Updates the Anthropic SDK to the latest and adds the new Claude Opus 4.5 to the available models."}, {"timestamp": "Đoạn 22", "start_seconds": 21, "text": "- v1.4.331 (Nov 23, 2025) — **Support for GitHub Models**: Adds support for using GitHub Models."}, {"timestamp": "Đoạn 23", "start_seconds": 22, "text": "- v1.4.322 (Nov 5, 2025) — **Interactive HTML Concept Maps and Claude Sonnet 4.5**: Adds `create_conceptmap` pattern for visual knowledge representation using Vis.js, introduces WELLNESS category with psychological analysis patterns, and upgrades to Claude Sonnet 4.5"}, {"timestamp": "Đoạn 24", "start_seconds": 23, "text": "- v1.4.317 (Sep 21, 2025) — **Portuguese Language Variants**: Adds BCP 47 locale normalization with support for Brazilian Portuguese (pt-BR) and European Portuguese (pt-PT) with intelligent fallback chains"}, {"timestamp": "Đoạn 25", "start_seconds": 24, "text": "- v1.4.314 (Sep 17, 2025) — **Azure OpenAI Migration**: Migrates to official `openai-go/azure` SDK with improved authentication and default API version support"}, {"timestamp": "Đoạn 26", "start_seconds": 25, "text": "- v1.4.311 (Sep 13, 2025) — **More internationalization support**: Adds de (German), fa (Persian / Farsi), fr (French), it (Italian),"}, {"timestamp": "Đoạn 27", "start_seconds": 26, "text": "- v1.4.309 (Sep 9, 2025) — **Comprehensive internationalization support**: Includes English and Spanish locale files."}, {"timestamp": "Đoạn 28", "start_seconds": 27, "text": "- v1.4.303 (Aug 29, 2025) — **New Binary Releases**: Linux ARM and Windows ARM targets. You can run Fabric on the Raspberry PI and on your Windows Surface!"}, {"timestamp": "Đoạn 29", "start_seconds": 28, "text": "- v1.4.294 (Aug 20, 2025) — **Venice AI Support**: Added the Venice AI provider. Venice is a Privacy-First, Open-Source AI provider. See their \"About Venice\" page for details."}, {"timestamp": "Đoạn 30", "start_seconds": 29, "text": "- v1.4.291 (Aug 18, 2025) — **Speech To Text**: Add OpenAI speech-to-text support with `--transcribe-file`, `--transcribe-model`, and `--split-media-file` flags."}, {"timestamp": "Đoạn 31", "start_seconds": 30, "text": "These features represent our commitment to making Fabric the most powerful and flexible AI augmentation framework available!"}, {"timestamp": "Đoạn 32", "start_seconds": 31, "text": "Keep in mind that many of these were recorded when Fabric was Python-based, so remember to use the current install instructions below."}, {"timestamp": "Đoạn 33", "start_seconds": 32, "text": "- Network Chuck"}, {"timestamp": "Đoạn 34", "start_seconds": 33, "text": "- David Bombal"}, {"timestamp": "Đoạn 35", "start_seconds": 34, "text": "- My Own Intro to the Tool"}, {"timestamp": "Đoạn 36", "start_seconds": 35, "text": "- More Fabric YouTube Videos"}, {"timestamp": "Đoạn 37", "start_seconds": 36, "text": "- Recent Major Features"}, {"timestamp": "Đoạn 38", "start_seconds": 37, "text": "- Breaking problems into components"}, {"timestamp": "Đoạn 39", "start_seconds": 38, "text": "- One-Line Install (Recommended)"}, {"timestamp": "Đoạn 40", "start_seconds": 39, "text": "- Manual Binary Downloads"}], "i18n": {"vi": {"title": "danielmiessler/fabric: Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "one_liner": "Fabric là một framework mã nguồn mở để hỗ trợ con người bằng cách sử dụng AI. Nó cung cấp một hệ thống mô-đun để giải quyết các vấn đề cụ thể bằng cách sử dụng một bộ lời nhắc AI có nguồn lực từ cộng đồng có thể được sử dụng ở bất cứ đâu.", "executive_summary": "Dự án mã nguồn mở ultraworkers/claw-code là bản tái cấu trúc sạch (clean-room implementation) bằng ngôn ngữ Rust cho hệ thống tác nhân lập trình dòng lệnh (CLI Coding Agent) theo kiến trúc đối tác của Claude Code. Hệ thống được thiết kế nhằm giải quyết bài toán hiệu năng khởi động, an toàn bộ nhớ và quản trị phiên làm việc đa tác nhân thông qua công cụ điều phối oh-my-codex (OmX) và quy trình phát triển tự động $ralph. Mã nguồn phân tách rõ ràng giữa lõi thực thi Rust hiệu năng cao (rust/) và bộ hồ sơ đặc tả kiến trúc tham chiếu (parity-spec/), cho phép lập trình viên tích hợp đa mô hình LLM (OpenAI, Anthropic, xAI, Local Ollama) ngay trên thiết bị đầu cuối.", "chapters": [{"timestamp": "H1", "seconds": 0, "title": "`vải`"}, {"timestamp": "H2", "seconds": 0, "title": "Cái gì và tại sao"}, {"timestamp": "H3", "seconds": 0, "title": "Cập nhật"}, {"timestamp": "H4", "seconds": 0, "title": "Các tính năng chính gần đây"}, {"timestamp": "H5", "seconds": 0, "title": "Video giới thiệu"}, {"timestamp": "H6", "seconds": 0, "title": "Điều hướng"}, {"timestamp": "H7", "seconds": 0, "title": "Nhật ký thay đổi"}, {"timestamp": "H8", "seconds": 0, "title": "Triết học"}, {"timestamp": "H9", "seconds": 0, "title": "Chia vấn đề thành các thành phần"}, {"timestamp": "H10", "seconds": 0, "title": "Quá nhiều lời nhắc"}, {"timestamp": "H11", "seconds": 0, "title": "Cài đặt"}, {"timestamp": "H12", "seconds": 0, "title": "Cài đặt một dòng (Được khuyến nghị)"}], "core_ideas": [{"chapter": "ĐỌC TÔI", "timestamp": "Ý 1", "seconds": 0, "content": "Chỉ cần sử dụng các mẫu •"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 2", "seconds": 0, "content": "Kể từ khi bắt đầu sử dụng AI hiện đại vào cuối năm 2022, chúng tôi đã thấy số lượng ứng dụng AI **_phi thường_** để hoàn thành nhiệm vụ. Có hàng nghìn trang web, bot trò chuyện, ứng dụng di động và các giao diện khác để sử dụng tất cả các AI khác nhau."}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 3", "seconds": 0, "content": "Tất cả đều thực sự thú vị và mạnh mẽ, nhưng _không dễ để tích hợp chức năng này vào cuộc sống của chúng ta._"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 4", "seconds": 0, "content": "**Fabric được tạo ra để giải quyết vấn đề này bằng cách tạo và sắp xếp các đơn vị cơ bản của AI—chính các lời nhắc!**"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 5", "seconds": 0, "content": "Fabric sắp xếp các lời nhắc theo nhiệm vụ trong thế giới thực, cho phép mọi người tạo, thu thập và sắp xếp các giải pháp AI quan trọng nhất của họ ở một nơi duy nhất để sử dụng trong các công cụ yêu thích của họ. Và nếu bạn tập trung vào dòng lệnh, bạn có thể sử dụng chính Fabric làm giao diện!"}, {"chapter": "ĐỌC TÔI", "timestamp": "Ý 6", "seconds": 0, "content": "Để tìm hiểu sâu hơn về Fabric và các bộ phận bên trong của nó, hãy đọc tài liệu trong thư mục tài liệu. có"}], "key_insights": [{"timestamp": "Kiến trúc", "seconds": 0, "content": "Các thành phần chính trong tài liệu: `fabric`, What and why, Updates, Recent Major Features, Intro videos, Navigation, Changelog, Philosophy"}], "actionable_steps": [{"timestamp": "Clone", "seconds": 0, "content": "bản sao git https://github.com/danielmiessler/fabric.git"}]}, "en": {"title": "danielmiessler/fabric: Fabric is an open-source framework for augmenting humans using AI. It provides a modular system for solving specific problems using a crowdsourced set of AI prompts that can be used anywhere.", "one_liner": "Fabric is an open-source framework for augmenting humans using AI. It provides a modular system for solving specific problems using a crowdsourced set of AI prompts that can be used anywhere.", "executive_summary": "ultraworkers/claw-code is a high-performance Rust clean-room implementation of the CLI coding agent harness architecture popularized by Claude Code. It addresses startup latency, memory safety, and multi-agent session orchestration using oh-my-codex (OmX) and autonomous $ralph development loops. The repository cleanly separates the native Rust runtime workspace (rust/) from reference parity specifications, enabling developers to run multi-provider LLM coding agents (Anthropic, OpenAI, xAI, Ollama) directly in the terminal.", "chapters": [{"timestamp": "H1", "seconds": 0, "title": "`fabric`"}, {"timestamp": "H2", "seconds": 0, "title": "What and why"}, {"timestamp": "H3", "seconds": 0, "title": "Updates"}, {"timestamp": "H4", "seconds": 0, "title": "Recent Major Features"}, {"timestamp": "H5", "seconds": 0, "title": "Intro videos"}, {"timestamp": "H6", "seconds": 0, "title": "Navigation"}, {"timestamp": "H7", "seconds": 0, "title": "Changelog"}, {"timestamp": "H8", "seconds": 0, "title": "Philosophy"}, {"timestamp": "H9", "seconds": 0, "title": "Breaking problems into components"}, {"timestamp": "H10", "seconds": 0, "title": "Too many prompts"}, {"timestamp": "H11", "seconds": 0, "title": "Installation"}, {"timestamp": "H12", "seconds": 0, "title": "One-Line Install (Recommended)"}], "core_ideas": [{"chapter": "README", "timestamp": "Ý 1", "seconds": 0, "content": "Just Use the Patterns •"}, {"chapter": "README", "timestamp": "Ý 2", "seconds": 0, "content": "Since the start of modern AI in late 2022 we've seen an **_extraordinary_** number of AI applications for accomplishing tasks. There are thousands of websites, chat-bots, mobile apps, and other interfaces for using all the different AI out there."}, {"chapter": "README", "timestamp": "Ý 3", "seconds": 0, "content": "It's all really exciting and powerful, but _it's not easy to integrate this functionality into our lives._"}, {"chapter": "README", "timestamp": "Ý 4", "seconds": 0, "content": "**Fabric was created to address this by creating and organizing the fundamental units of AI—the prompts themselves!**"}, {"chapter": "README", "timestamp": "Ý 5", "seconds": 0, "content": "Fabric organizes prompts by real-world task, allowing people to create, collect, and organize their most important AI solutions in a single place for use in their favorite tools. And if you're command-line focused, you can use Fabric itself as the interface!"}, {"chapter": "README", "timestamp": "Ý 6", "seconds": 0, "content": "For a deep dive into Fabric and its internals, read the documentation in the docs folder. There is"}], "key_insights": [{"timestamp": "Kiến trúc", "seconds": 0, "content": "Các thành phần chính trong tài liệu: `fabric`, What and why, Updates, Recent Major Features, Intro videos, Navigation, Changelog, Philosophy"}], "actionable_steps": [{"timestamp": "Clone", "seconds": 0, "content": "git clone https://github.com/danielmiessler/fabric.git"}]}}, "schema_version": 3}, {"id": "gh_elyned", "schema_version": 3, "resource_type": "github_repo", "metadata": {"url": "https://github.com/cloudflare/security-audit-skill", "title": "[GitHub] cloudflare/security-audit-skill (★ 46,206) — Bộ kỹ năng kiểm toán bảo mật đa giai đoạn cho AI Coding Agent của Cloudflare", "channel": "github.com/cloudflare", "duration": "6 giai đoạn • 11 phân lớp bảo mật", "publish_date": "2026-10-25", "extracted_at": "2026-10-25 23:00:00"}, "chat_context": {"shared_by": "User", "chat_group": "Zalo / R&D", "shared_at": "2026-10-25 23:00:00", "sender_note": "Chia sẻ trực tiếp sang Krypto"}, "taxonomy": {"category": "Công nghệ, Lập trình & AI", "tags": ["cloudflare", "security-audit", "coding-agent", "vulnerability-hunting", "ai-security", "devsecops"], "search_aliases": ["cloudflare security audit skill", "kiem toan bao mat ai", "lo hong bao mat"]}, "summary": {"one_liner": "Bộ kỹ năng (Agent Skill) của Cloudflare biến AI Coding Agent thành kiểm toán viên bảo mật chuyên nghiệp thông qua quy trình 6 giai đoạn độc lập, có sổ cái kiểm soát độ phủ và xác minh chéo chống ảo giác.", "executive_summary": "Dự án cloudflare/security-audit-skill là bộ kỹ năng kiểm toán bảo mật mã nguồn mở do đội ngũ Nghiên cứu Bảo mật AI của Cloudflare phát triển (nền tảng khởi nguồn của hệ thống rà quét lỗ hổng tự động toàn hệ thống tại Cloudflare). Thay vì để một AI đọc mã nguồn một cách cảm tính và sinh báo cáo lỗi giả (false positives), công cụ này điều phối nhiều tác nhân độc lập (isolated sub-agents) đi qua 6 giai đoạn: (1) Trinh sát kiến trúc và ranh giới tin cậy; (2) Săn tìm lỗ hổng theo sổ cái độ phủ; (3) Thẩm định phản biện độc lập; (4) Chuẩn hóa kết quả theo JSON Schema; (5) Xác minh chéo bằng chứng mã nguồn; và (6) Xuất báo cáo trung lập. Hệ thống bao quát 11 nhóm tấn công chuyên sâu (từ an toàn bộ nhớ nhị phân, lỗ hổng giao thức Web/Auth, Prompt Injection trên LLM đến chuỗi cung ứng CI/CD và cô lập dữ liệu đa thuê bao), giúp phát hiện gấp đôi số lỗ hổng thực tế khi chạy lặp nhiều vòng."}, "wisdom_distillation": {"core_ideas": [{"chapter": "1. Tổng quan & Ý nghĩa cốt lõi", "timestamp": "Mục 1", "seconds": 0, "content": "Biến AI Coding Agent thành hệ thống kiểm toán bảo mật có kỷ luật kỹ thuật cao. Đây chính là hạt nhân khởi đầu cho hệ thống phát hiện lỗ hổng diện rộng (Vulnerability Discovery Harness) của Cloudflare, hỗ trợ chạy cộng dồn nhiều vòng (additive runs) trên cùng một kho mã nguồn để lấp đầy các khoảng trống chưa được kiểm tra."}, {"chapter": "2. Quy trình Kiểm toán 6 Giai đoạn (What it does)", "timestamp": "Mục 2", "seconds": 1, "content": "(1) Trinh sát (Reconnaissance): Lập bản đồ kiến trúc, ranh giới tin cậy và bề mặt đầu vào trong architecture.md và coverage-ledger.json; (2) Săn tìm theo độ phủ (Coverage-led hunting): Phân công các tác nhân săn lỗi độc lập theo từng đơn vị sổ cái; (3) Thẩm định ứng viên (Candidate validation): Giao mỗi phát hiện cho một tác nhân phản biện mới tìm cách bác bỏ nó; (4) Xuất cấu trúc chuẩn (findings.json): Phân loại rõ confirmed, needs_validation và rejected; (5) Xác minh độc lập; (6) Xuất báo cáo REPORT.md và FINDINGS-DETAIL.md."}, {"chapter": "3. Hệ thống 11 Phân lớp Săn tìm Lỗ hổng (Attack Classes)", "timestamp": "Mục 3", "seconds": 2, "content": "Bộ kỹ năng cung cấp các mô-đun chuyên sâu cho từng bề mặt tấn công: An toàn bộ nhớ & nhị phân (MEMORY-SAFETY-AND-BINARY), Bảo mật AI & LLM (Prompt Injection, gọi công cụ), Giao thức Web & Xác thực (HTTP framing, Cache, Auth), Bảo mật trình duyệt (DOM/UI redress), Chuỗi cung ứng & CI/CD, Hạ tầng đám mây (IAM, IaC, Container), Giao thức RPC/Messaging, Cạn kiệt tài nguyên (DoS/Quota), Cô lập dữ liệu đa thuê bao và IPC trên Desktop/Mobile."}, {"chapter": "4. Năm Nguyên lý Thiết kế Chống Ảo giác (Design Principles)", "timestamp": "Mục 4", "seconds": 3, "content": "(1) Chỉ xác nhận lỗi (confirmed) khi chứng minh được sự phá vỡ ranh giới bảo mật kèm dấu vết mã nguồn đầy đủ; (2) Thẩm định đối kháng (Adversarial validation): Tác nhân kiểm tra không bao giờ là tác nhân phát hiện ra lỗi đó; (3) Mức độ nghiêm trọng phải dựa trên Tác động thực tế x Khả năng xảy ra; (4) Thiếu lớp phòng thủ phụ (Defense-in-depth) khi lớp chính đã chặn được tấn công chỉ được ghi nhận là lưu ý gia cố (hardening note), không tính là lỗ hổng; (5) Chạy nhiều vòng giúp tăng gấp đôi số lỗ hổng phát hiện được."}, {"chapter": "5. Cài đặt, Kích hoạt & Yêu cầu Sandbox An toàn", "timestamp": "Mục 5", "seconds": 4, "content": "Cài đặt qua lệnh 'npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global' và kích hoạt bằng câu lệnh 'security audit this codebase'. Khi cần biên dịch hoặc chạy thử mã nguồn mục tiêu, hệ thống yêu cầu môi trường Sandbox cấp hệ điều hành (ngắt mạng ngoài, giới hạn tài nguyên, chỉ ghi vào thư mục tạm) để đảm bảo an toàn tuyệt đối."}], "key_insights": [{"timestamp": "Nguyên lý 1", "seconds": 0, "content": "Thẩm định đối kháng (Adversarial Validation): Bí quyết giúp Cloudflare loại bỏ báo cáo giả của AI là bắt buộc một tác nhân độc lập thứ hai đóng vai người phản biện (verifier) cố gắng chứng minh phát hiện của tác nhân thứ nhất là sai."}, {"timestamp": "Nguyên lý 2", "seconds": 1, "content": "Kiểm soát độ phủ bằng Sổ cái tất định (validate-coverage-ledger.cjs): Thay vì quét ngẫu nhiên, mọi thành phần mã nguồn đều được ghi vào sổ cái độ phủ để các lần chạy sau tiếp tục đào sâu vào các vùng chưa được kiểm tra."}, {"timestamp": "Nguyên lý 3", "seconds": 2, "content": "Thực nghiệm của Cloudflare cho thấy 1 lần chạy đơn lẻ chỉ tìm thấy khoảng 50% tổng số lỗ hổng; cơ chế chạy tích lũy nhiều vòng (Multiple additive runs) là chìa khóa để đạt độ phủ bảo mật toàn diện."}], "actionable_steps": [{"timestamp": "Bước 1", "seconds": 0, "content": "Cài đặt bộ kỹ năng vào Coding Agent bằng lệnh: npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global"}, {"timestamp": "Bước 2", "seconds": 1, "content": "Mở Coding Agent tại thư mục dự án cần kiểm tra và yêu cầu: 'do a security review, output to ~/audits/my-project' để chạy toàn trình 6 giai đoạn."}, {"timestamp": "Bước 3", "seconds": 2, "content": "Rà soát tệp báo cáo đầu ra REPORT.md, FINDINGS-DETAIL.md và chạy lặp lại định kỳ sau mỗi lần cập nhật mã nguồn để tận dụng sổ cái độ phủ tích lũy (coverage-ledger.json)."}], "facts_and_metrics": [], "mentioned_references": [{"name": "cloudflare/security-audit-skill", "url": "https://github.com/cloudflare/security-audit-skill", "type": "github_repo"}]}, "timeline": {"chapters": [{"timestamp": "Mục 1", "seconds": 0, "title": "Tổng quan & Nguồn gốc từ Hệ thống Rà quét Lỗ hổng của Cloudflare"}, {"timestamp": "Mục 2", "seconds": 1, "title": "Quy trình Kiểm toán Bảo mật 6 Giai đoạn (Six-Phase Audit Pipeline)"}, {"timestamp": "Mục 3", "seconds": 2, "title": "11 Phân lớp Tấn công & Mô-đun Săn tìm Lỗ hổng Chuyên biệt"}, {"timestamp": "Mục 4", "seconds": 3, "title": "5 Nguyên lý Thiết kế Cốt lõi (Thẩm định Đối kháng & Chống Báo động giả)"}, {"timestamp": "Mục 5", "seconds": 4, "title": "Cài đặt, Vận hành & Yêu cầu Môi trường Sandbox Cô lập"}], "visual_slides": []}, "transcript_corpus": [{"timestamp": "Mục 1", "start_seconds": 0, "text": "1. Tổng quan & Ý nghĩa cốt lõi: Biến AI Coding Agent thành hệ thống kiểm toán bảo mật có kỷ luật kỹ thuật cao. Đây chính là hạt nhân khởi đầu cho hệ thống phát hiện lỗ hổng diện rộng (Vulnerability Discovery Harness) của Cloudflare, hỗ trợ chạy cộng dồn nhiều vòng (additive runs) trên cùng một kho mã nguồn để lấp đầy các khoảng trống chưa được kiểm tra."}, {"timestamp": "Mục 2", "start_seconds": 1, "text": "2. Quy trình Kiểm toán 6 Giai đoạn (What it does): (1) Trinh sát (Reconnaissance): Lập bản đồ kiến trúc, ranh giới tin cậy và bề mặt đầu vào trong architecture.md và coverage-ledger.json; (2) Săn tìm theo độ phủ (Coverage-led hunting): Phân công các tác nhân săn lỗi độc lập theo từng đơn vị sổ cái; (3) Thẩm định ứng viên (Candidate validation): Giao mỗi phát hiện cho một tác nhân phản biện mới tìm cách bác bỏ nó; (4) Xuất cấu trúc chuẩn (findings.json): Phân loại rõ confirmed, needs_validation và rejected; (5) Xác minh độc lập; (6) Xuất báo cáo REPORT.md và FINDINGS-DETAIL.md."}, {"timestamp": "Mục 3", "start_seconds": 2, "text": "3. Hệ thống 11 Phân lớp Săn tìm Lỗ hổng (Attack Classes): Bộ kỹ năng cung cấp các mô-đun chuyên sâu cho từng bề mặt tấn công: An toàn bộ nhớ & nhị phân (MEMORY-SAFETY-AND-BINARY), Bảo mật AI & LLM (Prompt Injection, gọi công cụ), Giao thức Web & Xác thực (HTTP framing, Cache, Auth), Bảo mật trình duyệt (DOM/UI redress), Chuỗi cung ứng & CI/CD, Hạ tầng đám mây (IAM, IaC, Container), Giao thức RPC/Messaging, Cạn kiệt tài nguyên (DoS/Quota), Cô lập dữ liệu đa thuê bao và IPC trên Desktop/Mobile."}, {"timestamp": "Mục 4", "start_seconds": 3, "text": "4. Năm Nguyên lý Thiết kế Chống Ảo giác (Design Principles): (1) Chỉ xác nhận lỗi (confirmed) khi chứng minh được sự phá vỡ ranh giới bảo mật kèm dấu vết mã nguồn đầy đủ; (2) Thẩm định đối kháng (Adversarial validation): Tác nhân kiểm tra không bao giờ là tác nhân phát hiện ra lỗi đó; (3) Mức độ nghiêm trọng phải dựa trên Tác động thực tế x Khả năng xảy ra; (4) Thiếu lớp phòng thủ phụ (Defense-in-depth) khi lớp chính đã chặn được tấn công chỉ được ghi nhận là lưu ý gia cố (hardening note), không tính là lỗ hổng; (5) Chạy nhiều vòng giúp tăng gấp đôi số lỗ hổng phát hiện được."}, {"timestamp": "Mục 5", "start_seconds": 4, "text": "5. Cài đặt, Kích hoạt & Yêu cầu Sandbox An toàn: Cài đặt qua lệnh 'npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global' và kích hoạt bằng câu lệnh 'security audit this codebase'. Khi cần biên dịch hoặc chạy thử mã nguồn mục tiêu, hệ thống yêu cầu môi trường Sandbox cấp hệ điều hành (ngắt mạng ngoài, giới hạn tài nguyên, chỉ ghi vào thư mục tạm) để đảm bảo an toàn tuyệt đối."}], "i18n": {"vi": {"title": "[GitHub] cloudflare/security-audit-skill (★ 46,206) — Bộ kỹ năng kiểm toán bảo mật đa giai đoạn cho AI Coding Agent của Cloudflare", "one_liner": "Bộ kỹ năng (Agent Skill) của Cloudflare biến AI Coding Agent thành kiểm toán viên bảo mật chuyên nghiệp thông qua quy trình 6 giai đoạn độc lập, có sổ cái kiểm soát độ phủ và xác minh chéo chống ảo giác.", "executive_summary": "Dự án cloudflare/security-audit-skill là bộ kỹ năng kiểm toán bảo mật mã nguồn mở do đội ngũ Nghiên cứu Bảo mật AI của Cloudflare phát triển (nền tảng khởi nguồn của hệ thống rà quét lỗ hổng tự động toàn hệ thống tại Cloudflare). Thay vì để một AI đọc mã nguồn một cách cảm tính và sinh báo cáo lỗi giả (false positives), công cụ này điều phối nhiều tác nhân độc lập (isolated sub-agents) đi qua 6 giai đoạn: (1) Trinh sát kiến trúc và ranh giới tin cậy; (2) Săn tìm lỗ hổng theo sổ cái độ phủ; (3) Thẩm định phản biện độc lập; (4) Chuẩn hóa kết quả theo JSON Schema; (5) Xác minh chéo bằng chứng mã nguồn; và (6) Xuất báo cáo trung lập. Hệ thống bao quát 11 nhóm tấn công chuyên sâu (từ an toàn bộ nhớ nhị phân, lỗ hổng giao thức Web/Auth, Prompt Injection trên LLM đến chuỗi cung ứng CI/CD và cô lập dữ liệu đa thuê bao), giúp phát hiện gấp đôi số lỗ hổng thực tế khi chạy lặp nhiều vòng.", "chapters": [{"timestamp": "Mục 1", "seconds": 0, "title": "Tổng quan & Nguồn gốc từ Hệ thống Rà quét Lỗ hổng của Cloudflare"}, {"timestamp": "Mục 2", "seconds": 1, "title": "Quy trình Kiểm toán Bảo mật 6 Giai đoạn (Six-Phase Audit Pipeline)"}, {"timestamp": "Mục 3", "seconds": 2, "title": "11 Phân lớp Tấn công & Mô-đun Săn tìm Lỗ hổng Chuyên biệt"}, {"timestamp": "Mục 4", "seconds": 3, "title": "5 Nguyên lý Thiết kế Cốt lõi (Thẩm định Đối kháng & Chống Báo động giả)"}, {"timestamp": "Mục 5", "seconds": 4, "title": "Cài đặt, Vận hành & Yêu cầu Môi trường Sandbox Cô lập"}], "core_ideas": [{"chapter": "1. Tổng quan & Ý nghĩa cốt lõi", "timestamp": "Mục 1", "seconds": 0, "content": "Biến AI Coding Agent thành hệ thống kiểm toán bảo mật có kỷ luật kỹ thuật cao. Đây chính là hạt nhân khởi đầu cho hệ thống phát hiện lỗ hổng diện rộng (Vulnerability Discovery Harness) của Cloudflare, hỗ trợ chạy cộng dồn nhiều vòng (additive runs) trên cùng một kho mã nguồn để lấp đầy các khoảng trống chưa được kiểm tra."}, {"chapter": "2. Quy trình Kiểm toán 6 Giai đoạn (What it does)", "timestamp": "Mục 2", "seconds": 1, "content": "(1) Trinh sát (Reconnaissance): Lập bản đồ kiến trúc, ranh giới tin cậy và bề mặt đầu vào trong architecture.md và coverage-ledger.json; (2) Săn tìm theo độ phủ (Coverage-led hunting): Phân công các tác nhân săn lỗi độc lập theo từng đơn vị sổ cái; (3) Thẩm định ứng viên (Candidate validation): Giao mỗi phát hiện cho một tác nhân phản biện mới tìm cách bác bỏ nó; (4) Xuất cấu trúc chuẩn (findings.json): Phân loại rõ confirmed, needs_validation và rejected; (5) Xác minh độc lập; (6) Xuất báo cáo REPORT.md và FINDINGS-DETAIL.md."}, {"chapter": "3. Hệ thống 11 Phân lớp Săn tìm Lỗ hổng (Attack Classes)", "timestamp": "Mục 3", "seconds": 2, "content": "Bộ kỹ năng cung cấp các mô-đun chuyên sâu cho từng bề mặt tấn công: An toàn bộ nhớ & nhị phân (MEMORY-SAFETY-AND-BINARY), Bảo mật AI & LLM (Prompt Injection, gọi công cụ), Giao thức Web & Xác thực (HTTP framing, Cache, Auth), Bảo mật trình duyệt (DOM/UI redress), Chuỗi cung ứng & CI/CD, Hạ tầng đám mây (IAM, IaC, Container), Giao thức RPC/Messaging, Cạn kiệt tài nguyên (DoS/Quota), Cô lập dữ liệu đa thuê bao và IPC trên Desktop/Mobile."}, {"chapter": "4. Năm Nguyên lý Thiết kế Chống Ảo giác (Design Principles)", "timestamp": "Mục 4", "seconds": 3, "content": "(1) Chỉ xác nhận lỗi (confirmed) khi chứng minh được sự phá vỡ ranh giới bảo mật kèm dấu vết mã nguồn đầy đủ; (2) Thẩm định đối kháng (Adversarial validation): Tác nhân kiểm tra không bao giờ là tác nhân phát hiện ra lỗi đó; (3) Mức độ nghiêm trọng phải dựa trên Tác động thực tế x Khả năng xảy ra; (4) Thiếu lớp phòng thủ phụ (Defense-in-depth) khi lớp chính đã chặn được tấn công chỉ được ghi nhận là lưu ý gia cố (hardening note), không tính là lỗ hổng; (5) Chạy nhiều vòng giúp tăng gấp đôi số lỗ hổng phát hiện được."}, {"chapter": "5. Cài đặt, Kích hoạt & Yêu cầu Sandbox An toàn", "timestamp": "Mục 5", "seconds": 4, "content": "Cài đặt qua lệnh 'npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global' và kích hoạt bằng câu lệnh 'security audit this codebase'. Khi cần biên dịch hoặc chạy thử mã nguồn mục tiêu, hệ thống yêu cầu môi trường Sandbox cấp hệ điều hành (ngắt mạng ngoài, giới hạn tài nguyên, chỉ ghi vào thư mục tạm) để đảm bảo an toàn tuyệt đối."}], "key_insights": [{"timestamp": "Nguyên lý 1", "seconds": 0, "content": "Thẩm định đối kháng (Adversarial Validation): Bí quyết giúp Cloudflare loại bỏ báo cáo giả của AI là bắt buộc một tác nhân độc lập thứ hai đóng vai người phản biện (verifier) cố gắng chứng minh phát hiện của tác nhân thứ nhất là sai."}, {"timestamp": "Nguyên lý 2", "seconds": 1, "content": "Kiểm soát độ phủ bằng Sổ cái tất định (validate-coverage-ledger.cjs): Thay vì quét ngẫu nhiên, mọi thành phần mã nguồn đều được ghi vào sổ cái độ phủ để các lần chạy sau tiếp tục đào sâu vào các vùng chưa được kiểm tra."}, {"timestamp": "Nguyên lý 3", "seconds": 2, "content": "Thực nghiệm của Cloudflare cho thấy 1 lần chạy đơn lẻ chỉ tìm thấy khoảng 50% tổng số lỗ hổng; cơ chế chạy tích lũy nhiều vòng (Multiple additive runs) là chìa khóa để đạt độ phủ bảo mật toàn diện."}], "actionable_steps": [{"timestamp": "Bước 1", "seconds": 0, "content": "Cài đặt bộ kỹ năng vào Coding Agent bằng lệnh: npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global"}, {"timestamp": "Bước 2", "seconds": 1, "content": "Mở Coding Agent tại thư mục dự án cần kiểm tra và yêu cầu: 'do a security review, output to ~/audits/my-project' để chạy toàn trình 6 giai đoạn."}, {"timestamp": "Bước 3", "seconds": 2, "content": "Rà soát tệp báo cáo đầu ra REPORT.md, FINDINGS-DETAIL.md và chạy lặp lại định kỳ sau mỗi lần cập nhật mã nguồn để tận dụng sổ cái độ phủ tích lũy (coverage-ledger.json)."}]}, "en": {"title": "[GitHub] cloudflare/security-audit-skill (★ 46,206) — Multi-phase Security Audit Skill for Coding Agents by Cloudflare", "one_liner": "Cloudflare's official coding-agent skill that orchestrates isolated sub-agents through a 6-phase security audit with deterministic coverage ledgers and adversarial verification.", "executive_summary": "cloudflare/security-audit-skill is the open-source coding-agent skill that seeded Cloudflare's fleet-wide vulnerability discovery harness. Instead of relying on single-pass LLM prompting that suffers from high false-positive rates, it orchestrates isolated sub-agents through six rigorous phases: (1) Reconnaissance of architecture and trust boundaries; (2) Coverage-led hunting tracked via coverage-ledger.json; (3) Adversarial candidate validation; (4) Schema-validated structured output (findings.json); (5) Independent record verification; and (6) Target-neutral reporting. It covers 11 specialized attack classes (memory safety, AI/LLM prompt injection, web/auth protocols, client-side DOM, supply chain, cloud/IAM, RPC/IPC, resource exhaustion, and tenant isolation) and supports additive multi-run auditing.", "chapters": [{"timestamp": "Section 1", "seconds": 0, "title": "Overview & Origin in Cloudflare's Vulnerability Discovery Harness"}, {"timestamp": "Section 2", "seconds": 1, "title": "Six-Phase Structured Security Audit Pipeline"}, {"timestamp": "Section 3", "seconds": 2, "title": "11 Specialized Attack-Class Hunting Modules"}, {"timestamp": "Section 4", "seconds": 3, "title": "5 Core Design Principles (Adversarial Validation & Impact Scoring)"}, {"timestamp": "Section 5", "seconds": 4, "title": "Installation, Usage & OS-Enforced Sandbox Requirements"}], "core_ideas": [{"chapter": "1. Overview & Purpose", "timestamp": "Section 1", "seconds": 0, "content": "Turns a tool-capable coding agent into a disciplined security auditor. Evolved from the foundation of Cloudflare's internal vulnerability discovery harness, supporting additive runs that build upon prior coverage ledgers and findings."}, {"chapter": "2. Six-Phase Audit Workflow (What it does)", "timestamp": "Section 2", "seconds": 1, "content": "(1) Reconnaissance: Maps trust boundaries and input surfaces in architecture.md and coverage-ledger.json; (2) Coverage-led hunting: Assigns isolated hunters to ledger units; (3) Candidate validation: Fresh verifiers attempt to disprove every candidate finding; (4) Structured output: Writes confirmed, needs_validation, and rejected verdicts validated by validate-findings.cjs; (5) Independent verification; (6) Generates REPORT.md and FINDINGS-DETAIL.md."}, {"chapter": "3. Eleven Specialized Attack Classes", "timestamp": "Section 3", "seconds": 2, "content": "Includes dedicated hunting prompts for Memory Safety & Binary, AI & LLM (prompt injection & tool handling), Web Protocol & Auth, Client-Side DOM/IPC, Supply Chain & CI/CD, Cloud & Deployment (IAM/IaC/Containers), Protocols/RPC/Messaging, Resource Exhaustion, Data Isolation & Tenant Lifecycle, and Desktop/Mobile Local IPC."}, {"chapter": "4. Core Design Principles", "timestamp": "Section 4", "seconds": 3, "content": "(1) Only confirm established boundary failures with full source traces; (2) Adversarial validation: the verifying agent is never the discovering agent; (3) Severity requires real impact x likelihood; (4) Defense-in-depth gaps where Layer A already blocks the attack are recorded as hardening notes, not vulnerabilities; (5) Repeated runs double total vulnerability discovery coverage."}, {"chapter": "5. Installation, Usage & Sandboxing", "timestamp": "Section 5", "seconds": 4, "content": "Installed via 'npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global' and triggered by asking the agent to 'security audit this codebase'. Target code execution requires an OS-enforced sandbox with disabled external networking and strict resource limits."}], "key_insights": [{"timestamp": "Principle 1", "seconds": 0, "content": "Adversarial Validation: Separating the hunter agent from a dedicated disproving verifier agent drastically eliminates hallucinated vulnerability claims."}, {"timestamp": "Principle 2", "seconds": 1, "content": "Deterministic Coverage Ledgers: Zero-dependency Node.js validators (validate-coverage-ledger.cjs and validate-findings.cjs) enforce strict schema compliance across all 6 phases."}, {"timestamp": "Principle 3", "seconds": 2, "content": "Empirical Multi-Run Gain: A single audit pass finds roughly half of total vulnerabilities; additive multi-run execution using prior ledgers uncovers the remaining deep bugs."}], "actionable_steps": [{"timestamp": "Step 1", "seconds": 0, "content": "Install globally via Skills CLI: npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global"}, {"timestamp": "Step 2", "seconds": 1, "content": "Launch your coding agent in the target repo and prompt: 'do a security review, output to ~/audits/my-project'."}, {"timestamp": "Step 3", "seconds": 2, "content": "Review REPORT.md, FINDINGS-DETAIL.md, and NEEDS-VALIDATION.md, then run additional passes to expand coverage-ledger.json."}]}}}];
 
   global.ChatVaultEngine = {
     init: autoRestoreIfEmpty,
@@ -1129,6 +1495,21 @@ window.__CHAT_VAULT_INITIAL_SEED = [{"id": "gh_859ebb1605", "resource_type": "gi
       await putItemToIDB(record);
       await syncBackupToNativeStorage();
       return record;
+    },
+    reExtractRecord: async function (recordId) {
+      const all = await getAllItemsFromIDB();
+      const target = all.find(x => x.id === recordId);
+      if (!target || !target.metadata || !target.metadata.url) return null;
+      await deleteItemFromIDB(recordId);
+      const fresh = await ingestAnyInput(target.metadata.url, {
+        senderNote: (target.chat_context && target.chat_context.sender_note) || '',
+        sharedBy: (target.chat_context && target.chat_context.shared_by) || 'User',
+        chatGroup: (target.chat_context && target.chat_context.chat_group) || 'Zalo / R&D'
+      });
+      await ensureRecordBilingual(fresh);
+      await putItemToIDB(fresh);
+      await syncBackupToNativeStorage();
+      return fresh;
     },
     ensureRecordBilingual,
     getLocalizedRecord,

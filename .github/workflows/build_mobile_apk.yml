@@ -66,17 +66,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.7.8
-          name: "Krypto v2.7.8 - Kho Tri Thức Song Ngữ (Mặc Định Tiếng Việt) & Tự Động Xử Lý Link Chia Sẻ"
+          tag_name: v2.7.9
+          name: "Krypto v2.7.9 - Tổng Hợp Tri Thức Mạch Lạc Chuẩn v3 (YouTube Chapter Synthesis & GitHub README AST)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.7.8 (PQC ML-KEM-768 + Chat Knowledge Vault v1.2)
-            - **Hỗ Trợ Song Ngữ (`🇻🇳 Tiếng Việt` Mặc Định | Chuyển Đổi `🇬🇧 English`)**:
-              + Tự động dịch và chuẩn hóa toàn bộ Tiêu đề, Tóm tắt 1 dòng, Tổng quan điều hành, Mục lục chương, Ý tưởng cốt lõi, Đúc kết sâu và Khuyến nghị hành động sang **Tiếng Việt mặc định** (`i18n.vi`).
-              + Hỗ trợ nút chuyển đổi ngôn ngữ 1 chạm (`🇻🇳 Tiếng Việt` | `🇬🇧 English`) ngay trên thanh công cụ và trong màn hình chi tiết bản ghi.
-              + Tự động nâng cấp các bản ghi tiếng Anh hiện có trong bộ nhớ thiết bị sang định dạng song ngữ Việt - Anh.
-            - **Tự Động Bóc Tách Ngay Khi Chia Sẻ Link Sang Krypto (`Share -> Krypto`)**:
-              + Bắt sự kiện `Intent.ACTION_SEND` đồng bộ ngay từ tầng Native Kotlin -> Dart MethodChannel -> JavaScript Queue, tự động chuyển sang Tab `🧠 Tri thức`, điền link, chạy bóc tách + dịch thuật Tiếng Việt và mở ngay trang Chi tiết bản ghi.
-            - **Kế thừa toàn diện v2.7.7**: Mật mã Hậu lượng tử `ML-KEM-768` (FIPS 203) + `AES-256-GCM` + `PQC Master Key Escrow`, Sao lưu 3 lớp (`Triple-Persistence`), Bảng Responsive chuẩn thẻ đơn (Rule 14).
+            ## Ứng dụng Di Động Krypto v2.7.9 (PQC ML-KEM-768 + Chat Knowledge Vault v3.0)
+            - **Tổng Hợp Nội Dung Mạch Lạc & Có Cấu Trúc (`ChatVaultEngine v3.0`)**:
+              + **GitHub Repository (`extractGitHubRepoCard`)**: Gọi trực tiếp GitHub REST API kết hợp tải nguyên bản `README.md` (Markdown), phân tích cấu trúc từng đề mục (`# / ## / ###`), bảng biểu và nguyên lý thiết kế để tổng hợp **Thông điệp trọng tâm**, **Bức tranh tổng thể** và **Nội dung chính theo từng Mục** — loại bỏ hoàn toàn lỗi quét nhầm Menu giao diện và React JSON của trang GitHub.
+              + **YouTube Video (`extractYouTubeIdeaCard`)**: Tái tạo câu văn hoàn chỉnh từ phụ đề (không cắt ngang câu 30 giây), khử từ đệm hội thoại (`filler words`) và lọc bỏ link quảng cáo (`sponsor links`), tổng hợp mạch lạc **Nội dung cốt lõi theo từng Chương mục** và **Tổng quan toàn video**.
+              + **Tự động nâng cấp dữ liệu cũ (`Schema v3 Auto-Upgrade`)**: Tự động làm sạch và bóc tách lại các bản ghi rời rạc từ phiên bản cũ trong bộ nhớ thiết bị ngay khi mở ứng dụng, đồng thời bổ sung nút **`🔄 Tóm tắt lại`** trong trang Chi tiết.
+            - **Song Ngữ (`🇻🇳 Tiếng Việt` Mặc Định | Chuyển Đổi `🇬🇧 English`) & Tự Động Xử Lý Khi Chia Sẻ Link (`Share -> Krypto`)**.
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk
