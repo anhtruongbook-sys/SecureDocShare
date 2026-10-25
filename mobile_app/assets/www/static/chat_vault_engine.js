@@ -841,6 +841,218 @@
     };
   }
 
+
+  /**
+   * 4C. BỘ PHÁT HIỆN TRÙNG LẶP 3 TẦNG (CANONICAL URL + JACCARD/COSINE SEMANTIC SIMILARITY >= 72%)
+   */
+  const TRACKING_PARAMS = new Set([
+    'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+    'fbclid', 'gclid', 'si', 'feature', 'ref', 's', 'spm', 'igshid', '_ga'
+  ]);
+
+  function normalizeCanonicalUrl(rawUrl) {
+    const trimmed = String(rawUrl || '').trim();
+    if (!trimmed) return '';
+    const ytMatch = trimmed.match(YOUTUBE_REGEX);
+    if (ytMatch) {
+      return `https://www.youtube.com/watch?v=${ytMatch[1]}`;
+    }
+    const ghMatch = trimmed.match(GITHUB_REGEX);
+    if (ghMatch) {
+      const owner = ghMatch[1].toLowerCase();
+      const repo = ghMatch[2].replace(/\.git$/i, '').toLowerCase();
+      return `https://github.com/${owner}/${repo}`;
+    }
+    try {
+      const u = new URL(trimmed);
+      u.hostname = u.hostname.replace(/^www\./i, '').toLowerCase();
+      for (const k of Array.from(u.searchParams.keys())) {
+        if (TRACKING_PARAMS.has(k.toLowerCase())) {
+          u.searchParams.delete(k);
+        }
+      }
+      let out = u.toString();
+      if (out.endsWith('/') && u.pathname !== '/') {
+        out = out.slice(0, -1);
+      }
+      return out;
+    } catch (_) {
+      return trimmed;
+    }
+  }
+
+  function extractSemanticTokens(recordOrText) {
+    let raw = '';
+    if (typeof recordOrText === 'string') {
+      raw = recordOrText;
+    } else if (recordOrText && typeof recordOrText === 'object') {
+      const m = recordOrText.metadata || {};
+      const s = recordOrText.summary || {};
+      const w = recordOrText.wisdom_distillation || {};
+      const ideas = (w.core_ideas || []).map(c => c.content || '').join(' ');
+      const enTitle = (recordOrText.i18n && recordOrText.i18n.en && recordOrText.i18n.en.title) || '';
+      const enExec = (recordOrText.i18n && recordOrText.i18n.en && recordOrText.i18n.en.executive_summary) || '';
+      raw = `${m.title || ''} ${s.one_liner || ''} ${s.executive_summary || ''} ${ideas} ${enTitle} ${enExec}`;
+    }
+    const norm = removeVietnameseAccents(raw).toLowerCase();
+    const words = (norm.match(/[a-z0-9]{3,}/g) || []).filter(w => !STOPWORDS.has(w));
+    return words;
+  }
+
+  function computeContentSimilarity(recA, recB) {
+    const tokensA = extractSemanticTokens(recA);
+    const tokensB = extractSemanticTokens(recB);
+    if (tokensA.length < 4 || tokensB.length < 4) return 0;
+
+    // 1. Cosine Similarity trên Vector tần suất từ khóa (TF Cosine)
+    const freqA = new Map();
+    const freqB = new Map();
+    for (const w of tokensA) freqA.set(w, (freqA.get(w) || 0) + 1);
+    for (const w of tokensB) freqB.set(w, (freqB.get(w) || 0) + 1);
+
+    let dot = 0;
+    let magA = 0;
+    let magB = 0;
+    for (const [w, cA] of freqA.entries()) {
+      magA += cA * cA;
+      if (freqB.has(w)) {
+        dot += cA * freqB.get(w);
+      }
+    }
+    for (const cB of freqB.values()) {
+      magB += cB * cB;
+    }
+    const cosine = (magA > 0 && magB > 0) ? (dot / (Math.sqrt(magA) * Math.sqrt(magB))) : 0;
+
+    // 2. Bigram Shingle Jaccard (bắt cấu trúc cụm từ 2 từ liên tiếp)
+    const bigramsA = new Set();
+    const bigramsB = new Set();
+    for (let i = 0; i < Math.min(tokensA.length - 1, 250); i++) {
+      bigramsA.add(`${tokensA[i]}_${tokensA[i + 1]}`);
+    }
+    for (let i = 0; i < Math.min(tokensB.length - 1, 250); i++) {
+      bigramsB.add(`${tokensB[i]}_${tokensB[i + 1]}`);
+    }
+    let inter = 0;
+    for (const bg of bigramsA) {
+      if (bigramsB.has(bg)) inter++;
+    }
+    const union = bigramsA.size + bigramsB.size - inter;
+    const bigramJaccard = union > 0 ? (inter / union) : 0;
+
+    return Math.min(1.0, cosine * 0.72 + bigramJaccard * 0.28);
+  }
+
+  async function findDuplicateInVault(rawInput, candidateRecord = null) {
+    const allItems = await getAllItemsFromIDB();
+    if (!allItems.length) return null;
+
+    const cleaned = String(rawInput || '').trim();
+    const urlMatch = cleaned.match(URL_REGEX);
+
+    // Tầng 1: Kiểm tra trùng khớp tuyệt đối theo Canonical URL / Video ID / Repo
+    if (urlMatch) {
+      const canonInput = normalizeCanonicalUrl(urlMatch[1]);
+      const ytMatch = canonInput.match(YOUTUBE_REGEX);
+      const targetYtId = ytMatch ? `yt_${ytMatch[1]}` : null;
+
+      for (const item of allItems) {
+        if (targetYtId && item.id === targetYtId) {
+          return { matchedItem: item, similarity: 1.0, duplicateType: 'exact_url' };
+        }
+        const itemUrl = (item.metadata && item.metadata.url) ? normalizeCanonicalUrl(item.metadata.url) : '';
+        if (itemUrl && canonInput && itemUrl.toLowerCase() === canonInput.toLowerCase()) {
+          return { matchedItem: item, similarity: 1.0, duplicateType: 'exact_url' };
+        }
+      }
+    } else if (!candidateRecord) {
+      // Nếu là ghi chú văn bản thuần túy: kiểm tra mã băm hoặc độ tương đồng trực tiếp với các ghi chú đã có
+      const noteId = `note_${simpleHash(cleaned)}`;
+      for (const item of allItems) {
+        if (item.id === noteId) {
+          return { matchedItem: item, similarity: 1.0, duplicateType: 'exact_text' };
+        }
+      }
+    }
+
+    // Tầng 2: Kiểm tra độ tương đồng ngữ nghĩa (Semantic Similarity >= 0.72)
+    const probe = candidateRecord || cleaned;
+    let bestMatch = null;
+    let bestSim = 0;
+    for (const item of allItems) {
+      if (candidateRecord && item.id === candidateRecord.id) {
+        return { matchedItem: item, similarity: 1.0, duplicateType: 'exact_id' };
+      }
+      const sim = computeContentSimilarity(probe, item);
+      if (sim > bestSim) {
+        bestSim = sim;
+        bestMatch = item;
+      }
+    }
+
+    if (bestMatch && bestSim >= 0.72) {
+      return { matchedItem: bestMatch, similarity: bestSim, duplicateType: 'semantic_content' };
+    }
+    return null;
+  }
+
+  async function scanAndMergeVaultDuplicates() {
+    const allItems = await getAllItemsFromIDB();
+    if (allItems.length < 2) {
+      return { mergedCount: 0, remainingCount: allItems.length, details: [] };
+    }
+
+    const removedIds = new Set();
+    const details = [];
+
+    for (let i = 0; i < allItems.length; i++) {
+      const primary = allItems[i];
+      if (removedIds.has(primary.id)) continue;
+      const canonA = (primary.metadata && primary.metadata.url) ? normalizeCanonicalUrl(primary.metadata.url) : '';
+
+      for (let j = i + 1; j < allItems.length; j++) {
+        const secondary = allItems[j];
+        if (removedIds.has(secondary.id)) continue;
+        const canonB = (secondary.metadata && secondary.metadata.url) ? normalizeCanonicalUrl(secondary.metadata.url) : '';
+
+        const isSameUrl = canonA && canonB && canonA !== 'chat://local-note' && canonA.toLowerCase() === canonB.toLowerCase();
+        const sim = isSameUrl ? 1.0 : computeContentSimilarity(primary, secondary);
+
+        if (isSameUrl || sim >= 0.75) {
+          // Gộp tags & ghi chú từ bản trùng sang bản chính
+          primary.taxonomy = primary.taxonomy || {};
+          const mergedTags = Array.from(new Set([...(primary.taxonomy.tags || []), ...((secondary.taxonomy && secondary.taxonomy.tags) || [])])).slice(0, 12);
+          primary.taxonomy.tags = mergedTags;
+
+          const noteA = (primary.chat_context && primary.chat_context.sender_note) || '';
+          const noteB = (secondary.chat_context && secondary.chat_context.sender_note) || '';
+          if (noteB && !noteA.includes(noteB)) {
+            primary.chat_context.sender_note = noteA ? `${noteA} | ${noteB}` : noteB;
+          }
+
+          await putItemToIDB(primary);
+          await deleteItemFromIDB(secondary.id);
+          removedIds.add(secondary.id);
+          details.push({
+            keptTitle: (primary.metadata && primary.metadata.title) || primary.id,
+            removedTitle: (secondary.metadata && secondary.metadata.title) || secondary.id,
+            similarity: Math.round(sim * 100)
+          });
+        }
+      }
+    }
+
+    if (removedIds.size > 0) {
+      await syncBackupToNativeStorage();
+    }
+
+    return {
+      mergedCount: removedIds.size,
+      remainingCount: allItems.length - removedIds.size,
+      details
+    };
+  }
+
   /**
    * 5. BỘ ĐIỀU PHỐI ĐA NĂNG (UNIVERSAL INGEST ROUTER)
    */
@@ -1546,12 +1758,60 @@
   global.ChatVaultEngine = {
     init: autoRestoreIfEmpty,
     ingestAndSave: async function (rawInput, options = {}) {
+      // Tầng 1: Kiểm tra trùng lặp tức thì trước khi tải mạng (trừ khi forceReExtract = true)
+      if (!options.forceReExtract && !options.keepBoth) {
+        const preDup = await findDuplicateInVault(rawInput, null);
+        if (preDup && preDup.matchedItem) {
+          const existing = preDup.matchedItem;
+          const newNote = String(options.senderNote || '').trim();
+          if (newNote && newNote !== 'Chia sẻ trực tiếp sang Krypto' && existing.chat_context) {
+            const curNote = existing.chat_context.sender_note || '';
+            if (!curNote.includes(newNote)) {
+              existing.chat_context.sender_note = curNote ? `${curNote} | ${newNote}` : newNote;
+              await putItemToIDB(existing);
+              await syncBackupToNativeStorage();
+            }
+          }
+          existing._duplicateInfo = {
+            isDuplicate: true,
+            duplicateType: preDup.duplicateType,
+            similarity: preDup.similarity,
+            matchedTitle: (existing.metadata && existing.metadata.title) || existing.id
+          };
+          return existing;
+        }
+      }
+
       const record = await ingestAnyInput(rawInput, options);
       await ensureRecordBilingual(record);
+
+      // Tầng 2: Kiểm tra trùng lặp ngữ nghĩa sau khi bóc tách nội dung (Cosine/Bigram >= 72%)
+      if (!options.forceReExtract && !options.keepBoth) {
+        const postDup = await findDuplicateInVault(rawInput, record);
+        if (postDup && postDup.matchedItem && postDup.matchedItem.id !== record.id) {
+          const existing = postDup.matchedItem;
+          existing._duplicateInfo = {
+            isDuplicate: true,
+            duplicateType: postDup.duplicateType,
+            similarity: postDup.similarity,
+            matchedTitle: (existing.metadata && existing.metadata.title) || existing.id,
+            candidateRecord: record
+          };
+          return existing;
+        }
+      }
+
+      if (options.keepBoth && record.id) {
+        record.id = `${record.id}_${Date.now().toString(36).slice(-4)}`;
+      }
+      record._duplicateInfo = { isDuplicate: false, similarity: 0 };
       await putItemToIDB(record);
       await syncBackupToNativeStorage();
       return record;
     },
+    findDuplicateInVault,
+    scanAndMergeVaultDuplicates,
+    computeContentSimilarity,
     reExtractRecord: async function (recordId) {
       const all = await getAllItemsFromIDB();
       const target = all.find(x => x.id === recordId);

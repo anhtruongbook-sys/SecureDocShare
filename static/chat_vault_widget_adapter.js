@@ -347,6 +347,7 @@
                   <button type="button" class="cv-lang-btn ${currentLang === 'vi' ? 'active' : ''}" data-lang="vi">🇻🇳 Tiếng Việt</button>
                   <button type="button" class="cv-lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en">🇬🇧 English</button>
                 </div>
+                <button type="button" class="cv-btn cv-btn-outline" id="cvBtnDedupe" title="Quét & gộp các bản ghi trùng lặp nội dung">🧹 Quét trùng</button>
                 <button type="button" class="cv-btn cv-btn-outline" id="cvBtnExport" title="Xuất toàn bộ CSDL ra file .json">💾 Sao lưu</button>
                 <button type="button" class="cv-btn cv-btn-outline" id="cvBtnImport" title="Khôi phục từ file .json">📂 Khôi phục</button>
                 <input type="file" id="cvFileImport" accept=".json" style="display:none;" />
@@ -766,8 +767,8 @@
         }
       }
 
-      async function executeSaveInput(autoOpenDetail = true) {
-        const raw = container.querySelector('#cvInputRaw').value.trim();
+      async function executeSaveInput(autoOpenDetail = true, extraOpts = {}) {
+        const raw = (extraOpts.overrideRaw || container.querySelector('#cvInputRaw').value).trim();
         const note = container.querySelector('#cvInputNote').value.trim();
         const sender = container.querySelector('#cvInputSender').value.trim();
         const group = container.querySelector('#cvInputGroup').value.trim();
@@ -777,28 +778,78 @@
           status.textContent = '⚠️ Vui lòng nhập đường dẫn YouTube, GitHub, Web hoặc nội dung ghi chú.';
           return;
         }
-        status.textContent = '⏳ Đang tự động bóc tách phụ đề, chắt lọc ý tưởng & dịch sang Tiếng Việt...';
+        status.textContent = '⏳ Đang kiểm tra trùng lặp, bóc tách phụ đề & dịch sang Tiếng Việt...';
         try {
           const rec = await global.ChatVaultEngine.ingestAndSave(raw, {
             senderNote: note,
             sharedBy: sender,
-            chatGroup: group
+            chatGroup: group,
+            forceReExtract: Boolean(extraOpts.forceReExtract),
+            keepBoth: Boolean(extraOpts.keepBoth)
           });
           const localizedRec = global.ChatVaultEngine.getLocalizedRecord(rec, currentLang);
-          status.textContent = `✓ Đã lưu (${currentLang.toUpperCase()}): ${localizedRec.metadata.title}`;
-          notifyUser(`✓ Đã bóc tách & lưu: ${localizedRec.metadata.title}`);
+          const dupInfo = rec._duplicateInfo || {};
+
           container.querySelector('#cvInputRaw').value = '';
           container.querySelector('#cvInputNote').value = '';
           container.querySelector('#cvSearchInput').value = '';
           container.querySelector('#cvFilterType').value = '';
           container.querySelector('#cvFilterCat').value = '';
           await refreshList();
+
           if (autoOpenDetail) {
             const foundIdx = currentResults.findIndex(x => x.id === rec.id);
             if (foundIdx !== -1) {
               showDetail(foundIdx, true);
             }
           }
+
+          if (dupInfo.isDuplicate) {
+            const simPct = Math.round((dupInfo.similarity || 1) * 100);
+            const dupLabel = dupInfo.duplicateType === 'semantic_content'
+              ? `Trùng khớp ngữ nghĩa ${simPct}%`
+              : 'Đã có sẵn trong Kho Tri Thức (Trùng 100%)';
+            status.textContent = `⚡ Phát hiện trùng nội dung (${dupLabel}): Đã mở ngay "${localizedRec.metadata.title}"`;
+            notifyUser(`⚡ ${dupLabel}: Đã mở bản ghi sẵn có!`);
+
+            if (typeof global.showCyberDialog === 'function') {
+              if (dupInfo.duplicateType === 'semantic_content' && dupInfo.candidateRecord) {
+                global.showCyberDialog({
+                  type: 'warning',
+                  icon: '🔍',
+                  title: `Phát Hiện Trùng Nội Dung (${simPct}%)`,
+                  message: `Nội dung bạn vừa nhập có độ tương đồng ngữ nghĩa ${simPct}% với bản ghi đã có trong kho:\n\n• "${localizedRec.metadata.title}"\n\nHệ thống đã mở bản ghi sẵn có để tránh lưu trùng. Bạn muốn giữ nguyên hay vẫn lưu thành một bản ghi riêng biệt?`,
+                  actionText: '➕ Vẫn Lưu Thành Bản Riêng',
+                  cancelText: 'Giữ Bản Đã Có',
+                  onAction: async function () {
+                    const sepRec = dupInfo.candidateRecord;
+                    sepRec.id = `${sepRec.id}_${Date.now().toString(36).slice(-4)}`;
+                    await global.ChatVaultEngine.saveRecord(sepRec);
+                    await refreshList();
+                    const idxNew = currentResults.findIndex(x => x.id === sepRec.id);
+                    if (idxNew !== -1) showDetail(idxNew, true);
+                    notifyUser('✓ Đã lưu thêm bản ghi riêng biệt vào kho!');
+                  }
+                });
+              } else {
+                global.showCyberDialog({
+                  type: 'info',
+                  icon: '⚡',
+                  title: 'Nội Dung Đã Có Trong Kho Tri Thức',
+                  message: `Đường dẫn / nội dung này đã được lưu trước đó:\n\n• "${localizedRec.metadata.title}"\n• Chủ đề: ${(localizedRec.taxonomy && localizedRec.taxonomy.category) || ''}\n\nHệ thống đã mở ngay bản ghi sẵn có (không cần tải lại). Bạn có muốn bóc tách và làm mới lại từ nguồn không?`,
+                  actionText: '🔄 Bóc Tách & Làm Mới Lại',
+                  cancelText: 'Xem Bản Hiện Có',
+                  onAction: function () {
+                    executeSaveInput(true, { overrideRaw: raw, forceReExtract: true });
+                  }
+                });
+              }
+            }
+          } else {
+            status.textContent = `✓ Đã lưu (${currentLang.toUpperCase()}): ${localizedRec.metadata.title}`;
+            notifyUser(`✓ Đã bóc tách & lưu: ${localizedRec.metadata.title}`);
+          }
+
           if (typeof options.onItemSaved === 'function') options.onItemSaved(rec);
         } catch (err) {
           status.textContent = '❌ Lỗi: ' + err.message;
@@ -823,6 +874,37 @@
       container.querySelector('#cvSearchInput').addEventListener('input', refreshList);
       container.querySelector('#cvFilterType').addEventListener('change', refreshList);
       container.querySelector('#cvFilterCat').addEventListener('change', refreshList);
+
+      // Quét & Gộp trùng lặp toàn kho
+      container.querySelector('#cvBtnDedupe').addEventListener('click', async () => {
+        if (!global.ChatVaultEngine.scanAndMergeVaultDuplicates) return;
+        const res = await global.ChatVaultEngine.scanAndMergeVaultDuplicates();
+        await refreshList();
+        if (res.mergedCount > 0) {
+          const detailLines = res.details.map(d => `• Đã gộp "${d.removedTitle}" -> "${d.keptTitle}" (Trùng ${d.similarity}%)`).join('\n');
+          notifyUser(`🧹 Đã phát hiện & gộp ${res.mergedCount} bản ghi trùng lặp!`);
+          if (typeof global.showCyberDialog === 'function') {
+            global.showCyberDialog({
+              type: 'success',
+              icon: '🧹',
+              title: `Đã Dọn Sạch ${res.mergedCount} Bản Ghi Trùng Lặp`,
+              message: `Hệ thống đã rà soát ngữ nghĩa toàn kho và tự động gộp ${res.mergedCount} bản ghi trùng lặp (còn lại ${res.remainingCount} bản ghi duy nhất):\n\n${detailLines}`,
+              actionText: 'Đã Hiểu'
+            });
+          }
+        } else {
+          notifyUser(`✓ Kho Tri Thức sạch 100% (${res.remainingCount} bản ghi duy nhất, không có trùng lặp)`);
+          if (typeof global.showCyberDialog === 'function') {
+            global.showCyberDialog({
+              type: 'info',
+              icon: '✅',
+              title: 'Kho Tri Thức Không Có Trùng Lặp',
+              message: `Đã kiểm tra đối sánh đường dẫn và độ tương đồng ngữ nghĩa trên toàn bộ ${res.remainingCount} bản ghi trong Kho Tri Thức.\n\nTất cả các bản ghi đều là duy nhất (không có nội dung trùng lặp >= 75%).`,
+              actionText: 'Đóng'
+            });
+          }
+        }
+      });
 
       // Sao lưu & Khôi phục JSON
       container.querySelector('#cvBtnExport').addEventListener('click', async () => {

@@ -66,15 +66,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.8.1
-          name: "Krypto v2.8.1 - Tự Động Nhận Dạng & Nhóm Tri Thức Theo Chủ Đề + Xuất Tệp .MD Qua MediaStore Downloads"
+          tag_name: v2.8.2
+          name: "Krypto v2.8.2 - Phát Hiện Trùng Lặp Nội Dung 3 Tầng (Canonical URL + Cosine/Bigram Similarity >= 72%)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.8.1 (PQC ML-KEM-768 + Chat Knowledge Vault v3.1)
-            - **Tự Động Nhận Dạng Chủ Đề & Nhóm Theo Chủ Đề (`Auto-Topic Clustering`)**:
-              + Tự động phân tích nội dung, tiêu đề và từ khóa để nhận diện **10 nhóm chủ đề chuyên sâu** (`📈 Chiến lược RevOps, Kinh doanh & Quản trị`, `🤖 AI Agent & Công cụ Lập trình`, `🛡️ An toàn Thông tin & Kiểm toán Bảo mật`, `⚖️ Pháp lý, Đấu thầu & Quy chuẩn Xây dựng`, `🏗️ BIM, CDE & Kỹ thuật Công trình`, `💰 Tài chính, Đầu tư & Kinh tế Vĩ mô`, `🧬 Y sinh, Ngân hàng Sinh học & Nghiên cứu KH&CN`, `🌐 Hạ tầng Đám mây, Mạng & Hệ thống`, `☯️ Huyền học, Tử vi & Phong thủy`) hoặc tự sinh nhãn chủ đề động (`🔖 Chủ đề: ...`) cho lĩnh vực mới.
-              + **Thanh Chip Chủ Đề 1 Chạm (`#cvTopicChipsBar`)** thống kê số lượng bản ghi theo từng chủ đề.
-              + **Chế độ `🗂️ Nhóm theo Chủ đề` (Mặc định bật)**: Tự động gom các bản ghi cùng chủ đề vào từng phân đoạn có nút **Thu gọn / Mở rộng** và nút **`📝 Xuất Nhóm (.md)`** để xuất toàn bộ tài liệu thuộc 1 chủ đề ra 1 tệp Markdown tổng hợp duy nhất.
-            - **Lưu Tệp `.md` / `.json` Qua Chuẩn Android `MediaStore.Downloads` & Mở/Chia Sẻ Ngay 1 Chạm (`v2.8.0`)**.
+            ## Ứng dụng Di Động Krypto v2.8.2 (PQC ML-KEM-768 + Chat Knowledge Vault v3.2)
+            - **Bộ Phát Hiện Trùng Lặp 3 Tầng (`3-Layer Duplicate & Similarity Detector`)**:
+              + **Tầng 1 — Chuẩn hóa URL & Khớp tức thì (`normalizeCanonicalUrl`)**: Tự động loại bỏ mọi tham số theo dõi (`utm_*`, `fbclid`, `gclid`, `si=...`, `feature=...`). Nếu phát hiện Video/GitHub/Web đã có sẵn trong kho -> **Không tốn thời gian tải lại**, mở thẳng bản ghi hiện có ngay lập tức (0.1s), tự động gộp thêm ghi chú mới và cho phép chọn **`🔄 Bóc Tách & Làm Mới Lại`** nếu muốn cập nhật.
+              + **Tầng 2 — So khớp độ tương đồng ngữ nghĩa (`computeContentSimilarity` >= 72%)**: Kết hợp Vector TF Cosine (72%) và Bigram Shingle Jaccard (28%) khử dấu tiếng Việt để phát hiện các ghi chú/bài viết trùng hoặc gần trùng nội dung, hiển thị tỷ lệ trùng khớp (`%`) kèm tùy chọn **`➕ Vẫn Lưu Thành Bản Riêng`** hoặc **`Giữ Bản Đã Có`**.
+              + **Tầng 3 — Công cụ `🧹 Quét trùng` toàn kho (`scanAndMergeVaultDuplicates`)**: Rà soát toàn bộ kho 1 chạm để phát hiện và gộp tự động các bản ghi trùng lặp.
+            - **Kế thừa toàn diện v2.8.1**: Tự động nhận dạng & nhóm theo 10 chủ đề, xuất tệp `.md` chuẩn `MediaStore.Downloads` kèm hộp thoại Mở/Chia sẻ ngay.
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk
