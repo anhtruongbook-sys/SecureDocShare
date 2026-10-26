@@ -355,11 +355,17 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
         final String? txt = call.arguments?.toString();
         if (txt != null && txt.trim().isNotEmpty) {
           _pendingSharedTextInDart = txt.trim();
+          try {
+            await _nativeChannel.invokeMethod<String>('consumeSharedText');
+          } catch (_) {}
           if (_pageLoaded) {
             final String toSend = _pendingSharedTextInDart!;
             _pendingSharedTextInDart = null;
             await _deliverSharedTextToJs(toSend);
-            Future.delayed(const Duration(milliseconds: 500), () {
+            Future.delayed(const Duration(milliseconds: 450), () {
+              _deliverSharedTextToJs(toSend);
+            });
+            Future.delayed(const Duration(milliseconds: 1100), () {
               _deliverSharedTextToJs(toSend);
             });
           }
@@ -405,9 +411,12 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
     try {
       await _controller.runJavaScript(
         "window.__kryptoHandlingShare = Date.now(); "
-        "window.__pendingSharedLink = $escaped; "
         "var _g = document.getElementById('cyber-lock-gate'); if (_g) _g.style.display = 'none'; "
-        "if (window.onReceiveSharedContent) { window.onReceiveSharedContent($escaped); }",
+        "if (typeof window.onReceiveSharedContent === 'function') { "
+        "  window.onReceiveSharedContent($escaped); "
+        "} else { "
+        "  window.__pendingSharedLink = $escaped; "
+        "}",
       );
     } catch (_) {}
   }
@@ -423,7 +432,10 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
         final String toSend = _pendingSharedTextInDart!;
         _pendingSharedTextInDart = null;
         await _deliverSharedTextToJs(toSend);
-        Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(const Duration(milliseconds: 450), () {
+          _deliverSharedTextToJs(toSend);
+        });
+        Future.delayed(const Duration(milliseconds: 1100), () {
           _deliverSharedTextToJs(toSend);
         });
         return true;

@@ -83,23 +83,64 @@ class MainActivity: FlutterFragmentActivity() {
 
     private fun extractSharedIntent(intent: Intent?) {
         if (intent == null) return
-        if (Intent.ACTION_SEND == intent.action) {
-            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: intent.dataString
-            val sharedSubj = intent.getStringExtra(Intent.EXTRA_SUBJECT) ?: ""
-            val combined = if (sharedSubj.isNotBlank() && !(sharedText ?: "").contains(sharedSubj)) {
-                "$sharedSubj - ${sharedText ?: ""}".trim()
-            } else {
-                (sharedText ?: "").trim()
+        val act = intent.action ?: return
+        if (Intent.ACTION_SEND == act || Intent.ACTION_SEND_MULTIPLE == act || Intent.ACTION_VIEW == act) {
+            var sharedText: String? = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+                ?: intent.getStringExtra(Intent.EXTRA_TEXT)
+                ?: intent.getCharSequenceExtra("android.intent.extra.PROCESS_TEXT")?.toString()
+
+            if (sharedText.isNullOrBlank() && intent.clipData != null) {
+                val clip = intent.clipData!!
+                val sb = StringBuilder()
+                for (i in 0 until clip.itemCount) {
+                    val item = clip.getItemAt(i)
+                    val piece = item.text?.toString()
+                        ?: item.uri?.toString()
+                        ?: try { item.coerceToText(this)?.toString() } catch (_: Throwable) { null }
+                    if (!piece.isNullOrBlank()) {
+                        if (sb.isNotEmpty()) sb.append("\n")
+                        sb.append(piece.trim())
+                    }
+                }
+                if (sb.isNotEmpty()) {
+                    sharedText = sb.toString()
+                }
             }
+
+            if (sharedText.isNullOrBlank()) {
+                sharedText = intent.dataString
+            }
+
+            val sharedSubj = intent.getCharSequenceExtra(Intent.EXTRA_SUBJECT)?.toString()
+                ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
+                ?: intent.getCharSequenceExtra(Intent.EXTRA_TITLE)?.toString()
+                ?: ""
+
+            val cleanBody = (sharedText ?: "").trim()
+            val combined = if (sharedSubj.isNotBlank() && cleanBody.isNotEmpty() && !cleanBody.contains(sharedSubj)) {
+                "${sharedSubj.trim()} - $cleanBody".trim()
+            } else {
+                cleanBody
+            }
+
             if (combined.isNotEmpty()) {
                 pendingSharedText = combined
                 intent.action = Intent.ACTION_MAIN
                 intent.removeExtra(Intent.EXTRA_TEXT)
+                intent.removeExtra(Intent.EXTRA_SUBJECT)
+                intent.clipData = null
                 runOnUiThread {
                     try {
                         methodChannel?.invokeMethod("onSharedTextReceived", combined)
                     } catch (_: Exception) {}
                 }
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    try {
+                        if (pendingSharedText != null) {
+                            methodChannel?.invokeMethod("onSharedTextReceived", combined)
+                        }
+                    } catch (_: Exception) {}
+                }, 450)
             }
         }
     }

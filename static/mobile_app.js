@@ -73,24 +73,36 @@ let customSignatureImageBase64 = '';
 let selectedAuditFile = null;
 let currentPinInput = '';
 let kryptoChatVaultInstance = null;
+let kryptoChatVaultMountPromise = null;
 
 async function ensureKryptoChatVaultMounted() {
     if (kryptoChatVaultInstance) {
-        if (typeof kryptoChatVaultInstance.refreshList === 'function') {
+        const isHandlingShare = window.__pendingSharedLink || (window.__kryptoHandlingShare && (Date.now() - window.__kryptoHandlingShare < 6000));
+        if (!isHandlingShare && typeof kryptoChatVaultInstance.refreshList === 'function') {
             await kryptoChatVaultInstance.refreshList();
         }
         return kryptoChatVaultInstance;
     }
+    if (kryptoChatVaultMountPromise) {
+        return await kryptoChatVaultMountPromise;
+    }
     const mountEl = document.getElementById('krypto-chat-vault-mount');
     if (mountEl && window.ChatVaultAdapter && typeof window.ChatVaultAdapter.mount === 'function') {
-        try {
-            kryptoChatVaultInstance = await window.ChatVaultAdapter.mount(mountEl, {
-                defaultSender: 'User',
-                defaultGroup: 'Zalo / R&D'
-            });
-        } catch (err) {
-            console.warn('ChatVaultAdapter mount error:', err);
-        }
+        kryptoChatVaultMountPromise = (async () => {
+            try {
+                kryptoChatVaultInstance = await window.ChatVaultAdapter.mount(mountEl, {
+                    defaultSender: 'User',
+                    defaultGroup: 'Zalo / R&D'
+                });
+                return kryptoChatVaultInstance;
+            } catch (err) {
+                console.warn('ChatVaultAdapter mount error:', err);
+                return null;
+            } finally {
+                kryptoChatVaultMountPromise = null;
+            }
+        })();
+        return await kryptoChatVaultMountPromise;
     }
     return kryptoChatVaultInstance;
 }

@@ -685,19 +685,19 @@
   async function extractGitHubRepoCard(extractedUrl, { senderNote = '', sharedBy = 'User', chatGroup = 'General' } = {}) {
     const ghMatch = String(extractedUrl).match(GITHUB_REGEX);
     if (!ghMatch) throw new Error('Đường dẫn GitHub không hợp lệ.');
-    const owner = ghMatch[1];
-    const repo = ghMatch[2].replace(/\.git$/i, '');
+    const owner = ghMatch[1].replace(/[.,;)]+$/, '');
+    const repo = ghMatch[2].replace(/\.git$/i, '').replace(/[.,;)]+$/, '');
     const canonicalUrl = `https://github.com/${owner}/${repo}`;
 
     // Kiểm tra nếu trùng với bản ghi mẫu chuẩn v3 đã tinh chỉnh -> trả về ngay
     if (global.__CHAT_VAULT_INITIAL_SEED && Array.isArray(global.__CHAT_VAULT_INITIAL_SEED)) {
       const preset = global.__CHAT_VAULT_INITIAL_SEED.find(
-        s => s.schema_version === CURRENT_SCHEMA_VERSION &&
-             s.metadata && s.metadata.url &&
+        s => s.metadata && s.metadata.url &&
              s.metadata.url.toLowerCase() === canonicalUrl.toLowerCase()
       );
       if (preset) {
         const cloned = JSON.parse(JSON.stringify(preset));
+        cloned.schema_version = CURRENT_SCHEMA_VERSION;
         if (senderNote) cloned.chat_context.sender_note = senderNote;
         return cloned;
       }
@@ -726,6 +726,7 @@
     let readmeMd = '';
     const candidateUrls = [
       `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/README.md`,
+      `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/readme.md`,
       `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`,
       `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`
     ];
@@ -736,16 +737,44 @@
           method: 'GET',
           headers: { 'User-Agent': 'KryptoKnowledgeVault/3.0' }
         });
-        if (txt && txt.trim().length > 50 && !txt.trim().startsWith('<!DOCTYPE html')) {
+        if (txt && txt.trim().length > 20 && !txt.trim().startsWith('<!DOCTYPE html')) {
           readmeMd = txt;
           break;
         }
       } catch (_) {}
     }
 
-    const { sections, codeSnippets } = parseMarkdownReadmeSections(readmeMd, repo);
+    if (!readmeMd) {
+      try {
+        const rawApiReadme = await hybridHttpRequest({
+          url: `https://api.github.com/repos/${owner}/${repo}/readme`,
+          method: 'GET',
+          headers: {
+            'Accept': 'application/vnd.github.raw+json',
+            'User-Agent': 'KryptoKnowledgeVault/3.0'
+          }
+        });
+        if (rawApiReadme && rawApiReadme.trim().length > 20 && !rawApiReadme.trim().startsWith('<!DOCTYPE html')) {
+          readmeMd = rawApiReadme;
+        }
+      } catch (_) {}
+    }
+
+    let { sections, codeSnippets } = parseMarkdownReadmeSections(readmeMd, repo);
     const starText = stars > 0 ? ` (★ ${stars.toLocaleString()})` : '';
     const fullTitle = `[GitHub] ${owner}/${repo}${starText} — ${apiDesc || 'Kho mã nguồn & Tài liệu kỹ thuật'}`;
+
+    if (!sections.length) {
+      sections = [{
+        title: 'Tổng quan & Chức năng Kho mã nguồn',
+        content: [
+          apiDesc ? `Mô tả dự án: ${apiDesc}.` : `Kho mã nguồn ${owner}/${repo} trên GitHub.`,
+          `Ngôn ngữ chính: ${language}${starText}.`,
+          topics.length ? `Chủ đề kỹ thuật: ${topics.join(', ')}.` : '',
+          readmeMd ? cleanMarkdownLine(readmeMd.slice(0, 500)) : ''
+        ].filter(Boolean).join(' ')
+      }];
+    }
 
     const overviewSec = sections[0] ? sections[0].content : '';
     const secondSec = sections[1] ? `${sections[1].title}: ${sections[1].content.slice(0, 380)}` : '';
@@ -1324,18 +1353,38 @@
   async function translateBatchViaGtx(items, targetLang = 'vi') {
     if (!items || !items.length) return [];
     const sep = '\n ||| \n';
-    const joined = items.map(x => String(x || '').replace(/\|\|\|/g, ' ')).join(sep);
-    if (!joined.trim()) return items;
-    const translatedJoined = await translateTextViaGtx(joined, targetLang);
-    const parts = translatedJoined.split('|||').map(s => s.trim());
-    if (parts.length === items.length) {
-      return parts;
+    const chunks = [];
+    let curBatch = [];
+    let curLen = 0;
+
+    for (const rawItem of items) {
+      const safeStr = String(rawItem || '').replace(/\|\|\|/g, ' ').slice(0, 800);
+      if (curBatch.length > 0 && (curLen + safeStr.length > 1300 || curBatch.length >= 4)) {
+        chunks.push(curBatch);
+        curBatch = [];
+        curLen = 0;
+      }
+      curBatch.push(safeStr);
+      curLen += safeStr.length + sep.length;
     }
-    const out = [];
-    for (const item of items) {
-      out.push(await translateTextViaGtx(item, targetLang));
-    }
-    return out;
+    if (curBatch.length > 0) chunks.push(curBatch);
+
+    const translatedChunks = await Promise.all(chunks.map(async (batch) => {
+      const joined = batch.join(sep);
+      if (!joined.trim()) return batch;
+      const translatedJoined = await translateTextViaGtx(joined, targetLang);
+      const parts = translatedJoined.split('|||').map(s => s.trim());
+      if (parts.length === batch.length) {
+        return parts;
+      }
+      const out = [];
+      for (const item of batch) {
+        out.push(await translateTextViaGtx(item, targetLang));
+      }
+      return out;
+    }));
+
+    return translatedChunks.flat();
   }
 
   function snapshotLangFields(record) {
@@ -1461,7 +1510,7 @@
   }
 
   function isLegacyOrCorruptedRecord(item) {
-    if (!item || item.schema_version !== CURRENT_SCHEMA_VERSION) return true;
+    if (!item) return true;
     const rawStr = JSON.stringify(item.summary || {}) + JSON.stringify(item.wisdom_distillation || {});
     if (rawStr.includes('\\u003c') || rawStr.includes('Sign in Appearance settings') || rawStr.includes('{"props":')) {
       return true;
@@ -1472,6 +1521,19 @@
   async function upgradeExistingItemsToCoherentV3(items) {
     let changed = false;
     for (const item of items) {
+      // Cập nhật nhanh danh mục chủ đề và schema_version không chặn luồng mạng
+      if (item.schema_version !== CURRENT_SCHEMA_VERSION) {
+        item.schema_version = CURRENT_SCHEMA_VERSION;
+        if (item.taxonomy && (!item.taxonomy.category || item.taxonomy.category === 'Công nghệ, Lập trình & AI' || item.taxonomy.category === 'Tri thức Tổng hợp')) {
+          const m = item.metadata || {};
+          const s = item.summary || {};
+          const t = item.taxonomy || {};
+          item.taxonomy.category = detectCategory(`${m.title || ''} ${s.one_liner || ''} ${s.executive_summary || ''} ${(t.tags || []).join(' ')}`, m.title || '', t.tags || []);
+        }
+        await putItemToIDB(item);
+        changed = true;
+      }
+
       if (isLegacyOrCorruptedRecord(item)) {
         // Kiểm tra trong bộ Seed chuẩn v3 trước
         const matchedSeed = (global.__CHAT_VAULT_INITIAL_SEED || []).find(
@@ -1484,36 +1546,12 @@
           if (oldId !== matchedSeed.id) {
             await deleteItemFromIDB(oldId);
           }
-          await putItemToIDB(JSON.parse(JSON.stringify(matchedSeed)));
+          const seedCopy = JSON.parse(JSON.stringify(matchedSeed));
+          seedCopy.schema_version = CURRENT_SCHEMA_VERSION;
+          await putItemToIDB(seedCopy);
           changed = true;
           continue;
         }
-
-        // Nếu là đường dẫn YouTube hoặc GitHub khác -> tự động bóc tách lại theo chuẩn v3 mạch lạc
-        const itemUrl = (item.metadata && item.metadata.url) || '';
-        if (itemUrl.startsWith('http')) {
-          try {
-            const oldId = item.id;
-            const freshRec = await ingestAnyInput(itemUrl, {
-              senderNote: (item.chat_context && item.chat_context.sender_note) || '',
-              sharedBy: (item.chat_context && item.chat_context.shared_by) || 'User',
-              chatGroup: (item.chat_context && item.chat_context.chat_group) || 'Zalo / R&D'
-            });
-            await ensureRecordBilingual(freshRec);
-            if (oldId !== freshRec.id) {
-              await deleteItemFromIDB(oldId);
-            }
-            await putItemToIDB(freshRec);
-            changed = true;
-            continue;
-          } catch (e) {
-            console.warn('[ChatVaultEngine] Không thể bóc tách lại tự động:', itemUrl, e);
-          }
-        }
-
-        await ensureRecordBilingual(item);
-        await putItemToIDB(item);
-        changed = true;
       }
     }
 
@@ -1523,7 +1561,9 @@
       const existingIds = new Set(currentAfter.map(x => x.id));
       for (const seedItem of global.__CHAT_VAULT_INITIAL_SEED) {
         if (!existingIds.has(seedItem.id)) {
-          await putItemToIDB(JSON.parse(JSON.stringify(seedItem)));
+          const seedCopy = JSON.parse(JSON.stringify(seedItem));
+          seedCopy.schema_version = CURRENT_SCHEMA_VERSION;
+          await putItemToIDB(seedCopy);
           changed = true;
         }
       }

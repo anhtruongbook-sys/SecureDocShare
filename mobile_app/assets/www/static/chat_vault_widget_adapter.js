@@ -15,21 +15,24 @@
   let activeShareHandler = null;
   let lastHandledShareText = '';
   let lastHandledShareTime = 0;
+  let isProcessingShare = false;
 
   global.onReceiveSharedContent = function (sharedText) {
     if (!sharedText || !String(sharedText).trim()) return;
     const cleaned = String(sharedText).trim();
-    if (cleaned === lastHandledShareText && (Date.now() - lastHandledShareTime < 4000)) {
+    if (cleaned === lastHandledShareText && (isProcessingShare || (Date.now() - lastHandledShareTime < 5000))) {
       return;
     }
     global.__kryptoHandlingShare = Date.now();
     const lockGate = document.getElementById('cyber-lock-gate');
     if (lockGate) lockGate.style.display = 'none';
-    global.__pendingSharedLink = cleaned;
     if (typeof activeShareHandler === 'function') {
       activeShareHandler(cleaned);
-    } else if (typeof global.switchTab === 'function') {
-      global.switchTab('knowledge');
+    } else {
+      global.__pendingSharedLink = cleaned;
+      if (typeof global.switchTab === 'function') {
+        global.switchTab('knowledge');
+      }
     }
   };
 
@@ -427,7 +430,7 @@
         btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
       });
 
-      await global.ChatVaultEngine.init();
+      const engineInitPromise = global.ChatVaultEngine.init();
 
       async function updateStatsAndTopicsBar() {
         const allItems = await global.ChatVaultEngine.getAllItems();
@@ -925,41 +928,53 @@
         await refreshList();
       });
 
-      // Xử lý tự động ngay lập tức khi nhận link chia sẻ từ Android Share Intent (Zalo/YouTube -> Krypto)
+      // Xử lý tự động ngay lập tức khi nhận link chia sẻ từ Android Share Intent (GitHub/Zalo/YouTube -> Krypto)
       activeShareHandler = async function (sharedText) {
         if (!sharedText || !String(sharedText).trim()) return;
         const cleaned = String(sharedText).trim();
-        if (cleaned === lastHandledShareText && (Date.now() - lastHandledShareTime < 4000)) {
+        if (cleaned === lastHandledShareText && (isProcessingShare || (Date.now() - lastHandledShareTime < 5000))) {
           return;
         }
+        isProcessingShare = true;
         lastHandledShareText = cleaned;
         lastHandledShareTime = Date.now();
         global.__kryptoHandlingShare = Date.now();
         global.__pendingSharedLink = null;
 
-        // Mở khóa màn hình cổng PIN (nếu đang che) để hiển thị ngay tiến trình bóc tách link chia sẻ
-        const lockGate = document.getElementById('cyber-lock-gate');
-        if (lockGate) lockGate.style.display = 'none';
-        if (typeof global.switchTab === 'function') {
-          global.switchTab('knowledge');
-        }
+        try {
+          // Mở khóa màn hình cổng PIN (nếu đang che) và chuyển ngay sang Tab Tri Thức
+          const lockGate = document.getElementById('cyber-lock-gate');
+          if (lockGate) lockGate.style.display = 'none';
+          if (typeof global.switchTab === 'function') {
+            global.switchTab('knowledge');
+          }
 
-        container.querySelector('#cvInputRaw').value = cleaned;
-        container.querySelector('#cvInputNote').value = 'Chia sẻ trực tiếp sang Krypto';
-        notifyUser('⏳ Đang tự động bóc tách liên kết vừa chia sẻ...');
-        await executeSaveInput(true);
+          const inputEl = container.querySelector('#cvInputRaw');
+          const noteEl = container.querySelector('#cvInputNote');
+          const statusEl = container.querySelector('#cvStatus');
+          if (inputEl) inputEl.value = cleaned;
+          if (noteEl) noteEl.value = 'Chia sẻ trực tiếp sang Krypto';
+          if (statusEl) statusEl.textContent = '⏳ Đang tự động bóc tách & lưu liên kết vừa chia sẻ...';
+          notifyUser('⏳ Đang tự động bóc tách & lưu liên kết vừa chia sẻ...');
+
+          await engineInitPromise;
+          await executeSaveInput(true, { overrideRaw: cleaned });
+        } finally {
+          isProcessingShare = false;
+        }
       };
 
+      await engineInitPromise;
       await refreshList();
 
       // Nếu có link được chia sẻ đến trong lúc app đang khởi động -> xử lý tự động ngay lập tức!
       if (global.__pendingSharedLink) {
         const pending = global.__pendingSharedLink;
         global.__pendingSharedLink = null;
-        setTimeout(() => activeShareHandler(pending), 100);
+        setTimeout(() => activeShareHandler(pending), 50);
       }
 
-      return { refreshList, setLanguage };
+      return { refreshList, setLanguage, handleShare: activeShareHandler };
     }
   };
 
