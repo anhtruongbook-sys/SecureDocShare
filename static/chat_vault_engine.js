@@ -762,15 +762,15 @@
 
     let { sections, codeSnippets } = parseMarkdownReadmeSections(readmeMd, repo);
     const starText = stars > 0 ? ` (★ ${stars.toLocaleString()})` : '';
-    const fullTitle = `[GitHub] ${owner}/${repo}${starText} — ${apiDesc || 'Kho mã nguồn & Tài liệu kỹ thuật'}`;
+    const fullTitle = `[GitHub] ${owner}/${repo}${starText} — ${apiDesc || 'Open Source Repository & Technical Documentation'}`;
 
     if (!sections.length) {
       sections = [{
-        title: 'Tổng quan & Chức năng Kho mã nguồn',
+        title: 'Repository Overview & Features',
         content: [
-          apiDesc ? `Mô tả dự án: ${apiDesc}.` : `Kho mã nguồn ${owner}/${repo} trên GitHub.`,
-          `Ngôn ngữ chính: ${language}${starText}.`,
-          topics.length ? `Chủ đề kỹ thuật: ${topics.join(', ')}.` : '',
+          apiDesc ? `Project overview: ${apiDesc}.` : `GitHub repository ${owner}/${repo}.`,
+          `Primary language: ${language}${starText}.`,
+          topics.length ? `Technical topics: ${topics.join(', ')}.` : '',
           readmeMd ? cleanMarkdownLine(readmeMd.slice(0, 500)) : ''
         ].filter(Boolean).join(' ')
       }];
@@ -779,18 +779,18 @@
     const overviewSec = sections[0] ? sections[0].content : '';
     const secondSec = sections[1] ? `${sections[1].title}: ${sections[1].content.slice(0, 380)}` : '';
     const oneLiner = apiDesc
-      ? `${apiDesc} (Ngôn ngữ: ${language}${starText}).`
+      ? `${apiDesc} (Language: ${language}${starText}).`
       : (overviewSec.slice(0, 220) || fullTitle);
 
     const execSummary = [
-      apiDesc ? `Mục tiêu dự án: ${apiDesc}.` : '',
+      apiDesc ? `Project overview: ${apiDesc}.` : '',
       overviewSec.slice(0, 520),
       secondSec
     ].filter(Boolean).join(' ').slice(0, 1050) || oneLiner;
 
     const coreIdeas = sections.slice(0, 6).map((sec, idx) => ({
       chapter: `${idx + 1}. ${sec.title}`,
-      timestamp: `Mục ${idx + 1}`,
+      timestamp: `Section ${idx + 1}`,
       seconds: idx,
       content: sec.content.slice(0, 650)
     }));
@@ -807,7 +807,7 @@
         });
       }
       if (/install|usage|quick start|getting started|setup|deploy|workflow/.test(lowerT) && actionableSteps.length < 4) {
-        const cmdNote = codeSnippets[0] ? ` (Lệnh thực thi: ${codeSnippets[0]})` : '';
+        const cmdNote = codeSnippets[0] ? ` (Command: ${codeSnippets[0]})` : '';
         actionableSteps.push({
           timestamp: sec.title.slice(0, 28),
           seconds: 0,
@@ -1350,41 +1350,35 @@
     return cleaned;
   }
 
+  function isPrimarilyVietnamese(text) {
+    const clean = String(text || '')
+      .replace(/Ngôn ngữ:|Mục tiêu dự án:|Mô tả dự án:|Ngôn ngữ chính:|Chủ đề kỹ thuật:|Lệnh thực thi:|Kho mã nguồn & Tài liệu kỹ thuật|Tổng quan & Giới thiệu|Mục \d+|Phần \d+|Luận điểm \d+|Đoạn \d+|Ý \d+/gi, ' ')
+      .trim();
+    const words = clean.split(/\s+/).filter(w => w.length >= 2);
+    if (!words.length) return false;
+    let viCount = 0;
+    for (const w of words) {
+      if (VI_DIACRITIC_REGEX.test(w)) viCount++;
+    }
+    return (viCount / words.length) >= 0.16;
+  }
+
+  function isSnapshotVietnamese(snap) {
+    if (!snap) return false;
+    const firstIdea = ((snap.core_ideas || [])[0] || {}).content || '';
+    const sample = `${snap.one_liner || ''} ${snap.executive_summary || ''} ${firstIdea}`;
+    return isPrimarilyVietnamese(sample);
+  }
+
   async function translateBatchViaGtx(items, targetLang = 'vi') {
     if (!items || !items.length) return [];
-    const sep = '\n ||| \n';
-    const chunks = [];
-    let curBatch = [];
-    let curLen = 0;
-
-    for (const rawItem of items) {
-      const safeStr = String(rawItem || '').replace(/\|\|\|/g, ' ').slice(0, 800);
-      if (curBatch.length > 0 && (curLen + safeStr.length > 1300 || curBatch.length >= 4)) {
-        chunks.push(curBatch);
-        curBatch = [];
-        curLen = 0;
-      }
-      curBatch.push(safeStr);
-      curLen += safeStr.length + sep.length;
-    }
-    if (curBatch.length > 0) chunks.push(curBatch);
-
-    const translatedChunks = await Promise.all(chunks.map(async (batch) => {
-      const joined = batch.join(sep);
-      if (!joined.trim()) return batch;
-      const translatedJoined = await translateTextViaGtx(joined, targetLang);
-      const parts = translatedJoined.split('|||').map(s => s.trim());
-      if (parts.length === batch.length) {
-        return parts;
-      }
-      const out = [];
-      for (const item of batch) {
-        out.push(await translateTextViaGtx(item, targetLang));
-      }
-      return out;
-    }));
-
-    return translatedChunks.flat();
+    return await Promise.all(
+      items.map(rawItem => {
+        const str = String(rawItem || '').trim().slice(0, 1200);
+        if (!str) return Promise.resolve('');
+        return translateTextViaGtx(str, targetLang);
+      })
+    );
   }
 
   function snapshotLangFields(record) {
@@ -1479,14 +1473,26 @@
     }
 
     if (record.i18n && record.i18n.vi && record.i18n.en) {
-      const updated = applyLangSnapshotToRecord(record, record.i18n.vi);
+      if (isSnapshotVietnamese(record.i18n.vi)) {
+        const updated = applyLangSnapshotToRecord(record, record.i18n.vi);
+        Object.assign(record, updated);
+        return record;
+      }
+      // Bản ghi trước đó bị lưu nhầm nội dung tiếng Anh vào i18n.vi -> dịch lại từ i18n.en sang Tiếng Việt
+      const cleanEnSnap = JSON.parse(JSON.stringify(record.i18n.en));
+      cleanEnSnap.one_liner = String(cleanEnSnap.one_liner || '').replace(/\(Ngôn ngữ:/gi, '(Language:');
+      cleanEnSnap.executive_summary = String(cleanEnSnap.executive_summary || '').replace(/^Mục tiêu dự án:/i, 'Project overview:');
+      const fixedViSnap = await translateSnapshot(cleanEnSnap, 'vi');
+      record.i18n = { vi: fixedViSnap, en: cleanEnSnap };
+      const updated = applyLangSnapshotToRecord(record, fixedViSnap);
       Object.assign(record, updated);
       return record;
     }
 
     const origSnap = snapshotLangFields(record);
-    const sampleText = `${origSnap.title} ${origSnap.one_liner} ${origSnap.executive_summary}`;
-    const isAlreadyVi = VI_DIACRITIC_REGEX.test(sampleText);
+    origSnap.one_liner = String(origSnap.one_liner || '').replace(/\(Ngôn ngữ:/gi, '(Language:');
+    origSnap.executive_summary = String(origSnap.executive_summary || '').replace(/^Mục tiêu dự án:/i, 'Project overview:');
+    const isAlreadyVi = isSnapshotVietnamese(origSnap);
 
     if (isAlreadyVi) {
       const enSnap = await translateSnapshot(origSnap, 'en');
@@ -1521,7 +1527,16 @@
   async function upgradeExistingItemsToCoherentV3(items) {
     let changed = false;
     for (const item of items) {
-      // Cập nhật nhanh danh mục chủ đề và schema_version không chặn luồng mạng
+      // Tự động phát hiện và dịch sang Tiếng Việt các bản ghi trước đó bị lưu nhầm bằng tiếng Anh trong i18n.vi
+      if (!item.i18n || !item.i18n.vi || !isSnapshotVietnamese(item.i18n.vi)) {
+        try {
+          await ensureRecordBilingual(item);
+          await putItemToIDB(item);
+          changed = true;
+        } catch (e) {
+          console.warn('[ChatVaultEngine] Lỗi tự động dịch lại bản ghi:', item.id, e);
+        }
+      }
       if (item.schema_version !== CURRENT_SCHEMA_VERSION) {
         item.schema_version = CURRENT_SCHEMA_VERSION;
         if (item.taxonomy && (!item.taxonomy.category || item.taxonomy.category === 'Công nghệ, Lập trình & AI' || item.taxonomy.category === 'Tri thức Tổng hợp')) {
@@ -1803,6 +1818,11 @@
         const preDup = await findDuplicateInVault(rawInput, null);
         if (preDup && preDup.matchedItem) {
           const existing = preDup.matchedItem;
+          if (!existing.i18n || !existing.i18n.vi || !isSnapshotVietnamese(existing.i18n.vi)) {
+            await ensureRecordBilingual(existing);
+            await putItemToIDB(existing);
+            await syncBackupToNativeStorage();
+          }
           const newNote = String(options.senderNote || '').trim();
           if (newNote && newNote !== 'Chia sẻ trực tiếp sang Krypto' && existing.chat_context) {
             const curNote = existing.chat_context.sender_note || '';
@@ -1868,6 +1888,8 @@
       return fresh;
     },
     ensureRecordBilingual,
+    isPrimarilyVietnamese,
+    isSnapshotVietnamese,
     getLocalizedRecord,
     saveRecord: async function (record) {
       await putItemToIDB(record);

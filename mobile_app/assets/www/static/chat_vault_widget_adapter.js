@@ -653,6 +653,28 @@
         const summ = item.summary || {};
         const wis = item.wisdom_distillation || {};
         const tl = item.timeline || {};
+
+        // Tự động dịch bổ sung ngay lập tức nếu đang ở chế độ Tiếng Việt mà bản ghi cũ vẫn còn tiếng Anh
+        if (
+          currentLang === 'vi' &&
+          !item._autoTranslatingVi &&
+          global.ChatVaultEngine.isPrimarilyVietnamese &&
+          !global.ChatVaultEngine.isPrimarilyVietnamese(`${summ.one_liner || ''} ${summ.executive_summary || ''}`)
+        ) {
+          item._autoTranslatingVi = true;
+          (async () => {
+            try {
+              const statusEl = container.querySelector('#cvStatus');
+              if (statusEl) statusEl.textContent = '⏳ Đang tự động dịch toàn bộ thẻ sang Tiếng Việt...';
+              await global.ChatVaultEngine.ensureRecordBilingual(item);
+              await global.ChatVaultEngine.saveRecord(item);
+              await refreshList();
+              const newIdx = currentResults.findIndex(x => x.id === item.id);
+              if (newIdx !== -1) showDetail(newIdx, false);
+              if (statusEl) statusEl.textContent = `✓ Đã dịch sang Tiếng Việt: ${(item.metadata && item.metadata.title) || ''}`;
+            } catch (_) {}
+          })();
+        }
         const box = container.querySelector('#cvDetailBox');
         const baseUrl = meta.url || '#';
         const isYt = item.resource_type === 'youtube_video';

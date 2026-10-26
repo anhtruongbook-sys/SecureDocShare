@@ -66,16 +66,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.8.3
-          name: "Krypto v2.8.3 - Tự Động Bóc Tách & Lưu Ngay Khi Share Link Từ GitHub, YouTube, Chrome, Zalo (SingleTask + ClipData Intent)"
+          tag_name: v2.8.4
+          name: "Krypto v2.8.4 - Dịch Tiếng Việt 100% Cho GitHub & YouTube (Khắc Phục Nhận Diện Sai Nhãn Tiếng Việt + Tự Động Dịch Lại Bản Ghi Cũ)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.8.3 (PQC ML-KEM-768 + Chat Knowledge Vault v3.3)
-            - **Khắc phục triệt để lỗi Share Link từ ứng dụng GitHub / YouTube / Chrome / Zalo không tự lưu (`Auto-Save on Share Intent`)**:
-              + **Kiến trúc `android:launchMode="singleTask"`**: Đảm bảo toàn hệ điều hành chỉ duy nhất 1 tiến trình `MainActivity` hoạt động, đưa thẳng phiên Krypto đang chạy ngầm lên tiền cảnh (`onNewIntent`) thay vì mở chồng Activity thứ hai trong Task của GitHub (tránh khóa cơ sở dữ liệu `IndexedDB`).
-              + **Bóc tách toàn diện `Intent` / `ClipData` / `CharSequence` (`MainActivity.kt`)**: Đọc đầy đủ `getCharSequenceExtra(EXTRA_TEXT)`, `ClipData.Item` (`text`, `uri`, `coerceToText`), `ACTION_SEND`, `ACTION_SEND_MULTIPLE` và `text/*` từ Android ShareSheet (Android 12–15 & GitHub Mobile App).
-              + **Khóa chống xung đột khởi tạo kép (`Single-Flight Mount Mutex`)**: Loại bỏ hiện tượng `DOMContentLoaded` và `switchTab('knowledge')` gọi `ChatVaultAdapter.mount()` song song làm mất liên kết vừa chia sẻ.
-              + **Tối ưu tốc độ dịch song ngữ theo lô (`Chunked Parallel Translation`)**: Chia nhỏ chuỗi dịch `<= 1300` ký tự chạy song song, rút ngắn thời gian bóc tách và dịch `README.md` từ GitHub xuống dưới 1.5 giây.
-            - **Kế thừa toàn diện v2.8.2**: Phát hiện trùng lặp 3 tầng (`>= 72%`), tự động nhận dạng & nhóm theo 10 chủ đề, xuất tệp `.md` vào `Download/` kèm hộp thoại Mở/Chia sẻ ngay.
+            ## Ứng dụng Di Động Krypto v2.8.4 (PQC ML-KEM-768 + Chat Knowledge Vault v3.4)
+            - **Khắc phục triệt để lỗi bản ghi GitHub / YouTube vẫn hiển thị tiếng Anh khi đang chọn `🇻🇳 VI`**:
+              + **Nguyên nhân gốc rễ đã xử lý**: Trước đây hàm `extractGitHubRepoCard` ghép nhãn tiếng Việt (`"Ngôn ngữ:"`, `"Mục tiêu dự án:"`) vào văn bản tiếng Anh trước khi kiểm tra ngôn ngữ bằng `VI_DIACRITIC_REGEX.test(...)`, khiến bộ kiểm tra tưởng nhầm toàn bộ đoạn tiếng Anh đã là tiếng Việt và bỏ qua bước dịch.
+              + **Bộ nhận diện tỷ lệ từ Tiếng Việt thực chất (`isPrimarilyVietnamese` >= 16%)**: Loại bỏ các nhãn giao diện hệ thống và tính tỷ lệ từ có dấu tiếng Việt thực tế trên toàn văn bản trước khi quyết định dịch.
+              + **Tự động dịch lại ngay các bản ghi cũ bị lưu tiếng Anh (`Auto-Heal Untranslated VI Records`)**: Khi mở ứng dụng hoặc bấm xem chi tiết một bản ghi cũ (như `K-Dense-AI/scientific-agent-skills`), nếu phát hiện `i18n.vi` đang là tiếng Anh, hệ thống tự động dịch toàn bộ tiêu đề, thông điệp trọng tâm, tổng quan và các luận điểm sang Tiếng Việt ngay lập tức.
+            - **Kế thừa toàn diện v2.8.3**: Tự động lưu khi Share từ GitHub/YouTube/Zalo (`singleTask` + `ClipData`), phát hiện trùng lặp 3 tầng, tự động nhóm theo 10 chủ đề.
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk
