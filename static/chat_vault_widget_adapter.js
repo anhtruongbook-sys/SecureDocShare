@@ -654,6 +654,28 @@
         const wis = item.wisdom_distillation || {};
         const tl = item.timeline || {};
 
+        // Tự động bóc tách lại ngay lập tức nếu bản ghi Facebook/Web cũ bị rỗng ("0 đoạn nội dung")
+        if (
+          !item._autoReExtractingEmpty &&
+          global.ChatVaultEngine.isEmptyOrIncompleteWebRecord &&
+          global.ChatVaultEngine.isEmptyOrIncompleteWebRecord(item)
+        ) {
+          item._autoReExtractingEmpty = true;
+          (async () => {
+            try {
+              const statusEl = container.querySelector('#cvStatus');
+              if (statusEl) statusEl.textContent = '⏳ Đang bóc tách lại toàn văn nội dung bài viết...';
+              const fresh = await global.ChatVaultEngine.reExtractRecord(item.id);
+              await refreshList();
+              if (fresh) {
+                const newIdx = currentResults.findIndex(x => x.id === fresh.id);
+                if (newIdx !== -1) showDetail(newIdx, false);
+                if (statusEl) statusEl.textContent = `✓ Đã khôi phục đầy đủ nội dung: ${(fresh.metadata && fresh.metadata.title) || ''}`;
+              }
+            } catch (_) {}
+          })();
+        }
+
         // Tự động dịch bổ sung ngay lập tức nếu đang ở chế độ Tiếng Việt mà bản ghi cũ vẫn còn tiếng Anh
         if (
           currentLang === 'vi' &&

@@ -15,9 +15,10 @@
 (function (global) {
   'use strict';
 
-  const CURRENT_SCHEMA_VERSION = 4;
+  const CURRENT_SCHEMA_VERSION = 5;
   const YOUTUBE_REGEX = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i;
   const GITHUB_REGEX = /https?:\/\/(?:www\.)?github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)/i;
+  const FACEBOOK_REGEX = /https?:\/\/(?:www\.|m\.|mbasic\.|web\.)?(?:facebook\.com|fb\.watch|fb\.com)\/[^\s<>"']+/i;
   const URL_REGEX = /(https?:\/\/[^\s<>"']+)/i;
   const VI_DIACRITIC_REGEX = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
 
@@ -25,7 +26,8 @@
     '🛡️ An toàn Thông tin & Kiểm toán Bảo mật': [
       'security', 'security-audit', 'vulnerability', 'vulnerabilities', 'pen-test', 'exploit',
       'devsecops', 'attack-classes', 'memory-safety', 'prompt-injection', 'cryptography', 'pqc',
-      'ml-kem', 'cipher', 'bảo mật', 'an toàn thông tin', 'lỗ hổng', 'kiểm toán bảo mật', 'mật mã'
+      'ml-kem', 'cipher', 'bảo mật', 'an toàn thông tin', 'lỗ hổng', 'kiểm toán bảo mật', 'mật mã',
+      'cve-', 'rce', 'kiểm chứng hình thức', 'formal verification', 'lean verification'
     ],
     '📈 Chiến lược RevOps, Kinh doanh & Quản trị': [
       'revops', 'revenue operations', 'company brain', 'hubspot', 'salesforce', 'crm', 'go-to-market',
@@ -114,7 +116,12 @@
       .replace(/&#39;/g, "'")
       .replace(/&apos;/g, "'")
       .replace(/&#x27;/gi, "'")
-      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+        try { return String.fromCodePoint(parseInt(hex, 16)); } catch (__) { return ''; }
+      })
+      .replace(/&#(\d+);/g, (_, code) => {
+        try { return String.fromCodePoint(Number(code)); } catch (__) { return ''; }
+      });
     return txt;
   }
 
@@ -1085,6 +1092,482 @@
   /**
    * 5. BỘ ĐIỀU PHỐI ĐA NĂNG (UNIVERSAL INGEST ROUTER)
    */
+  function extractMetaTagContent(rawHtml, propOrName) {
+    if (!rawHtml) return '';
+    const escaped = propOrName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re1 = new RegExp(`<meta[^>]+(?:property|name)=["']${escaped}["'][^>]+content=["']([^"']*)["']`, 'i');
+    const m1 = rawHtml.match(re1);
+    if (m1 && m1[1]) return decodeHtmlEntities(m1[1]).trim();
+    const re2 = new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${escaped}["']`, 'i');
+    const m2 = rawHtml.match(re2);
+    if (m2 && m2[1]) return decodeHtmlEntities(m2[1]).trim();
+    return '';
+  }
+
+  function isAllCapsSectionHeading(line) {
+    const s = String(line || '').trim();
+    if (s.length < 6 || s.length > 115) return false;
+    if (/[.,;:]$/.test(s)) return false;
+    const words = s.split(/\s+/);
+    if (words.length < 2) return false;
+    const letters = (s.match(/[A-Za-zÀ-ỹ]/g) || []);
+    if (letters.length < 4) return false;
+    return s === s.toUpperCase();
+  }
+
+  function clipAtSentenceBoundary(text, maxChars = 480) {
+    const s = String(text || '').replace(/\s+/g, ' ').trim();
+    if (s.length <= maxChars) return s;
+    const slice = s.slice(0, maxChars);
+    const lastPeriod = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '));
+    if (lastPeriod >= Math.floor(maxChars * 0.55)) {
+      return slice.slice(0, lastPeriod + 1).trim();
+    }
+    return slice.trim() + '...';
+  }
+
+  function parseStructuredArticleSections(fullText, fallbackTitle = '') {
+    const rawLines = String(fullText || '')
+      .split(/\r?\n/)
+      .map(l => l.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+
+    let detectedMainTitle = '';
+    const sections = [];
+    let currentSection = null;
+
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i];
+      // Bỏ qua các dòng chú thích mở đầu trong ngoặc đơn ngắn
+      if (/^[\(\[].*[\)\]]$/.test(line) && line.length < 130) {
+        continue;
+      }
+
+      const mdMatch = line.match(/^#{1,4}\s+(.{4,115})$/);
+      const numMatch = line.match(/^(?:Phần|Mục|Chương|Part|Section|\d+[\.\)]|[IVX]+[\.\)])\s+(.{4,115})$/i);
+      const isCaps = isAllCapsSectionHeading(line);
+
+      if (mdMatch || numMatch || isCaps) {
+        const headingText = mdMatch ? mdMatch[1].trim() : line;
+        if (i === 0 && !detectedMainTitle) {
+          detectedMainTitle = headingText;
+          currentSection = {
+            heading: `Bối cảnh & Đặt vấn đề: ${headingText}`,
+            paragraphs: []
+          };
+          sections.push(currentSection);
+        } else {
+          currentSection = {
+            heading: headingText,
+            paragraphs: []
+          };
+          sections.push(currentSection);
+        }
+      } else {
+        if (!currentSection) {
+          currentSection = {
+            heading: 'Tổng quan & Đặt vấn đề',
+            paragraphs: []
+          };
+          sections.push(currentSection);
+        }
+        currentSection.paragraphs.push(line);
+      }
+    }
+
+    const nonEmptySections = sections.filter(sec => sec.paragraphs.length > 0);
+
+    // Nếu văn bản không có tiêu đề con tường minh nhưng có nhiều đoạn văn -> tự động chia thành 4-6 phần mạch lạc
+    if (nonEmptySections.length <= 1 && rawLines.length >= 4) {
+      const substantiveParas = rawLines.filter(p => p.length >= 45 && !/^[\(\[].*[\)\]]$/.test(p));
+      if (substantiveParas.length >= 3) {
+        nonEmptySections.length = 0;
+        const targetGroupCount = Math.min(6, Math.max(3, Math.ceil(substantiveParas.length / 3)));
+        const chunkSize = Math.ceil(substantiveParas.length / targetGroupCount);
+        for (let g = 0; g < substantiveParas.length; g += chunkSize) {
+          const groupParas = substantiveParas.slice(g, g + chunkSize);
+          const firstSent = (groupParas[0].split(/(?<=[.!?])\s+/)[0] || groupParas[0]).slice(0, 78);
+          nonEmptySections.push({
+            heading: firstSent.length < groupParas[0].length ? `${firstSent}...` : firstSent,
+            paragraphs: groupParas
+          });
+        }
+      }
+    }
+
+    // Tổng hợp tất cả đoạn văn thực chất
+    const allParas = [];
+    for (const sec of nonEmptySections) {
+      for (const p of sec.paragraphs) {
+        if (p.length >= 25) allParas.push(p);
+      }
+    }
+    if (allParas.length === 0 && rawLines.length > 0) {
+      allParas.push(...rawLines);
+    }
+
+    const firstPara = allParas[0] || fallbackTitle;
+    const lastPara = allParas.length > 1 ? allParas[allParas.length - 1] : '';
+    const oneLiner = clipAtSentenceBoundary(firstPara, 260);
+
+    // Xây dựng Executive Summary tổng hợp mở đầu + các trục nội dung chính + kết luận
+    const sectionTitlesList = nonEmptySections
+      .map(s => s.heading.replace(/^Bối cảnh & Đặt vấn đề:\s*/i, ''))
+      .filter(Boolean);
+    let execSummary = firstPara;
+    if (allParas.length > 2) {
+      const secondPara = allParas[1];
+      execSummary = `${clipAtSentenceBoundary(firstPara, 320)} ${clipAtSentenceBoundary(secondPara, 260)}`;
+    }
+    if (lastPara && lastPara !== firstPara) {
+      execSummary = `${execSummary} Kết luận trọng tâm: ${clipAtSentenceBoundary(lastPara, 260)}`;
+    }
+    execSummary = clipAtSentenceBoundary(execSummary, 860);
+
+    // Xây dựng Chapters & Core Ideas theo từng Phần / Chương mục
+    const chapters = [];
+    const coreIdeas = [];
+    nonEmptySections.slice(0, 8).forEach((sec, idx) => {
+      const secLabel = `Phần ${idx + 1}`;
+      const cleanHeading = sec.heading.replace(/^\d+\.\s*/, '');
+      chapters.push({
+        timestamp: secLabel,
+        seconds: idx,
+        title: `${idx + 1}. ${cleanHeading}`
+      });
+
+      let secSynthesis = sec.paragraphs[0] || '';
+      if (sec.paragraphs.length >= 2) {
+        const lastSecPara = sec.paragraphs[sec.paragraphs.length - 1];
+        const firstPart = clipAtSentenceBoundary(sec.paragraphs[0], 260);
+        const secondPart = clipAtSentenceBoundary(lastSecPara, 220);
+        secSynthesis = (lastSecPara !== sec.paragraphs[0]) ? `${firstPart} ${secondPart}` : firstPart;
+      } else {
+        secSynthesis = clipAtSentenceBoundary(secSynthesis, 450);
+      }
+
+      coreIdeas.push({
+        chapter: `${idx + 1}. ${cleanHeading}`,
+        timestamp: secLabel,
+        seconds: idx,
+        content: secSynthesis
+      });
+    });
+
+    // Rút trích Key Insights (các đoạn có số liệu, dẫn chứng, năm, CVE, nguyên lý cốt lõi)
+    const keyInsights = [];
+    const insightCandidates = allParas.filter(
+      p => p.length >= 90 && (/\b(20\d\d|CVE-|\d+%|\d+\.\d+|nguyên lý|bất biến|kiểm chứng|chứng minh|kiến trúc|lỗ hổng|rủi ro|chi phí|principle|invariant|security)\b/i.test(p))
+    );
+    (insightCandidates.length ? insightCandidates : allParas.slice(1)).slice(0, 5).forEach((p, idx) => {
+      keyInsights.push({
+        timestamp: `Đúc kết ${idx + 1}`,
+        seconds: idx,
+        content: clipAtSentenceBoundary(p, 360)
+      });
+    });
+
+    // Rút trích Actionable Steps (các đoạn khuyến nghị, giải pháp, hướng đi, đào tạo, tái thiết)
+    const actionableSteps = [];
+    const actionCandidates = allParas.filter(
+      p => p.length >= 80 && (/\b(phải|cần|hãy|bắt đầu từ|khuyến nghị|giải pháp|đào tạo|thiết kế|xây dựng|kiểm soát|chuyển đổi|must|should|need to|build|verify)\b/i.test(p))
+    );
+    (actionCandidates.length ? actionCandidates.slice(-4) : allParas.slice(-3)).forEach((p, idx) => {
+      actionableSteps.push({
+        timestamp: `Hành động ${idx + 1}`,
+        seconds: idx,
+        content: clipAtSentenceBoundary(p, 350)
+      });
+    });
+
+    return {
+      detectedMainTitle: detectedMainTitle || fallbackTitle,
+      allParas,
+      oneLiner,
+      execSummary,
+      chapters,
+      coreIdeas,
+      keyInsights,
+      actionableSteps,
+      sectionTitlesList
+    };
+  }
+
+  async function extractFacebookPostCard(extractedUrl, { senderNote = '', sharedBy = 'User', chatGroup = 'General' } = {}) {
+    let htmlText = '';
+    try {
+      htmlText = await hybridHttpRequest({
+        url: extractedUrl,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8'
+        }
+      });
+    } catch (e) {
+      console.warn('[ChatVaultEngine] Lỗi tải Facebook HTML:', e);
+    }
+
+    const ogTitle = extractMetaTagContent(htmlText, 'og:title');
+    const ogDesc = extractMetaTagContent(htmlText, 'og:description');
+    const ogUrl = extractMetaTagContent(htmlText, 'og:url') || extractedUrl;
+
+    // 1. Trích xuất tên tác giả / người đăng từ khối Relay JSON "actors"
+    const actorNames = [];
+    const actorRegex = /"actors"\s*:\s*\[\s*\{\s*"__typename"\s*:\s*"(?:User|Page)"[\s\S]{0,180}?"name"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+    let actMatch;
+    while ((actMatch = actorRegex.exec(htmlText)) !== null) {
+      try {
+        const decodedName = JSON.parse('"' + actMatch[1] + '"').trim();
+        if (decodedName && !actorNames.includes(decodedName)) {
+          actorNames.push(decodedName);
+        }
+      } catch (_) {}
+    }
+
+    // 2. Trích xuất toàn văn nội dung bài viết từ các khối Relay JSON `"text":"..."` trước khi lọc script
+    const relayTexts = [];
+    const textRegex = /"text"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+    let txtMatch;
+    while ((txtMatch = textRegex.exec(htmlText)) !== null) {
+      const rawCandidate = txtMatch[1];
+      if (rawCandidate.length < 40) continue;
+      try {
+        const decodedTxt = JSON.parse('"' + rawCandidate + '"').trim();
+        if (
+          decodedTxt.length >= 40 &&
+          !decodedTxt.includes('{"props":') &&
+          !decodedTxt.includes('function(') &&
+          !relayTexts.includes(decodedTxt)
+        ) {
+          relayTexts.push(decodedTxt);
+        }
+      } catch (_) {}
+    }
+    relayTexts.sort((a, b) => b.length - a.length);
+
+    let fullPostBody = '';
+    if (relayTexts.length > 0) {
+      fullPostBody = relayTexts[0];
+      // Nếu có lời bình của người chia sẻ (ngắn hơn và không nằm trong bài gốc) thì ghép vào
+      if (relayTexts.length > 1 && !fullPostBody.includes(relayTexts[1]) && relayTexts[1].length >= 40) {
+        fullPostBody = `${relayTexts[1]}\n\n${fullPostBody}`;
+      }
+    } else if (ogDesc) {
+      fullPostBody = ogDesc;
+    } else if (senderNote) {
+      fullPostBody = senderNote;
+    }
+
+    let authorLabel = actorNames[0] || ogTitle || 'Facebook';
+    if (actorNames.length >= 2) {
+      const outerSharer = ogTitle && actorNames.find(a => a.toLowerCase() === ogTitle.toLowerCase());
+      const origAuthor = ogTitle && actorNames.find(a => a.toLowerCase() !== ogTitle.toLowerCase());
+      if (outerSharer && origAuthor) {
+        authorLabel = `${origAuthor} (Chia sẻ bởi: ${outerSharer})`;
+      } else {
+        authorLabel = `${actorNames[0]} (Chia sẻ bởi: ${actorNames[1]})`;
+      }
+    }
+
+    const parsed = parseStructuredArticleSections(fullPostBody, ogTitle || 'Bài viết Facebook');
+    let finalTitle = parsed.detectedMainTitle || ogTitle || 'Bài viết chia sẻ từ Facebook';
+    if (finalTitle === ogTitle && parsed.allParas.length > 0) {
+      const firstSentence = (parsed.allParas[0].split(/(?<=[.!?])\s+/)[0] || parsed.allParas[0]).slice(0, 95);
+      finalTitle = `${firstSentence} — ${authorLabel}`;
+    } else if (authorLabel && !finalTitle.toLowerCase().includes(authorLabel.toLowerCase())) {
+      finalTitle = `${finalTitle} — ${authorLabel}`;
+    }
+
+    const pseudoSegments = parsed.allParas.map((p, i) => ({
+      timestamp: `Đoạn ${i + 1}`,
+      start_seconds: i,
+      text: p
+    }));
+
+    const { topKeywords } = await computeTfIdfScoresAsync(pseudoSegments, finalTitle);
+    const category = detectCategory(`${finalTitle} ${senderNote} ${fullPostBody.slice(0, 3000)}`, finalTitle, topKeywords);
+    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const wordCount = fullPostBody ? fullPostBody.split(/\s+/).filter(Boolean).length : 0;
+
+    return {
+      id: `web_${simpleHash(extractedUrl)}`,
+      schema_version: CURRENT_SCHEMA_VERSION,
+      resource_type: 'web_article',
+      metadata: {
+        url: extractedUrl,
+        canonical_url: ogUrl,
+        title: finalTitle,
+        channel: `Facebook • ${authorLabel}`,
+        duration: `${parsed.coreIdeas.length} phần • ${ parsed.allParas.length } đoạn (${wordCount} từ)`,
+        publish_date: nowStr.slice(0, 10),
+        extracted_at: nowStr
+      },
+      chat_context: {
+        shared_by: sharedBy,
+        chat_group: chatGroup,
+        shared_at: nowStr,
+        sender_note: senderNote || `Chia sẻ bài viết từ Facebook (${authorLabel})`
+      },
+      taxonomy: {
+        category,
+        tags: topKeywords.slice(0, 10),
+        search_aliases: [
+          removeVietnameseAccents(finalTitle),
+          removeVietnameseAccents(authorLabel),
+          removeVietnameseAccents(category)
+        ]
+      },
+      summary: {
+        one_liner: parsed.oneLiner || finalTitle,
+        executive_summary: parsed.execSummary || finalTitle
+      },
+      wisdom_distillation: {
+        core_ideas: parsed.coreIdeas,
+        key_insights: parsed.keyInsights,
+        actionable_steps: parsed.actionableSteps,
+        facts_and_metrics: [],
+        mentioned_references: [{ name: finalTitle, url: ogUrl, type: 'facebook_post' }]
+      },
+      timeline: {
+        chapters: parsed.chapters,
+        visual_slides: []
+      },
+      transcript_corpus: pseudoSegments
+    };
+  }
+
+  async function extractWebArticleCard(extractedUrl, { senderNote = '', sharedBy = 'User', chatGroup = 'General' } = {}) {
+    let htmlText = '';
+    try {
+      htmlText = await hybridHttpRequest({
+        url: extractedUrl,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8'
+        }
+      });
+    } catch (_) {
+      htmlText = `<title>${extractedUrl}</title><p>${senderNote}</p>`;
+    }
+
+    const ogTitle = extractMetaTagContent(htmlText, 'og:title') || extractMetaTagContent(htmlText, 'twitter:title');
+    const ogDesc = extractMetaTagContent(htmlText, 'og:description') || extractMetaTagContent(htmlText, 'description');
+
+    // Quét thêm JSON-LD articleBody / description trước khi xóa thẻ <script>
+    const jsonLdBodies = [];
+    const jsonLdMatches = htmlText.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+    for (const m of jsonLdMatches) {
+      try {
+        const parsedLd = JSON.parse(m[1].trim());
+        const items = Array.isArray(parsedLd) ? parsedLd : [parsedLd];
+        for (const it of items) {
+          if (it && typeof it.articleBody === 'string' && it.articleBody.trim().length > 60) {
+            jsonLdBodies.push(it.articleBody.trim());
+          } else if (it && typeof it.description === 'string' && it.description.trim().length > 60) {
+            jsonLdBodies.push(it.description.trim());
+          }
+        }
+      } catch (_) {}
+    }
+
+    const strippedHtml = htmlText
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<nav[\s\S]*?<\/nav>/gi, ' ')
+      .replace(/<header[\s\S]*?<\/header>/gi, ' ')
+      .replace(/<footer[\s\S]*?<\/footer>/gi, ' ')
+      .replace(/<svg[\s\S]*?<\/svg>/gi, ' ');
+
+    const titleMatch = strippedHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const rawTitle = ogTitle || (titleMatch ? decodeHtmlEntities(titleMatch[1]).replace(/\s+/g, ' ').trim() : extractedUrl);
+
+    const blockLines = [];
+    const blockMatches = strippedHtml.matchAll(/<(h1|h2|h3|p|li|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi);
+    for (const m of blockMatches) {
+      const tag = m[1].toLowerCase();
+      const text = decodeHtmlEntities(m[2].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+      if (!text || CONVERSATIONAL_NOISE_RE.test(text) || text.includes('{"props":')) continue;
+      if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
+        if (text.length >= 6 && text.length <= 120) {
+          blockLines.push(`## ${text}`);
+        }
+      } else if (text.length >= 45) {
+        blockLines.push(text);
+      }
+    }
+
+    if (blockLines.length === 0 && jsonLdBodies.length > 0) {
+      blockLines.push(...jsonLdBodies.join('\n').split(/\r?\n/).filter(Boolean));
+    }
+    if (blockLines.length === 0 && ogDesc) {
+      blockLines.push(ogDesc);
+    }
+    if (blockLines.length === 0 && senderNote) {
+      blockLines.push(senderNote);
+    }
+
+    const fullArticleText = blockLines.join('\n');
+    const parsed = parseStructuredArticleSections(fullArticleText, rawTitle);
+    const pseudoSegments = parsed.allParas.slice(0, 40).map((p, i) => ({
+      timestamp: `Đoạn ${i + 1}`,
+      start_seconds: i,
+      text: p
+    }));
+
+    const { topKeywords } = await computeTfIdfScoresAsync(pseudoSegments, rawTitle);
+    const category = detectCategory(`${rawTitle} ${senderNote} ${fullArticleText.slice(0, 2500)}`, rawTitle, topKeywords);
+    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    let hostname = 'Web';
+    try { hostname = new URL(extractedUrl).hostname.replace(/^www\./, ''); } catch (_) {}
+
+    return {
+      id: `web_${simpleHash(extractedUrl)}`,
+      schema_version: CURRENT_SCHEMA_VERSION,
+      resource_type: 'web_article',
+      metadata: {
+        url: extractedUrl,
+        title: rawTitle,
+        channel: hostname,
+        duration: `${parsed.coreIdeas.length || 1} phần • ${pseudoSegments.length} đoạn nội dung`,
+        publish_date: nowStr.slice(0, 10),
+        extracted_at: nowStr
+      },
+      chat_context: {
+        shared_by: sharedBy,
+        chat_group: chatGroup,
+        shared_at: nowStr,
+        sender_note: senderNote || 'Lưu từ liên kết chia sẻ qua chat'
+      },
+      taxonomy: {
+        category,
+        tags: topKeywords.slice(0, 8),
+        search_aliases: [removeVietnameseAccents(rawTitle), removeVietnameseAccents(category)]
+      },
+      summary: {
+        one_liner: parsed.oneLiner || ogDesc || rawTitle,
+        executive_summary: parsed.execSummary || ogDesc || rawTitle
+      },
+      wisdom_distillation: {
+        core_ideas: parsed.coreIdeas.length ? parsed.coreIdeas : [{
+          chapter: '1. Nội dung chính',
+          timestamp: 'Phần 1',
+          seconds: 0,
+          content: ogDesc || senderNote || rawTitle
+        }],
+        key_insights: parsed.keyInsights,
+        actionable_steps: parsed.actionableSteps,
+        facts_and_metrics: [],
+        mentioned_references: [{ name: rawTitle, url: extractedUrl, type: 'web_source' }]
+      },
+      timeline: { chapters: parsed.chapters, visual_slides: [] },
+      transcript_corpus: pseudoSegments
+    };
+  }
+
   async function ingestAnyInput(rawInput, { senderNote = '', sharedBy = 'User', chatGroup = 'General' } = {}) {
     const cleaned = String(rawInput || '').trim();
     if (!cleaned) throw new Error('Nội dung đầu vào trống.');
@@ -1111,83 +1594,19 @@
         });
       }
 
-      // Với bài viết Web thông thường: lọc sạch thẻ script/style/nav/header/footer trước khi rút trích đoạn văn
-      let htmlText = '';
-      try {
-        htmlText = await hybridHttpRequest({
-          url: extractedUrl,
-          method: 'GET',
-          headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14)' }
+      if (FACEBOOK_REGEX.test(extractedUrl)) {
+        return await extractFacebookPostCard(extractedUrl, {
+          senderNote: mergedNote,
+          sharedBy,
+          chatGroup
         });
-      } catch (_) {
-        htmlText = `<title>${extractedUrl}</title><p>${mergedNote}</p>`;
       }
 
-      const strippedHtml = htmlText
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<nav[\s\S]*?<\/nav>/gi, ' ')
-        .replace(/<header[\s\S]*?<\/header>/gi, ' ')
-        .replace(/<footer[\s\S]*?<\/footer>/gi, ' ')
-        .replace(/<svg[\s\S]*?<\/svg>/gi, ' ');
-
-      const titleMatch = strippedHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-      const title = titleMatch ? decodeHtmlEntities(titleMatch[1]).replace(/\s+/g, ' ').trim() : extractedUrl;
-      const pMatches = Array.from(strippedHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
-        .map(m => decodeHtmlEntities(m[1].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim())
-        .filter(t => t.length >= 60 && !CONVERSATIONAL_NOISE_RE.test(t) && !t.includes('{"props":'));
-
-      const pseudoSegments = pMatches.slice(0, 25).map((p, i) => ({
-        timestamp: `Đoạn ${i + 1}`,
-        start_seconds: i,
-        text: p
-      }));
-      const { topKeywords } = await computeTfIdfScoresAsync(pseudoSegments, title);
-      const category = detectCategory(`${title} ${mergedNote} ${pMatches.slice(0, 10).join(' ')}`, title, topKeywords);
-      const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
-
-      return {
-        id: `web_${simpleHash(extractedUrl)}`,
-        schema_version: CURRENT_SCHEMA_VERSION,
-        resource_type: 'web_article',
-        metadata: {
-          url: extractedUrl,
-          title,
-          channel: new URL(extractedUrl).hostname.replace(/^www\./, ''),
-          duration: `${pseudoSegments.length} đoạn nội dung`,
-          publish_date: nowStr.slice(0, 10),
-          extracted_at: nowStr
-        },
-        chat_context: {
-          shared_by: sharedBy,
-          chat_group: chatGroup,
-          shared_at: nowStr,
-          sender_note: mergedNote || 'Lưu từ liên kết chia sẻ qua chat'
-        },
-        taxonomy: {
-          category,
-          tags: topKeywords.slice(0, 8),
-          search_aliases: [removeVietnameseAccents(title), removeVietnameseAccents(category)]
-        },
-        summary: {
-          one_liner: pMatches[0] ? pMatches[0].slice(0, 220) : title,
-          executive_summary: pMatches.slice(0, 3).join(' ').slice(0, 680) || title
-        },
-        wisdom_distillation: {
-          core_ideas: pseudoSegments.slice(0, 6).map((s, idx) => ({
-            chapter: `Luận điểm ${idx + 1}`,
-            timestamp: s.timestamp,
-            seconds: 0,
-            content: s.text
-          })),
-          key_insights: [],
-          actionable_steps: [],
-          facts_and_metrics: [],
-          mentioned_references: [{ name: title, url: extractedUrl, type: 'web_source' }]
-        },
-        timeline: { chapters: [], visual_slides: [] },
-        transcript_corpus: pseudoSegments
-      };
+      return await extractWebArticleCard(extractedUrl, {
+        senderNote: mergedNote,
+        sharedBy,
+        chatGroup
+      });
     }
 
     // Trường hợp ghi chú văn bản / tin nhắn chat
@@ -1372,13 +1791,20 @@
 
   async function translateBatchViaGtx(items, targetLang = 'vi') {
     if (!items || !items.length) return [];
-    return await Promise.all(
-      items.map(rawItem => {
-        const str = String(rawItem || '').trim().slice(0, 1200);
-        if (!str) return Promise.resolve('');
-        return translateTextViaGtx(str, targetLang);
-      })
-    );
+    const cleanedItems = items.map(rawItem => String(rawItem || '').replace(/\r?\n/g, ' ').trim().slice(0, 950));
+    const joined = cleanedItems.join('\n[[888]]\n');
+    if (joined.length <= 3800) {
+      const translatedJoined = await translateTextViaGtx(joined, targetLang);
+      const parts = translatedJoined.split(/\s*\[\[\s*888\s*\]\]\s*/);
+      if (parts.length === cleanedItems.length) {
+        return parts.map((p, idx) => p.trim() || cleanedItems[idx]);
+      }
+    }
+    const out = [];
+    for (const str of cleanedItems) {
+      out.push(str ? await translateTextViaGtx(str, targetLang) : '');
+    }
+    return out;
   }
 
   function snapshotLangFields(record) {
@@ -1515,6 +1941,16 @@
     return record;
   }
 
+  function isEmptyOrIncompleteWebRecord(item) {
+    if (!item || !item.metadata || !item.metadata.url || !String(item.metadata.url).startsWith('http')) return false;
+    const wis = item.wisdom_distillation || {};
+    const ideas = wis.core_ideas || [];
+    const dur = String((item.metadata && item.metadata.duration) || '');
+    if (ideas.length === 0 || dur.startsWith('0 đoạn')) return true;
+    if (FACEBOOK_REGEX.test(item.metadata.url) && ideas.length <= 1 && String(item.metadata.title || '').length < 25) return true;
+    return false;
+  }
+
   function isLegacyOrCorruptedRecord(item) {
     if (!item) return true;
     const rawStr = JSON.stringify(item.summary || {}) + JSON.stringify(item.wisdom_distillation || {});
@@ -1527,6 +1963,25 @@
   async function upgradeExistingItemsToCoherentV3(items) {
     let changed = false;
     for (const item of items) {
+      // Tự động khôi phục các bản ghi Facebook / Web trước đó bị rỗng ("0 đoạn nội dung")
+      if (isEmptyOrIncompleteWebRecord(item)) {
+        try {
+          const fresh = await ingestAnyInput(item.metadata.url, {
+            senderNote: (item.chat_context && item.chat_context.sender_note) || '',
+            sharedBy: (item.chat_context && item.chat_context.shared_by) || 'User',
+            chatGroup: (item.chat_context && item.chat_context.chat_group) || 'Zalo / R&D'
+          });
+          if (fresh && fresh.wisdom_distillation && (fresh.wisdom_distillation.core_ideas || []).length > 0) {
+            fresh.id = item.id;
+            await ensureRecordBilingual(fresh);
+            await putItemToIDB(fresh);
+            changed = true;
+            continue;
+          }
+        } catch (e) {
+          console.warn('[ChatVaultEngine] Lỗi tự động bóc tách lại bản ghi rỗng:', item.id, e);
+        }
+      }
       // Tự động phát hiện và dịch sang Tiếng Việt các bản ghi trước đó bị lưu nhầm bằng tiếng Anh trong i18n.vi
       if (!item.i18n || !item.i18n.vi || !isSnapshotVietnamese(item.i18n.vi)) {
         try {
@@ -1816,7 +2271,9 @@
       // Tầng 1: Kiểm tra trùng lặp tức thì trước khi tải mạng (trừ khi forceReExtract = true)
       if (!options.forceReExtract && !options.keepBoth) {
         const preDup = await findDuplicateInVault(rawInput, null);
-        if (preDup && preDup.matchedItem) {
+        if (preDup && preDup.matchedItem && isEmptyOrIncompleteWebRecord(preDup.matchedItem)) {
+          await deleteItemFromIDB(preDup.matchedItem.id);
+        } else if (preDup && preDup.matchedItem) {
           const existing = preDup.matchedItem;
           if (!existing.i18n || !existing.i18n.vi || !isSnapshotVietnamese(existing.i18n.vi)) {
             await ensureRecordBilingual(existing);
@@ -1888,6 +2345,7 @@
       return fresh;
     },
     ensureRecordBilingual,
+    isEmptyOrIncompleteWebRecord,
     isPrimarilyVietnamese,
     isSnapshotVietnamese,
     getLocalizedRecord,

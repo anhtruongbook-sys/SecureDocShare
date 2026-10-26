@@ -62,11 +62,17 @@ class ChatVaultNativeBridge {
     final HttpClient client = HttpClient();
     client.connectionTimeout = const Duration(seconds: 15);
     try {
+      headers.forEach((key, value) {
+        if (key.toLowerCase() == 'user-agent') {
+          client.userAgent = value.toString();
+        }
+      });
+
       final Uri uri = Uri.parse(url);
       final HttpClientRequest request =
           method == 'POST' ? await client.postUrl(uri) : await client.getUrl(uri);
 
-      // Gắn đầy đủ Header tùy chỉnh (bao gồm User-Agent Android YouTube Innertube)
+      // Gắn đầy đủ Header tùy chỉnh (bao gồm User-Agent, Accept, Accept-Language qua cả các bước Redirect 301/302)
       headers.forEach((key, value) {
         if (key.toLowerCase() == 'user-agent') {
           request.headers.set(HttpHeaders.userAgentHeader, value.toString());
