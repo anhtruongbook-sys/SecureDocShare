@@ -89,12 +89,12 @@ def build_pades_block(start_u=755, target_after_close=1329):
     emit(0x0612)                                     # const/4 v6, 0
     emit(0x306E, 0xA32B, 0x0564)                     # invoke-virtual {v4, v6, v5}, String.substring(II)String
     emit(0x070C)                                     # move-result-object v7 (p12B64)
-    emit(0x2071, 0x0584, 0x0067)                     # invoke-static {v7, v6}, Base64.decode(String, I)[B
+    emit(0x2071, 0x0917, 0x0067)                     # invoke-static {v7, v6}, Base64.decode(String, I)[B
     emit(0x070C)                                     # move-result-object v7 (p12Bytes)
     emit(0x05D8, 0x0105)                             # add-int/lit8 v5, v5, 1
     emit(0x206E, 0xA32A, 0x0054)                     # invoke-virtual {v4, v5}, String.substring(I)String
     emit(0x080C)                                     # move-result-object v8 (cmsB64)
-    emit(0x2071, 0x0584, 0x0068)                     # invoke-static {v8, v6}, Base64.decode(String, I)[B
+    emit(0x2071, 0x0917, 0x0068)                     # invoke-static {v8, v6}, Base64.decode(String, I)[B
     emit(0x080C)                                     # move-result-object v8 (cmsBytes)
 
     # Build 'PKCS12' string in v9
@@ -282,24 +282,28 @@ def main():
     # 4. Redirect unit 716 (if-eqz v3, +23 -> 739) to +19 (-> 735, which spills v3->v38 and jumps to 1002)
     struct.pack_into("<HH", orig_dex, insns_off + 716 * 2, 0x0338, 19)
 
-    # 5. Write PAdES CMS SignedData signing block at units 755..967 and jump to it from 1326
+    # 5. Zero-fill units 739..1001 with nop (0x0000) so linear instruction scanner has 100% clean instruction boundaries,
+    #    then write PAdES CMS SignedData signing block at units 755..967 and jump to it from 1326
+    for u_nop in range(739, 1002):
+        struct.pack_into("<H", orig_dex, insns_off + u_nop * 2, 0x0000)
     pades_units = build_pades_block(start_u=755, target_after_close=1329)
     assert 755 + len(pades_units) <= 1001
     for idx_u, val_u in enumerate(pades_units):
         struct.pack_into("<H", orig_dex, insns_off + (755 + idx_u) * 2, val_u)
     struct.pack_into("<HHH", orig_dex, insns_off + 1326 * 2, 0x0029, (755 - 1326) & 0xFFFF, 0x0000)
 
-    # 6. Update Try 30, Try 31, and Try 44 so PAdES block at 755..967 is protected by handler 72 (catch Throwable -> 1363)
+    # 6. Update Try 30, Try 31, and Try 44
     padding_bytes = (4 - ((insns_size * 2) % 4)) % 4
     tries_off = insns_off + insns_size * 2 + padding_bytes
     try30_off = tries_off + 30 * 8
     try31_off = tries_off + 31 * 8
     try44_off = tries_off + 44 * 8
     start_30, count_30, handler_30 = struct.unpack_from("<IHH", orig_dex, try30_off)
+    start_31, count_31, handler_31 = struct.unpack_from("<IHH", orig_dex, try31_off)
     start_44, count_44, handler_44 = struct.unpack_from("<IHH", orig_dex, try44_off)
-    assert start_30 == 686 and start_44 == 1277
+    assert start_30 == 686 and start_31 == 753 and start_44 == 1277
     struct.pack_into("<IHH", orig_dex, try30_off, 686, 739 - 686, handler_30)
-    struct.pack_into("<IHH", orig_dex, try31_off, 755, len(pades_units), handler_44)
+    struct.pack_into("<IHH", orig_dex, try31_off, 1002, 1005 - 1002, handler_31)
     struct.pack_into("<IHH", orig_dex, try44_off, 1326, 3, handler_44)
 
     # Recompute DEX SHA-1 signature and Adler32 checksum
