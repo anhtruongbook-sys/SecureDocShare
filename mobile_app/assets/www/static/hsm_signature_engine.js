@@ -759,6 +759,55 @@ class KryptoHSMSignatureEngine {
     }
 
     /**
+     * 4b. Kết xuất CHỈ Chữ ký tay .PNG nền trong suốt (Không kèm khung viền và thông tin chứng thư)
+     *     để đóng vào góc dưới bên phải hoặc vị trí cụ thể trên trang PDF như ký bút mực thật,
+     *     trong khi chữ ký số PAdES / PKCS#7 vẫn được nhúng ngầm vào tab Digital Signatures của PDF.
+     */
+    static async renderHandwrittenOnlyStampDataUrl(vaultState, includeSignerName = false, customSigDataUrl = '') {
+        const cert = vaultState?.certificate || {};
+        const sigDataUrl = customSigDataUrl || vaultState?.cko_data_handwritten_png?.png_data_url || KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL;
+        if (!includeSignerName) {
+            return sigDataUrl;
+        }
+        return new Promise((resolve) => {
+            let settled = false;
+            const safeResolve = (val) => {
+                if (!settled) {
+                    settled = true;
+                    resolve(val);
+                }
+            };
+            const timer = setTimeout(() => safeResolve(sigDataUrl), 1000);
+            const sigImg = new Image();
+            sigImg.onload = () => {
+                clearTimeout(timer);
+                try {
+                    const w = Math.max(420, sigImg.width + 40);
+                    const h = sigImg.height + 58;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    const dx = Math.round((w - sigImg.width) / 2);
+                    ctx.drawImage(sigImg, dx, 6, sigImg.width, sigImg.height);
+                    ctx.fillStyle = '#003399';
+                    ctx.font = 'bold 26px "Times New Roman", "Segoe UI", serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(cert.signer_name || 'Trương Tuấn Anh', Math.round(w / 2), h - 12);
+                    safeResolve(canvas.toDataURL('image/png'));
+                } catch (e) {
+                    safeResolve(sigDataUrl);
+                }
+            };
+            sigImg.onerror = () => {
+                clearTimeout(timer);
+                safeResolve(sigDataUrl);
+            };
+            sigImg.src = sigDataUrl;
+        });
+    }
+
+    /**
      * 5. Thực thi lệnh ký PKCS#11 C_Sign trên 32 bytes mã băm bằng USER_PIN (Tự động khóa cứng sau 5 lần sai PIN).
      *    Tuân thủ nghiêm ngặt FIPS 140-3: Bắt buộc xác thực đúng USER_PIN, không dùng khóa neo ngầm.
      */

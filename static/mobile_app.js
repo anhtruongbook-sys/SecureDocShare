@@ -1320,7 +1320,8 @@ async function executeMobileLockFiles() {
                 const enableSignature = (currentProtectionLevel === 'sign_only') || (document.getElementById('enable-digital-signature')?.checked || false);
                 let signerName = enableSignature ? (document.getElementById('signer-name-input')?.value || '') : '';
                 const signingReason = enableSignature ? (document.getElementById('signing-reason-input')?.value || '') : '';
-                const sigPos = enableSignature ? (document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page') : 'last_page';
+                const rawSigPos = enableSignature ? (document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page') : 'last_page';
+                const sigPos = enableSignature ? buildEncodedSigPosString(rawSigPos) : 'last_page';
                 const masterPassword = localStorage.getItem('krypto_master_password') || 'KryptoPQC@2026';
                 const compressPdf = document.getElementById('compress-pdf-checkbox')?.checked !== false;
 
@@ -1353,10 +1354,19 @@ async function executeMobileLockFiles() {
                                 file.name
                             );
                             if (!signerName) signerName = hsmVault.certificate.signer_name;
-                            if (currentSignatureMode === 'vault' || !effectiveSigImageB64) {
+                            const includeSignerName = document.getElementById('sig-include-signer-name')?.checked || false;
+                            if (currentSignatureVisualStyle === 'invisible') {
+                                effectiveSigImageB64 = '';
+                            } else if (currentSignatureVisualStyle === 'full_stamp') {
                                 effectiveSigImageB64 = await window.KryptoHSMSignatureEngine.renderCompositePAdESStampDataUrl(
                                     hsmVault,
                                     signingReason || 'Phê duyệt & Ký số phát hành'
+                                );
+                            } else {
+                                effectiveSigImageB64 = await window.KryptoHSMSignatureEngine.renderHandwrittenOnlyStampDataUrl(
+                                    hsmVault,
+                                    includeSignerName,
+                                    (currentSignatureMode === 'custom-img') ? customSignatureImageBase64 : ''
                                 );
                             }
                             const sendSmime = document.getElementById('enable-smime-email-notify')?.checked;
@@ -2219,22 +2229,206 @@ function generateReleaseCode() {
 // =============================================================
 // MODULE 3: CHỮ KÝ SỐ & CON DẤU ĐIỆN TỬ
 // =============================================================
+let currentSignatureVisualStyle = 'handwritten_only'; // 'handwritten_only' | 'full_stamp' | 'invisible'
+let currentSignaturePlacementPreset = 'bottom_right'; // 'bottom_right' | 'bottom_center' | 'bottom_left' | 'custom'
+let currentSigXPct = 64;
+let currentSigYPct = 6;
+let currentSigWPct = 26;
+let __sigPadEventsBound = false;
+
 function toggleDigitalSignatureOption() {
     const checkbox = document.getElementById('enable-digital-signature');
     const panel = document.getElementById('digital-signature-panel');
     if (checkbox && panel) {
         panel.style.display = checkbox.checked ? 'block' : 'none';
         if (checkbox.checked) {
-            showToast('✍️ Đã kích hoạt Chữ Ký Số & Con Dấu Điện Tử');
+            updateInteractiveSigPreview();
+            showToast('✍️ Đã kích hoạt Chữ Ký Số & Chữ Ký Tay (.PNG)');
         }
     }
 }
 
 function setSignatureMode(mode) {
     currentSignatureMode = mode;
-    document.querySelectorAll('.btn-sig-chip').forEach(c => c.classList.remove('active'));
+    ['sig-mode-vault', 'sig-mode-custom-img', 'sig-mode-p12'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
     const chip = document.getElementById('sig-mode-' + mode);
     if (chip) chip.classList.add('active');
+    updateInteractiveSigPreview();
+}
+
+function setSignatureVisualStyle(style) {
+    currentSignatureVisualStyle = style;
+    ['sig-visual-handwritten', 'sig-visual-full', 'sig-visual-invisible'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
+    const mapId = {
+        handwritten_only: 'sig-visual-handwritten',
+        full_stamp: 'sig-visual-full',
+        invisible: 'sig-visual-invisible'
+    };
+    const activeBtn = document.getElementById(mapId[style]);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    const includeNameWrap = document.getElementById('sig-include-name-wrap');
+    if (includeNameWrap) {
+        includeNameWrap.style.display = (style === 'handwritten_only') ? 'inline-flex' : 'none';
+    }
+    const placementControls = document.getElementById('sig-placement-controls');
+    if (placementControls) {
+        placementControls.style.display = (style === 'invisible') ? 'none' : 'block';
+    }
+    updateInteractiveSigPreview();
+}
+
+function onSigPageOptionChange() {
+    const checked = document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page';
+    const customPageInput = document.getElementById('sig-custom-page-input');
+    if (customPageInput) {
+        customPageInput.style.display = (checked === 'custom_page') ? 'inline-block' : 'none';
+    }
+}
+
+function setSignaturePlacementPreset(preset) {
+    currentSignaturePlacementPreset = preset;
+    ['sig-place-br', 'sig-place-bc', 'sig-place-bl', 'sig-place-custom'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
+    const btnMap = {
+        bottom_right: 'sig-place-br',
+        bottom_center: 'sig-place-bc',
+        bottom_left: 'sig-place-bl',
+        custom: 'sig-place-custom'
+    };
+    const activeEl = document.getElementById(btnMap[preset]);
+    if (activeEl) activeEl.classList.add('active');
+
+    const defaultW = (currentSignatureVisualStyle === 'full_stamp') ? 32 : 26;
+    if (preset === 'bottom_right') {
+        currentSigXPct = 64;
+        currentSigYPct = 6;
+        currentSigWPct = defaultW;
+    } else if (preset === 'bottom_center') {
+        currentSigXPct = 37;
+        currentSigYPct = 6;
+        currentSigWPct = defaultW;
+    } else if (preset === 'bottom_left') {
+        currentSigXPct = 8;
+        currentSigYPct = 6;
+        currentSigWPct = defaultW;
+    }
+
+    const customPanel = document.getElementById('sig-custom-xy-panel');
+    if (customPanel) {
+        customPanel.style.display = (preset === 'custom') ? 'block' : 'none';
+    }
+    syncSigSlidersAndMarker();
+    if (preset === 'custom') {
+        bindInteractiveSigPadEvents();
+        updateInteractiveSigPreview();
+    }
+}
+
+function syncSigSlidersAndMarker() {
+    const xSlider = document.getElementById('sig-x-pct-slider');
+    const ySlider = document.getElementById('sig-y-pct-slider');
+    const wSlider = document.getElementById('sig-w-pct-slider');
+    const xLbl = document.getElementById('sig-x-val-label');
+    const yLbl = document.getElementById('sig-y-val-label');
+    const wLbl = document.getElementById('sig-w-val-label');
+
+    if (xSlider) xSlider.value = currentSigXPct;
+    if (ySlider) ySlider.value = currentSigYPct;
+    if (wSlider) wSlider.value = currentSigWPct;
+    if (xLbl) xLbl.textContent = currentSigXPct;
+    if (yLbl) yLbl.textContent = currentSigYPct;
+    if (wLbl) wLbl.textContent = currentSigWPct;
+
+    const marker = document.getElementById('sig-draggable-marker');
+    if (marker) {
+        marker.style.left = currentSigXPct + '%';
+        marker.style.bottom = currentSigYPct + '%';
+        marker.style.width = currentSigWPct + '%';
+    }
+}
+
+function onSigSliderChange() {
+    const xSlider = document.getElementById('sig-x-pct-slider');
+    const ySlider = document.getElementById('sig-y-pct-slider');
+    const wSlider = document.getElementById('sig-w-pct-slider');
+    if (wSlider) currentSigWPct = Math.max(10, Math.min(60, parseInt(wSlider.value, 10) || 26));
+    if (xSlider) currentSigXPct = Math.max(1, Math.min(96 - currentSigWPct, parseInt(xSlider.value, 10) || 64));
+    if (ySlider) currentSigYPct = Math.max(1, Math.min(90, parseInt(ySlider.value, 10) || 6));
+    syncSigSlidersAndMarker();
+}
+
+function bindInteractiveSigPadEvents() {
+    if (__sigPadEventsBound) return;
+    const pad = document.getElementById('sig-interactive-page-pad');
+    if (!pad) return;
+    __sigPadEventsBound = true;
+
+    let dragging = false;
+    const updateFromClientXY = (clientX, clientY) => {
+        const rect = pad.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const relX = ((clientX - rect.left) / rect.width) * 100;
+        const relYFromBottom = ((rect.bottom - clientY) / rect.height) * 100;
+        currentSigXPct = Math.round(Math.max(2, Math.min(96 - currentSigWPct, relX - currentSigWPct / 2)));
+        currentSigYPct = Math.round(Math.max(2, Math.min(88, relYFromBottom - 4)));
+        syncSigSlidersAndMarker();
+    };
+
+    pad.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        try { pad.setPointerCapture(e.pointerId); } catch (_) {}
+        updateFromClientXY(e.clientX, e.clientY);
+    });
+    pad.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        updateFromClientXY(e.clientX, e.clientY);
+    });
+    pad.addEventListener('pointerup', () => { dragging = false; });
+    pad.addEventListener('pointercancel', () => { dragging = false; });
+}
+
+async function updateInteractiveSigPreview() {
+    const imgEl = document.getElementById('sig-draggable-img');
+    if (!imgEl || !window.KryptoHSMSignatureEngine) return;
+    try {
+        const vault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
+        const includeName = document.getElementById('sig-include-signer-name')?.checked || false;
+        if (currentSignatureVisualStyle === 'full_stamp') {
+            imgEl.src = await window.KryptoHSMSignatureEngine.renderCompositePAdESStampDataUrl(vault, 'Phê duyệt & Ký số');
+        } else {
+            imgEl.src = await window.KryptoHSMSignatureEngine.renderHandwrittenOnlyStampDataUrl(vault, includeName, customSignatureImageBase64);
+        }
+        syncSigSlidersAndMarker();
+    } catch (_) {}
+}
+
+function buildEncodedSigPosString(rawPageRadioVal) {
+    let base9 = 'last_page';
+    let targetPageCode = 0;
+    if (rawPageRadioVal === 'all_pages') {
+        base9 = 'all_pages';
+        targetPageCode = 0;
+    } else if (rawPageRadioVal === 'first_page') {
+        base9 = 'all_pages';
+        targetPageCode = 1;
+    } else if (rawPageRadioVal === 'custom_page') {
+        base9 = 'all_pages';
+        const pNum = parseInt(document.getElementById('sig-custom-page-input')?.value || '1', 10) || 1;
+        targetPageCode = Math.max(1, Math.min(90, pNum));
+    }
+    const x = Math.max(1, Math.min(90, Math.round(currentSigXPct)));
+    const y = Math.max(1, Math.min(90, Math.round(currentSigYPct)));
+    const w = Math.max(8, Math.min(65, Math.round(currentSigWPct)));
+    return base9 + String.fromCharCode(32 + x, 32 + y, 32 + w, 32 + targetPageCode);
 }
 
 function triggerPickSignatureImage() {

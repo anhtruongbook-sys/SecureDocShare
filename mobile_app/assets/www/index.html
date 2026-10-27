@@ -301,16 +301,85 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="sig-position-row" style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                                    <div>
-                                        <span class="micro-label">Vị trí đóng dấu:</span>
-                                        <label class="radio-label-micro"><input type="radio" name="sig-pos" value="last_page" checked> Trang cuối</label>
-                                        <label class="radio-label-micro"><input type="radio" name="sig-pos" value="all_pages"> Tất cả trang</label>
+                                <div class="sig-style-section" style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;">
+                                        <span class="micro-label">Kiểu hiển thị trên trang PDF (Vẫn nhúng chứng thư số PAdES):</span>
+                                        <label id="sig-include-name-wrap" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--primary); font-weight: 600; cursor: pointer;">
+                                            <input type="checkbox" id="sig-include-signer-name" style="width: 13px; height: 13px; margin: 0;" onchange="updateInteractiveSigPreview()">
+                                            <span>Kèm họ tên dưới chữ ký</span>
+                                        </label>
                                     </div>
-                                    <label style="display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--primary); font-weight: 600; cursor: pointer;">
-                                        <input type="checkbox" id="enable-smime-email-notify" checked style="width: 14px; height: 14px; margin: 0;">
-                                        <span>📧 Xuất kèm Email S/MIME kết quả</span>
-                                    </label>
+                                    <div class="sig-mode-chips">
+                                        <button type="button" class="btn-sig-chip active" id="sig-visual-handwritten" onclick="setSignatureVisualStyle('handwritten_only')">✒️ Chỉ Chữ Ký Tay (Không Kèm Thông Tin)</button>
+                                        <button type="button" class="btn-sig-chip" id="sig-visual-full" onclick="setSignatureVisualStyle('full_stamp')">🪪 Con Dấu + Khung Thông Tin</button>
+                                        <button type="button" class="btn-sig-chip" id="sig-visual-invisible" onclick="setSignatureVisualStyle('invisible')">🔒 Ký Số Ẩn</button>
+                                    </div>
+                                </div>
+
+                                <div class="sig-position-row" style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                            <span class="micro-label">Trang ký:</span>
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="last_page" checked onchange="onSigPageOptionChange()"> Trang cuối</label>
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="first_page" onchange="onSigPageOptionChange()"> Trang đầu</label>
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="custom_page" onchange="onSigPageOptionChange()"> Trang số:</label>
+                                            <input type="number" id="sig-custom-page-input" min="1" max="90" value="1" style="width: 44px; padding: 2px 5px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-input, transparent); color: var(--text-title); display: none;">
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="all_pages" onchange="onSigPageOptionChange()"> Tất cả trang</label>
+                                        </div>
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--primary); font-weight: 600; cursor: pointer;">
+                                            <input type="checkbox" id="enable-smime-email-notify" checked style="width: 14px; height: 14px; margin: 0;">
+                                            <span>📧 Xuất kèm Email S/MIME</span>
+                                        </label>
+                                    </div>
+
+                                    <div id="sig-placement-controls" style="margin-top: 6px;">
+                                        <span class="micro-label" style="display: block; margin-bottom: 4px;">Vị trí đặt chữ ký tay trên trang PDF:</span>
+                                        <div class="sig-mode-chips">
+                                            <button type="button" class="btn-sig-chip active" id="sig-place-br" onclick="setSignaturePlacementPreset('bottom_right')">↘️ Góc dưới bên phải</button>
+                                            <button type="button" class="btn-sig-chip" id="sig-place-bc" onclick="setSignaturePlacementPreset('bottom_center')">⬇️ Giữa dưới</button>
+                                            <button type="button" class="btn-sig-chip" id="sig-place-bl" onclick="setSignaturePlacementPreset('bottom_left')">↙️ Góc dưới trái</button>
+                                            <button type="button" class="btn-sig-chip" id="sig-place-custom" onclick="setSignaturePlacementPreset('custom')">🎯 Chọn vị trí cụ thể trên trang</button>
+                                        </div>
+
+                                        <div id="sig-custom-xy-panel" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
+                                            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; text-align: center;">
+                                                👆 Chạm hoặc kéo chữ ký tay vào đúng vị trí cần ký trên trang PDF A4:
+                                            </div>
+                                            <div id="sig-interactive-page-pad" style="position: relative; width: 180px; height: 254px; margin: 0 auto 8px auto; background: #ffffff; border: 1.5px solid #64748b; border-radius: 4px; overflow: hidden; touch-action: none; cursor: crosshair; user-select: none;">
+                                                <div style="padding: 12px 14px; font-size: 7px; color: #94a3b8; line-height: 1.7; pointer-events: none;">
+                                                    <div style="text-align: center; font-weight: 700; color: #475569; margin-bottom: 4px;">MÔ PHỎNG TRANG PDF (A4)</div>
+                                                    <div style="height: 3px; background: #e2e8f0; margin-bottom: 4px; width: 85%;"></div>
+                                                    <div style="height: 3px; background: #e2e8f0; margin-bottom: 4px; width: 100%;"></div>
+                                                    <div style="height: 3px; background: #e2e8f0; margin-bottom: 4px; width: 92%;"></div>
+                                                    <div style="height: 3px; background: #e2e8f0; margin-bottom: 8px; width: 70%;"></div>
+                                                    <div style="height: 3px; background: #e2e8f0; margin-bottom: 4px; width: 96%;"></div>
+                                                    <div style="height: 3px; background: #e2e8f0; margin-bottom: 4px; width: 88%;"></div>
+                                                    <div style="height: 3px; background: #e2e8f0; margin-bottom: 10px; width: 60%;"></div>
+                                                    <div style="display: flex; justify-content: space-between; margin-top: 72px; color: #64748b; font-weight: 600;">
+                                                        <span>Nơi nhận</span>
+                                                        <span>NGƯỜI KÝ / PHÊ DUYỆT</span>
+                                                    </div>
+                                                </div>
+                                                <div id="sig-draggable-marker" style="position: absolute; left: 64%; bottom: 6%; width: 26%; border: 1.5px dashed #003399; background: rgba(0, 51, 153, 0.06); border-radius: 3px; padding: 2px; text-align: center; pointer-events: none;">
+                                                    <img id="sig-draggable-img" src="" alt="Chữ ký" style="width: 100%; height: auto; display: block;" />
+                                                </div>
+                                            </div>
+                                            <div class="dual-inputs-row" style="gap: 8px;">
+                                                <div class="input-col">
+                                                    <label class="micro-label">Ngang từ lề trái (<span id="sig-x-val-label">64</span>%):</label>
+                                                    <input type="range" id="sig-x-pct-slider" min="2" max="85" value="64" oninput="onSigSliderChange()" style="width: 100%;">
+                                                </div>
+                                                <div class="input-col">
+                                                    <label class="micro-label">Cách đáy trang (<span id="sig-y-val-label">6</span>%):</label>
+                                                    <input type="range" id="sig-y-pct-slider" min="2" max="88" value="6" oninput="onSigSliderChange()" style="width: 100%;">
+                                                </div>
+                                                <div class="input-col">
+                                                    <label class="micro-label">Độ rộng chữ ký (<span id="sig-w-val-label">26</span>%):</label>
+                                                    <input type="range" id="sig-w-pct-slider" min="12" max="50" value="26" oninput="onSigSliderChange()" style="width: 100%;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

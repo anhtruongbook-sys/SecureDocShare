@@ -51,7 +51,99 @@ def compute_v2_sha256(sections):
     return top.digest()
 
 
-def build_pades_block(start_u=755, target_after_close=1329):
+def build_sig_placement_block(start_u=703, target_after_place=1002):
+    code = []
+    labels = {}
+    fixups = []
+
+    def emit(*words):
+        code.extend(words)
+
+    def label(name):
+        labels[name] = start_u + len(code)
+
+    def branch16(op_byte, reg, target_label):
+        idx = len(code)
+        cur_u = start_u + idx
+        emit(op_byte | (reg << 8), 0)
+        fixups.append((idx + 1, cur_u, target_label))
+
+    def branch22(op_byte, reg_a, reg_b, target_label):
+        idx = len(code)
+        cur_u = start_u + idx
+        emit(op_byte | (reg_a << 8) | (reg_b << 12), 0)
+        fixups.append((idx + 1, cur_u, target_label))
+
+    def goto16(target_u):
+        cur_u = start_u + len(code)
+        off = (target_u - cur_u) & 0xFFFF
+        emit(0x0029, off)
+
+    def goto16_lbl(target_label):
+        idx = len(code)
+        cur_u = start_u + idx
+        emit(0x0029, 0)
+        fixups.append((idx + 1, cur_u, target_label))
+
+    # If v3 (Image) == null (e.g. invisible signature mode), skip drawing on page
+    branch16(0x38, 3, "L_done")                       # if-eqz v3, L_done
+
+    # Check targetPage = v15.charAt(12) - 32 (0 = use base last_page/all_pages, >=1 = specific 1-based page)
+    emit(0x0013, 0x000C)                              # const/16 v0, 12
+    emit(0x206E, 0xA2FE, 0x000F)                      # invoke-virtual {v15, v0}, String.charAt(I)C
+    emit(0x000A)                                      # move-result v0
+    emit(0x00D8, 0xE000)                              # add-int/lit8 v0, v0, -32
+    branch16(0x3D, 0, "L_page_ok")                    # if-lez v0, L_page_ok
+    branch22(0x33, 6, 0, "L_done")                    # if-ne v6, v0, L_done
+
+    label("L_page_ok")
+    # Compute scalePct = (pageWidth * wPct) / imgWidth
+    emit(0x0174, 0x6C53, 0x0010)                      # invoke-virtual/range {v16}, Rectangle.getWidth()F
+    emit(0x090A)                                      # move-result v9 (pageWidth)
+    emit(0x0013, 0x000B)                              # const/16 v0, 11
+    emit(0x206E, 0xA2FE, 0x000F)                      # invoke-virtual {v15, v0}, String.charAt(I)C
+    emit(0x000A)                                      # move-result v0
+    emit(0x00D8, 0xE000)                              # add-int/lit8 v0, v0, -32 (wPct)
+    emit(0x0082)                                      # int-to-float v0, v0
+    emit(0x90C8)                                      # mul-float/2addr v0, v9 (wPct * pageWidth)
+    emit(0x106E, 0x6A99, 0x0003)                      # invoke-virtual {v3}, Image.getWidth()F
+    emit(0x0B0A)                                      # move-result v11 (imgWidth)
+    emit(0xB0C9)                                      # div-float/2addr v0, v11
+    emit(0x206E, 0x6AB4, 0x0003)                      # invoke-virtual {v3, v0}, Image.scalePercent(F)V
+
+    # Compute absX = (pageWidth * xPct) / 100.0f in v9
+    emit(0x0013, 0x0009)                              # const/16 v0, 9
+    emit(0x206E, 0xA2FE, 0x000F)                      # invoke-virtual {v15, v0}, String.charAt(I)C
+    emit(0x000A)                                      # move-result v0
+    emit(0x00D8, 0xE000)                              # add-int/lit8 v0, v0, -32 (xPct)
+    emit(0x0082)                                      # int-to-float v0, v0
+    emit(0x09C8)                                      # mul-float/2addr v9, v0 (pageWidth * xPct)
+    emit(0x09A9, 0x1909)                              # div-float v9, v9, v25 (/ 100.0f)
+
+    # Compute absY = (pageHeight * yPct) / 100.0f in v11
+    emit(0x0174, 0x6C4A, 0x0010)                      # invoke-virtual/range {v16}, Rectangle.getHeight()F
+    emit(0x0B0A)                                      # move-result v11 (pageHeight)
+    emit(0x0013, 0x000A)                              # const/16 v0, 10
+    emit(0x206E, 0xA2FE, 0x000F)                      # invoke-virtual {v15, v0}, String.charAt(I)C
+    emit(0x000A)                                      # move-result v0
+    emit(0x00D8, 0xE000)                              # add-int/lit8 v0, v0, -32 (yPct)
+    emit(0x0082)                                      # int-to-float v0, v0
+    emit(0x0BC8)                                      # mul-float/2addr v11, v0 (pageHeight * yPct)
+    emit(0x0BA9, 0x190B)                              # div-float v11, v11, v25 (/ 100.0f)
+
+    emit(0x306E, 0x6AB8, 0x0B93)                      # invoke-virtual {v3, v9, v11}, Image.setAbsolutePosition(FF)V
+    emit(0x206E, 0x74DA, 0x003A)                      # invoke-virtual {v10, v3}, PdfContentByte.addImage(Image)V
+
+    label("L_done")
+    emit(0x2608, 0x0003)                              # move-object/from16 v38, v3
+    goto16(target_after_place)                        # goto/16 -> 1002
+
+    for fix_idx, cur_u, lbl in fixups:
+        code[fix_idx] = (labels[lbl] - cur_u) & 0xFFFF
+    return code
+
+
+def build_pades_block(start_u=785, target_after_close=1329):
     code = []
     labels = {}
     fixups = []
@@ -279,18 +371,24 @@ def main():
     for idx_u, val_u in enumerate(sub_units):
         struct.pack_into("<H", orig_dex, insns_off + (1271 + idx_u) * 2, val_u)
 
-    # 4. Redirect unit 716 (if-eqz v3, +23 -> 739) to +19 (-> 735, which spills v3->v38 and jumps to 1002)
-    struct.pack_into("<HH", orig_dex, insns_off + 716 * 2, 0x0338, 19)
+    # 4. At unit 666: use String.startsWith("all_pages") instead of Intrinsics.areEqual so signature_pos can carry coordinate suffix
+    struct.pack_into("<HHH", orig_dex, insns_off + 666 * 2, 0x206E, 0xA327, 0x006F)
 
-    # 5. Zero-fill units 739..1001 with nop (0x0000) so linear instruction scanner has 100% clean instruction boundaries,
-    #    then write PAdES CMS SignedData signing block at units 755..967 and jump to it from 1326
-    for u_nop in range(739, 1002):
+    # 5. Zero-fill units 703..1001 with nop (0x0000), write dynamic signature placement block at 703..782,
+    #    and write PAdES CMS SignedData signing block at units 785..997 and jump to it from 1326
+    for u_nop in range(703, 1002):
         struct.pack_into("<H", orig_dex, insns_off + u_nop * 2, 0x0000)
-    pades_units = build_pades_block(start_u=755, target_after_close=1329)
-    assert 755 + len(pades_units) <= 1001
+    place_units = build_sig_placement_block(start_u=703, target_after_place=1002)
+    assert 703 + len(place_units) <= 784, f"place_units too long: {len(place_units)}"
+    for idx_u, val_u in enumerate(place_units):
+        struct.pack_into("<H", orig_dex, insns_off + (703 + idx_u) * 2, val_u)
+
+    pades_start = 785
+    pades_units = build_pades_block(start_u=pades_start, target_after_close=1329)
+    assert pades_start + len(pades_units) <= 1001
     for idx_u, val_u in enumerate(pades_units):
-        struct.pack_into("<H", orig_dex, insns_off + (755 + idx_u) * 2, val_u)
-    struct.pack_into("<HHH", orig_dex, insns_off + 1326 * 2, 0x0029, (755 - 1326) & 0xFFFF, 0x0000)
+        struct.pack_into("<H", orig_dex, insns_off + (pades_start + idx_u) * 2, val_u)
+    struct.pack_into("<HHH", orig_dex, insns_off + 1326 * 2, 0x0029, (pades_start - 1326) & 0xFFFF, 0x0000)
 
     # 6. Update Try 30, Try 31, and Try 44
     padding_bytes = (4 - ((insns_size * 2) % 4)) % 4
@@ -302,8 +400,8 @@ def main():
     start_31, count_31, handler_31 = struct.unpack_from("<IHH", orig_dex, try31_off)
     start_44, count_44, handler_44 = struct.unpack_from("<IHH", orig_dex, try44_off)
     assert start_30 == 686 and start_31 == 753 and start_44 == 1277
-    struct.pack_into("<IHH", orig_dex, try30_off, 686, 739 - 686, handler_30)
-    struct.pack_into("<IHH", orig_dex, try31_off, 755, len(pades_units), handler_44)
+    struct.pack_into("<IHH", orig_dex, try30_off, 686, len(place_units) + (703 - 686), handler_30)
+    struct.pack_into("<IHH", orig_dex, try31_off, pades_start, len(pades_units), handler_44)
     struct.pack_into("<IHH", orig_dex, try44_off, 1326, 3, handler_44)
 
     # Recompute DEX SHA-1 signature and Adler32 checksum
