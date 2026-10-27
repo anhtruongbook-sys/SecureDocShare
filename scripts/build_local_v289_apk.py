@@ -79,7 +79,7 @@ def build_pades_block(start_u=755, target_after_close=1329):
     emit(0x0513, 0x007C)                             # const/16 v5, 0x7c ('|')
     emit(0x206E, 0xA312, 0x0054)                     # invoke-virtual {v4, v5}, String.indexOf(I)I
     emit(0x050A)                                     # move-result v5 (pipeIdx)
-    branch16(0x3D, 5, "L_do_sign")                   # if-gtz v5, L_do_sign
+    branch16(0x3C, 5, "L_do_sign")                   # if-gtz v5, L_do_sign (0x3C = if-gtz!)
 
     label("L_close")
     emit(0x106E, 0x7CAD, 0x0003)                     # invoke-virtual {v3}, PdfStamper.close()V
@@ -303,7 +303,7 @@ def main():
     start_44, count_44, handler_44 = struct.unpack_from("<IHH", orig_dex, try44_off)
     assert start_30 == 686 and start_31 == 753 and start_44 == 1277
     struct.pack_into("<IHH", orig_dex, try30_off, 686, 739 - 686, handler_30)
-    struct.pack_into("<IHH", orig_dex, try31_off, 1002, 1005 - 1002, handler_31)
+    struct.pack_into("<IHH", orig_dex, try31_off, 755, len(pades_units), handler_44)
     struct.pack_into("<IHH", orig_dex, try44_off, 1326, 3, handler_44)
 
     # Recompute DEX SHA-1 signature and Adler32 checksum

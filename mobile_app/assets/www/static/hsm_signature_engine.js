@@ -1021,7 +1021,7 @@ class KryptoHSMSignatureEngine {
         const orgName = (certInfo.organization || 'IBST-BIM / Krypto HSM Security').trim();
         const serialHexRaw = ((certInfo.serial_hex || '57249B18BBDD2284').replace(/[^0-9A-Fa-f]/g, '') + '57249B18BBDD2284').slice(0, 16);
 
-        const cacheKey = `krypto_hsm_pades_bundle_v3_${serialHexRaw}_${signerName}`;
+        const cacheKey = `krypto_hsm_pades_bundle_v4_${serialHexRaw}_${signerName}`;
         try {
             const cachedBundle = localStorage.getItem(cacheKey);
             if (cachedBundle && cachedBundle.includes('|') && cachedBundle.length > 800) {
@@ -1088,7 +1088,10 @@ class KryptoHSMSignatureEngine {
         // sha256WithRSAEncryption (1.2.840.113549.1.1.11)
         const algId = derSeq(derOid([0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b]), derNull());
         const validity = derSeq(derUtcTime('250101000000Z'), derUtcTime('361231235959Z'));
-        const serialBytes = KryptoHSMSignatureEngine.hexToU8(serialHexRaw);
+        const serialBytes = new Uint8Array(8);
+        for (let i = 0; i < 8; i++) {
+            serialBytes[i] = parseInt(serialHexRaw.slice(i * 2, i * 2 + 2), 16) || (i + 1);
+        }
 
         // X.509v3 KeyUsage: digitalSignature (bit 0) + nonRepudiation/contentCommitment (bit 1) = 0xC0
         const extKeyUsage = derSeq(
@@ -1121,10 +1124,14 @@ class KryptoHSMSignatureEngine {
         const oidKeyBag = [0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x0c, 0x0a, 0x01, 0x01];
         const oidCertBag = [0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x0c, 0x0a, 0x01, 0x03];
         const oidX509Cert = [0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x16, 0x01];
+        const oidFriendlyName = [0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x14];
         const oidLocalKeyId = [0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x15];
         const oidSha1 = [0x2b, 0x0e, 0x03, 0x02, 0x1a];
 
+        // BMPString 'krypto' (UTF-16BE) cho friendlyName để KeyStore.aliases() luôn có alias hợp lệ
+        const bmpKrypto = new Uint8Array([0x00, 0x6b, 0x00, 0x72, 0x00, 0x79, 0x00, 0x70, 0x00, 0x74, 0x00, 0x6f]);
         const bagAttrs = derSet(
+            derSeq(derOid(oidFriendlyName), derSet(derTlv(0x1e, bmpKrypto))),
             derSeq(derOid(oidLocalKeyId), derSet(derTlv(0x04, new Uint8Array([0x01, 0x02, 0x03, 0x04]))))
         );
         const keyBag = derSeq(derOid(oidKeyBag), derTlv(0xa0, pkcs8Bytes), bagAttrs);
@@ -1137,10 +1144,13 @@ class KryptoHSMSignatureEngine {
         const authSafeCi = derSeq(derOid(oidData), derTlv(0xa0, derTlv(0x04, authSafeBytes)));
 
         // PKCS#12 KDF (RFC 7292 Appendix B) cho SHA-1 (v=64, u=20, ID=3, password='', iterations=2)
+        // Với password='' (BMPString 2 bytes null terminator 0x00 0x00), P = 64 bytes 0x00, I = S || P (128 bytes)
         const salt = new Uint8Array([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]);
         const D = new Uint8Array(64).fill(3);
-        const I = new Uint8Array(64);
-        for (let i = 0; i < 64; i++) I[i] = salt[i % salt.length];
+        const S = new Uint8Array(64);
+        for (let i = 0; i < 64; i++) S[i] = salt[i % salt.length];
+        const P = new Uint8Array(64).fill(0);
+        const I = concatU8(S, P);
 
         let A = concatU8(D, I);
         A = new Uint8Array(await crypto.subtle.digest('SHA-1', A));
