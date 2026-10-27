@@ -19,6 +19,7 @@ P12_PASS = b"anhsteam2026"
 
 REPLACEMENTS = {
     "assets/flutter_assets/assets/www/index.html": os.path.join(ROOT, "mobile_app", "assets", "www", "index.html"),
+    "assets/flutter_assets/assets/www/static/app.js": os.path.join(ROOT, "mobile_app", "assets", "www", "static", "app.js"),
     "assets/flutter_assets/assets/www/static/hsm_signature_engine.js": os.path.join(ROOT, "mobile_app", "assets", "www", "static", "hsm_signature_engine.js"),
     "assets/flutter_assets/assets/www/static/mobile_app.js": os.path.join(ROOT, "mobile_app", "assets", "www", "static", "mobile_app.js"),
 }

@@ -391,6 +391,9 @@ function selectProtectionLevel(levelVal, cardEl) {
         if (advBody) advBody.style.display = 'block';
         const sigPanel = document.getElementById('digital-signature-panel');
         if (sigPanel) sigPanel.style.display = 'block';
+        bindInteractiveSigPadEvents();
+        updateInteractiveSigPreview();
+        loadSelectedPdfForSigPreview();
     } else if (levelVal === 'view_only_restricted') {
         if (pwdSection) pwdSection.style.display = 'block';
         if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU GỠ KHÓA <span class="required">*</span>`;
@@ -511,6 +514,7 @@ async function handleFilesSelected(files, context) {
             }
         }
         renderFileListLock();
+        loadSelectedPdfForSigPreview();
 
         if (hasAlreadyLocked) {
             // Nếu người dùng chọn đúng 1 file và file đó đã có mật khẩu:
@@ -722,6 +726,7 @@ function redirectToUnlockWithSelectedFile(idx) {
 function removeLockFile(idx) {
     selectedLockFiles.splice(idx, 1);
     renderFileListLock();
+    loadSelectedPdfForSigPreview();
 }
 
 function renderFileListUnlock() {
@@ -2235,6 +2240,10 @@ let currentSigXPct = 64;
 let currentSigYPct = 6;
 let currentSigWPct = 26;
 let __sigPadEventsBound = false;
+let __activeSigPdfDoc = null;
+let __activeSigPdfFileKey = '';
+let __activeSigPreviewPageNum = 1;
+let __activeSigPdfRenderTask = null;
 
 function toggleDigitalSignatureOption() {
     const checkbox = document.getElementById('enable-digital-signature');
@@ -2242,7 +2251,9 @@ function toggleDigitalSignatureOption() {
     if (checkbox && panel) {
         panel.style.display = checkbox.checked ? 'block' : 'none';
         if (checkbox.checked) {
+            bindInteractiveSigPadEvents();
             updateInteractiveSigPreview();
+            loadSelectedPdfForSigPreview();
             showToast('✍️ Đã kích hoạt Chữ Ký Số & Chữ Ký Tay (.PNG)');
         }
     }
@@ -2290,6 +2301,181 @@ function onSigPageOptionChange() {
     if (customPageInput) {
         customPageInput.style.display = (checked === 'custom_page') ? 'inline-block' : 'none';
     }
+    if (__activeSigPdfDoc) {
+        const total = __activeSigPdfDoc.numPages || 1;
+        if (checked === 'last_page') {
+            __activeSigPreviewPageNum = total;
+        } else if (checked === 'first_page') {
+            __activeSigPreviewPageNum = 1;
+        } else if (checked === 'custom_page') {
+            const p = parseInt(customPageInput?.value || '1', 10) || 1;
+            __activeSigPreviewPageNum = Math.max(1, Math.min(total, p));
+        }
+        renderSigPdfPageCanvas(__activeSigPreviewPageNum);
+    }
+}
+
+function onCustomPageInputChange() {
+    const customPageInput = document.getElementById('sig-custom-page-input');
+    const p = parseInt(customPageInput?.value || '1', 10) || 1;
+    if (__activeSigPdfDoc) {
+        const total = __activeSigPdfDoc.numPages || 1;
+        __activeSigPreviewPageNum = Math.max(1, Math.min(total, p));
+        renderSigPdfPageCanvas(__activeSigPreviewPageNum);
+    }
+}
+
+function stepSigPreviewPage(delta) {
+    if (!__activeSigPdfDoc) {
+        showToast('📄 Vui lòng chọn tệp PDF ở trên để xem và lật từng trang thực tế!');
+        return;
+    }
+    const total = __activeSigPdfDoc.numPages || 1;
+    const nextPage = Math.max(1, Math.min(total, (__activeSigPreviewPageNum || 1) + delta));
+    __activeSigPreviewPageNum = nextPage;
+
+    // Tự động đồng bộ lựa chọn trang ký theo trang đang xem để ký đúng trang đó
+    const customInput = document.getElementById('sig-custom-page-input');
+    if (customInput) customInput.value = String(nextPage);
+
+    const radios = document.querySelectorAll('input[name="sig-pos"]');
+    const curChecked = document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page';
+    if (curChecked !== 'all_pages') {
+        let targetRadioVal = 'custom_page';
+        if (nextPage === total && total > 1) targetRadioVal = 'last_page';
+        else if (nextPage === 1 && total > 1) targetRadioVal = 'first_page';
+        else if (total === 1) targetRadioVal = 'last_page';
+        radios.forEach(r => {
+            r.checked = (r.value === targetRadioVal);
+        });
+        if (customInput) {
+            customInput.style.display = (targetRadioVal === 'custom_page') ? 'inline-block' : 'none';
+        }
+    }
+    renderSigPdfPageCanvas(nextPage);
+}
+
+async function loadSelectedPdfForSigPreview() {
+    const statusEl = document.getElementById('sig-pdf-file-status');
+    const indicatorEl = document.getElementById('sig-preview-page-indicator');
+    const canvas = document.getElementById('sig-pdf-page-canvas');
+    const fallback = document.getElementById('sig-pdf-fallback-mockup');
+    const pad = document.getElementById('sig-interactive-page-pad');
+
+    const pdfFile = (selectedLockFiles || []).find(f => f && f.name && f.name.toLowerCase().endsWith('.pdf'));
+    if (!pdfFile) {
+        __activeSigPdfDoc = null;
+        __activeSigPdfFileKey = '';
+        if (canvas) canvas.style.display = 'none';
+        if (fallback) fallback.style.display = 'block';
+        if (pad) pad.style.height = '396px';
+        if (statusEl) statusEl.textContent = '📄 Chọn tệp PDF ở trên để hiển thị trang thực';
+        if (indicatorEl) indicatorEl.textContent = 'Trang 1 / 1';
+        return;
+    }
+
+    const fileKey = `${pdfFile.name}_${pdfFile.size}_${pdfFile.lastModified || 0}`;
+    if (__activeSigPdfDoc && __activeSigPdfFileKey === fileKey) {
+        await renderSigPdfPageCanvas(__activeSigPreviewPageNum);
+        return;
+    }
+
+    const pdfjs = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+    if (!pdfjs || typeof pdfjs.getDocument !== 'function') {
+        if (statusEl) statusEl.textContent = `📄 ${pdfFile.name} (Chế độ mô phỏng A4)`;
+        return;
+    }
+
+    try {
+        if (statusEl) statusEl.textContent = `⏳ Đang nạp trang thực: ${pdfFile.name}...`;
+        const arrayBuf = await pdfFile.arrayBuffer();
+        const loadingTask = pdfjs.getDocument({
+            data: new Uint8Array(arrayBuf),
+            disableFontFace: false,
+            useSystemFonts: true
+        });
+        const pdfDoc = await loadingTask.promise;
+        __activeSigPdfDoc = pdfDoc;
+        __activeSigPdfFileKey = fileKey;
+
+        const total = pdfDoc.numPages || 1;
+        const customInput = document.getElementById('sig-custom-page-input');
+        if (customInput) customInput.max = String(Math.min(90, total));
+
+        const checked = document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page';
+        if (checked === 'last_page') {
+            __activeSigPreviewPageNum = total;
+        } else if (checked === 'first_page') {
+            __activeSigPreviewPageNum = 1;
+        } else if (checked === 'custom_page') {
+            const p = parseInt(customInput?.value || '1', 10) || 1;
+            __activeSigPreviewPageNum = Math.max(1, Math.min(total, p));
+        } else {
+            __activeSigPreviewPageNum = total;
+        }
+
+        if (statusEl) {
+            const shortName = pdfFile.name.length > 26 ? (pdfFile.name.slice(0, 23) + '...') : pdfFile.name;
+            statusEl.textContent = `📄 ${shortName} (${total} trang)`;
+        }
+        await renderSigPdfPageCanvas(__activeSigPreviewPageNum);
+    } catch (err) {
+        console.warn('Không thể dựng trang PDF thực tế:', err);
+        if (canvas) canvas.style.display = 'none';
+        if (fallback) fallback.style.display = 'block';
+        if (statusEl) statusEl.textContent = `📄 ${pdfFile.name} (Bản mô phỏng A4)`;
+    }
+}
+
+async function renderSigPdfPageCanvas(pageNum) {
+    if (!__activeSigPdfDoc) return;
+    const canvas = document.getElementById('sig-pdf-page-canvas');
+    const fallback = document.getElementById('sig-pdf-fallback-mockup');
+    const pad = document.getElementById('sig-interactive-page-pad');
+    const indicatorEl = document.getElementById('sig-preview-page-indicator');
+    if (!canvas || !pad) return;
+
+    const total = __activeSigPdfDoc.numPages || 1;
+    const safePage = Math.max(1, Math.min(total, pageNum || 1));
+    __activeSigPreviewPageNum = safePage;
+    if (indicatorEl) indicatorEl.textContent = `Trang ${safePage} / ${total}`;
+
+    try {
+        if (__activeSigPdfRenderTask && typeof __activeSigPdfRenderTask.cancel === 'function') {
+            try { __activeSigPdfRenderTask.cancel(); } catch (_) {}
+        }
+        const page = await __activeSigPdfDoc.getPage(safePage);
+        const unscaledVp = page.getViewport({ scale: 1.0 });
+        const padWidth = pad.clientWidth || 280;
+        const aspect = unscaledVp.height / Math.max(1, unscaledVp.width);
+        const targetCssHeight = Math.round(Math.max(180, Math.min(460, padWidth * aspect)));
+        pad.style.height = targetCssHeight + 'px';
+
+        // Render nét cao (2x retina) để chữ văn bản trên trang PDF rõ nét khi căn chữ ký
+        const renderScale = (padWidth * 2.0) / Math.max(1, unscaledVp.width);
+        const viewport = page.getViewport({ scale: renderScale });
+
+        canvas.width = Math.round(viewport.width);
+        canvas.height = Math.round(viewport.height);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const renderTask = page.render({
+            canvasContext: ctx,
+            viewport: viewport
+        });
+        __activeSigPdfRenderTask = renderTask;
+        await renderTask.promise;
+
+        if (fallback) fallback.style.display = 'none';
+        canvas.style.display = 'block';
+        bindInteractiveSigPadEvents();
+        syncSigSlidersAndMarker();
+    } catch (err) {
+        if (err && err.name === 'RenderingCancelledException') return;
+        console.warn('Lỗi vẽ trang PDF:', err);
+    }
 }
 
 function setSignaturePlacementPreset(preset) {
@@ -2324,13 +2510,12 @@ function setSignaturePlacementPreset(preset) {
 
     const customPanel = document.getElementById('sig-custom-xy-panel');
     if (customPanel) {
-        customPanel.style.display = (preset === 'custom') ? 'block' : 'none';
+        customPanel.style.display = 'block';
     }
     syncSigSlidersAndMarker();
-    if (preset === 'custom') {
-        bindInteractiveSigPadEvents();
-        updateInteractiveSigPreview();
-    }
+    bindInteractiveSigPadEvents();
+    updateInteractiveSigPreview();
+    loadSelectedPdfForSigPreview();
 }
 
 function syncSigSlidersAndMarker() {
@@ -2363,6 +2548,11 @@ function onSigSliderChange() {
     if (wSlider) currentSigWPct = Math.max(10, Math.min(60, parseInt(wSlider.value, 10) || 26));
     if (xSlider) currentSigXPct = Math.max(1, Math.min(96 - currentSigWPct, parseInt(xSlider.value, 10) || 64));
     if (ySlider) currentSigYPct = Math.max(1, Math.min(90, parseInt(ySlider.value, 10) || 6));
+    if (currentSignaturePlacementPreset !== 'custom') {
+        currentSignaturePlacementPreset = 'custom';
+        ['sig-place-br', 'sig-place-bc', 'sig-place-bl'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+        document.getElementById('sig-place-custom')?.classList.add('active');
+    }
     syncSigSlidersAndMarker();
 }
 
@@ -2380,6 +2570,11 @@ function bindInteractiveSigPadEvents() {
         const relYFromBottom = ((rect.bottom - clientY) / rect.height) * 100;
         currentSigXPct = Math.round(Math.max(2, Math.min(96 - currentSigWPct, relX - currentSigWPct / 2)));
         currentSigYPct = Math.round(Math.max(2, Math.min(88, relYFromBottom - 4)));
+        if (currentSignaturePlacementPreset !== 'custom') {
+            currentSignaturePlacementPreset = 'custom';
+            ['sig-place-br', 'sig-place-bc', 'sig-place-bl'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+            document.getElementById('sig-place-custom')?.classList.add('active');
+        }
         syncSigSlidersAndMarker();
     };
 
