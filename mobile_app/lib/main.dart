@@ -509,6 +509,24 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
     return null;
   }
 
+  Future<void> _restorePermanentHSMVaultToWebView() async {
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final hsmFile = File('${appDocDir.path}/krypto_hsm_vault_permanent.json');
+      if (await hsmFile.exists()) {
+        final rawJson = await hsmFile.readAsString();
+        if (rawJson.trim().isNotEmpty) {
+          final escaped = jsonEncode(rawJson);
+          await _controller.runJavaScript(
+            "if (typeof window.__restoreNativeHSMVault === 'function') { window.__restoreNativeHSMVault($escaped); }",
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Lỗi đọc HSM Vault vĩnh viễn: $e');
+    }
+  }
+
   void _initController() async {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -519,9 +537,10 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
             _pageLoaded = false;
             setState(() => _isLoading = true);
           },
-          onPageFinished: (String url) {
+          onPageFinished: (String url) async {
             _pageLoaded = true;
             setState(() => _isLoading = false);
+            await _restorePermanentHSMVaultToWebView();
             _checkAndForwardSharedIntentText();
           },
           onWebResourceError: (WebResourceError error) {
@@ -1088,6 +1107,21 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
+                }
+              }
+              return;
+            }
+
+            // CHỨC NĂNG 5B: ĐỒNG BỘ VĨNH VIỄN KÉT CHỮ KÝ SỐ HSM VÀO BỘ NHỚ TỆP NATIVE ANDROID
+            if (action == 'persist_hsm_vault_native') {
+              final content = data['content'] as String? ?? '';
+              if (content.isNotEmpty) {
+                try {
+                  final appDocDir = await getApplicationDocumentsDirectory();
+                  final hsmFile = File('${appDocDir.path}/krypto_hsm_vault_permanent.json');
+                  await hsmFile.writeAsString(content, flush: true);
+                } catch (e) {
+                  debugPrint('Lỗi lưu HSM Vault vĩnh viễn: $e');
                 }
               }
               return;

@@ -2472,6 +2472,7 @@ function loadVaultConfigInputs() {
     if (msgMaster) msgMaster.style.display = 'none';
     const msgPin = document.getElementById('pin-match-msg');
     if (msgPin) msgPin.style.display = 'none';
+    if (typeof syncHSMVaultToUI === 'function') syncHSMVaultToUI();
 }
 
 function pressVaultPinDigit(digit) {
@@ -2587,7 +2588,7 @@ function updateDrawerVaultStatus() {
     const actionContainer = document.getElementById('drawer-vault-action-container');
     const vaultDesc = document.getElementById('drawer-vault-desc');
     const versionEl = document.getElementById('drawer-app-version');
-    if (versionEl) versionEl.textContent = 'v2.7.6 PQC';
+    if (versionEl) versionEl.textContent = 'v2.8.8 PQC-HSM';
 
     if (actionContainer) {
         if (isVaultSessionUnlocked) {
@@ -2981,7 +2982,44 @@ function scrollToSettings() {
 // =============================================================
 let __pendingHsmHandwrittenPngDataUrl = null;
 
-function syncHSMVaultToUI() {
+window.__restoreNativeHSMVault = function(nativeJsonStr) {
+    if (!nativeJsonStr || !window.KryptoHSMSignatureEngine) return;
+    try {
+        const nativeVault = JSON.parse(nativeJsonStr);
+        if (!nativeVault || !nativeVault.certificate || !nativeVault.slot_id) return;
+        // Chuẩn hóa SHA-256 ảnh chữ ký tay mặc định nếu bản cũ từng qua Canvas
+        if (
+            !nativeVault.custom_uploaded_sig &&
+            (!nativeVault.certificate.ink_preset || nativeVault.certificate.ink_preset === 'administrative_blue') &&
+            typeof KRYPTO_DEFAULT_CHU_KY_TA_SHA256 !== 'undefined'
+        ) {
+            nativeVault.certificate.visual_sig_png_sha256 = KRYPTO_DEFAULT_CHU_KY_TA_SHA256;
+            nativeVault.cko_data_handwritten_png = {
+                png_data_url: KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL,
+                sha256_hex: KRYPTO_DEFAULT_CHU_KY_TA_SHA256,
+                width: 673,
+                height: 312
+            };
+        }
+        const localRaw = localStorage.getItem('krypto_pkcs11_hsm_vault_v1');
+        if (!localRaw) {
+            localStorage.setItem('krypto_pkcs11_hsm_vault_v1', JSON.stringify(nativeVault));
+            syncHSMVaultToUI(true);
+            return;
+        }
+        const localVault = JSON.parse(localRaw);
+        const localSeq = localVault?.audit_chain?.length || 0;
+        const nativeSeq = nativeVault?.audit_chain?.length || 0;
+        if (nativeSeq >= localSeq) {
+            localStorage.setItem('krypto_pkcs11_hsm_vault_v1', JSON.stringify(nativeVault));
+            syncHSMVaultToUI(true);
+        } else {
+            window.KryptoHSMSignatureEngine.persistHSMVaultEverywhere(localVault);
+        }
+    } catch (_) {}
+};
+
+function syncHSMVaultToUI(forceOverwriteInputs = false) {
     if (!window.KryptoHSMSignatureEngine) return;
     const vault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
     const previewImg = document.getElementById('hsm-sig-preview-img');
@@ -3003,30 +3041,36 @@ function syncHSMVaultToUI() {
     const emailEl = document.getElementById('hsm-signer-email');
     const titleEl = document.getElementById('hsm-signer-title');
     const orgEl = document.getElementById('hsm-signer-org');
+    const inkEl = document.getElementById('hsm-ink-preset');
     const badgeEl = document.getElementById('vault-hsm-slot-badge');
+    const lockBanner = document.getElementById('hsm-immutable-lock-banner');
 
-    if (nameEl && !nameEl.value) nameEl.value = cert.signer_name || '';
-    if (emailEl && !emailEl.value) emailEl.value = cert.signer_email || '';
-    if (titleEl && !titleEl.value) titleEl.value = cert.signer_title || '';
-    if (orgEl && !orgEl.value) orgEl.value = cert.organization || '';
-    if (badgeEl) badgeEl.innerText = `${vault.slot_id} • SN:${(cert.serial_hex || '').slice(0, 8)}`;
+    if (nameEl && (forceOverwriteInputs || !nameEl.value)) nameEl.value = cert.signer_name || 'Trương Tuấn Anh';
+    if (emailEl && (forceOverwriteInputs || !emailEl.value)) emailEl.value = cert.signer_email || 'truongtuananhxd@gmail.com';
+    if (titleEl && (forceOverwriteInputs || !titleEl.value)) titleEl.value = cert.signer_title || 'ANH';
+    if (orgEl && (forceOverwriteInputs || !orgEl.value)) orgEl.value = cert.organization || "ANH'S TEAM";
+    if (inkEl && cert.ink_preset) inkEl.value = cert.ink_preset;
+    if (badgeEl) badgeEl.innerText = `🔒 ${vault.slot_id} • SN:${(cert.serial_hex || '').slice(0, 8)}`;
+    if (lockBanner) {
+        lockBanner.innerHTML = `🔒 <strong>Đã Cố Định Khóa &amp; Serial HSM (<code>SN:${(cert.serial_hex || '').slice(0, 10)}</code>):</strong> Mọi cập nhật Họ tên, Email, Chức danh hoặc Mã PIN đều giữ nguyên 100% Chữ ký số này.`;
+    }
 
     if (previewImg && vault.cko_data_handwritten_png?.png_data_url) {
         previewImg.src = vault.cko_data_handwritten_png.png_data_url;
         previewImg.style.display = 'block';
     }
     if (previewCap && cert.visual_sig_png_sha256) {
-        previewCap.innerHTML = `Mẫu chữ ký tay (.PNG) trong HSM • SHA-256: <code>${cert.visual_sig_png_sha256.slice(0, 16)}...</code>`;
+        previewCap.innerHTML = `Mẫu chữ ký tay (.PNG) cố định trong HSM • SHA-256: <code>${cert.visual_sig_png_sha256.slice(0, 16)}...</code>`;
     }
 
     // Đồng bộ sang Module C ở Tab Trang chủ
     const lockSignerName = document.getElementById('signer-name-input');
     const lockSignerEmail = document.getElementById('signer-email-input');
     const activeSummary = document.getElementById('hsm-active-summary-text');
-    if (lockSignerName && !lockSignerName.value) lockSignerName.value = cert.signer_name || '';
-    if (lockSignerEmail && !lockSignerEmail.value) lockSignerEmail.value = cert.signer_email || '';
+    if (lockSignerName && (forceOverwriteInputs || !lockSignerName.value)) lockSignerName.value = cert.signer_name || '';
+    if (lockSignerEmail && (forceOverwriteInputs || !lockSignerEmail.value)) lockSignerEmail.value = cert.signer_email || '';
     if (activeSummary) {
-        activeSummary.innerHTML = `🛡️ <strong>${cert.signer_name}</strong> (${cert.signer_email}) • SN: <code>${(cert.serial_hex || '').slice(0, 8)}</code>`;
+        activeSummary.innerHTML = `🔒 <strong>${cert.signer_name}</strong> (${cert.signer_email}) • SN: <code>${(cert.serial_hex || '').slice(0, 8)}</code> (Đã cố định)`;
     }
 }
 
@@ -3056,33 +3100,37 @@ async function handleHsmRawSigUpload(input) {
     reader.readAsDataURL(file);
 }
 
-async function previewAutoGeneratedHandwrittenSig() {
-    const signerName = document.getElementById('hsm-signer-name')?.value || 'TS. Nguyễn Hoàng Anh';
-    const inkPreset = document.getElementById('hsm-ink-preset')?.value || 'administrative_blue';
-    try {
-        const res = await window.KryptoHSMSignatureEngine.generateStylizedHandwrittenSignature(signerName, inkPreset);
-        __pendingHsmHandwrittenPngDataUrl = res.pngDataUrl;
-        const previewImg = document.getElementById('hsm-sig-preview-img');
-        const previewCap = document.getElementById('hsm-sig-preview-caption');
-        if (previewImg) {
-            previewImg.src = res.pngDataUrl;
-            previewImg.style.display = 'block';
-        }
-        if (previewCap) {
-            previewCap.innerHTML = `✓ Đã tạo mẫu chữ ký tay (.PNG) • SHA-256: <code>${res.sha256Hex.slice(0, 16)}...</code>`;
-        }
-        showToast('✒️ Đã tạo mẫu chữ ký tay nền trong suốt!');
-    } catch (err) {
-        showToast('⚠️ ' + err.message);
+async function restoreOfficialDefaultHandwrittenSig() {
+    __pendingHsmHandwrittenPngDataUrl = null;
+    const inkEl = document.getElementById('hsm-ink-preset');
+    if (inkEl) inkEl.value = 'administrative_blue';
+    const vault = window.KryptoHSMSignatureEngine?.getActiveHSMVault();
+    if (vault && typeof KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL !== 'undefined') {
+        vault.custom_uploaded_sig = false;
+        vault.certificate.ink_preset = 'administrative_blue';
+        vault.certificate.visual_sig_png_sha256 = KRYPTO_DEFAULT_CHU_KY_TA_SHA256;
+        vault.cko_data_handwritten_png = {
+            png_data_url: KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL,
+            sha256_hex: KRYPTO_DEFAULT_CHU_KY_TA_SHA256,
+            width: 673,
+            height: 312
+        };
+        window.KryptoHSMSignatureEngine.persistHSMVaultEverywhere(vault);
+        syncHSMVaultToUI();
+        showToast('✒️ Đã khôi phục Chữ ký tay gốc (Chu ky TA.png) • SHA-256 cố định 100%!');
     }
 }
 
-async function provisionPersonalHSMFromVaultUI() {
+async function previewAutoGeneratedHandwrittenSig() {
+    return await restoreOfficialDefaultHandwrittenSig();
+}
+
+async function provisionPersonalHSMFromVaultUI(forceRegenerateKey = false) {
     try {
-        const signerName = document.getElementById('hsm-signer-name')?.value || 'TS. Nguyễn Hoàng Anh';
-        const signerEmail = document.getElementById('hsm-signer-email')?.value || 'signer@krypto-pki.vn';
-        const signerTitle = document.getElementById('hsm-signer-title')?.value || 'Chủ trì Thẩm tra & Phê duyệt';
-        const organization = document.getElementById('hsm-signer-org')?.value || 'Krypto Enterprise PKI';
+        const signerName = document.getElementById('hsm-signer-name')?.value || 'Trương Tuấn Anh';
+        const signerEmail = document.getElementById('hsm-signer-email')?.value || 'truongtuananhxd@gmail.com';
+        const signerTitle = document.getElementById('hsm-signer-title')?.value || 'ANH';
+        const organization = document.getElementById('hsm-signer-org')?.value || "ANH'S TEAM";
         const userPin = document.getElementById('hsm-user-pin')?.value || localStorage.getItem('krypto_vault_pin') || '1234';
         const masterPass = document.getElementById('setting-master-password')?.value || localStorage.getItem('krypto_master_password') || 'AdminPUK@2026';
         const inkPreset = document.getElementById('hsm-ink-preset')?.value || 'administrative_blue';
@@ -3096,20 +3144,48 @@ async function provisionPersonalHSMFromVaultUI() {
             userPin,
             soPin: masterPass,
             inkPreset,
-            customPngDataUrl: __pendingHsmHandwrittenPngDataUrl
+            customPngDataUrl: __pendingHsmHandwrittenPngDataUrl,
+            forceRegenerateKey: !!forceRegenerateKey
         });
 
-        syncHSMVaultToUI();
-        showCyberAlert(
-            'Đã Cấp Phát Buồng HSM Cá Nhân',
-            `Buồng HSM (${vault.slot_id}) đã được khởi tạo thành công!\n• Chủ sở hữu: ${vault.certificate.signer_name}\n• Email S/MIME: ${vault.certificate.signer_email}\n• Serial C/S: ${vault.certificate.serial_hex.slice(0, 16)}\n• Khóa bí mật: CKA_EXTRACTABLE=FALSE`,
-            null,
-            'Hoàn Tất',
-            'info'
-        );
+        __pendingHsmHandwrittenPngDataUrl = null;
+        syncHSMVaultToUI(true);
+
+        if (forceRegenerateKey) {
+            showCyberAlert(
+                'Đã Cấp Lại Cặp Khóa & Serial HSM Mới',
+                `Đã thu hồi khóa cũ và sinh Cặp khóa & Số Serial HSM mới thành công!\n• Buồng HSM: ${vault.slot_id}\n• Chủ sở hữu: ${vault.certificate.signer_name}\n• Email S/MIME: ${vault.certificate.signer_email}\n• Serial Mới: ${vault.certificate.serial_hex.slice(0, 16)}\n• PNG SHA-256: ${vault.certificate.visual_sig_png_sha256.slice(0, 16)}...`,
+                null,
+                'Hoàn Tất',
+                'info'
+            );
+        } else {
+            showCyberAlert(
+                '🔒 Đã Lưu Hồ Sơ (Giữ Nguyên Chữ Ký Số)',
+                `Đã cập nhật thông tin và lưu bền vững vào Két Sắt HSM!\n• Buồng HSM cố định: ${vault.slot_id}\n• Serial KHÔNG ĐỔI: ${vault.certificate.serial_hex.slice(0, 16)}\n• Chủ sở hữu: ${vault.certificate.signer_name} (${vault.certificate.signer_title} - ${vault.certificate.organization})\n• Email S/MIME: ${vault.certificate.signer_email}\n• PNG SHA-256 cố định: ${vault.certificate.visual_sig_png_sha256.slice(0, 16)}...`,
+                null,
+                'Đã Lưu Cố Định',
+                'info'
+            );
+        }
     } catch (err) {
-        showCyberAlert('Lỗi Khởi Tạo HSM', err.message || String(err), null, 'Đóng', 'error');
+        showCyberAlert('Lỗi Cập Nhật HSM', err.message || String(err), null, 'Đóng', 'error');
     }
+}
+
+function confirmReissueNewHSMKeyUI() {
+    const vault = window.KryptoHSMSignatureEngine?.getActiveHSMVault();
+    const curSn = vault?.certificate?.serial_hex ? vault.certificate.serial_hex.slice(0, 12) : 'HSM';
+    showCyberConfirm(
+        'Xác Nhận Cấp Lại Khóa & Serial Mới?',
+        `Chữ ký số hiện tại của bạn (Serial: ${curSn}...) đang được KHÓA CỐ ĐỊNH để sử dụng lâu dài.\n\nBạn có chắc chắn muốn thu hồi khóa hiện tại và sinh một Cặp khóa + Số Serial HSM mới không?`,
+        function() {
+            provisionPersonalHSMFromVaultUI(true);
+        },
+        'Cấp Khóa Mới',
+        'Giữ Khóa Cũ',
+        'warning'
+    );
 }
 
 async function exportKryptoHSMBundleUI() {
@@ -3119,6 +3195,16 @@ async function exportKryptoHSMBundleUI() {
         const bundleJson = await window.KryptoHSMSignatureEngine.exportMigrationBundle(userPin, masterPass);
         const vault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
         const fileName = `Krypto_HSM_Migration_${vault ? vault.slot_id : 'Backup'}.kryptohsm`;
+
+        if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+            window.FlutterBridge.postMessage(JSON.stringify({
+                action: 'save',
+                name: fileName,
+                content: bundleJson
+            }));
+            showToast(`📤 Đã lưu tệp di trú ${fileName} vào Thư mục Downloads!`);
+            return;
+        }
 
         const blob = new Blob([bundleJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -3144,7 +3230,7 @@ function importKryptoHSMBundleUI(input) {
         try {
             const masterPass = document.getElementById('setting-master-password')?.value || localStorage.getItem('krypto_master_password') || 'MasterRecovery@2026';
             const restored = await window.KryptoHSMSignatureEngine.importMigrationBundle(e.target.result, masterPass);
-            syncHSMVaultToUI();
+            syncHSMVaultToUI(true);
             showCyberAlert(
                 'Khôi Phục Buồng HSM Thành Công!',
                 `Đã chuyển nguyên vẹn 100% Chữ ký số HSM & Ảnh chữ ký tay (.PNG) sang thiết bị này!\n• Chủ sở hữu: ${restored.certificate.signer_name}\n• Email: ${restored.certificate.signer_email}\n• Serial giữ nguyên: ${restored.certificate.serial_hex.slice(0, 16)}`,
@@ -3176,6 +3262,16 @@ async function sendSigningRequestEmailUI() {
             signingReason: 'Trình phê duyệt và ký số PAdES-HSM',
             userPin
         });
+
+        if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+            window.FlutterBridge.postMessage(JSON.stringify({
+                action: 'share',
+                name: res.emlFilename,
+                content: res.emlContent
+            }));
+            showToast(`📧 Đã tạo gói Email Ký số S/MIME (${res.emlFilename}) tới ${res.to}`);
+            return;
+        }
 
         const blob = new Blob([res.emlContent], { type: 'message/rfc822' });
         const url = URL.createObjectURL(blob);
@@ -3209,5 +3305,5 @@ function showMobileTOTPTransferDialog() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(syncHSMVaultToUI, 300);
+    setTimeout(() => syncHSMVaultToUI(false), 250);
 });
