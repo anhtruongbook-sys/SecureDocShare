@@ -108,6 +108,11 @@
                             <span class="segment-icon">👁️</span>
                             <span class="segment-text">Chỉ Xem (Cấm Copy)</span>
                         </label>
+                        <label class="level-card segment-card" id="level-card-sign-only" onclick="selectProtectionLevel('sign_only', this)">
+                            <input type="radio" name="protection-level" value="sign_only" style="display: none;">
+                            <span class="segment-icon">✍️</span>
+                            <span class="segment-text">Chỉ Ký Số (Không Pass)</span>
+                        </label>
                     </div>
                     <!-- Phân quyền in ấn khi chọn Chỉ xem -->
                     <div class="allow-print-box" id="allow-print-box" style="display: none; margin-top: 6px; padding: 6px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm);">
@@ -136,7 +141,7 @@
                 </div>
 
                 <!-- Unified Password Input Section -->
-                <div class="form-group-compact">
+                <div class="form-group-compact" id="password-input-section">
                     <div class="label-with-action">
                         <label for="lock-password" id="password-label">MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
                         <button type="button" class="btn-micro-gen" onclick="generateMilitaryPassword()" title="Sinh mã quân sự 16 ký tự">

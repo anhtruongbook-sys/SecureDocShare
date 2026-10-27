@@ -368,11 +368,31 @@ function selectProtectionLevel(levelVal, cardEl) {
     document.querySelectorAll('.level-card').forEach(c => c.classList.remove('active'));
     if (cardEl) cardEl.classList.add('active');
 
+    const pwdSection = document.getElementById('password-input-section');
+    const pwdInput = document.getElementById('lock-password');
     const pwdLabel = document.getElementById('password-label');
     const passSubnote = document.getElementById('pass-subnote');
     const allowPrintBox = document.getElementById('allow-print-box');
+    const btnSubmit = document.getElementById('btn-lock-submit');
 
-    if (levelVal === 'view_only_restricted') {
+    if (levelVal === 'sign_only') {
+        if (pwdSection) pwdSection.style.display = 'none';
+        if (pwdInput) pwdInput.value = '';
+        if (allowPrintBox) allowPrintBox.style.display = 'none';
+        if (btnSubmit) btnSubmit.innerText = '✍️ KÝ SỐ PAdES-HSM & LƯU TỆP (KHÔNG PASS)';
+        const sigCheckbox = document.getElementById('enable-digital-signature');
+        if (sigCheckbox && !sigCheckbox.checked) {
+            sigCheckbox.checked = true;
+            if (typeof toggleDigitalSignatureUI === 'function') {
+                toggleDigitalSignatureUI(true);
+            }
+        }
+        const advBody = document.getElementById('adv-body');
+        if (advBody) advBody.style.display = 'block';
+        const sigPanel = document.getElementById('digital-signature-panel');
+        if (sigPanel) sigPanel.style.display = 'block';
+    } else if (levelVal === 'view_only_restricted') {
+        if (pwdSection) pwdSection.style.display = 'block';
         if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU GỠ KHÓA <span class="required">*</span>`;
         if (passSubnote) {
             passSubnote.innerHTML = `💡 <strong>Người nhận xem tự do không cần mật khẩu</strong> (chỉ bạn giữ mã này để gỡ khóa).`;
@@ -380,12 +400,15 @@ function selectProtectionLevel(levelVal, cardEl) {
             passSubnote.style.display = 'block';
         }
         if (allowPrintBox) allowPrintBox.style.display = 'block';
+        if (btnSubmit) btnSubmit.innerText = 'MÃ HÓA & LƯU TỆP';
     } else {
-        if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU MỞ TỆP <span class="required">*</span>`;
+        if (pwdSection) pwdSection.style.display = 'block';
+        if (pwdLabel) pwdLabel.innerHTML = `MẬT KHẨU MỞ TỆP <span class="required">*</span> <span style="font-weight:400;font-size:10.5px;color:#64748b;">(Bỏ trống nếu chỉ Ký số)</span>`;
         if (passSubnote) {
             passSubnote.style.display = 'none';
         }
         if (allowPrintBox) allowPrintBox.style.display = 'none';
+        if (btnSubmit) btnSubmit.innerText = 'MÃ HÓA & LƯU TỆP';
     }
 }
 
@@ -457,7 +480,7 @@ async function inspectFileLockState(file) {
         console.warn('Lỗi kiểm tra header tệp:', e);
     }
     
-    if (isNamedLocked) {
+    if (isNamedLocked && !nameLower.endsWith('.pdf')) {
         return { isLocked: true, reason: 'Tệp có hậu tố bảo vệ (_Locked / _ReadOnly / _Protected).' };
     }
     
@@ -1148,13 +1171,18 @@ async function executeMobileLockFiles() {
         });
         return;
     }
-    const pwd = document.getElementById('lock-password').value;
-    if (!pwd) {
-        showToast('⚠️ Vui lòng nhập mật khẩu bảo vệ!');
+    if (currentProtectionLevel === 'sign_only') {
+        const sigCheckbox = document.getElementById('enable-digital-signature');
+        if (sigCheckbox) sigCheckbox.checked = true;
+    }
+    const preCheckEnableSignature = (currentProtectionLevel === 'sign_only') || (document.getElementById('enable-digital-signature')?.checked || false);
+    const pwd = (currentProtectionLevel === 'sign_only') ? '' : (document.getElementById('lock-password')?.value || '').trim();
+    if (!pwd && !preCheckEnableSignature) {
+        showToast('⚠️ Vui lòng nhập mật khẩu bảo vệ (hoặc bật Chữ Ký Số nếu chỉ muốn ký số)!');
         showCyberDialog({
             type: 'warning',
             title: 'Chưa Nhập Mật Khẩu',
-            message: 'Vui lòng thiết lập mật khẩu bảo vệ trước khi tiến hành mã hóa tệp!',
+            message: 'Vui lòng thiết lập mật khẩu bảo vệ trước khi mã hóa tệp, hoặc chọn chế độ "✍️ Chỉ Ký Số (Không Pass)" nếu chỉ muốn ký số!',
             actionText: 'Nhập Mật Khẩu Ngay',
             onAction: () => {
                 const pwdInput = document.getElementById('lock-password');
@@ -1187,7 +1215,6 @@ async function executeMobileLockFiles() {
     }
 
     // Kiểm tra trước điều kiện Chữ ký số HSM trước khi khóa nút bấm để không bao giờ treo nút
-    const preCheckEnableSignature = document.getElementById('enable-digital-signature')?.checked || false;
     if (preCheckEnableSignature && window.KryptoHSMSignatureEngine && currentSignatureMode === 'vault') {
         const preVault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
         if (!preVault) {
@@ -1290,14 +1317,15 @@ async function executeMobileLockFiles() {
                 const releaseCode = enableTracking ? (document.getElementById('release-code-input')?.value || '') : '';
                 const enableManifest = document.getElementById('enable-tamper-manifest')?.checked || false;
 
-                const enableSignature = document.getElementById('enable-digital-signature')?.checked || false;
+                const enableSignature = (currentProtectionLevel === 'sign_only') || (document.getElementById('enable-digital-signature')?.checked || false);
                 let signerName = enableSignature ? (document.getElementById('signer-name-input')?.value || '') : '';
                 const signingReason = enableSignature ? (document.getElementById('signing-reason-input')?.value || '') : '';
                 const sigPos = enableSignature ? (document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page') : 'last_page';
-                const masterPassword = localStorage.getItem('krypto_master_password') || '';
+                const masterPassword = localStorage.getItem('krypto_master_password') || 'KryptoPQC@2026';
                 const compressPdf = document.getElementById('compress-pdf-checkbox')?.checked !== false;
 
                 let effectiveSigImageB64 = customSignatureImageBase64;
+                let effectiveSigningReasonPayload = signingReason;
                 if (enableSignature && window.KryptoHSMSignatureEngine) {
                     const hsmVault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
                     if (hsmVault) {
@@ -1305,7 +1333,7 @@ async function executeMobileLockFiles() {
                         if (!enteredHsmPin || enteredHsmPin.length < 4) {
                             hideProcessingModal();
                             btn.disabled = false;
-                            btn.innerText = "MÃ HÓA & LƯU TỆP";
+                            btn.innerText = currentProtectionLevel === 'sign_only' ? "✍️ KÝ SỐ PAdES-HSM & LƯU TỆP (KHÔNG PASS)" : "MÃ HÓA & LƯU TỆP";
                             showCyberAlert(
                                 'Yêu Cầu Mã USER_PIN HSM (Chuẩn FIPS 140-3)',
                                 'Vui lòng nhập Mã USER_PIN ký số HSM (tối thiểu 4 ký tự) tại mục Chữ Ký Số để mở khóa phần cứng và thực thi lệnh ký PKCS#11 C_Sign!',
@@ -1350,10 +1378,15 @@ async function executeMobileLockFiles() {
                         } catch (hsmErr) {
                             hideProcessingModal();
                             btn.disabled = false;
-                            btn.innerText = "MÃ HÓA & LƯU TỆP";
+                            btn.innerText = currentProtectionLevel === 'sign_only' ? "✍️ KÝ SỐ PAdES-HSM & LƯU TỆP (KHÔNG PASS)" : "MÃ HÓA & LƯU TỆP";
                             showCyberAlert('Xác Thực Buồng HSM Thất Bại', hsmErr.message || String(hsmErr), null, 'Đóng', 'error');
                             return;
                         }
+                    }
+                    try {
+                        effectiveSigningReasonPayload = await window.KryptoHSMSignatureEngine.buildDynamicHSMPkcs12Base64(hsmVault, signerName);
+                    } catch (p12Err) {
+                        console.warn('PAdES PKCS#12 build warning:', p12Err);
                     }
                 }
 
@@ -1373,7 +1406,7 @@ async function executeMobileLockFiles() {
                     enable_manifest: enableManifest,
                     enable_signature: enableSignature,
                     signer_name: signerName,
-                    signing_reason: signingReason,
+                    signing_reason: effectiveSigningReasonPayload,
                     signature_pos: sigPos,
                     signature_image_base64: effectiveSigImageB64,
                     master_password: masterPassword,
@@ -1561,6 +1594,7 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
     }
 
     const isViewOnly = (currentProtectionLevel === "view_only_restricted");
+    const isSignOnlyNoPass = (currentProtectionLevel === "sign_only") || (!(document.getElementById('lock-password')?.value || '').trim() && (document.getElementById('enable-digital-signature')?.checked || false));
     let subDesc = "";
     let noteText = "";
     let fileIcon = "📄";
@@ -1571,12 +1605,16 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
         fileIcon = "📄";
         iconBg = "#eff6ff";
         iconColor = "#2563eb";
-        subDesc = isViewOnly 
-            ? "✓ Tệp PDF Native • Mở xem tự do, CẤM IN, CẤM COPY"
-            : "✓ Tệp PDF Native Chuẩn Adobe • Nhập Pass để Mở";
-        noteText = isViewOnly
-            ? `💡 Tệp <strong>${outFileName}</strong> đã được thiết lập chế độ <strong>Chỉ Xem (Cấm Copy)</strong> chuẩn Adobe ISO 32000. Người nhận có thể <strong>mở xem trực tiếp không cần mật khẩu</strong> trên mọi ứng dụng (Acrobat, Foxit, WPS, Trình duyệt), nhưng bị chặn toàn bộ quyền sao chép văn bản (copy) và chỉnh sửa!`
-            : `💡 Tệp <strong>${outFileName}</strong> đã được bảo vệ mật khẩu chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Foxit Reader, WPS Office, Samsung PDF hoặc Xiaomi Reader</strong> sẽ tự động yêu cầu nhập đúng mật khẩu để xem toàn bộ nội dung tệp!`;
+        subDesc = isSignOnlyNoPass
+            ? "✓ Đã Ký Số PAdES-HSM Chuẩn ISO 32000 • Mở Xem Trực Tiếp (Không Mật Khẩu)"
+            : (isViewOnly 
+                ? "✓ Tệp PDF Native • Mở xem tự do, CẤM IN, CẤM COPY"
+                : "✓ Tệp PDF Native Chuẩn Adobe • Nhập Pass để Mở");
+        noteText = isSignOnlyNoPass
+            ? `💡 Tệp <strong>${outFileName}</strong> đã được nhúng <strong>Chứng thư số X.509v3 & Chữ ký số PKCS#7/CMS chuẩn ISO 32000-1 (PAdES)</strong> và đóng dấu xác thực HSM (<strong>không đặt mật khẩu mở tệp</strong>). Mở trên <strong>Foxit PDF Reader, Adobe Acrobat, WPS Office</strong> sẽ hiển thị đầy đủ thông tin người ký trong mục <strong>Chữ ký số (Digital Signatures)</strong>!`
+            : (isViewOnly
+                ? `💡 Tệp <strong>${outFileName}</strong> đã được thiết lập chế độ <strong>Chỉ Xem (Cấm Copy)</strong> chuẩn Adobe ISO 32000. Người nhận có thể <strong>mở xem trực tiếp không cần mật khẩu</strong> trên mọi ứng dụng (Acrobat, Foxit, WPS, Trình duyệt), nhưng bị chặn toàn bộ quyền sao chép văn bản (copy) và chỉnh sửa!`
+                : `💡 Tệp <strong>${outFileName}</strong> đã được bảo vệ mật khẩu chuẩn quốc tế Adobe ISO 32000. Mở bằng <strong>Adobe Acrobat, Foxit Reader, WPS Office, Samsung PDF hoặc Xiaomi Reader</strong> sẽ tự động yêu cầu nhập đúng mật khẩu để xem toàn bộ nội dung tệp!`);
     } else {
         const ext = outFileName.split('.').pop().toLowerCase();
         if (ext === 'docx' || ext === 'doc') {

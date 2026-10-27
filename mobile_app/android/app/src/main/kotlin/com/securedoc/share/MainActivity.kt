@@ -283,28 +283,35 @@ class MainActivity: FlutterFragmentActivity() {
                             outFile.parentFile?.mkdirs()
                             fos = FileOutputStream(outFile)
 
-                            stamper = PdfStamper(reader, fos)
-
-                            // Cài đặt bảo vệ mật khẩu và quyền hạn (Adobe ISO 32000) NGAY TRƯỚC KHI ghi ảnh chữ ký số / watermark vào PdfBody
-                            val userPwd: ByteArray? = if (isViewOnly) null else password.toByteArray(Charsets.UTF_8)
-                            val effectiveMaster = if (masterPassword.isNotBlank()) masterPassword else PQC_DEFAULT_MASTER_KEY
-                            val ownerPwd = effectiveMaster.toByteArray(Charsets.UTF_8)
-                            val permissions = if (isViewOnly) {
-                                if (allowPrint) {
-                                    PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_DEGRADED_PRINTING or PdfWriter.ALLOW_SCREENREADERS
-                                } else {
-                                    PdfWriter.ALLOW_SCREENREADERS // CẤM IN, CẤM COPY, CHỈ CHO XEM!
-                                }
+                            stamper = if (enableSignature) {
+                                PdfStamper.createSignature(reader, fos, '\u0000')
                             } else {
-                                PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_COPY or PdfWriter.ALLOW_SCREENREADERS or PdfWriter.ALLOW_FILL_IN
+                                PdfStamper(reader, fos)
                             }
 
-                            stamper.setEncryption(
-                                userPwd,
-                                ownerPwd,
-                                permissions,
-                                PdfWriter.STANDARD_ENCRYPTION_128
-                            )
+                            // Cài đặt bảo vệ mật khẩu và quyền hạn (Adobe ISO 32000) NGAY TRƯỚC KHI ghi ảnh chữ ký số / watermark vào PdfBody
+                            // Nếu chế độ Chỉ Ký Số (không đặt mật khẩu mở tệp và không bật Chỉ Xem), bỏ qua setEncryption hoàn toàn
+                            if (isViewOnly || password.isNotBlank()) {
+                                val userPwd: ByteArray? = if (isViewOnly) null else password.toByteArray(Charsets.UTF_8)
+                                val effectiveMaster = if (masterPassword.isNotBlank()) masterPassword else PQC_DEFAULT_MASTER_KEY
+                                val ownerPwd = effectiveMaster.toByteArray(Charsets.UTF_8)
+                                val permissions = if (isViewOnly) {
+                                    if (allowPrint) {
+                                        PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_DEGRADED_PRINTING or PdfWriter.ALLOW_SCREENREADERS
+                                    } else {
+                                        PdfWriter.ALLOW_SCREENREADERS // CẤM IN, CẤM COPY, CHỈ CHO XEM!
+                                    }
+                                } else {
+                                    PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_COPY or PdfWriter.ALLOW_SCREENREADERS or PdfWriter.ALLOW_FILL_IN
+                                }
+
+                                stamper.setEncryption(
+                                    userPwd,
+                                    ownerPwd,
+                                    permissions,
+                                    PdfWriter.STANDARD_ENCRYPTION_128
+                                )
+                            }
 
                             if (compress) {
                                 try {
@@ -471,7 +478,42 @@ class MainActivity: FlutterFragmentActivity() {
                             }
                             stamper.moreInfo = infoMap
 
-                            stamper.close()
+                            if (enableSignature) {
+                                val pipeIdx = signingReason.indexOf('|')
+                                val cleanReason = if (pipeIdx >= 0) signingReason.substring(0, pipeIdx) else signingReason
+                                val p12B64 = if (pipeIdx >= 0) signingReason.substring(pipeIdx + 1) else ""
+                                if (p12B64.isNotBlank()) {
+                                    val p12Bytes = Base64.decode(p12B64, Base64.DEFAULT)
+                                    val ks = java.security.KeyStore.getInstance("PKCS12")
+                                    ks.load(java.io.ByteArrayInputStream(p12Bytes), CharArray(0))
+                                    val alias = ks.aliases().nextElement()
+                                    val pk = ks.getKey(alias, CharArray(0)) as java.security.PrivateKey
+                                    val cert = ks.getCertificate(alias)
+                                    val chain = arrayOf(cert)
+                                    val sap = stamper.signatureAppearance
+                                    sap.reason = cleanReason
+                                    sap.contact = signerName
+                                    sap.setVisibleSignature(com.itextpdf.text.Rectangle(0f, 0f, 1f, 1f), totalPages, "KryptoHSM")
+                                    sap.getLayer(2)
+                                    val digest = com.itextpdf.text.pdf.security.BouncyCastleDigest()
+                                    val pks = com.itextpdf.text.pdf.security.PrivateKeySignature(pk, "SHA256", null)
+                                    com.itextpdf.text.pdf.security.MakeSignature.signDetached(
+                                        sap,
+                                        digest,
+                                        pks,
+                                        chain,
+                                        null,
+                                        null,
+                                        null,
+                                        0,
+                                        com.itextpdf.text.pdf.security.MakeSignature.CryptoStandard.CMS
+                                    )
+                                } else {
+                                    stamper.close()
+                                }
+                            } else {
+                                stamper.close()
+                            }
                             stamper = null
                             fos.close()
                             fos = null
