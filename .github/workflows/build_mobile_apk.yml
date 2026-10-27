@@ -66,19 +66,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.8.5
-          name: "Krypto v2.8.5 - Bóc Tách Toàn Văn Bài Viết Facebook & Web SPA + Tự Động Khôi Phục Bản Ghi Rỗng"
+          tag_name: v2.8.6
+          name: "Krypto v2.8.6 - Tích Hợp Chữ Ký Số Cá Nhân Chuẩn HSM (PKCS#11) + Chữ Ký Tay (Chu ky TA.png) + Di Trú Đa Thiết Bị (.kryptohsm) + Email S/MIME"
           body: |
-            ## Ứng dụng Di Động Krypto v2.8.5 (PQC ML-KEM-768 + Chat Knowledge Vault v3.5)
-            - **Khắc phục triệt để lỗi xử lý liên kết Facebook (`facebook.com/share/...`, `posts/...`) và trang Web SPA bị rỗng (`0 đoạn nội dung`)**:
-              + **Nguyên nhân gốc rễ đã xử lý**:
-                1. Trước đây tầng Native `HttpClient` trong `chat_vault_bridge.dart` chưa gán `client.userAgent` nên khi liên kết rút gọn `facebook.com/share/...` chuyển hướng `302 Redirect` sang đường dẫn bài viết thật, `User-Agent` bị mất về mặc định khiến Facebook trả về trang khung đăng nhập rỗng.
-                2. Bộ nạp cũ xóa toàn bộ thẻ `<script>` và chỉ quét thẻ `<p>`, trong khi bài viết Facebook lưu toàn văn nội dung trong cấu trúc Relay JSON (`"text":"..."`) và thẻ `<meta property="og:description">`.
-              + **Bộ bóc tách chuyên sâu Facebook & Web (`extractFacebookPostCard` + `parseStructuredArticleSections`)**:
-                * Bảo toàn `User-Agent` và `Accept-Language` xuyên suốt mọi bước Redirect 301/302 ở tầng Native Dart.
-                * Bóc tách 100% toàn văn bài viết dài từ Relay JSON (ví dụ bài viết 4.072 từ / 39 đoạn / 7 phần chuyên sâu từ liên kết `facebook.com/share/14uahV2kXCc/`), nhận diện chính xác tác giả gốc & người chia sẻ (`Ky Vu — Chia sẻ bởi: Lộc Đặng`).
-                * Tự động phân tách các tiêu đề phần (IN HOA, Markdown, đánh số) để tổng hợp mạch lạc `Thông điệp trọng tâm`, `Bức tranh tổng thể`, `Mục lục phần`, `Nội dung cốt lõi theo từng phần`, `Đúc kết sâu` và `Khuyến nghị hành động`.
-              + **Tự động khôi phục bản ghi rỗng đã lưu trước đó (`Auto-Heal Empty Records`)**: Tự động phát hiện các bản ghi có `0 đoạn nội dung` trong máy để bóc tách và cập nhật lại toàn văn ngay khi mở ứng dụng hoặc khi bấm xem chi tiết.
+            ## Ứng dụng Di Động Krypto v2.8.6 (PQC ML-KEM-768 + PKCS#11 HSM Personal Digital Signature Suite)
+            - **Buồng Chữ Ký Số Cá Nhân Chuẩn HSM (`PKCS#11` `CKA_EXTRACTABLE = FALSE`)**:
+              + Khởi tạo và quản lý Chứng thư số X.509v3 cá nhân ngay trong Két sắt Krypto, bảo vệ bằng `USER_PIN`, `SO_PIN/PUK` (tự động khóa cứng sau 5 lần nhập sai PIN) và mã `TOTP 6 số` (`RFC 6238`) trên điện thoại.
+            - **Gắn liền Chữ Ký Tay Chính Thức (`Chu ky TA.png` nền trong suốt, mực hành chính `#003399`)**:
+              + Nhúng sẵn mẫu chữ ký tay chính thức `Chu ky TA.png` vào đối tượng `CKO_DATA` của HSM và khóa mã băm `SHA-256` (`f725d40806e86a9c...`) trong trường mở rộng X.509v3.
+              + Hỗ trợ tách nền trong suốt tự động (`Adaptive Alpha Matting`) từ ảnh chụp chữ ký tay bất kỳ và dàn trang con dấu chữ ký `PAdES-HSM` sắc nét lên tài liệu PDF.
+            - **Cơ chế Đổi Điện Thoại & Đổi PC 1 Chạm (`.kryptohsm` `PKCS#11 C_WrapKey / C_UnwrapKey`)**:
+              + Xuất và khôi phục trọn vẹn Buồng HSM + Số Serial Chứng thư + Ảnh chữ ký tay `.png` + Cấu hình TOTP sang Điện thoại mới hoặc PC mới.
+            - **Tích hợp Email Ký Số Chuẩn `S/MIME (RFC 8551)`**:
+              + Hỗ trợ tạo và xuất gói Email Yêu cầu ký số & Email Trả kết quả đã ký số (`.eml` kèm chữ ký số `smime.p7s` từ HSM).
           files: |
             build-output/Krypto.apk
             build-output/KryptoDoc.apk

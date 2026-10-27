@@ -19,11 +19,19 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from core.unified_locker import UnifiedLocker, ProtectionMode, ProtectionLevel
+from core.hsm_signature import (
+    HandwrittenSignatureProcessor,
+    KryptoHSMVault,
+    TOTPAuthenticator,
+    PDFPAdESHSMSigner,
+    SMIMEEmailWorkflowEngine,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 TEMP_STORAGE_DIR = os.path.join(BASE_DIR, "temp_downloads")
+HSM_VAULT_STORAGE_PATH = os.path.join(BASE_DIR, "temp_downloads", "krypto_personal_hsm_vault.json")
 
 os.makedirs(TEMP_STORAGE_DIR, exist_ok=True)
 
@@ -200,3 +208,221 @@ async def api_download_file(file_id: str):
         filename=item["filename"],
         media_type="application/octet-stream"
     )
+
+
+# =========================================================================
+# CÁC API CHỮ KÝ SỐ CÁ NHÂN CHUẨN HSM (PKCS#11 + PNG + PAdES + S/MIME + DI TRÚ)
+# =========================================================================
+
+@app.post("/api/hsm/process-signature-png")
+async def api_hsm_process_signature_png(
+    file: Optional[UploadFile] = File(None),
+    signer_name: str = Form("TS. Nguyễn Hoàng Anh"),
+    ink_preset: str = Form("administrative_blue")
+):
+    """Tách nền trong suốt 100%, khử bóng giấy và chuẩn hóa màu mực (#003399) cho ảnh chữ ký tay."""
+    try:
+        if file and file.filename:
+            raw_bytes = await file.read()
+            res = HandwrittenSignatureProcessor.process_raw_signature_image(
+                image_input=raw_bytes,
+                ink_preset=ink_preset,
+            )
+        else:
+            res = HandwrittenSignatureProcessor.generate_stylized_handwritten_signature(
+                signer_name=signer_name,
+                ink_preset=ink_preset,
+            )
+        return {
+            "status": "SUCCESS",
+            "base64_data_url": res["base64_data_url"],
+            "sha256_hash": res["sha256_hash"],
+            "width": res["width"],
+            "height": res["height"],
+            "ink_hex": res["ink_hex"],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Lỗi xử lý ảnh chữ ký tay: {str(e)}")
+
+
+@app.post("/api/hsm/provision")
+async def api_hsm_provision_slot(
+    signer_name: str = Form(...),
+    signer_email: str = Form(...),
+    signer_title: str = Form("Chuyên gia"),
+    organization: str = Form("Krypto Security"),
+    org_unit: str = Form("Phòng Kỹ thuật"),
+    personal_id_cccd: str = Form("VN-HSM-001"),
+    user_pin: str = Form(...),
+    so_pin: str = Form("AdminPUK@2026"),
+    ink_preset: str = Form("administrative_blue"),
+    require_totp: bool = Form(False),
+    signature_png: Optional[UploadFile] = File(None)
+):
+    """Khởi tạo Buồng HSM Cá nhân chuẩn PKCS#11 + Cấp phát Chứng thư X.509v3 gắn Ảnh chữ ký tay .PNG & Email S/MIME."""
+    try:
+        if signature_png and signature_png.filename:
+            raw_png = await signature_png.read()
+            sig_info = HandwrittenSignatureProcessor.process_raw_signature_image(raw_png, ink_preset=ink_preset)
+        else:
+            sig_info = HandwrittenSignatureProcessor.generate_stylized_handwritten_signature(
+                signer_name=signer_name, ink_preset=ink_preset
+            )
+
+        vault = KryptoHSMVault(HSM_VAULT_STORAGE_PATH)
+        prov = vault.provision_personal_hsm_slot(
+            signer_name=signer_name,
+            signer_email=signer_email,
+            signer_title=signer_title,
+            organization=organization,
+            org_unit=org_unit,
+            personal_id_cccd=personal_id_cccd,
+            user_pin=user_pin,
+            so_pin=so_pin,
+            handwritten_png_bytes=sig_info["png_bytes"],
+            require_totp_for_signing=require_totp,
+        )
+        creds = vault.get_public_credentials_and_png()
+        return {
+            "status": "SUCCESS",
+            "slot_id": prov["slot_id"],
+            "serial_hex": prov["serial_hex"],
+            "root_serial_hex": prov["root_serial_hex"],
+            "signer_name": prov["signer_name"],
+            "signer_email": prov["signer_email"],
+            "visual_sig_png_sha256": prov["visual_sig_png_sha256"],
+            "handwritten_png_data_url": "data:image/png;base64," + creds["handwritten_png_b64"],
+            "totp_secret": prov["totp_secret"],
+            "totp_uri": prov["totp_uri"],
+            "current_totp_code": prov["current_totp_code"],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Lỗi khởi tạo Buồng HSM: {str(e)}")
+
+
+@app.post("/api/hsm/sign-pdf")
+async def api_hsm_sign_pdf(
+    file: UploadFile = File(...),
+    user_pin: str = Form(...),
+    totp_code: Optional[str] = Form(None),
+    signing_reason: str = Form("Phê duyệt & Ký số phát hành hồ sơ"),
+    signing_location: str = Form("Hà Nội, Việt Nam"),
+    page_position: str = Form("last_page"),
+    send_email_receipt: bool = Form(True)
+):
+    """Ký số PDF chuẩn PAdES-HSM (chỉ truyền 32 bytes mã băm vào HSM) và xuất kèm gói Email S/MIME (.eml)."""
+    if not os.path.exists(HSM_VAULT_STORAGE_PATH):
+        raise HTTPException(status_code=400, detail="Chưa khởi tạo Buồng HSM Cá nhân! Vui lòng khởi tạo trong Tab Két sắt.")
+
+    session_id = str(uuid.uuid4())
+    session_dir = os.path.join(TEMP_STORAGE_DIR, session_id)
+    os.makedirs(session_dir, exist_ok=True)
+
+    in_path = os.path.join(session_dir, file.filename)
+    base_name = os.path.splitext(file.filename)[0]
+    out_pdf_name = f"{base_name}_Signed_PAdES_HSM.pdf"
+    out_pdf_path = os.path.join(session_dir, out_pdf_name)
+
+    with open(in_path, "wb") as f_dst:
+        shutil.copyfileobj(file.file, f_dst)
+
+    try:
+        vault = KryptoHSMVault(HSM_VAULT_STORAGE_PATH)
+        sign_res = PDFPAdESHSMSigner.sign_pdf_file(
+            input_pdf_path=in_path,
+            output_pdf_path=out_pdf_path,
+            vault=vault,
+            user_pin=user_pin,
+            totp_code=totp_code,
+            signing_reason=signing_reason,
+            signing_location=signing_location,
+            page_position=page_position,
+        )
+
+        pdf_dl_id = str(uuid.uuid4())
+        DOWNLOAD_CACHE[pdf_dl_id] = {"filepath": out_pdf_path, "filename": out_pdf_name}
+
+        eml_dl_id = None
+        if send_email_receipt:
+            eml_name = f"{base_name}_Ket_Qua_Ky_So_SMIME.eml"
+            eml_path = os.path.join(session_dir, eml_name)
+            SMIMEEmailWorkflowEngine.create_signed_result_delivery_email(
+                signing_result=sign_res,
+                vault=vault,
+                user_pin=user_pin,
+                totp_code=totp_code,
+                output_eml_path=eml_path,
+            )
+            eml_dl_id = str(uuid.uuid4())
+            DOWNLOAD_CACHE[eml_dl_id] = {"filepath": eml_path, "filename": eml_name}
+
+        return {
+            "status": "SUCCESS",
+            "signed_pdf_download_id": pdf_dl_id,
+            "smime_eml_download_id": eml_dl_id,
+            "signing_details": sign_res,
+        }
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi ký số PAdES-HSM: {str(e)}")
+
+
+@app.post("/api/hsm/export-migration")
+async def api_hsm_export_migration(
+    user_pin: str = Form(...),
+    master_recovery_passphrase: str = Form(...),
+    totp_code: Optional[str] = Form(None)
+):
+    """Xuất tệp Két sắt Di trú .kryptohsm (PKCS#11 C_WrapKey) để đổi Điện thoại và đổi PC."""
+    if not os.path.exists(HSM_VAULT_STORAGE_PATH):
+        raise HTTPException(status_code=400, detail="Chưa có Buồng HSM để xuất!")
+    try:
+        vault = KryptoHSMVault(HSM_VAULT_STORAGE_PATH)
+        out_name = f"Krypto_HSM_Migration_{vault.state['slot_id']}.kryptohsm"
+        out_path = os.path.join(TEMP_STORAGE_DIR, out_name)
+        res = vault.export_migration_bundle(
+            user_pin=user_pin,
+            master_recovery_passphrase=master_recovery_passphrase,
+            output_bundle_path=out_path,
+            totp_code=totp_code,
+        )
+        dl_id = str(uuid.uuid4())
+        DOWNLOAD_CACHE[dl_id] = {"filepath": out_path, "filename": out_name}
+        return {
+            "status": "SUCCESS",
+            "download_id": dl_id,
+            "filename": out_name,
+            "bundle_sha256": res["bundle_sha256"],
+            "serial_hex": res["serial_hex"],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/hsm/import-migration")
+async def api_hsm_import_migration(
+    bundle_file: UploadFile = File(...),
+    master_recovery_passphrase: str = Form(...)
+):
+    """Khôi phục Buồng HSM + Chứng thư số + Ảnh chữ ký tay .PNG sang PC mới / Điện thoại mới (PKCS#11 C_UnwrapKey)."""
+    try:
+        raw_bytes = await bundle_file.read()
+        vault = KryptoHSMVault.import_migration_bundle_to_new_device(
+            bundle_input=raw_bytes,
+            master_recovery_passphrase=master_recovery_passphrase,
+            new_device_vault_path=HSM_VAULT_STORAGE_PATH,
+        )
+        creds = vault.get_public_credentials_and_png()
+        return {
+            "status": "SUCCESS",
+            "slot_id": creds["slot_id"],
+            "signer_name": creds["signer_name"],
+            "signer_email": creds["signer_email"],
+            "serial_hex": creds["serial_hex"],
+            "visual_sig_png_sha256": creds["visual_sig_png_sha256"],
+            "handwritten_png_data_url": "data:image/png;base64," + creds["handwritten_png_b64"],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

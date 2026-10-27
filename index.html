@@ -250,39 +250,59 @@
                             </div>
                         </div>
 
-                        <!-- MODULE C: CHỮ KÝ SỐ & CON DẤU ĐIỆN TỬ -->
+                            <!-- MODULE C: CHỮ KÝ SỐ & CON DẤU ĐIỆN TỬ -->
                         <div class="option-module-box">
                             <div class="feature-toggle-row" onclick="toggleDigitalSignatureOption()">
                                 <div class="feature-toggle-left">
                                     <input type="checkbox" id="enable-digital-signature" onclick="event.stopPropagation(); toggleDigitalSignatureOption()">
                                     <label for="enable-digital-signature" style="cursor: pointer; margin: 0; font-size: 11px; font-weight: 600; color: var(--text-title);">
-                                        ✍️ Chèn Chữ Ký Số & Con Dấu Điện Tử
+                                        ✍️ Chèn Chữ Ký Số Cá Nhân HSM &amp; Chữ Ký Tay (.PNG)
                                     </label>
                                 </div>
-                                <span class="feature-toggle-tag">PAdES</span>
+                                <span class="feature-toggle-tag">PAdES-HSM</span>
                             </div>
                             <div id="digital-signature-panel" style="display: none; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
                                 <div class="sig-mode-chips">
-                                    <button type="button" class="btn-sig-chip active" id="sig-mode-vault" onclick="setSignatureMode('vault')">🛡️ Mộc Két KryptoDoc</button>
-                                    <button type="button" class="btn-sig-chip" id="sig-mode-custom-img" onclick="triggerPickSignatureImage()">🖼️ Tải Ảnh Con Dấu/Chữ Ký</button>
+                                    <button type="button" class="btn-sig-chip active" id="sig-mode-vault" onclick="setSignatureMode('vault')">🛡️ Buồng HSM Cá Nhân (.PNG)</button>
+                                    <button type="button" class="btn-sig-chip" id="sig-mode-custom-img" onclick="triggerPickSignatureImage()">🖼️ Tách Nền Ảnh Chữ Ký Tay</button>
                                     <button type="button" class="btn-sig-chip" id="sig-mode-p12" onclick="triggerPickCertFile()">🔑 Chứng Thư .P12/.PFX</button>
                                     <input type="file" id="sig-image-file" accept="image/*" style="display:none;" onchange="handleSignatureImageSelected(this)">
                                     <input type="file" id="sig-cert-file" accept=".p12,.pfx" style="display:none;" onchange="handleCertFileSelected(this)">
                                 </div>
+                                <div id="hsm-active-badge-bar" style="margin-top: 6px; padding: 6px 9px; border-radius: 6px; background: rgba(5, 150, 105, 0.08); border: 1px solid rgba(5, 150, 105, 0.28); font-size: 10.5px; color: var(--text-title); display: flex; justify-content: space-between; align-items: center;">
+                                    <span id="hsm-active-summary-text">🔒 Buồng HSM: Sẵn sàng ký số PAdES + Chữ ký tay .PNG</span>
+                                    <button type="button" class="btn-mini-gen" onclick="switchTab('vault')">⚙️ Quản lý HSM</button>
+                                </div>
                                 <div class="dual-inputs-row" style="margin-top: 5px;">
                                     <div class="input-col">
-                                        <label class="micro-label">Người ký / Đơn vị:</label>
-                                        <input type="text" id="signer-name-input" placeholder="VD: KS. Nguyễn Văn A">
+                                        <label class="micro-label">Người ký / Chủ sở hữu HSM:</label>
+                                        <input type="text" id="signer-name-input" placeholder="VD: TS. Nguyễn Hoàng Anh">
                                     </div>
                                     <div class="input-col">
-                                        <label class="micro-label">Lý do ký:</label>
-                                        <input type="text" id="signing-reason-input" placeholder="Phê duyệt phát hành">
+                                        <label class="micro-label">Lý do ký số:</label>
+                                        <input type="text" id="signing-reason-input" placeholder="Phê duyệt &amp; phát hành">
                                     </div>
                                 </div>
-                                <div class="sig-position-row" style="margin-top: 5px;">
-                                    <span class="micro-label">Vị trí đóng dấu:</span>
-                                    <label class="radio-label-micro"><input type="radio" name="sig-pos" value="last_page" checked> Trang cuối</label>
-                                    <label class="radio-label-micro"><input type="radio" name="sig-pos" value="all_pages"> Tất cả các trang</label>
+                                <div class="dual-inputs-row" style="margin-top: 5px;">
+                                    <div class="input-col">
+                                        <label class="micro-label">Email ký số &amp; nhận kết quả (S/MIME):</label>
+                                        <input type="email" id="signer-email-input" placeholder="VD: email@domain.com">
+                                    </div>
+                                    <div class="input-col">
+                                        <label class="micro-label">Mã USER_PIN mở HSM khi ký:</label>
+                                        <input type="password" id="signer-hsm-pin-input" placeholder="PIN HSM (mặc định theo PIN Két)">
+                                    </div>
+                                </div>
+                                <div class="sig-position-row" style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                    <div>
+                                        <span class="micro-label">Vị trí đóng dấu:</span>
+                                        <label class="radio-label-micro"><input type="radio" name="sig-pos" value="last_page" checked> Trang cuối</label>
+                                        <label class="radio-label-micro"><input type="radio" name="sig-pos" value="all_pages"> Tất cả trang</label>
+                                    </div>
+                                    <label style="display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--primary); font-weight: 600; cursor: pointer;">
+                                        <input type="checkbox" id="enable-smime-email-notify" checked style="width: 14px; height: 14px; margin: 0;">
+                                        <span>📧 Xuất kèm Email S/MIME kết quả</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -549,6 +569,94 @@
                 <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 16px; width: 100%;" onclick="saveVaultSettings()">
                     <span>Lưu Cấu Hình Két Bảo Mật</span>
                 </button>
+
+                <!-- PHÂN KHU MỚI: BUỒNG CHỮ KÝ SỐ CÁ NHÂN CHUẨN HSM + CHỮ KÝ TAY (.PNG) + ĐỔI MÁY (.KRYPTOHSM) + EMAIL S/MIME -->
+                <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--primary);">✍️ BUỒNG CHỮ KÝ SỐ CÁ NHÂN CHUẨN HSM (PKCS#11)</span>
+                        <span id="vault-hsm-slot-badge" style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(5,150,105,0.14); color: #059669;">CKA_EXTRACTABLE=FALSE</span>
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px; line-height: 1.4;">
+                        Khởi tạo Chứng thư số X.509v3 cá nhân trong HSM gắn liền <strong>Ảnh chữ ký tay (.PNG trong suốt)</strong>, <strong>Email S/MIME</strong> và hỗ trợ xuất/nhập két sắt <code>.kryptohsm</code> khi đổi Điện thoại hoặc đổi PC.
+                    </p>
+
+                    <div class="dual-inputs-row">
+                        <div class="input-col">
+                            <label class="micro-label">Họ và tên chủ chữ ký số:</label>
+                            <input type="text" id="hsm-signer-name" placeholder="VD: TS. Nguyễn Hoàng Anh">
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Email ký số S/MIME &amp; thông báo:</label>
+                            <input type="email" id="hsm-signer-email" placeholder="VD: hoanganh@domain.vn">
+                        </div>
+                    </div>
+
+                    <div class="dual-inputs-row" style="margin-top: 6px;">
+                        <div class="input-col">
+                            <label class="micro-label">Chức danh chuyên môn:</label>
+                            <input type="text" id="hsm-signer-title" placeholder="VD: Chủ trì thẩm tra">
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Cơ quan / Đơn vị / CCCD:</label>
+                            <input type="text" id="hsm-signer-org" placeholder="VD: IBST-BIM / CCCD:001...">
+                        </div>
+                    </div>
+
+                    <div class="dual-inputs-row" style="margin-top: 6px;">
+                        <div class="input-col">
+                            <label class="micro-label">Mã USER_PIN ký số HSM:</label>
+                            <input type="password" id="hsm-user-pin" placeholder="Tối thiểu 4 số (VD: 1234)">
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Màu mực chữ ký tay (.PNG):</label>
+                            <select id="hsm-ink-preset" style="width: 100%; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 11.5px;">
+                                <option value="administrative_blue">🔵 Xanh cửu long (#003399)</option>
+                                <option value="royal_blue">🔷 Xanh biếc tươi (#004CB4)</option>
+                                <option value="carbon_black">⚫ Đen mực bút ký (#0F0F0F)</option>
+                                <option value="seal_red">🔴 Đỏ tươi con dấu (#C00000)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Khung xem trước ảnh chữ ký tay (.PNG trong suốt) lưu trong CKO_DATA của HSM -->
+                    <div style="margin-top: 10px; padding: 10px; border: 1px dashed var(--border-active); border-radius: 8px; background: var(--bg-subtle); text-align: center;">
+                        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px;" id="hsm-sig-preview-caption">
+                            Mẫu chữ ký tay (.PNG nền trong suốt) gắn mã băm SHA-256 trong HSM:
+                        </div>
+                        <img id="hsm-sig-preview-img" src="" alt="Preview Chữ Ký Tay" style="max-height: 76px; max-width: 100%; display: none; margin: 0 auto;" />
+                        <div style="display: flex; justify-content: center; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+                            <button type="button" class="btn-chip-micro" onclick="document.getElementById('hsm-raw-sig-upload').click()">📷 Chụp / Tải Ảnh Chữ Ký Tay</button>
+                            <button type="button" class="btn-chip-micro" onclick="previewAutoGeneratedHandwrittenSig()">✒️ Tạo Mẫu Chữ Ký Tay Tự Động</button>
+                            <input type="file" id="hsm-raw-sig-upload" accept="image/*" style="display: none;" onchange="handleHsmRawSigUpload(this)">
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, #003399 0%, #1d4ed8 100%);" onclick="provisionPersonalHSMFromVaultUI()">
+                        <span>🛡️ Khởi Tạo / Cập Nhật Buồng Chữ Ký Số HSM Cá Nhân</span>
+                    </button>
+
+                    <!-- Khu vực Đổi Điện Thoại & Đổi PC (.kryptohsm) + Email S/MIME -->
+                    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);">
+                        <label class="micro-label">ĐỔI ĐIỆN THOẠI &amp; ĐỔI PC (DI TRÚ KÉT SẮT .KRYPTOHSM) &amp; EMAIL KÝ SỐ:</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="exportKryptoHSMBundleUI()">
+                                📤 Xuất Két .kryptohsm
+                            </button>
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="document.getElementById('hsm-bundle-import-input').click()">
+                                📥 Nhập Két Máy Mới
+                            </button>
+                            <input type="file" id="hsm-bundle-import-input" accept=".kryptohsm,.json" style="display: none;" onchange="importKryptoHSMBundleUI(this)">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="sendSigningRequestEmailUI()">
+                                📧 Gửi Email Yêu Cầu Ký
+                            </button>
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="showMobileTOTPTransferDialog()">
+                                📱 Mã QR Đổi Điện Thoại
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -663,7 +771,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.7.6 PQC</strong>
+                    <strong id="drawer-app-version">v2.8.6 PQC-HSM</strong>
                 </div>
             </div>
 
@@ -792,6 +900,7 @@
     <script src="static/qrcode.min.js"></script>
     <script src="static/watermark_presets.js"></script>
     <script src="static/pqc_crypto_engine.js"></script>
+    <script src="static/hsm_signature_engine.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>
