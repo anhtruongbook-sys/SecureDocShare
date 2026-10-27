@@ -1063,14 +1063,15 @@ class KryptoHSMSignatureEngine {
      *    để nhúng trực tiếp vào cấu trúc /AcroForm /Sig (/SubFilter /adbe.pkcs7.detached) của tệp PDF.
      *    Nhờ đó Foxit PDF Reader, Adobe Acrobat, WPS Office đều nhận diện và hiển thị đầy đủ trong tab "Digital Signatures".
      */
-    static async buildDynamicHSMPkcs12Base64(vault = null, overrideSignerName = '') {
+    static async buildDynamicHSMPkcs12Base64(vault = null, overrideSignerName = '', overrideSignerEmail = '') {
         const activeVault = vault || KryptoHSMSignatureEngine.getActiveHSMVault();
         const certInfo = (activeVault && activeVault.certificate) ? activeVault.certificate : {};
         const signerName = (overrideSignerName || certInfo.signer_name || 'Krypto HSM Signer').trim();
+        const signerEmail = (overrideSignerEmail || certInfo.signer_email || 'truongtuananhxd@gmail.com').trim();
         const orgName = (certInfo.organization || 'IBST-BIM / Krypto HSM Security').trim();
         const serialHexRaw = ((certInfo.serial_hex || '57249B18BBDD2284').replace(/[^0-9A-Fa-f]/g, '') + '57249B18BBDD2284').slice(0, 16);
 
-        const cacheKey = `krypto_hsm_pades_bundle_v4_${serialHexRaw}_${signerName}`;
+        const cacheKey = `krypto_hsm_pades_bundle_v5_${serialHexRaw}_${signerName}_${signerEmail}`;
         try {
             const cachedBundle = localStorage.getItem(cacheKey);
             if (cachedBundle && cachedBundle.includes('|') && cachedBundle.length > 800) {
@@ -1105,6 +1106,7 @@ class KryptoHSMSignatureEngine {
         const derOid = (oidBytes) => derTlv(0x06, new Uint8Array(oidBytes));
         const derUtf8 = (str) => derTlv(0x0c, new TextEncoder().encode(str));
         const derPrintable = (str) => derTlv(0x13, new TextEncoder().encode(str));
+        const derIA5 = (str) => derTlv(0x16, new TextEncoder().encode(str));
         const derUtcTime = (str) => derTlv(0x17, new TextEncoder().encode(str));
         const derNull = () => new Uint8Array([0x05, 0x00]);
         const derIntBytes = (u8) => {
@@ -1127,12 +1129,13 @@ class KryptoHSMSignatureEngine {
         const pkcs8Bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', keyPair.privateKey));
         const spkiBytes = new Uint8Array(await crypto.subtle.exportKey('spki', keyPair.publicKey));
 
-        // 2. Đóng gói X.509v3 TBSCertificate (RFC 5280)
+        // 2. Đóng gói X.509v3 TBSCertificate (RFC 5280) kèm emailAddress (1.2.840.113549.1.9.1) + SubjectAltName rfc822Name
         const x500Name = derSeq(
             rdn([0x55, 0x04, 0x06], derPrintable('VN')),
             rdn([0x55, 0x04, 0x0a], derUtf8(orgName)),
             rdn([0x55, 0x04, 0x0b], derUtf8('Krypto HSM PKCS#11 (FIPS 140-3)')),
-            rdn([0x55, 0x04, 0x03], derUtf8(signerName))
+            rdn([0x55, 0x04, 0x03], derUtf8(signerName)),
+            rdn([0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x01], derIA5(signerEmail))
         );
         // sha256WithRSAEncryption (1.2.840.113549.1.1.11)
         const algId = derSeq(derOid([0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b]), derNull());
@@ -1148,7 +1151,12 @@ class KryptoHSMSignatureEngine {
             derTlv(0x01, new Uint8Array([0xff])),
             derTlv(0x04, derTlv(0x03, new Uint8Array([0x06, 0xc0])))
         );
-        const extensions = derTlv(0xa3, derSeq(extKeyUsage));
+        // X.509v3 SubjectAltName (2.5.29.17): rfc822Name ([1] IMPLICIT IA5String = tag 0x81)
+        const extSubjectAltName = derSeq(
+            derOid([0x55, 0x1d, 0x11]),
+            derTlv(0x04, derSeq(derTlv(0x81, new TextEncoder().encode(signerEmail))))
+        );
+        const extensions = derTlv(0xa3, derSeq(extKeyUsage, extSubjectAltName));
 
         const tbsCert = derSeq(
             derTlv(0xa0, derIntBytes(new Uint8Array([0x02]))),

@@ -1399,7 +1399,8 @@ async function executeMobileLockFiles() {
                         }
                     }
                     try {
-                        effectiveSigningReasonPayload = await window.KryptoHSMSignatureEngine.buildDynamicHSMPkcs12Base64(hsmVault, signerName);
+                        const signerEmailVal = (document.getElementById('signer-email-input')?.value || hsmVault?.certificate?.signer_email || 'truongtuananhxd@gmail.com').trim();
+                        effectiveSigningReasonPayload = await window.KryptoHSMSignatureEngine.buildDynamicHSMPkcs12Base64(hsmVault, signerName, signerEmailVal);
                     } catch (p12Err) {
                         console.warn('PAdES PKCS#12 build warning:', p12Err);
                     }
