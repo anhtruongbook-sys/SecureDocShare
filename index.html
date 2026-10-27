@@ -618,9 +618,9 @@
                         </div>
                     </div>
 
-                    <!-- Khung xem trước ảnh chữ ký tay (.PNG trong suốt) lưu trong CKO_DATA của HSM -->
-                    <div style="margin-top: 10px; padding: 10px; border: 1px dashed var(--border-active); border-radius: 8px; background: var(--bg-subtle); text-align: center;">
-                        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px;" id="hsm-sig-preview-caption">
+                    <!-- Khung xem trước ảnh chữ ký tay (.PNG trong suốt) lưu trong CKO_DATA của HSM (Tuân thủ Single-Level Card Rule 14) -->
+                    <div style="margin-top: 12px; padding: 12px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); background: transparent; text-align: center;">
+                        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; word-break: break-word;" id="hsm-sig-preview-caption">
                             Mẫu chữ ký tay (.PNG nền trong suốt) gắn mã băm SHA-256 trong HSM:
                         </div>
                         <img id="hsm-sig-preview-img" src="" alt="Preview Chữ Ký Tay" style="max-height: 76px; max-width: 100%; display: none; margin: 0 auto;" />
@@ -631,27 +631,27 @@
                         </div>
                     </div>
 
-                    <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, #003399 0%, #1d4ed8 100%);" onclick="provisionPersonalHSMFromVaultUI()">
+                    <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 12px; width: 100%; background: linear-gradient(135deg, #003399 0%, #1d4ed8 100%);" onclick="provisionPersonalHSMFromVaultUI()">
                         <span>🛡️ Khởi Tạo / Cập Nhật Buồng Chữ Ký Số HSM Cá Nhân</span>
                     </button>
 
                     <!-- Khu vực Đổi Điện Thoại & Đổi PC (.kryptohsm) + Email S/MIME -->
                     <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);">
                         <label class="micro-label">ĐỔI ĐIỆN THOẠI &amp; ĐỔI PC (DI TRÚ KÉT SẮT .KRYPTOHSM) &amp; EMAIL KÝ SỐ:</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
-                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="exportKryptoHSMBundleUI()">
+                        <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 6px; width: 100%; box-sizing: border-box;">
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="exportKryptoHSMBundleUI()">
                                 📤 Xuất Két .kryptohsm
                             </button>
-                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="document.getElementById('hsm-bundle-import-input').click()">
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="document.getElementById('hsm-bundle-import-input').click()">
                                 📥 Nhập Két Máy Mới
                             </button>
                             <input type="file" id="hsm-bundle-import-input" accept=".kryptohsm,.json" style="display: none;" onchange="importKryptoHSMBundleUI(this)">
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
-                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="sendSigningRequestEmailUI()">
+                        <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 6px; width: 100%; box-sizing: border-box;">
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="sendSigningRequestEmailUI()">
                                 📧 Gửi Email Yêu Cầu Ký
                             </button>
-                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px;" onclick="showMobileTOTPTransferDialog()">
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="showMobileTOTPTransferDialog()">
                                 📱 Mã QR Đổi Điện Thoại
                             </button>
                         </div>
@@ -771,7 +771,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.8.6 PQC-HSM</strong>
+                    <strong id="drawer-app-version">v2.8.7 PQC-HSM</strong>
                 </div>
             </div>
 

@@ -66,8 +66,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.8.6
-          name: "Krypto v2.8.6 - Tích Hợp Chữ Ký Số Cá Nhân Chuẩn HSM (PKCS#11) + Chữ Ký Tay (Chu ky TA.png) + Di Trú Đa Thiết Bị (.kryptohsm) + Email S/MIME"
+          tag_name: v2.8.7
+          name: "Krypto v2.8.7 - Fix Tràn Ngang Ô Nhập Liệu Mobile (Single-Column Responsive Grid) & Chuẩn Hóa Giao Diện HSM"
           body: |
             ## Ứng dụng Di Động Krypto v2.8.6 (PQC ML-KEM-768 + PKCS#11 HSM Personal Digital Signature Suite)
             - **Buồng Chữ Ký Số Cá Nhân Chuẩn HSM (`PKCS#11` `CKA_EXTRACTABLE = FALSE`)**:

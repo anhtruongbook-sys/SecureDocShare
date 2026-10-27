@@ -1985,13 +1985,33 @@ body.light-mode .krypto-toast {
 /* Dual Inputs Grid */
 .dual-inputs-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .input-col {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-col input,
+.input-col select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+    .dual-inputs-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
 }
 
 .micro-label {
