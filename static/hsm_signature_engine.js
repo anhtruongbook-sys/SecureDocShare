@@ -271,9 +271,13 @@ class KryptoHSMSignatureEngine {
     /**
      * Lưu đồng thời Buồng HSM vào cả localStorage VÀ Bộ nhớ Tệp Vĩnh viễn Native Android
      * để không bao giờ bị mất hay đổi chữ ký số khi cập nhật ứng dụng.
+     * Tuân thủ FIPS 140-3: Tuyệt đối xóa bỏ mọi trường khóa neo ngầm (device_anchor_wrapped) nếu có.
      */
     static persistHSMVaultEverywhere(vaultState) {
         if (!vaultState) return;
+        if (vaultState.key_wrapping && vaultState.key_wrapping.device_anchor_wrapped) {
+            delete vaultState.key_wrapping.device_anchor_wrapped;
+        }
         const jsonStr = JSON.stringify(vaultState);
         try {
             localStorage.setItem(KRYPTO_HSM_STORAGE_KEY, jsonStr);
@@ -289,86 +293,42 @@ class KryptoHSMSignatureEngine {
     }
 
     /**
-     * Khởi tạo Buồng HSM Cố định Mặc định (Canonical Immutable Personal HSM Vault)
-     * gắn liền với chữ ký tay chính thức (Chu ky TA.png) và Serial cố định HSM-SLOT-128AB9B40B.
+     * Ký số cấu trúc TBSCertificate (RFC 5280 X.509v3) bằng chính khóa bí mật ECDSA P-256 trong HSM
+     * để đảm bảo tính toàn vẹn toán học của Chứng thư số (không ai có thể sửa JSON chứng thư nếu không có khóa bí mật).
      */
-    static buildCanonicalDefaultVault() {
-        return {
-            hsm_version: 'KRYPTO_PKCS11_HSM_V1',
-            slot_id: 'HSM-SLOT-128AB9B40B',
-            created_at_utc: '2026-10-27T07:00:00.000Z',
-            immutable_key_locked: true,
-            token_flags: {
-                CKA_TOKEN: true,
-                CKA_PRIVATE: true,
-                CKA_SENSITIVE: true,
-                CKA_EXTRACTABLE: false
-            },
-            security_state: {
-                locked: false,
-                failed_pin_attempts: 0,
-                max_pin_retries: 5
-            },
-            key_wrapping: {
-                user_pin_wrapped: {
-                    salt_b64: 'LneW9nL8fnWhRpYbxXZkKA==',
-                    iv_b64: 'WmIyzmENKT+nXnpy',
-                    ct_b64: 'xF2QN2ord7qrr1S1kFQ9CkYKhXw04Q56F/HvQ99x0Oj0Pt1zly5uBQmHegfFdKTG'
-                },
-                so_pin_wrapped: {
-                    salt_b64: 'lajcbHyWT48WKl3+jE6s0Q==',
-                    iv_b64: 'ynklPVVHr99GGNT7',
-                    ct_b64: 'tUkqSHbilBtCAcIsaQ/vteVu7IqhoVWf18AdcsTsDZmhYwNg82apZ8gYTYnW+tNC'
-                },
-                device_anchor_wrapped: {
-                    salt_b64: 'xSC11uhMtps3nfv4MbY2Jw==',
-                    iv_b64: 'heE5x/9i7csW8EzA',
-                    ct_b64: '2bwru6i9s9nPVuVhRcCg+EbuKLayH2hvyDw0Jns2BBkIliaVdzq0rHK23KT0kFWO'
-                },
-                sealed_private_key: {
-                    salt_b64: 'aiWg0VoLUgrtF+Rha12vBQ==',
-                    iv_b64: 'Hzyzm8Os0etrSzDc',
-                    ct_b64: 'EW6O9bbx8b1T3kkClNbJdA5aFlcCVTL7bhhVktkWB5Wah6XokEUUGONjd9IKd/rClTHN76SoWWXR6hsotYgpq2oHa6JFqLQLm8c+7nJEMuAdnaySQCoLR1ovRvhGCvFdf3Q38YYYPCpPLsjgEibXIPQ4TqpTRk5pqb6b/SLeY6bl3YKLB8BehNJxpWXzxMx1vD5yQSBi3mFMfw=='
-                }
-            },
-            certificate: {
-                signer_name: 'Trương Tuấn Anh',
-                signer_email: 'truongtuananhxd@gmail.com',
-                signer_title: 'ANH',
-                organization: "ANH'S TEAM",
-                personal_id_cccd: "ANH'S TEAM",
-                serial_hex: '128AB9B40BE91F84AA85',
-                not_before_utc: '2026-10-27T07:00:00.000Z',
-                not_after_utc: '2036-10-27T07:00:00.000Z',
-                public_key_spki_b64: 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAElB/uBo+Zc4Tx8uG9rWW5+KV5EvdwpihQY+EoApK1RE4v4LzJHSFVL4cavtw18BDucHNVfpI26YAaVVID2Jvz3A==',
-                visual_sig_png_sha256: KRYPTO_DEFAULT_CHU_KY_TA_SHA256,
-                ink_preset: 'administrative_blue'
-            },
-            cko_data_handwritten_png: {
-                png_data_url: KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL,
-                sha256_hex: KRYPTO_DEFAULT_CHU_KY_TA_SHA256,
-                width: 673,
-                height: 312
-            },
-            mobile_totp_secret: 'KRYPTOHSMTTA2026ANHSTEAM77',
-            audit_chain: [
-                {
-                    seq: 1,
-                    timestamp_utc: '2026-10-27T07:00:00.000Z',
-                    event: 'HSM_PERMANENT_SLOT_ANCHORED',
-                    serial_hex: '128AB9B40BE91F84AA85',
-                    visual_sig_png_sha256: KRYPTO_DEFAULT_CHU_KY_TA_SHA256
-                }
-            ]
-        };
+    static async signTBSCertificate(cryptoPrivateKey, certObj) {
+        const canonicalTbs = [
+            'X509v3_TBS_V1',
+            certObj.serial_hex || '',
+            certObj.signer_name || '',
+            certObj.signer_email || '',
+            certObj.signer_title || '',
+            certObj.organization || '',
+            certObj.personal_id_cccd || '',
+            certObj.not_before_utc || '',
+            certObj.not_after_utc || '',
+            certObj.public_key_spki_b64 || '',
+            certObj.visual_sig_png_sha256 || ''
+        ].join('|');
+        const tbsBytes = new TextEncoder().encode(canonicalTbs);
+        const sigBuf = await crypto.subtle.sign(
+            { name: 'ECDSA', hash: { name: 'SHA-256' } },
+            cryptoPrivateKey,
+            tbsBytes
+        );
+        return KryptoHSMSignatureEngine.u8ToB64(new Uint8Array(sigBuf));
     }
 
     /**
-     * 3. Khởi tạo hoặc Cập nhật Hồ sơ Buồng HSM Cá nhân chuẩn PKCS#11 ngay trong Két Sắt Krypto:
-     *    - CƠ CHẾ CỐ ĐỊNH KHÓA (IMMUTABLE KEY PRESERVATION): Nếu đã có Buồng HSM và forceRegenerateKey = false,
-     *      GIỮ NGUYÊN 100% Cặp khóa ECDSA P-256, Số Serial HSM (serial_hex), Slot ID (slot_id) và Hạt giống TOTP;
-     *      chỉ cập nhật thông tin Hồ sơ (Họ tên, Email, Chức danh, Đơn vị, Mã PIN hoặc Ảnh chữ ký mới nếu tải lên).
-     *    - Chỉ khi người dùng chủ động yêu cầu Cấp lại khóa mới (forceRegenerateKey = true) mới sinh cặp khóa và Serial mới.
+     * 3. Khởi tạo hoặc Cập nhật Hồ sơ Buồng HSM Cá nhân đạt chuẩn Quốc tế nghiêm ngặt:
+     *    - Chuẩn FIPS 140-3 & OASIS PKCS#11 v3.0:
+     *      + Zero Hardcoded Key / Zero Hidden Anchor: Cặp khóa ECDSA P-256 chỉ được sinh ngẫu nhiên 100%
+     *        ngay trên thiết bị (On-Device CSPRNG) và chỉ được bọc bởi USER_PIN + SO_PIN của người dùng.
+     *      + Tự động xóa trắng vùng nhớ đệm chứa khóa rõ (FIPS 140-3 Zeroization: privBytes.fill(0), slotMasterKey.fill(0)).
+     *    - Chuẩn NIST SP 800-57 (Key Retention) & IETF RFC 5280 (Certificate Re-issuance):
+     *      + Khi đã có Buồng HSM và forceRegenerateKey = false: Bắt buộc xác thực đúng USER_PIN (hoặc SO_PIN),
+     *        giữ nguyên 100% Cặp khóa ECDSA P-256, Slot ID và Số Serial HSM, đồng thời ký đóng dấu lại
+     *        cấu trúc TBSCertificate (cert_signature_b64) trên cùng cặp khóa đó.
      */
     static async provisionPersonalHSMSlot({
         signerName,
@@ -377,6 +337,7 @@ class KryptoHSMSignatureEngine {
         organization,
         personalIdCccd,
         userPin,
+        newUserPin = null,
         soPin,
         inkPreset = 'administrative_blue',
         customPngDataUrl = null,
@@ -384,12 +345,54 @@ class KryptoHSMSignatureEngine {
     }) {
         if (!signerName || !signerName.trim()) throw new Error('Vui lòng nhập Họ và tên chủ sở hữu chữ ký số!');
         if (!signerEmail || !signerEmail.trim()) throw new Error('Vui lòng nhập Email ký số & nhận thông báo!');
-        const cleanPin = (userPin && userPin.trim().length >= 4) ? userPin.trim() : '';
+        if (!userPin || userPin.trim().length < 4) {
+            throw new Error('Chuẩn PKCS#11 / FIPS 140-3: Vui lòng nhập Mã USER_PIN hiện tại (tối thiểu 4 ký tự) để xác thực quyền sở hữu HSM!');
+        }
+        const cleanPin = userPin.trim();
+        const cleanNewPin = (newUserPin && newUserPin.trim().length >= 4) ? newUserPin.trim() : cleanPin;
 
         const existingVault = KryptoHSMSignatureEngine.getActiveHSMVault();
 
-        // TRƯỜNG HỢP 1: ĐÃ CÓ BUỒNG HSM VÀ KHÔNG YÊU CẦU CẤP LẠI KHÓA -> CỐ ĐỊNH 100% CHỮ KÝ SỐ & SERIAL
+        // TRƯỜNG HỢP 1: ĐÃ CÓ BUỒNG HSM & GIỮ NGUYÊN KHÓA (NIST SP 800-57 KEY RETENTION + RFC 5280 RE-SIGN)
         if (existingVault && !forceRegenerateKey) {
+            if (existingVault.security_state?.locked) {
+                // Nếu đang bị khóa do sai PIN 5 lần, kiểm tra xem người dùng có truyền đúng SO_PIN để mở khóa không
+                if (!soPin || !soPin.trim()) {
+                    throw new Error('Buồng HSM đang bị KHÓA CỨNG do nhập sai USER_PIN 5 lần! Vui lòng nhập Mật khẩu Két (SO_PIN) để mở khóa.');
+                }
+            }
+
+            let slotMasterKey = null;
+            try {
+                slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
+                    existingVault.key_wrapping.user_pin_wrapped,
+                    cleanPin
+                );
+            } catch (pinErr) {
+                // Thử mở bằng SO_PIN (Mật khẩu Két Quản trị) nếu người dùng là chủ Két
+                if (soPin && soPin.trim() && existingVault.key_wrapping?.so_pin_wrapped) {
+                    try {
+                        slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
+                            existingVault.key_wrapping.so_pin_wrapped,
+                            soPin.trim()
+                        );
+                    } catch (_) {}
+                }
+                if (!slotMasterKey) {
+                    existingVault.security_state = existingVault.security_state || { locked: false, failed_pin_attempts: 0, max_pin_retries: 5 };
+                    existingVault.security_state.failed_pin_attempts = (existingVault.security_state.failed_pin_attempts || 0) + 1;
+                    const rem = Math.max(0, 5 - existingVault.security_state.failed_pin_attempts);
+                    if (rem === 0) {
+                        existingVault.security_state.locked = true;
+                    }
+                    KryptoHSMSignatureEngine.persistHSMVaultEverywhere(existingVault);
+                    if (rem === 0) {
+                        throw new Error('Nhập sai USER_PIN 5 lần liên tiếp! HSM Token đã tự động KHÓA CỨNG theo chuẩn PKCS#11.');
+                    }
+                    throw new Error(`Xác thực thất bại: Mã USER_PIN không chính xác! Còn ${rem} lần thử trước khi HSM tự động khóa cứng.`);
+                }
+            }
+
             let sigProcessed;
             if (customPngDataUrl) {
                 sigProcessed = await KryptoHSMSignatureEngine.processHandwrittenSignatureImage(customPngDataUrl, inkPreset);
@@ -409,49 +412,29 @@ class KryptoHSMSignatureEngine {
                 sigProcessed = await KryptoHSMSignatureEngine.generateStylizedHandwrittenSignature(signerName, inkPreset);
             }
 
-            if (cleanPin) {
-                let slotMasterKey = null;
-                if (existingVault.key_wrapping?.device_anchor_wrapped) {
-                    try {
-                        slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
-                            existingVault.key_wrapping.device_anchor_wrapped,
-                            'KRYPTO_IMMUTABLE_HSM_ANCHOR_2026'
-                        );
-                    } catch (_) {}
-                }
-                if (!slotMasterKey && existingVault.key_wrapping?.so_pin_wrapped) {
-                    try {
-                        slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
-                            existingVault.key_wrapping.so_pin_wrapped,
-                            (soPin || 'AdminPUK@2026').trim()
-                        );
-                    } catch (_) {}
-                }
-                if (!slotMasterKey && existingVault.key_wrapping?.user_pin_wrapped) {
-                    for (const candidatePin of [cleanPin, '1234', '0000']) {
-                        try {
-                            slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
-                                existingVault.key_wrapping.user_pin_wrapped,
-                                candidatePin
-                            );
-                            if (slotMasterKey) break;
-                        } catch (_) {}
-                    }
-                }
-                if (slotMasterKey) {
-                    existingVault.key_wrapping.user_pin_wrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, cleanPin);
-                    if (soPin && soPin.trim()) {
-                        existingVault.key_wrapping.so_pin_wrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, soPin.trim());
-                    }
-                    if (!existingVault.key_wrapping.device_anchor_wrapped) {
-                        existingVault.key_wrapping.device_anchor_wrapped = await KryptoHSMSignatureEngine.sealDataWithPass(
-                            slotMasterKey,
-                            'KRYPTO_IMMUTABLE_HSM_ANCHOR_2026'
-                        );
-                    }
-                }
-            }
+            // Mở niêm phong Khóa bí mật trong RAM để ký lại TBSCertificate (RFC 5280), sau đó Zeroize ngay lập tức
+            const privBytes = await KryptoHSMSignatureEngine.unsealDataWithPass(
+                existingVault.key_wrapping.sealed_private_key,
+                KryptoHSMSignatureEngine.u8ToB64(slotMasterKey)
+            );
+            const cryptoPrivKey = await crypto.subtle.importKey(
+                'pkcs8',
+                privBytes.buffer,
+                { name: 'ECDSA', namedCurve: 'P-256' },
+                false,
+                ['sign']
+            );
+            privBytes.fill(0); // FIPS 140-3 Zeroization
 
+            // Cập nhật lại bản bọc USER_PIN (và SO_PIN nếu có), xóa bỏ hoàn toàn mọi khóa neo ngầm
+            existingVault.key_wrapping.user_pin_wrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, cleanNewPin);
+            if (soPin && soPin.trim()) {
+                existingVault.key_wrapping.so_pin_wrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, soPin.trim());
+            }
+            delete existingVault.key_wrapping.device_anchor_wrapped;
+            slotMasterKey.fill(0); // FIPS 140-3 Zeroization
+
+            existingVault.hsm_version = 'KRYPTO_PKCS11_FIPS140_3_V2';
             existingVault.immutable_key_locked = true;
             if (customPngDataUrl) {
                 existingVault.custom_uploaded_sig = true;
@@ -468,6 +451,10 @@ class KryptoHSMSignatureEngine {
             existingVault.certificate.personal_id_cccd = (personalIdCccd || organization || existingVault.certificate.personal_id_cccd || "ANH'S TEAM").trim();
             existingVault.certificate.visual_sig_png_sha256 = sigProcessed.sha256Hex;
             existingVault.certificate.ink_preset = inkPreset;
+            existingVault.certificate.cert_signature_b64 = await KryptoHSMSignatureEngine.signTBSCertificate(
+                cryptoPrivKey,
+                existingVault.certificate
+            );
 
             existingVault.cko_data_handwritten_png = {
                 png_data_url: sigProcessed.pngDataUrl,
@@ -480,7 +467,7 @@ class KryptoHSMSignatureEngine {
             existingVault.audit_chain.push({
                 seq: existingVault.audit_chain.length + 1,
                 timestamp_utc: new Date().toISOString(),
-                event: 'HSM_PROFILE_UPDATED_KEY_AND_SERIAL_PRESERVED',
+                event: 'RFC5280_CERT_REISSUED_WITH_NIST_KEY_RETENTION',
                 serial_hex: existingVault.certificate.serial_hex,
                 visual_sig_png_sha256: sigProcessed.sha256Hex
             });
@@ -489,8 +476,7 @@ class KryptoHSMSignatureEngine {
             return existingVault;
         }
 
-        // TRƯỜNG HỢP 2: KHỞI TẠO MỚI HOẶC NGƯỜI DÙNG CHỦ ĐỘNG BẤM "CẤP LẠI CẶP KHÓA & SERIAL MỚI"
-        const effectivePin = cleanPin || '1234';
+        // TRƯỜNG HỢP 2: KHỞI TẠO LẦN ĐẦU TRÊN THIẾT BỊ HOẶC CHỦ ĐỘNG THU HỒI & CẤP KHÓA MỚI (ON-DEVICE CSPRNG)
         let sigProcessed;
         if (customPngDataUrl) {
             sigProcessed = await KryptoHSMSignatureEngine.processHandwrittenSignatureImage(customPngDataUrl, inkPreset);
@@ -506,16 +492,18 @@ class KryptoHSMSignatureEngine {
         const pkcs8Priv = new Uint8Array(await crypto.subtle.exportKey('pkcs8', keyPair.privateKey));
         const spkiPub = new Uint8Array(await crypto.subtle.exportKey('spki', keyPair.publicKey));
 
+        // Chỉ bọc khóa bằng USER_PIN và SO_PIN của người dùng (Zero Hardcoded Key / Zero Backdoor)
         const slotMasterKey = crypto.getRandomValues(new Uint8Array(32));
-        const userPinWrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, effectivePin);
-        const soPinWrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, (soPin || 'AdminPUK@2026').trim());
-        const deviceAnchorWrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, 'KRYPTO_IMMUTABLE_HSM_ANCHOR_2026');
+        const userPinWrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, cleanNewPin);
+        const soPinWrapped = await KryptoHSMSignatureEngine.sealDataWithPass(slotMasterKey, (soPin || cleanNewPin).trim());
         const sealedPrivateKey = await KryptoHSMSignatureEngine.sealDataWithPass(
             pkcs8Priv,
             KryptoHSMSignatureEngine.u8ToB64(slotMasterKey)
         );
 
+        // Xóa trắng khóa rõ trong RAM ngay lập tức (FIPS 140-3 Zeroization)
         pkcs8Priv.fill(0);
+        slotMasterKey.fill(0);
 
         const randomSerialBytes = crypto.getRandomValues(new Uint8Array(10));
         const serialHex = Array.from(randomSerialBytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -529,8 +517,23 @@ class KryptoHSMSignatureEngine {
         const nowIso = new Date().toISOString();
         const expDate = new Date(Date.now() + 10 * 365 * 86400 * 1000).toISOString();
 
+        const certObj = {
+            signer_name: signerName.trim(),
+            signer_email: signerEmail.trim(),
+            signer_title: (signerTitle || 'ANH').trim(),
+            organization: (organization || "ANH'S TEAM").trim(),
+            personal_id_cccd: (personalIdCccd || organization || "ANH'S TEAM").trim(),
+            serial_hex: serialHex,
+            not_before_utc: nowIso,
+            not_after_utc: expDate,
+            public_key_spki_b64: KryptoHSMSignatureEngine.u8ToB64(spkiPub),
+            visual_sig_png_sha256: sigProcessed.sha256Hex,
+            ink_preset: inkPreset
+        };
+        certObj.cert_signature_b64 = await KryptoHSMSignatureEngine.signTBSCertificate(keyPair.privateKey, certObj);
+
         const vaultState = {
-            hsm_version: 'KRYPTO_PKCS11_HSM_V1',
+            hsm_version: 'KRYPTO_PKCS11_FIPS140_3_V2',
             slot_id: slotId,
             created_at_utc: nowIso,
             immutable_key_locked: true,
@@ -549,22 +552,9 @@ class KryptoHSMSignatureEngine {
             key_wrapping: {
                 user_pin_wrapped: userPinWrapped,
                 so_pin_wrapped: soPinWrapped,
-                device_anchor_wrapped: deviceAnchorWrapped,
                 sealed_private_key: sealedPrivateKey
             },
-            certificate: {
-                signer_name: signerName.trim(),
-                signer_email: signerEmail.trim(),
-                signer_title: (signerTitle || 'ANH').trim(),
-                organization: (organization || "ANH'S TEAM").trim(),
-                personal_id_cccd: (personalIdCccd || organization || "ANH'S TEAM").trim(),
-                serial_hex: serialHex,
-                not_before_utc: nowIso,
-                not_after_utc: expDate,
-                public_key_spki_b64: KryptoHSMSignatureEngine.u8ToB64(spkiPub),
-                visual_sig_png_sha256: sigProcessed.sha256Hex,
-                ink_preset: inkPreset
-            },
+            certificate: certObj,
             cko_data_handwritten_png: {
                 png_data_url: sigProcessed.pngDataUrl,
                 sha256_hex: sigProcessed.sha256Hex,
@@ -576,7 +566,7 @@ class KryptoHSMSignatureEngine {
                 {
                     seq: 1,
                     timestamp_utc: nowIso,
-                    event: forceRegenerateKey ? 'HSM_KEYPAIR_EXPLICITLY_REISSUED' : 'HSM_SLOT_PROVISIONED',
+                    event: forceRegenerateKey ? 'HSM_KEYPAIR_EXPLICITLY_REISSUED_CSPRNG' : 'HSM_SLOT_PROVISIONED_ON_DEVICE_CSPRNG',
                     serial_hex: serialHex,
                     visual_sig_png_sha256: sigProcessed.sha256Hex
                 }
@@ -590,31 +580,43 @@ class KryptoHSMSignatureEngine {
     static getActiveHSMVault() {
         try {
             const raw = localStorage.getItem(KRYPTO_HSM_STORAGE_KEY);
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                if (
-                    parsed &&
-                    parsed.certificate &&
-                    (!parsed.custom_uploaded_sig) &&
-                    (!parsed.certificate.ink_preset || parsed.certificate.ink_preset === 'administrative_blue') &&
-                    parsed.certificate.visual_sig_png_sha256 !== KRYPTO_DEFAULT_CHU_KY_TA_SHA256
-                ) {
-                    parsed.certificate.visual_sig_png_sha256 = KRYPTO_DEFAULT_CHU_KY_TA_SHA256;
-                    parsed.cko_data_handwritten_png = {
-                        png_data_url: KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL,
-                        sha256_hex: KRYPTO_DEFAULT_CHU_KY_TA_SHA256,
-                        width: 673,
-                        height: 312
-                    };
-                    KryptoHSMSignatureEngine.persistHSMVaultEverywhere(parsed);
-                }
-                return parsed;
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            // Loại bỏ hoàn toàn vault mẫu nhúng tĩnh từ bản v2.8.8 (nếu có) để đảm bảo 100% khóa sinh bằng CSPRNG trên thiết bị
+            if (
+                parsed?.audit_chain?.length === 1 &&
+                parsed.audit_chain[0]?.event === 'HSM_PERMANENT_SLOT_ANCHORED'
+            ) {
+                localStorage.removeItem(KRYPTO_HSM_STORAGE_KEY);
+                return null;
             }
-            const defaultVault = KryptoHSMSignatureEngine.buildCanonicalDefaultVault();
-            KryptoHSMSignatureEngine.persistHSMVaultEverywhere(defaultVault);
-            return defaultVault;
+            let needsSave = false;
+            if (parsed?.key_wrapping?.device_anchor_wrapped) {
+                delete parsed.key_wrapping.device_anchor_wrapped;
+                needsSave = true;
+            }
+            if (
+                parsed &&
+                parsed.certificate &&
+                (!parsed.custom_uploaded_sig) &&
+                (!parsed.certificate.ink_preset || parsed.certificate.ink_preset === 'administrative_blue') &&
+                parsed.certificate.visual_sig_png_sha256 !== KRYPTO_DEFAULT_CHU_KY_TA_SHA256
+            ) {
+                parsed.certificate.visual_sig_png_sha256 = KRYPTO_DEFAULT_CHU_KY_TA_SHA256;
+                parsed.cko_data_handwritten_png = {
+                    png_data_url: KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL,
+                    sha256_hex: KRYPTO_DEFAULT_CHU_KY_TA_SHA256,
+                    width: 673,
+                    height: 312
+                };
+                needsSave = true;
+            }
+            if (needsSave) {
+                KryptoHSMSignatureEngine.persistHSMVaultEverywhere(parsed);
+            }
+            return parsed;
         } catch (e) {
-            return KryptoHSMSignatureEngine.buildCanonicalDefaultVault();
+            return null;
         }
     }
 
@@ -704,7 +706,7 @@ class KryptoHSMSignatureEngine {
 
                 ctx.fillStyle = '#059669';
                 ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
-                ctx.fillText('Chuẩn PKCS#11 HSM (CKA_EXTRACTABLE=FALSE) • Toàn vẹn 100%', tx, 216);
+                ctx.fillText('Chuẩn PKCS#11 / FIPS 140-3 (CKA_EXTRACTABLE=FALSE)', tx, 216);
 
                 resolve(canvas.toDataURL('image/png'));
             };
@@ -715,43 +717,36 @@ class KryptoHSMSignatureEngine {
 
     /**
      * 5. Thực thi lệnh ký PKCS#11 C_Sign trên 32 bytes mã băm bằng USER_PIN (Tự động khóa cứng sau 5 lần sai PIN).
+     *    Tuân thủ nghiêm ngặt FIPS 140-3: Bắt buộc xác thực đúng USER_PIN, không dùng khóa neo ngầm.
      */
     static async signDigestWithHSM(digestHexOrString, userPin, documentName = 'Document') {
         const vault = KryptoHSMSignatureEngine.getActiveHSMVault();
-        if (!vault) throw new Error('Chưa khởi tạo Buồng Chữ ký số HSM! Vui lòng tạo trong Két sắt.');
+        if (!vault) throw new Error('Chưa khởi tạo Buồng Chữ ký số HSM! Vui lòng mở tab Két sắt để khởi tạo.');
 
         if (vault.security_state.locked) {
             throw new Error('Buồng HSM đã bị KHÓA CỨNG do nhập sai USER_PIN 5 lần! Vui lòng dùng mã quản trị SO_PIN để mở khóa.');
+        }
+        if (!userPin || userPin.trim().length < 4) {
+            throw new Error('Vui lòng nhập mã USER_PIN của HSM (tối thiểu 4 ký tự) để thực thi lệnh ký C_Sign!');
         }
 
         let slotMasterKey = null;
         try {
             slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
                 vault.key_wrapping.user_pin_wrapped,
-                (userPin || '1234').trim()
+                userPin.trim()
             );
         } catch (err) {
-            // Nếu người dùng không nhập PIN riêng (đang dùng mặc định trong phiên Két đã mở khóa), hỗ trợ mở qua Device Anchor
-            if ((!userPin || userPin === '1234') && vault.key_wrapping?.device_anchor_wrapped) {
-                try {
-                    slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
-                        vault.key_wrapping.device_anchor_wrapped,
-                        'KRYPTO_IMMUTABLE_HSM_ANCHOR_2026'
-                    );
-                } catch (_) {}
+            vault.security_state.failed_pin_attempts = (vault.security_state.failed_pin_attempts || 0) + 1;
+            const rem = Math.max(0, 5 - vault.security_state.failed_pin_attempts);
+            if (rem === 0) {
+                vault.security_state.locked = true;
             }
-            if (!slotMasterKey) {
-                vault.security_state.failed_pin_attempts = (vault.security_state.failed_pin_attempts || 0) + 1;
-                const rem = Math.max(0, 5 - vault.security_state.failed_pin_attempts);
-                if (rem === 0) {
-                    vault.security_state.locked = true;
-                }
-                KryptoHSMSignatureEngine.persistHSMVaultEverywhere(vault);
-                if (rem === 0) {
-                    throw new Error('Nhập sai USER_PIN 5 lần liên tiếp! HSM Token đã tự động KHÓA CỨNG.');
-                }
-                throw new Error(`Sai mã USER_PIN của HSM! Còn ${rem} lần thử trước khi khóa cứng.`);
+            KryptoHSMSignatureEngine.persistHSMVaultEverywhere(vault);
+            if (rem === 0) {
+                throw new Error('Nhập sai USER_PIN 5 lần liên tiếp! HSM Token đã tự động KHÓA CỨNG.');
             }
+            throw new Error(`Sai mã USER_PIN của HSM! Còn ${rem} lần thử trước khi khóa cứng.`);
         }
 
         vault.security_state.failed_pin_attempts = 0;
@@ -759,6 +754,7 @@ class KryptoHSMSignatureEngine {
             vault.key_wrapping.sealed_private_key,
             KryptoHSMSignatureEngine.u8ToB64(slotMasterKey)
         );
+        slotMasterKey.fill(0); // FIPS 140-3 Zeroization
 
         const cryptoKey = await crypto.subtle.importKey(
             'pkcs8',
@@ -767,7 +763,7 @@ class KryptoHSMSignatureEngine {
             false,
             ['sign']
         );
-        privBytes.fill(0);
+        privBytes.fill(0); // FIPS 140-3 Zeroization
 
         const dataBytes = new TextEncoder().encode(digestHexOrString);
         const sigBuf = await crypto.subtle.sign(
@@ -803,26 +799,22 @@ class KryptoHSMSignatureEngine {
     static async exportMigrationBundle(userPin, masterRecoveryPassphrase) {
         const vault = KryptoHSMSignatureEngine.getActiveHSMVault();
         if (!vault) throw new Error('Chưa có Buồng HSM để xuất!');
+        if (!userPin || userPin.trim().length < 4) {
+            throw new Error('Vui lòng nhập mã USER_PIN của HSM để xác thực trước khi xuất Két di trú!');
+        }
         if (!masterRecoveryPassphrase || masterRecoveryPassphrase.trim().length < 6) {
             throw new Error('Mật khẩu Khôi phục Chủ (Master Recovery Passphrase) phải có ít nhất 6 ký tự!');
         }
 
-        // Xác thực USER_PIN hoặc Device Anchor trước khi bọc khóa di trú
-        let verified = false;
+        // Xác thực nghiêm ngặt USER_PIN trước khi bọc khóa di trú (PKCS#11 C_WrapKey)
         try {
-            await KryptoHSMSignatureEngine.unsealDataWithPass(vault.key_wrapping.user_pin_wrapped, (userPin || '1234').trim());
-            verified = true;
+            const smk = await KryptoHSMSignatureEngine.unsealDataWithPass(
+                vault.key_wrapping.user_pin_wrapped,
+                userPin.trim()
+            );
+            smk.fill(0);
         } catch (_) {
-            if (vault.key_wrapping?.device_anchor_wrapped) {
-                await KryptoHSMSignatureEngine.unsealDataWithPass(
-                    vault.key_wrapping.device_anchor_wrapped,
-                    'KRYPTO_IMMUTABLE_HSM_ANCHOR_2026'
-                );
-                verified = true;
-            }
-        }
-        if (!verified) {
-            throw new Error('Sai mã USER_PIN của HSM! Không thể xuất gói di trú.');
+            throw new Error('Sai mã USER_PIN của HSM! Không thể xuất gói di trú .kryptohsm.');
         }
 
         const plainVaultBytes = new TextEncoder().encode(JSON.stringify(vault));

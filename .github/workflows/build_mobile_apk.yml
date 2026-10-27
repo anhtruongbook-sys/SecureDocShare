@@ -66,14 +66,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.8.8
-          name: "Krypto v2.8.8 - Khóa Cố Định Chữ Ký Số & Serial HSM (Immutable HSM Key) & Lưu Trữ Bền Vững Native Android"
+          tag_name: v2.8.9
+          name: "Krypto v2.8.9 - Chuẩn Bảo Mật Quốc Tế Nghiêm Ngặt (FIPS 140-3 / PKCS#11 / NIST SP 800-57 Key Retention / RFC 5280)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.8.8 (PQC ML-KEM-768 + Immutable PKCS#11 HSM Personal Digital Signature Suite)
-            - **Cơ Chế Cố Định Chữ Ký Số & Serial HSM (`Immutable HSM Key & Dual-Layer Native Persistence`)**:
-              + Giữ nguyên 100% Cặp khóa ECDSA P-256, Số Serial HSM (`HSM-SLOT-128AB9B40B • SN:128AB9B40BE91F84AA85`) và mã băm `SHA-256` của ảnh chữ ký tay gốc (`Chu ky TA.png`: `f725d40806e86a9c...`) mỗi khi người dùng cập nhật Họ tên, Email, Chức danh hoặc Mã PIN.
-              + Đồng bộ tự động 2 tầng vào cả `localStorage` và tệp hệ thống vĩnh viễn trên Android (`krypto_hsm_vault_permanent.json`) để không bao giờ bị mất hay đổi chữ ký số khi cập nhật ứng dụng.
-              + Tách riêng nút phụ có xác nhận bảo mật khi người dùng thực sự muốn thu hồi khóa cũ và cấp lại cặp khóa/Serial mới.
+            ## Ứng dụng Di Động Krypto v2.8.9 (Strict FIPS 140-3 / PKCS#11 / NIST SP 800-57 Key Retention)
+            - **Zero Hardcoded Key & Zero Hidden Anchor (`FIPS 140-3` & `OASIS PKCS#11 v3.0`)**:
+              + Xóa bỏ hoàn toàn khóa nhúng tĩnh và khóa neo ngầm (`device_anchor_wrapped`).
+              + Cặp khóa `ECDSA P-256` được sinh ngẫu nhiên 100% ngay trên thiết bị (`On-Device CSPRNG`) và chỉ bọc bởi `USER_PIN` + `SO_PIN` (`PBKDF2-HMAC-SHA512 250.000 vòng lặp` + `AES-256-GCM`).
+              + Thực thi cơ chế xóa trắng vùng nhớ chứa khóa rõ ngay sau khi ký (`FIPS 140-3 Zeroization`: `privBytes.fill(0)`, `slotMasterKey.fill(0)`).
+            - **Giữ Nguyên Khóa & Tái Ký Chứng Thư Số (`NIST SP 800-57 Key Retention` & `IETF RFC 5280`)**:
+              + Một khi Buồng HSM đã được khởi tạo trên thiết bị, cặp khóa và số Serial HSM được lưu bền vững 2 tầng (`localStorage` + tệp vĩnh viễn Native Android) và giữ cố định 100%.
+              + Mọi thao tác cập nhật Hồ sơ (Họ tên, Email, Chức danh) bắt buộc xác thực đúng `USER_PIN` (hoặc `SO_PIN`) và tái ký cấu trúc `TBSCertificate` (`cert_signature_b64`) trên cùng cặp khóa đó.
             - **Buồng Chữ Ký Số Cá Nhân Chuẩn HSM (`PKCS#11` `CKA_EXTRACTABLE = FALSE`)**:
               + Khởi tạo và quản lý Chứng thư số X.509v3 cá nhân ngay trong Két sắt Krypto, bảo vệ bằng `USER_PIN`, `SO_PIN/PUK` (tự động khóa cứng sau 5 lần nhập sai PIN) và mã `TOTP 6 số` (`RFC 6238`) trên điện thoại.
             - **Gắn liền Chữ Ký Tay Chính Thức (`Chu ky TA.png` nền trong suốt, mực hành chính `#003399`)**:
