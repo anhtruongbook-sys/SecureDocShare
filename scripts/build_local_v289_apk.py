@@ -320,13 +320,13 @@ def main():
     insns_off = code_off + 16
     insns_size = struct.unpack_from("<I", orig_dex, code_off + 12)[0]
 
-    # 1. At units 185..194 (10 units): if enableSignature (v37 != 0), jump to 1271 (createSignature); else new PdfStamper(reader, fos) and jump to 1276
+    # 1. At units 185..194 (10 units): if enableSignature (v37 != 0), jump to 1271 (createSignature); else new PdfStamper(reader, fos) and jump to 1277
     u185_units = [
         0x2539, (1271 - 185) & 0xFFFF,  # 185: if-nez v37, -> 1271
         0x0622, 0x10E0,                 # 187: new-instance v6, PdfStamper
         0x3070, 0x7CA1, 0x07B6,         # 189: invoke-direct {v6, v11, v7}, PdfStamper.<init>(PdfReader, OutputStream)V
         0x0000,                         # 192: nop (aligns Try 11 end=193)
-        0x0029, (1276 - 193) & 0xFFFF,  # 193: goto/16 -> 1276
+        0x0029, (1277 - 193) & 0xFFFF,  # 193: goto/16 -> 1277
     ]
     assert len(u185_units) == 10
     for idx_u, val_u in enumerate(u185_units):
@@ -335,38 +335,40 @@ def main():
     # 2. At unit 1270: goto -> 1326 (+56 = 0x38)
     struct.pack_into("<H", orig_dex, insns_off + 1270 * 2, 0x3828)
 
-    # 3. At units 1271..1325 (55 units): PdfStamper.createSignature (1271..1275) + conditional setEncryption (skip when !isViewOnly && password.isBlank)
+    # 3. At units 1271..1325 (55 units): PdfStamper.createSignature(reader, fos, '\0', null, true) (append=true so multiple signatures work!) + conditional setEncryption
     sub_units = [
         0x0212,                         # 1271: const/4 v2, 0 ('\0')
-        0x3071, 0x7CAE, 0x027B,         # 1272: invoke-static {v11, v7, v2}, PdfStamper.createSignature(PdfReader, OutputStream, C)PdfStamper
-        0x060C,                         # 1275: move-result-object v6
-        0x3038, 0x0004,                 # 1276: if-eqz v48, -> 1280 (!isViewOnly)
-        0x0312,                         # 1278: const/4 v3, 0 (userPwd = null for isViewOnly)
-        0x0D28,                         # 1279: goto -> 1292
-        0x1071, 0xD00E, 0x0009,         # 1280: invoke-static {v9}, StringsKt.isBlank(CharSequence)Z
-        0x000A,                         # 1283: move-result v0
-        0x0039, 0x001E,                 # 1284: if-nez v0, -> 1314 (skip setEncryption completely when password is blank and !isViewOnly!)
-        0x0562, 0x5C8A,                 # 1286: sget-object v5, Charsets.UTF_8
-        0x206E, 0xA30F, 0x0059,         # 1288: invoke-virtual {v9, v5}, String.getBytes
-        0x030C,                         # 1291: move-result-object v3
-        0x0262, 0x5C8A,                 # 1292: sget-object v2, Charsets.UTF_8
-        0x206E, 0xA30F, 0x0028,         # 1294: invoke-virtual {v8, v2}, String.getBytes
-        0x000C,                         # 1297: move-result-object v0
-        0x3038, 0x000A,                 # 1298: if-eqz v48, -> 1308
-        0x3138, 0x0005,                 # 1300: if-eqz v49, -> 1305
-        0x0213, 0x0A04,                 # 1302: const/16 v2, 2564
-        0x0628,                         # 1304: goto -> 1310
-        0x0213, 0x0200,                 # 1305: const/16 v2, 512
-        0x0328,                         # 1307: goto -> 1310
-        0x0213, 0x0B14,                 # 1308: const/16 v2, 2836
-        0x1412,                         # 1310: const/4 v4, 1
-        0x546E, 0x7CCD, 0x2036,         # 1311: invoke-virtual {v6, v3, v0, v2, v4}, PdfStamper.setEncryption
-        0x0308, 0x0024,                 # 1314: move-object/from16 v3, v36
-        0x0408, 0x0026,                 # 1316: move-object/from16 v4, v38
-        0x0502, 0x0027,                 # 1318: move/from16 v5, v39
-        0x2338, 0x0004,                 # 1320: if-eqz v35, -> 1324
-        0x0029, (195 - 1322) & 0xFFFF,  # 1322: goto/16 -> 195
-        0x0029, (198 - 1324) & 0xFFFF,  # 1324: goto/16 -> 198
+        0x0312,                         # 1272: const/4 v3, 0 (null tempFile)
+        0x1412,                         # 1273: const/4 v4, 1 (append = true: preserves existing digital signatures!)
+        0x5071, 0x7CB0, 0x327B,         # 1274: invoke-static {v11, v7, v2, v3, v4}, PdfStamper.createSignature(PdfReader, OutputStream, C, File, Z)PdfStamper
+        0x060C,                         # 1277: move-result-object v6
+        0x3038, 0x0004,                 # 1278: if-eqz v48, -> 1282 (!isViewOnly)
+        0x0312,                         # 1280: const/4 v3, 0 (userPwd = null for isViewOnly)
+        0x0D28,                         # 1281: goto -> 1294
+        0x1071, 0xD00E, 0x0009,         # 1282: invoke-static {v9}, StringsKt.isBlank(CharSequence)Z
+        0x000A,                         # 1285: move-result v0
+        0x0039, 0x001E,                 # 1286: if-nez v0, -> 1316 (skip setEncryption completely when password is blank and !isViewOnly!)
+        0x0562, 0x5C8A,                 # 1288: sget-object v5, Charsets.UTF_8
+        0x206E, 0xA30F, 0x0059,         # 1290: invoke-virtual {v9, v5}, String.getBytes
+        0x030C,                         # 1293: move-result-object v3
+        0x0262, 0x5C8A,                 # 1294: sget-object v2, Charsets.UTF_8
+        0x206E, 0xA30F, 0x0028,         # 1296: invoke-virtual {v8, v2}, String.getBytes
+        0x000C,                         # 1299: move-result-object v0
+        0x3038, 0x000A,                 # 1300: if-eqz v48, -> 1310
+        0x3138, 0x0005,                 # 1302: if-eqz v49, -> 1307
+        0x0213, 0x0A04,                 # 1304: const/16 v2, 2564
+        0x0628,                         # 1306: goto -> 1312
+        0x0213, 0x0200,                 # 1307: const/16 v2, 512
+        0x0328,                         # 1309: goto -> 1312
+        0x0213, 0x0B14,                 # 1310: const/16 v2, 2836
+        0x1412,                         # 1312: const/4 v4, 1
+        0x546E, 0x7CCD, 0x2036,         # 1313: invoke-virtual {v6, v3, v0, v2, v4}, PdfStamper.setEncryption
+        0x0308, 0x0024,                 # 1316: move-object/from16 v3, v36
+        0x0408, 0x0026,                 # 1318: move-object/from16 v4, v38
+        0x0502, 0x0027,                 # 1320: move/from16 v5, v39
+        0x0029, (198 - 1322) & 0xFFFF,  # 1322: goto/16 -> 198 (skip setFullCompression in append/signature mode)
+        0x0000,                         # 1324: nop
+        0x0000,                         # 1325: nop
     ]
     assert len(sub_units) == 55, f"Expected 55 units, got {len(sub_units)}"
     for idx_u, val_u in enumerate(sub_units):
