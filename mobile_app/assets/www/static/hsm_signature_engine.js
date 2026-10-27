@@ -353,23 +353,37 @@ class KryptoHSMSignatureEngine {
 
         const existingVault = KryptoHSMSignatureEngine.getActiveHSMVault();
 
-        // TRƯỜNG HỢP 1: ĐÃ CÓ BUỒNG HSM & GIỮ NGUYÊN KHÓA (NIST SP 800-57 KEY RETENTION + RFC 5280 RE-SIGN)
-        if (existingVault && !forceRegenerateKey) {
-            if (existingVault.security_state?.locked) {
-                // Nếu đang bị khóa do sai PIN 5 lần, kiểm tra xem người dùng có truyền đúng SO_PIN để mở khóa không
-                if (!soPin || !soPin.trim()) {
-                    throw new Error('Buồng HSM đang bị KHÓA CỨNG do nhập sai USER_PIN 5 lần! Vui lòng nhập Mật khẩu Két (SO_PIN) để mở khóa.');
-                }
-            }
-
-            let slotMasterKey = null;
+        // Nếu đã có Buồng HSM và người dùng yêu cầu Thu hồi & Cấp mới (forceRegenerateKey = true),
+        // BẮT BUỘC phải xác thực đúng USER_PIN cũ (currentPin) trước khi cho phép thu hồi khóa cũ!
+        if (existingVault && forceRegenerateKey) {
             try {
-                slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
+                const verifyKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
                     existingVault.key_wrapping.user_pin_wrapped,
                     cleanPin
                 );
-            } catch (pinErr) {
-                // Thử mở bằng SO_PIN (Mật khẩu Két Quản trị) nếu người dùng là chủ Két
+                verifyKey.fill(0);
+            } catch (_) {
+                existingVault.security_state = existingVault.security_state || { locked: false, failed_pin_attempts: 0, max_pin_retries: 5 };
+                existingVault.security_state.failed_pin_attempts = (existingVault.security_state.failed_pin_attempts || 0) + 1;
+                const rem = Math.max(0, 5 - existingVault.security_state.failed_pin_attempts);
+                if (rem === 0) existingVault.security_state.locked = true;
+                KryptoHSMSignatureEngine.persistHSMVaultEverywhere(existingVault);
+                throw new Error(`Từ chối thu hồi khóa: Mã USER_PIN hiện tại (cũ) không chính xác! Còn ${rem} lần thử.`);
+            }
+        }
+
+        // TRƯỜNG HỢP 1: ĐÃ CÓ BUỒNG HSM & GIỮ NGUYÊN KHÓA (NIST SP 800-57 KEY RETENTION + RFC 5280 RE-SIGN)
+        if (existingVault && !forceRegenerateKey) {
+            let slotMasterKey = null;
+            if (!existingVault.security_state?.locked) {
+                try {
+                    slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
+                        existingVault.key_wrapping.user_pin_wrapped,
+                        cleanPin
+                    );
+                } catch (_) {}
+            } else {
+                // Chỉ khi bị khóa cứng do sai PIN 5 lần mới cho phép dùng SO_PIN (Mật khẩu Két nhập trực tiếp) để cứu hộ
                 if (soPin && soPin.trim() && existingVault.key_wrapping?.so_pin_wrapped) {
                     try {
                         slotMasterKey = await KryptoHSMSignatureEngine.unsealDataWithPass(
@@ -377,20 +391,23 @@ class KryptoHSMSignatureEngine {
                             soPin.trim()
                         );
                     } catch (_) {}
+                } else {
+                    throw new Error('Buồng HSM đang bị KHÓA CỨNG do nhập sai USER_PIN 5 lần! Vui lòng nhập Mật khẩu Két hiện tại (SO_PIN) để mở khóa.');
                 }
-                if (!slotMasterKey) {
-                    existingVault.security_state = existingVault.security_state || { locked: false, failed_pin_attempts: 0, max_pin_retries: 5 };
-                    existingVault.security_state.failed_pin_attempts = (existingVault.security_state.failed_pin_attempts || 0) + 1;
-                    const rem = Math.max(0, 5 - existingVault.security_state.failed_pin_attempts);
-                    if (rem === 0) {
-                        existingVault.security_state.locked = true;
-                    }
-                    KryptoHSMSignatureEngine.persistHSMVaultEverywhere(existingVault);
-                    if (rem === 0) {
-                        throw new Error('Nhập sai USER_PIN 5 lần liên tiếp! HSM Token đã tự động KHÓA CỨNG theo chuẩn PKCS#11.');
-                    }
-                    throw new Error(`Xác thực thất bại: Mã USER_PIN không chính xác! Còn ${rem} lần thử trước khi HSM tự động khóa cứng.`);
+            }
+
+            if (!slotMasterKey) {
+                existingVault.security_state = existingVault.security_state || { locked: false, failed_pin_attempts: 0, max_pin_retries: 5 };
+                existingVault.security_state.failed_pin_attempts = (existingVault.security_state.failed_pin_attempts || 0) + 1;
+                const rem = Math.max(0, 5 - existingVault.security_state.failed_pin_attempts);
+                if (rem === 0) {
+                    existingVault.security_state.locked = true;
                 }
+                KryptoHSMSignatureEngine.persistHSMVaultEverywhere(existingVault);
+                if (rem === 0) {
+                    throw new Error('Nhập sai USER_PIN 5 lần liên tiếp! HSM Token đã tự động KHÓA CỨNG theo chuẩn PKCS#11.');
+                }
+                throw new Error(`Xác thực thất bại: Mã USER_PIN hiện tại không chính xác! Còn ${rem} lần thử trước khi HSM tự động khóa cứng.`);
             }
 
             let sigProcessed;
@@ -626,91 +643,117 @@ class KryptoHSMSignatureEngine {
      *    để đóng trực tiếp lên trang PDF trong cả chế độ Native Android (iTextG) và Web/PC.
      */
     static async renderCompositePAdESStampDataUrl(vaultState, signingReason = 'Phê duyệt & Ký số phát hành') {
-        const cert = vaultState.certificate;
-        const sigDataUrl = vaultState.cko_data_handwritten_png.png_data_url;
+        const cert = vaultState?.certificate || {};
+        const sigDataUrl = vaultState?.cko_data_handwritten_png?.png_data_url || KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL;
 
         return new Promise((resolve) => {
+            let settled = false;
+            const safeResolve = (val) => {
+                if (!settled) {
+                    settled = true;
+                    resolve(val);
+                }
+            };
+            const timer = setTimeout(() => safeResolve(sigDataUrl), 1200);
+
             const sigImg = new Image();
             sigImg.onload = () => {
-                const w = 780, h = 250;
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
+                clearTimeout(timer);
+                try {
+                    const w = 780, h = 250, r = 12;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
 
-                // Nền trắng mờ sang trọng + khung viền xanh cửu long chuẩn hành chính
-                ctx.fillStyle = 'rgba(250, 252, 255, 0.94)';
-                ctx.strokeStyle = '#003399';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.roundRect(3, 3, w - 6, h - 6, 12);
-                ctx.fill();
-                ctx.stroke();
+                    // Nền trắng mờ sang trọng + khung viền xanh cửu long chuẩn hành chính (không phụ thuộc ctx.roundRect)
+                    ctx.fillStyle = 'rgba(250, 252, 255, 0.94)';
+                    ctx.strokeStyle = '#003399';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(3 + r, 3);
+                    ctx.lineTo(w - 3 - r, 3);
+                    ctx.quadraticCurveTo(w - 3, 3, w - 3, 3 + r);
+                    ctx.lineTo(w - 3, h - 3 - r);
+                    ctx.quadraticCurveTo(w - 3, h - 3, w - 3 - r, h - 3);
+                    ctx.lineTo(3 + r, h - 3);
+                    ctx.quadraticCurveTo(3, h - 3, 3, h - 3 - r);
+                    ctx.lineTo(3, 3 + r);
+                    ctx.quadraticCurveTo(3, 3, 3 + r, 3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
 
-                // Đường chia cột giữa Chữ ký tay và Thông tin chứng thư HSM
-                const splitX = 295;
-                ctx.strokeStyle = 'rgba(0, 51, 153, 0.28)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(splitX, 16);
-                ctx.lineTo(splitX, h - 16);
-                ctx.stroke();
+                    // Đường chia cột giữa Chữ ký tay và Thông tin chứng thư HSM
+                    const splitX = 295;
+                    ctx.strokeStyle = 'rgba(0, 51, 153, 0.28)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(splitX, 16);
+                    ctx.lineTo(splitX, h - 16);
+                    ctx.stroke();
 
-                // Vẽ ảnh chữ ký tay (.PNG nền trong suốt) ở cột trái
-                const maxSw = splitX - 28;
-                const maxSh = h - 68;
-                const scale = Math.min(maxSw / Math.max(1, sigImg.width), maxSh / Math.max(1, sigImg.height));
-                const drawW = Math.round(sigImg.width * scale);
-                const drawH = Math.round(sigImg.height * scale);
-                const dx = Math.round((splitX - drawW) / 2);
-                const dy = 16 + Math.round((maxSh - drawH) / 2);
-                ctx.drawImage(sigImg, dx, dy, drawW, drawH);
+                    // Vẽ ảnh chữ ký tay (.PNG nền trong suốt) ở cột trái
+                    const maxSw = splitX - 28;
+                    const maxSh = h - 68;
+                    const scale = Math.min(maxSw / Math.max(1, sigImg.width), maxSh / Math.max(1, sigImg.height));
+                    const drawW = Math.round(sigImg.width * scale);
+                    const drawH = Math.round(sigImg.height * scale);
+                    const dx = Math.round((splitX - drawW) / 2);
+                    const dy = 16 + Math.round((maxSh - drawH) / 2);
+                    ctx.drawImage(sigImg, dx, dy, drawW, drawH);
 
-                // Họ tên dưới chữ ký tay
-                ctx.fillStyle = '#003399';
-                ctx.font = 'bold 18px "Times New Roman", "Segoe UI", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(cert.signer_name, Math.round(splitX / 2), h - 22);
+                    // Họ tên dưới chữ ký tay
+                    ctx.fillStyle = '#003399';
+                    ctx.font = 'bold 18px "Times New Roman", "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(cert.signer_name || 'Trương Tuấn Anh', Math.round(splitX / 2), h - 22);
 
-                // Cột phải: Thông tin chứng thư số X.509v3 & HSM
-                ctx.textAlign = 'left';
-                const tx = splitX + 18;
-                ctx.fillStyle = '#003399';
-                ctx.font = 'bold 17px "Segoe UI", Arial, sans-serif';
-                ctx.fillText('✓ CHỮ KÝ SỐ CÁ NHÂN (PAdES-HSM)', tx, 32);
+                    // Cột phải: Thông tin chứng thư số X.509v3 & HSM
+                    ctx.textAlign = 'left';
+                    const tx = splitX + 18;
+                    ctx.fillStyle = '#003399';
+                    ctx.font = 'bold 17px "Segoe UI", Arial, sans-serif';
+                    ctx.fillText('✓ CHỮ KÝ SỐ CÁ NHÂN (PAdES-HSM)', tx, 32);
 
-                ctx.fillStyle = '#0f172a';
-                ctx.font = 'bold 19px "Segoe UI", Arial, sans-serif';
-                ctx.fillText('Ký bởi: ' + cert.signer_name, tx, 60);
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = 'bold 19px "Segoe UI", Arial, sans-serif';
+                    ctx.fillText('Ký bởi: ' + (cert.signer_name || 'Trương Tuấn Anh'), tx, 60);
 
-                ctx.fillStyle = '#1e293b';
-                ctx.font = '15px "Segoe UI", Arial, sans-serif';
-                ctx.fillText('Chức vụ: ' + (cert.signer_title || 'Chuyên gia') + ' • ' + (cert.organization || ''), tx, 86);
+                    ctx.fillStyle = '#1e293b';
+                    ctx.font = '15px "Segoe UI", Arial, sans-serif';
+                    ctx.fillText('Chức vụ: ' + (cert.signer_title || 'Chuyên gia') + ' • ' + (cert.organization || ''), tx, 86);
 
-                ctx.fillStyle = '#004CB4';
-                ctx.fillText('Email S/MIME: ' + cert.signer_email, tx, 111);
+                    ctx.fillStyle = '#004CB4';
+                    ctx.fillText('Email S/MIME: ' + (cert.signer_email || ''), tx, 111);
 
-                ctx.fillStyle = '#1e293b';
-                ctx.fillText('Lý do ký: ' + (signingReason || 'Phê duyệt phát hành'), tx, 136);
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillText('Lý do ký: ' + (signingReason || 'Phê duyệt phát hành'), tx, 136);
 
-                const nowStr = new Date().toLocaleString('vi-VN', { hour12: false }) + ' +07:00';
-                ctx.fillText('Thời gian ký: ' + nowStr, tx, 161);
+                    const nowStr = new Date().toLocaleString('vi-VN', { hour12: false }) + ' +07:00';
+                    ctx.fillText('Thời gian ký: ' + nowStr, tx, 161);
 
-                ctx.fillStyle = '#475569';
-                ctx.font = '13px Consolas, monospace';
-                ctx.fillText(
-                    'Serial HSM: ' + cert.serial_hex.slice(0, 16) + ' | PNG-SHA256: ' + cert.visual_sig_png_sha256.slice(0, 10).toUpperCase(),
-                    tx,
-                    190
-                );
+                    ctx.fillStyle = '#475569';
+                    ctx.font = '13px Consolas, monospace';
+                    ctx.fillText(
+                        'Serial HSM: ' + (cert.serial_hex || '').slice(0, 16) + ' | PNG-SHA256: ' + (cert.visual_sig_png_sha256 || '').slice(0, 10).toUpperCase(),
+                        tx,
+                        190
+                    );
 
-                ctx.fillStyle = '#059669';
-                ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
-                ctx.fillText('Chuẩn PKCS#11 / FIPS 140-3 (CKA_EXTRACTABLE=FALSE)', tx, 216);
+                    ctx.fillStyle = '#059669';
+                    ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
+                    ctx.fillText('Chuẩn PKCS#11 / FIPS 140-3 (CKA_EXTRACTABLE=FALSE)', tx, 216);
 
-                resolve(canvas.toDataURL('image/png'));
+                    safeResolve(canvas.toDataURL('image/png'));
+                } catch (e) {
+                    safeResolve(sigDataUrl);
+                }
             };
-            sigImg.onerror = () => resolve(sigDataUrl);
+            sigImg.onerror = () => {
+                clearTimeout(timer);
+                safeResolve(sigDataUrl);
+            };
             sigImg.src = sigDataUrl;
         });
     }
@@ -877,7 +920,8 @@ class KryptoHSMSignatureEngine {
         documentSha256,
         recipientEmail,
         signingReason,
-        userPin
+        userPin,
+        precomputedSigRes = null
     }) {
         const vault = KryptoHSMSignatureEngine.getActiveHSMVault();
         if (!vault) throw new Error('Chưa khởi tạo Buồng HSM!');
@@ -886,7 +930,7 @@ class KryptoHSMSignatureEngine {
         const nowStr = new Date().toLocaleString('vi-VN', { hour12: false }) + ' +07:00';
         const reqId = 'REQ-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + (documentSha256 || '8899AA').slice(0, 6).toUpperCase();
 
-        const sigRes = await KryptoHSMSignatureEngine.signDigestWithHSM(
+        const sigRes = precomputedSigRes || await KryptoHSMSignatureEngine.signDigestWithHSM(
             `${mode}|${documentName}|${documentSha256}|${nowStr}`,
             userPin,
             `S/MIME Email (${mode}): ${documentName}`

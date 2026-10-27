@@ -290,7 +290,10 @@
                                     </div>
                                     <div class="input-col">
                                         <label class="micro-label">Mã USER_PIN mở HSM khi ký:</label>
-                                        <input type="password" id="signer-hsm-pin-input" placeholder="PIN HSM (mặc định theo PIN Két)">
+                                        <div class="vault-input-with-eye">
+                                            <input type="password" id="signer-hsm-pin-input" placeholder="Nhập USER_PIN của HSM...">
+                                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('signer-hsm-pin-input', this)">👁️</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="sig-position-row" style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
@@ -514,34 +517,48 @@
                 </div>
 
                 <div class="flat-grouped-settings">
-                    <!-- Nhóm 1: Mật khẩu Master -->
+                    <!-- Nhóm 1: Mật khẩu Master (Zero Pre-fill & Bắt buộc xác thực Mật khẩu cũ khi đổi) -->
                     <div class="flat-setting-item">
-                        <label class="micro-label">MẬT KHẨU KÉT / MASTER PASS:</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <label class="micro-label" style="margin: 0;">MẬT KHẨU KÉT / MASTER PASS:</label>
+                            <span id="master-pass-status-badge" style="font-size: 10px; font-weight: 700; color: #059669;">🔒 Bảo mật ẩn 1 chiều</span>
+                        </div>
+                        <div id="setting-master-current-wrap" class="vault-input-with-eye" style="margin-bottom: 6px; display: none;">
+                            <input type="password" id="setting-master-password-current" placeholder="Nhập Mật khẩu Két HIỆN TẠI (Mật khẩu cũ)..." autocomplete="new-password" oninput="checkMasterPassMatch()">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password-current', this)">👁️</button>
+                        </div>
                         <div class="vault-input-with-eye">
-                            <input type="password" id="setting-master-password" placeholder="Mật khẩu quản trị viên..." oninput="checkMasterPassMatch()">
+                            <input type="password" id="setting-master-password" placeholder="Nhập Mật khẩu Két MỚI (Lần 1 - để trống nếu giữ nguyên)..." autocomplete="new-password" oninput="checkMasterPassMatch()">
                             <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password', this)">👁️</button>
                         </div>
                         <div class="vault-input-with-eye" style="margin-top: 6px;">
-                            <input type="password" id="setting-master-password-confirm" placeholder="Xác nhận lại mật khẩu nếu muốn đổi..." oninput="checkMasterPassMatch()">
+                            <input type="password" id="setting-master-password-confirm" placeholder="Xác nhận lại Mật khẩu Két MỚI (Lần 2)..." autocomplete="new-password" oninput="checkMasterPassMatch()">
                             <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-master-password-confirm', this)">👁️</button>
                         </div>
                         <div id="master-pass-match-msg" class="vault-match-status" style="display: none;"></div>
-                        <span class="setting-subtext">Dùng để mở khóa cứu hộ mọi tệp tin đã mã hóa.</span>
+                        <span class="setting-subtext">Mật khẩu đã đặt không bao giờ hiển thị lại. Muốn đổi mật khẩu mới bắt buộc phải nhập đúng mật khẩu cũ.</span>
                     </div>
 
-                    <!-- Nhóm 2: Mã PIN nhanh -->
+                    <!-- Nhóm 2: Mã PIN nhanh (Zero Pre-fill & Bắt buộc xác thực Mã PIN cũ khi đổi) -->
                     <div class="flat-setting-item" style="margin-top: 10px;">
-                        <label class="micro-label">MÃ PIN NHANH (4 - 6 SỐ):</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <label class="micro-label" style="margin: 0;">MÃ PIN NHANH (4 - 6 SỐ):</label>
+                            <span id="quick-pin-status-badge" style="font-size: 10px; font-weight: 700; color: #059669;">🔒 Bảo mật ẩn 1 chiều</span>
+                        </div>
+                        <div id="setting-pin-current-wrap" class="vault-input-with-eye" style="margin-bottom: 6px;">
+                            <input type="password" id="setting-quick-pin-current" placeholder="Nhập Mã PIN HIỆN TẠI (Mã PIN cũ, mặc định 0000)..." maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" oninput="checkPinMatch()">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin-current', this)">👁️</button>
+                        </div>
                         <div class="vault-input-with-eye">
-                            <input type="password" id="setting-quick-pin" placeholder="Ví dụ: 1234 hoặc 888888" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
+                            <input type="password" id="setting-quick-pin" placeholder="Nhập Mã PIN MỚI 4-6 số (Lần 1 - để trống nếu giữ nguyên)..." maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" oninput="checkPinMatch()">
                             <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin', this)">👁️</button>
                         </div>
                         <div class="vault-input-with-eye" style="margin-top: 6px;">
-                            <input type="password" id="setting-quick-pin-confirm" placeholder="Xác nhận lại mã PIN nếu muốn đổi..." maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="checkPinMatch()">
+                            <input type="password" id="setting-quick-pin-confirm" placeholder="Xác nhận lại Mã PIN MỚI (Lần 2)..." maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" oninput="checkPinMatch()">
                             <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('setting-quick-pin-confirm', this)">👁️</button>
                         </div>
                         <div id="pin-match-msg" class="vault-match-status" style="display: none;"></div>
-                        <span class="setting-subtext">Mở két 1 chạm siêu tốc bằng bàn phím số.</span>
+                        <span class="setting-subtext">Mã PIN đã đặt không thể xem lại. Muốn đổi PIN mới bắt buộc phải nhập đúng PIN hiện tại.</span>
                     </div>
 
                     <!-- Nhóm 3: Sinh trắc học & Tự động khóa -->
@@ -602,11 +619,37 @@
                         </div>
                     </div>
 
-                    <div class="dual-inputs-row" style="margin-top: 6px;">
-                        <div class="input-col">
-                            <label class="micro-label">Mã USER_PIN ký số HSM:</label>
-                            <input type="password" id="hsm-user-pin" placeholder="Tối thiểu 4 số (VD: 1234)">
+                    <!-- Khu vực Xác thực USER_PIN Hiện tại & Đổi USER_PIN Mới (Zero Pre-fill - Không bao giờ lộ PIN cũ) -->
+                    <div id="hsm-current-pin-group" style="margin-top: 6px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <label class="micro-label" style="margin: 0;">Mã USER_PIN HIỆN TẠI của HSM (Xác thực sở hữu):</label>
+                            <button type="button" id="hsm-toggle-new-pin-btn" class="btn-chip-micro" style="font-size: 10px; padding: 2px 7px;" onclick="toggleHsmChangePinFields()">🔑 Đổi Mã USER_PIN Mới</button>
                         </div>
+                        <div class="vault-input-with-eye">
+                            <input type="password" id="hsm-current-user-pin" placeholder="Nhập đúng Mã USER_PIN hiện tại để mở khóa HSM..." autocomplete="new-password">
+                            <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('hsm-current-user-pin', this)">👁️</button>
+                        </div>
+                    </div>
+
+                    <div id="hsm-new-pin-group" class="dual-inputs-row" style="margin-top: 6px; display: none;">
+                        <div class="input-col">
+                            <label class="micro-label" id="hsm-new-pin-label-1">Mã USER_PIN MỚI (Lần 1):</label>
+                            <div class="vault-input-with-eye">
+                                <input type="password" id="hsm-user-pin" placeholder="Nhập USER_PIN mới (tối thiểu 4 ký tự)..." autocomplete="new-password" oninput="checkHsmPinMatch()">
+                                <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('hsm-user-pin', this)">👁️</button>
+                            </div>
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label" id="hsm-new-pin-label-2">Xác nhận Mã USER_PIN MỚI (Lần 2):</label>
+                            <div class="vault-input-with-eye">
+                                <input type="password" id="hsm-user-pin-confirm" placeholder="Nhập lại đúng Mã USER_PIN mới..." autocomplete="new-password" oninput="checkHsmPinMatch()">
+                                <button type="button" class="btn-eye-toggle" onclick="toggleVaultPassEye('hsm-user-pin-confirm', this)">👁️</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="hsm-pin-match-msg" class="vault-match-status" style="display: none; margin-top: 4px;"></div>
+
+                    <div class="dual-inputs-row" style="margin-top: 6px;">
                         <div class="input-col">
                             <label class="micro-label">Màu mực chữ ký tay (.PNG):</label>
                             <select id="hsm-ink-preset" style="width: 100%; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 11.5px;">

@@ -285,6 +285,27 @@ class MainActivity: FlutterFragmentActivity() {
 
                             stamper = PdfStamper(reader, fos)
 
+                            // Cài đặt bảo vệ mật khẩu và quyền hạn (Adobe ISO 32000) NGAY TRƯỚC KHI ghi ảnh chữ ký số / watermark vào PdfBody
+                            val userPwd: ByteArray? = if (isViewOnly) null else password.toByteArray(Charsets.UTF_8)
+                            val effectiveMaster = if (masterPassword.isNotBlank()) masterPassword else PQC_DEFAULT_MASTER_KEY
+                            val ownerPwd = effectiveMaster.toByteArray(Charsets.UTF_8)
+                            val permissions = if (isViewOnly) {
+                                if (allowPrint) {
+                                    PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_DEGRADED_PRINTING or PdfWriter.ALLOW_SCREENREADERS
+                                } else {
+                                    PdfWriter.ALLOW_SCREENREADERS // CẤM IN, CẤM COPY, CHỈ CHO XEM!
+                                }
+                            } else {
+                                PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_COPY or PdfWriter.ALLOW_SCREENREADERS or PdfWriter.ALLOW_FILL_IN
+                            }
+
+                            stamper.setEncryption(
+                                userPwd,
+                                ownerPwd,
+                                permissions,
+                                PdfWriter.STANDARD_ENCRYPTION_128
+                            )
+
                             if (compress) {
                                 try {
                                     stamper.setFullCompression()
@@ -390,10 +411,10 @@ class MainActivity: FlutterFragmentActivity() {
                                         over.saveState()
                                         over.setGState(gState)
 
-                                        val sealX = rect.width - 200f
-                                        val sealY = 32f
-                                        val sealW = 180f
+                                        val sealW = 190f
                                         val sealH = 65f
+                                        val sealX = rect.right - sealW - 18f
+                                        val sealY = rect.bottom + 28f
 
                                         if (sigImg != null) {
                                             val scale = (sealW / sigImg.width) * 100f
@@ -449,27 +470,6 @@ class MainActivity: FlutterFragmentActivity() {
                                 infoMap["KD_SIGNER"] = if (signerName.isNotBlank()) signerName else "Krypto Enterprise Vault"
                             }
                             stamper.moreInfo = infoMap
-
-                            // 5. Cài đặt bảo vệ mật khẩu và quyền hạn (Adobe ISO 32000)
-                            val userPwd: ByteArray? = if (isViewOnly) null else password.toByteArray(Charsets.UTF_8)
-                            val effectiveMaster = if (masterPassword.isNotBlank()) masterPassword else PQC_DEFAULT_MASTER_KEY
-                            val ownerPwd = effectiveMaster.toByteArray(Charsets.UTF_8)
-                            val permissions = if (isViewOnly) {
-                                if (allowPrint) {
-                                    PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_DEGRADED_PRINTING or PdfWriter.ALLOW_SCREENREADERS
-                                } else {
-                                    PdfWriter.ALLOW_SCREENREADERS // CẤM IN, CẤM COPY, CHỈ CHO XEM!
-                                }
-                            } else {
-                                PdfWriter.ALLOW_PRINTING or PdfWriter.ALLOW_COPY or PdfWriter.ALLOW_SCREENREADERS or PdfWriter.ALLOW_FILL_IN
-                            }
-
-                            stamper.setEncryption(
-                                userPwd,
-                                ownerPwd,
-                                permissions,
-                                PdfWriter.STANDARD_ENCRYPTION_128
-                            )
 
                             stamper.close()
                             stamper = null

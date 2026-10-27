@@ -208,6 +208,27 @@ function handleCyberDialogOverlayClick(event) {
     }
 }
 
+function showCyberAlert(title, message, onAction = null, actionText = 'Đã Hiểu', type = 'warning') {
+    showCyberDialog({
+        type: type || 'warning',
+        title: title || 'Thông Báo',
+        message: message || '',
+        actionText: actionText || 'Đã Hiểu',
+        onAction: onAction
+    });
+}
+
+function showCyberConfirm(title, message, onAction = null, actionText = 'Đồng Ý', cancelText = 'Hủy', type = 'warning') {
+    showCyberDialog({
+        type: type || 'warning',
+        title: title || 'Xác Nhận',
+        message: message || '',
+        actionText: actionText || 'Đồng Ý',
+        cancelText: cancelText || 'Hủy',
+        onAction: onAction
+    });
+}
+
 // Ghi đè toàn cục window.alert: Hiển thị cả Toast lẫn Cyber Dialog đẹp mắt
 window.alert = function(msg) {
     try {
@@ -1165,6 +1186,39 @@ async function executeMobileLockFiles() {
         return;
     }
 
+    // Kiểm tra trước điều kiện Chữ ký số HSM trước khi khóa nút bấm để không bao giờ treo nút
+    const preCheckEnableSignature = document.getElementById('enable-digital-signature')?.checked || false;
+    if (preCheckEnableSignature && window.KryptoHSMSignatureEngine && currentSignatureMode === 'vault') {
+        const preVault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
+        if (!preVault) {
+            showCyberAlert(
+                'Chưa Khởi Tạo Buồng Chữ Ký Số HSM',
+                'Bạn đã bật tùy chọn Ký số PAdES-HSM nhưng chưa khởi tạo Buồng HSM. Vui lòng chuyển sang tab Két sắt để khởi tạo Buồng HSM trước!',
+                () => switchTab('vault'),
+                'Mở Tab Két Sắt',
+                'warning'
+            );
+            return;
+        }
+        const preHsmPin = (document.getElementById('signer-hsm-pin-input')?.value || '').trim();
+        if (!preHsmPin || preHsmPin.length < 4) {
+            showCyberAlert(
+                'Yêu Cầu Mã USER_PIN Mở HSM Khi Ký',
+                'Vui lòng nhập đúng Mã USER_PIN của Buồng HSM vào ô "Mã USER_PIN mở HSM khi ký" để mở khóa phần cứng và thực thi lệnh ký PKCS#11 C_Sign!',
+                () => {
+                    const pinEl = document.getElementById('signer-hsm-pin-input');
+                    if (pinEl) {
+                        pinEl.focus();
+                        pinEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                },
+                'Nhập USER_PIN Ngay',
+                'warning'
+            );
+            return;
+        }
+    }
+
     const btn = document.getElementById('btn-lock-submit');
     btn.disabled = true;
     btn.innerText = "Đang xử lý...";
@@ -1247,9 +1301,11 @@ async function executeMobileLockFiles() {
                 if (enableSignature && window.KryptoHSMSignatureEngine) {
                     const hsmVault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
                     if (hsmVault) {
-                        const enteredHsmPin = (document.getElementById('signer-hsm-pin-input')?.value || localStorage.getItem('krypto_vault_pin') || '').trim();
+                        const enteredHsmPin = (document.getElementById('signer-hsm-pin-input')?.value || '').trim();
                         if (!enteredHsmPin || enteredHsmPin.length < 4) {
                             hideProcessingModal();
+                            btn.disabled = false;
+                            btn.innerText = "MÃ HÓA & LƯU TỆP";
                             showCyberAlert(
                                 'Yêu Cầu Mã USER_PIN HSM (Chuẩn FIPS 140-3)',
                                 'Vui lòng nhập Mã USER_PIN ký số HSM (tối thiểu 4 ký tự) tại mục Chữ Ký Số để mở khóa phần cứng và thực thi lệnh ký PKCS#11 C_Sign!',
@@ -1263,7 +1319,7 @@ async function executeMobileLockFiles() {
                             return;
                         }
                         try {
-                            await window.KryptoHSMSignatureEngine.signDigestWithHSM(
+                            const hsmSigRes = await window.KryptoHSMSignatureEngine.signDigestWithHSM(
                                 `${file.name}|${file.size}|${signingReason}`,
                                 enteredHsmPin,
                                 file.name
@@ -1284,12 +1340,18 @@ async function executeMobileLockFiles() {
                                     documentSha256: hsmVault.certificate.visual_sig_png_sha256,
                                     recipientEmail: emailTarget,
                                     signingReason: signingReason || 'Phê duyệt & Ký số PAdES-HSM',
-                                    userPin: enteredHsmPin
+                                    userPin: enteredHsmPin,
+                                    precomputedSigRes: hsmSigRes
                                 });
                             }
+                            // Xóa trắng ô PIN ký số sau khi ký xong để không lộ PIN qua nút 👁️
+                            const pinSignEl = document.getElementById('signer-hsm-pin-input');
+                            if (pinSignEl) { pinSignEl.value = ''; pinSignEl.type = 'password'; }
                         } catch (hsmErr) {
-                            showCyberAlert('Xác Thực Buồng HSM Thất Bại', hsmErr.message || String(hsmErr), null, 'Đóng', 'error');
                             hideProcessingModal();
+                            btn.disabled = false;
+                            btn.innerText = "MÃ HÓA & LƯU TỆP";
+                            showCyberAlert('Xác Thực Buồng HSM Thất Bại', hsmErr.message || String(hsmErr), null, 'Đóng', 'error');
                             return;
                         }
                     }
@@ -1434,6 +1496,8 @@ async function unlock(){
 
     } catch (e) {
         hideProcessingModal();
+        btn.disabled = false;
+        btn.innerText = "MÃ HÓA & LƯU TỆP";
         showCyberDialog({
             type: 'error',
             title: 'Lỗi Mã Hóa',
@@ -1565,12 +1629,22 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
     const card = document.getElementById('results-lock');
     const list = document.getElementById('results-list-lock');
 
+    const hasDigitalSig = document.getElementById('enable-digital-signature')?.checked || false;
+    const sigPosLabel = (document.querySelector('input[name="sig-pos"]:checked')?.value === 'all_pages') ? 'Tất cả trang' : 'Trang cuối';
+    const sigBadgeHtml = hasDigitalSig ? `
+        <div class="saved-status-compact" style="background: rgba(37, 99, 235, 0.1); border-left: 3px solid #2563eb; margin-top: 6px;">
+            <span class="saved-status-icon">✍️</span>
+            <span class="saved-status-text" style="color: #1d4ed8;">Đã đóng dấu <strong>Chữ ký số PAdES-HSM & Chữ ký tay (.PNG)</strong> (${sigPosLabel})</span>
+        </div>
+    ` : '';
+
     const displaySavedPath = savedPath ? `
         <div class="saved-status-compact">
             <span class="saved-status-icon">✅</span>
             <span class="saved-status-text">Đã lưu: <strong>Thư mục Downloads của máy</strong></span>
         </div>
-    ` : '';
+        ${sigBadgeHtml}
+    ` : sigBadgeHtml;
 
     list.innerHTML = `
         <div class="result-card-box">
@@ -2429,6 +2503,36 @@ function checkPinMatch() {
     }
 }
 
+function checkHsmPinMatch() {
+    const pin1 = document.getElementById('hsm-user-pin')?.value || '';
+    const pin2 = document.getElementById('hsm-user-pin-confirm')?.value || '';
+    const msg = document.getElementById('hsm-pin-match-msg');
+    if (!msg) return true;
+
+    if (!pin1 && !pin2) {
+        msg.style.display = 'none';
+        return false;
+    }
+    if (!pin2) {
+        msg.style.display = 'block';
+        msg.className = 'vault-match-status';
+        msg.style.color = 'var(--text-muted)';
+        msg.textContent = '🔑 Vui lòng nhập lại Mã USER_PIN ở ô xác nhận (Lần 2)';
+        return false;
+    }
+    msg.style.display = 'block';
+    msg.style.color = '';
+    if (pin1 === pin2) {
+        msg.className = 'vault-match-status match-success';
+        msg.textContent = '✓ Hai mã USER_PIN ký số HSM đã trùng khớp 100%';
+        return true;
+    } else {
+        msg.className = 'vault-match-status match-error';
+        msg.textContent = '⚠️ Mã USER_PIN xác nhận (Lần 2) không khớp với Lần 1!';
+        return false;
+    }
+}
+
 let isVaultSessionUnlocked = false;
 let currentVaultPinInput = '';
 
@@ -2465,20 +2569,47 @@ function checkVaultAccess() {
 }
 
 function loadVaultConfigInputs() {
+    const masterCurrentWrap = document.getElementById('setting-master-current-wrap');
+    const masterCurrent = document.getElementById('setting-master-password-current');
     const masterInput = document.getElementById('setting-master-password');
     const masterConfirm = document.getElementById('setting-master-password-confirm');
+    const masterBadge = document.getElementById('master-pass-status-badge');
+
+    const pinCurrentWrap = document.getElementById('setting-pin-current-wrap');
+    const pinCurrent = document.getElementById('setting-quick-pin-current');
     const pinInput = document.getElementById('setting-quick-pin');
     const pinConfirm = document.getElementById('setting-quick-pin-confirm');
+    const pinBadge = document.getElementById('quick-pin-status-badge');
+
     const bioToggle = document.getElementById('setting-biometric-toggle');
     const autoToggle = document.getElementById('setting-autolock-toggle');
 
     const curMaster = localStorage.getItem('krypto_master_password') || '';
     const curPin = localStorage.getItem('krypto_vault_pin') || '';
 
-    if (masterInput) masterInput.value = curMaster;
-    if (masterConfirm) masterConfirm.value = '';
-    if (pinInput) pinInput.value = curPin;
-    if (pinConfirm) pinConfirm.value = '';
+    // TUYỆT ĐỐI KHÔNG BAO GIỜ ĐIỀN SẴN (PRE-FILL) MẬT KHẨU HAY MÃ PIN ĐÃ ĐẶT VÀO Ô INPUT
+    [masterCurrent, masterInput, masterConfirm, pinCurrent, pinInput, pinConfirm].forEach((el) => {
+        if (el) {
+            el.value = '';
+            el.type = 'password';
+        }
+    });
+
+    if (masterCurrentWrap) {
+        masterCurrentWrap.style.display = curMaster ? 'flex' : 'none';
+    }
+    if (masterBadge) {
+        masterBadge.textContent = curMaster ? '🔒 Đã đặt mật khẩu (Ẩn 1 chiều)' : '⚪ Chưa đặt mật khẩu';
+    }
+    if (pinCurrentWrap) {
+        pinCurrentWrap.style.display = 'flex';
+    }
+    if (pinBadge) {
+        pinBadge.textContent = (curPin && curPin !== '0000')
+            ? '🔒 Đã đặt PIN riêng (Ẩn 1 chiều)'
+            : '🔑 Đang dùng PIN mặc định (0000)';
+    }
+
     if (bioToggle) bioToggle.checked = localStorage.getItem('krypto_biometrics_enabled') !== 'false';
     if (autoToggle) autoToggle.checked = localStorage.getItem('krypto_autolock_enabled') !== 'false';
 
@@ -2486,6 +2617,14 @@ function loadVaultConfigInputs() {
     if (msgMaster) msgMaster.style.display = 'none';
     const msgPin = document.getElementById('pin-match-msg');
     if (msgPin) msgPin.style.display = 'none';
+    const hsmCurPin = document.getElementById('hsm-current-user-pin');
+    const hsmPin1 = document.getElementById('hsm-user-pin');
+    const hsmPin2 = document.getElementById('hsm-user-pin-confirm');
+    const msgHsmPin = document.getElementById('hsm-pin-match-msg');
+    if (hsmCurPin) { hsmCurPin.value = ''; hsmCurPin.type = 'password'; }
+    if (hsmPin1) { hsmPin1.value = ''; hsmPin1.type = 'password'; }
+    if (hsmPin2) { hsmPin2.value = ''; hsmPin2.type = 'password'; }
+    if (msgHsmPin) msgHsmPin.style.display = 'none';
     if (typeof syncHSMVaultToUI === 'function') syncHSMVaultToUI();
 }
 
@@ -2703,67 +2842,91 @@ function clearSessionHistoryInModal() {
 }
 
 function saveVaultSettings() {
+    const masterCurrent = document.getElementById('setting-master-password-current');
     const masterInput = document.getElementById('setting-master-password');
     const masterConfirm = document.getElementById('setting-master-password-confirm');
+
+    const pinCurrent = document.getElementById('setting-quick-pin-current');
     const pinInput = document.getElementById('setting-quick-pin');
     const pinConfirm = document.getElementById('setting-quick-pin-confirm');
+
     const bioToggle = document.getElementById('setting-biometric-toggle');
     const autoToggle = document.getElementById('setting-autolock-toggle');
 
     const curMaster = localStorage.getItem('krypto_master_password') || '';
-    const curPin = localStorage.getItem('krypto_vault_pin') || '';
+    const curPin = localStorage.getItem('krypto_vault_pin') || '0000';
 
+    const enteredCurMaster = masterCurrent ? masterCurrent.value.trim() : '';
     const masterPass = masterInput ? masterInput.value.trim() : '';
     const masterPassConfirm = masterConfirm ? masterConfirm.value.trim() : '';
+
+    const enteredCurPin = pinCurrent ? pinCurrent.value.trim() : '';
     const pin = pinInput ? pinInput.value.trim() : '';
     const pinConf = pinConfirm ? pinConfirm.value.trim() : '';
+
     const bio = bioToggle ? bioToggle.checked : true;
     const autolock = autoToggle ? autoToggle.checked : true;
 
-    // 1. Kiểm tra xác nhận Master Password
-    if (masterPass) {
-        if (masterPass !== curMaster || masterPassConfirm) {
-            if (!masterPassConfirm) {
-                showToast('⚠️ Vui lòng nhập lại mật khẩu vào ô thứ 2 để xác nhận!');
-                if (masterConfirm) masterConfirm.focus();
+    let finalMaster = curMaster;
+    let finalPin = curPin;
+
+    // 1. Kiểm tra nếu người dùng muốn đặt hoặc đổi Master Password
+    if (masterPass || masterPassConfirm || enteredCurMaster) {
+        if (curMaster) {
+            if (!enteredCurMaster) {
+                showCyberAlert('Yêu Cầu Mật Khẩu Cũ', 'Bạn đã thiết lập Mật khẩu Két trước đó. Vui lòng nhập đúng Mật khẩu Két HIỆN TẠI (Mật khẩu cũ) trước khi đặt mật khẩu mới!', () => { if (masterCurrent) masterCurrent.focus(); }, 'Nhập Mật Khẩu Cũ', 'warning');
                 return;
             }
-            if (masterPass !== masterPassConfirm) {
-                showToast('⚠️ Mật khẩu Két xác nhận không khớp! Vui lòng kiểm tra lại.');
-                if (masterConfirm) masterConfirm.focus();
+            if (enteredCurMaster !== curMaster) {
+                showCyberAlert('Sai Mật Khẩu Két Hiện Tại', 'Mật khẩu Két HIỆN TẠI (Mật khẩu cũ) không chính xác! Hệ thống từ chối thay đổi mật khẩu.', () => { if (masterCurrent) masterCurrent.focus(); }, 'Thử Lại', 'error');
                 return;
             }
         }
+        if (!masterPass || masterPass.length < 4) {
+            showToast('⚠️ Mật khẩu Két mới phải có tối thiểu 4 ký tự!');
+            if (masterInput) masterInput.focus();
+            return;
+        }
+        if (!masterPassConfirm || masterPass !== masterPassConfirm) {
+            showToast('⚠️ Mật khẩu Két MỚI xác nhận (Lần 2) không khớp với Lần 1!');
+            if (masterConfirm) masterConfirm.focus();
+            return;
+        }
+        finalMaster = masterPass;
     }
 
-    // 2. Kiểm tra xác nhận Mã PIN
-    if (pin) {
-        if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
-            showToast('⚠️ Mã PIN nhanh phải từ 4 đến 6 chữ số!');
+    // 2. Kiểm tra nếu người dùng muốn đặt hoặc đổi Mã PIN Nhanh
+    if (pin || pinConf || enteredCurPin) {
+        if (!enteredCurPin) {
+            showCyberAlert('Yêu Cầu Mã PIN Hiện Tại', 'Vui lòng nhập đúng Mã PIN HIỆN TẠI (Mã PIN cũ, mặc định là 0000 nếu chưa đổi) trước khi đặt Mã PIN mới!', () => { if (pinCurrent) pinCurrent.focus(); }, 'Nhập PIN Cũ', 'warning');
+            return;
+        }
+        if (enteredCurPin !== curPin) {
+            showCyberAlert('Sai Mã PIN Hiện Tại', 'Mã PIN HIỆN TẠI (Mã PIN cũ) không chính xác! Hệ thống từ chối thay đổi Mã PIN.', () => { if (pinCurrent) pinCurrent.focus(); }, 'Thử Lại', 'error');
+            return;
+        }
+        if (!pin || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
+            showToast('⚠️ Mã PIN mới phải từ 4 đến 6 chữ số!');
             if (pinInput) pinInput.focus();
             return;
         }
-        if (pin !== curPin || pinConf) {
-            if (!pinConf) {
-                showToast('⚠️ Vui lòng nhập lại mã PIN vào ô thứ 2 để xác nhận!');
-                if (pinConfirm) pinConfirm.focus();
-                return;
-            }
-            if (pin !== pinConf) {
-                showToast('⚠️ Mã PIN nhanh xác nhận không khớp! Vui lòng kiểm tra lại.');
-                if (pinConfirm) pinConfirm.focus();
-                return;
-            }
+        if (!pinConf || pin !== pinConf) {
+            showToast('⚠️ Mã PIN MỚI xác nhận (Lần 2) không khớp với Lần 1!');
+            if (pinConfirm) pinConfirm.focus();
+            return;
         }
+        finalPin = pin;
     }
 
-    localStorage.setItem('krypto_master_password', masterPass);
-    localStorage.setItem('krypto_vault_pin', pin || '0000');
+    localStorage.setItem('krypto_master_password', finalMaster);
+    localStorage.setItem('krypto_vault_pin', finalPin);
     localStorage.setItem('krypto_biometrics_enabled', bio ? 'true' : 'false');
     localStorage.setItem('krypto_autolock_enabled', autolock ? 'true' : 'false');
 
     isVaultSessionUnlocked = true;
-    showToast('✓ Đã lưu cấu hình Két & Master Key an toàn! 🛡️');
+    // Xóa trắng ngay lập tức mọi ô mật khẩu/PIN sau khi lưu để không ai bấm 👁️ xem lại được
+    loadVaultConfigInputs();
+    showToast('✓ Đã xác thực & lưu cấu hình Két Bảo Mật an toàn! 🛡️');
 }
 
 function checkAppLockOnStartup() {
@@ -3043,6 +3206,26 @@ window.__restoreNativeHSMVault = function(nativeJsonStr) {
     } catch (_) {}
 };
 
+function toggleHsmChangePinFields(forceState) {
+    const newPinGroup = document.getElementById('hsm-new-pin-group');
+    const toggleBtn = document.getElementById('hsm-toggle-new-pin-btn');
+    const pin1 = document.getElementById('hsm-user-pin');
+    const pin2 = document.getElementById('hsm-user-pin-confirm');
+    const msg = document.getElementById('hsm-pin-match-msg');
+    if (!newPinGroup) return;
+
+    const show = typeof forceState === 'boolean' ? forceState : (newPinGroup.style.display === 'none');
+    newPinGroup.style.display = show ? 'flex' : 'none';
+    if (!show) {
+        if (pin1) { pin1.value = ''; pin1.type = 'password'; }
+        if (pin2) { pin2.value = ''; pin2.type = 'password'; }
+        if (msg) msg.style.display = 'none';
+    }
+    if (toggleBtn) {
+        toggleBtn.textContent = show ? '✖ Hủy Đổi USER_PIN Mới' : '🔑 Đổi Mã USER_PIN Mới';
+    }
+}
+
 function syncHSMVaultToUI(forceOverwriteInputs = false) {
     if (!window.KryptoHSMSignatureEngine) return;
     const vault = window.KryptoHSMSignatureEngine.getActiveHSMVault();
@@ -3056,8 +3239,28 @@ function syncHSMVaultToUI(forceOverwriteInputs = false) {
     const badgeEl = document.getElementById('vault-hsm-slot-badge');
     const lockBanner = document.getElementById('hsm-immutable-lock-banner');
     const saveBtnLabel = document.getElementById('hsm-save-btn-label');
+    const curPinGroup = document.getElementById('hsm-current-pin-group');
+    const newPinGroup = document.getElementById('hsm-new-pin-group');
+    const newPinLbl1 = document.getElementById('hsm-new-pin-label-1');
+    const newPinLbl2 = document.getElementById('hsm-new-pin-label-2');
+    const curPinEl = document.getElementById('hsm-current-user-pin');
+    const newPin1El = document.getElementById('hsm-user-pin');
+    const newPin2El = document.getElementById('hsm-user-pin-confirm');
+    const msgHsmPin = document.getElementById('hsm-pin-match-msg');
+
+    // TUYỆT ĐỐI KHÔNG BAO GIỜ ĐIỀN SẴN (PRE-FILL) MÃ PIN HSM VÀO Ô INPUT
+    if (forceOverwriteInputs) {
+        [curPinEl, newPin1El, newPin2El].forEach((el) => {
+            if (el) { el.value = ''; el.type = 'password'; }
+        });
+        if (msgHsmPin) msgHsmPin.style.display = 'none';
+    }
 
     if (!vault) {
+        if (curPinGroup) curPinGroup.style.display = 'none';
+        if (newPinGroup) newPinGroup.style.display = 'flex';
+        if (newPinLbl1) newPinLbl1.textContent = 'Thiết lập Mã USER_PIN HSM (Lần 1):';
+        if (newPinLbl2) newPinLbl2.textContent = 'Xác nhận Mã USER_PIN HSM (Lần 2):';
         if (nameEl && !nameEl.value) nameEl.value = 'Trương Tuấn Anh';
         if (emailEl && !emailEl.value) emailEl.value = 'truongtuananhxd@gmail.com';
         if (titleEl && !titleEl.value) titleEl.value = 'ANH';
@@ -3065,7 +3268,7 @@ function syncHSMVaultToUI(forceOverwriteInputs = false) {
         if (badgeEl) badgeEl.innerText = 'CHƯA CẤP KHÓA (FIPS 140-3 CSPRNG)';
         if (saveBtnLabel) saveBtnLabel.innerText = '🛡️ Khởi Tạo Buồng Chữ Ký Số HSM Chuẩn FIPS 140-3 (Sinh Khóa CSPRNG Trên Máy)';
         if (lockBanner) {
-            lockBanner.innerHTML = '🛡️ <strong>Chuẩn Quốc Tế FIPS 140-3 &amp; PKCS#11:</strong> Nhập <code>USER_PIN</code> (tối thiểu 4 ký tự) và bấm nút bên dưới để sinh cặp khóa <code>ECDSA P-256</code> ngẫu nhiên 100% trên thiết bị (Zero Backdoor) và khóa cố định lâu dài.';
+            lockBanner.innerHTML = '🛡️ <strong>Chuẩn Quốc Tế FIPS 140-3 &amp; PKCS#11:</strong> Nhập 2 lần <code>USER_PIN</code> (tối thiểu 4 ký tự) và bấm nút bên dưới để sinh cặp khóa <code>ECDSA P-256</code> ngẫu nhiên 100% trên thiết bị (Zero Backdoor) và khóa cố định lâu dài.';
         }
         if (previewImg && typeof KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL !== 'undefined') {
             previewImg.src = KRYPTO_DEFAULT_CHU_KY_TA_DATA_URL;
@@ -3075,6 +3278,13 @@ function syncHSMVaultToUI(forceOverwriteInputs = false) {
             previewCap.innerHTML = `Mẫu chữ ký tay chính thức (Chu ky TA.png) • SHA-256: <code>${KRYPTO_DEFAULT_CHU_KY_TA_SHA256.slice(0, 16)}...</code>`;
         }
         return;
+    }
+
+    if (curPinGroup) curPinGroup.style.display = 'block';
+    if (newPinLbl1) newPinLbl1.textContent = 'Mã USER_PIN MỚI (Lần 1):';
+    if (newPinLbl2) newPinLbl2.textContent = 'Xác nhận Mã USER_PIN MỚI (Lần 2):';
+    if (forceOverwriteInputs) {
+        toggleHsmChangePinFields(false);
     }
 
     const cert = vault.certificate || {};
@@ -3087,7 +3297,7 @@ function syncHSMVaultToUI(forceOverwriteInputs = false) {
     if (saveBtnLabel) saveBtnLabel.innerText = '💾 Lưu Cập Nhật Hồ Sơ & Tái Ký Chứng Thư (Giữ Nguyên Khóa & Serial HSM)';
     if (lockBanner) {
         const tbsSigShort = cert.cert_signature_b64 ? ` • Chữ ký X.509 TBS: <code>${cert.cert_signature_b64.slice(0, 12)}...</code>` : '';
-        lockBanner.innerHTML = `🔒 <strong>Chuẩn NIST SP 800-57 Key Retention (<code>SN:${(cert.serial_hex || '').slice(0, 10)}</code>):</strong> Cặp khóa &amp; Serial được cố định vĩnh viễn trên máy. Mọi cập nhật Hồ sơ bắt buộc xác thực <code>USER_PIN</code> và tái ký chứng thư <code>RFC 5280</code>${tbsSigShort}.`;
+        lockBanner.innerHTML = `🔒 <strong>Chuẩn NIST SP 800-57 Key Retention (<code>SN:${(cert.serial_hex || '').slice(0, 10)}</code>):</strong> Mã <code>USER_PIN</code> không bao giờ hiển thị lại. Mọi cập nhật Hồ sơ hoặc đổi PIN mới bắt buộc nhập đúng <code>USER_PIN hiện tại</code>${tbsSigShort}.`;
     }
 
     if (previewImg && vault.cko_data_handwritten_png?.png_data_url) {
@@ -3161,25 +3371,96 @@ async function provisionPersonalHSMFromVaultUI(forceRegenerateKey = false) {
         const signerEmail = document.getElementById('hsm-signer-email')?.value || 'truongtuananhxd@gmail.com';
         const signerTitle = document.getElementById('hsm-signer-title')?.value || 'ANH';
         const organization = document.getElementById('hsm-signer-org')?.value || "ANH'S TEAM";
-        const userPin = (document.getElementById('hsm-user-pin')?.value || localStorage.getItem('krypto_vault_pin') || '').trim();
-        const masterPass = (document.getElementById('setting-master-password')?.value || localStorage.getItem('krypto_master_password') || '').trim();
+        const currentPinInput = (document.getElementById('hsm-current-user-pin')?.value || '').trim();
+        const rawPin1 = (document.getElementById('hsm-user-pin')?.value || '').trim();
+        const rawPin2 = (document.getElementById('hsm-user-pin-confirm')?.value || '').trim();
+        const masterPass = (document.getElementById('setting-master-password-current')?.value || '').trim();
         const inkPreset = document.getElementById('hsm-ink-preset')?.value || 'administrative_blue';
 
-        if (!userPin || userPin.length < 4) {
-            showCyberAlert(
-                'Yêu Cầu Xác Thực USER_PIN (Chuẩn FIPS 140-3)',
-                'Theo tiêu chuẩn bảo mật quốc tế PKCS#11 & FIPS 140-3 (Zero Hardcoded Key), vui lòng nhập Mã USER_PIN (tối thiểu 4 ký tự) vào ô "Mã USER_PIN ký số HSM" để bảo vệ và xác thực quyền sở hữu khóa bí mật!',
-                () => {
-                    const pinInput = document.getElementById('hsm-user-pin');
-                    if (pinInput) pinInput.focus();
-                },
-                'Nhập USER_PIN Ngay',
-                'warning'
-            );
-            return;
+        const hadExistingVault = !!window.KryptoHSMSignatureEngine.getActiveHSMVault();
+        let userPin = '';
+        let newUserPin = null;
+
+        if (!hadExistingVault || forceRegenerateKey) {
+            if (hadExistingVault && forceRegenerateKey) {
+                if (!currentPinInput || currentPinInput.length < 4) {
+                    showCyberAlert(
+                        'Yêu Cầu Mã USER_PIN Hiện Tại',
+                        'Để thu hồi khóa cũ và cấp khóa mới, trước tiên bạn bắt buộc phải nhập đúng Mã USER_PIN HIỆN TẠI của Buồng HSM để xác thực quyền sở hữu!',
+                        () => { const el = document.getElementById('hsm-current-user-pin'); if (el) el.focus(); },
+                        'Nhập USER_PIN Cũ',
+                        'warning'
+                    );
+                    return;
+                }
+            }
+            if (!rawPin1 || rawPin1.length < 4) {
+                toggleHsmChangePinFields(true);
+                showCyberAlert(
+                    'Yêu Cầu Thiết Lập Mã USER_PIN Mới (Lần 1)',
+                    'Theo tiêu chuẩn bảo mật quốc tế PKCS#11 & FIPS 140-3, vui lòng nhập Mã USER_PIN mới (tối thiểu 4 ký tự) vào ô Lần 1!',
+                    () => { const pinInput = document.getElementById('hsm-user-pin'); if (pinInput) pinInput.focus(); },
+                    'Nhập USER_PIN Mới',
+                    'warning'
+                );
+                return;
+            }
+            if (!rawPin2 || rawPin1 !== rawPin2) {
+                checkHsmPinMatch();
+                showCyberAlert(
+                    'Yêu Cầu Xác Nhận Mã USER_PIN Mới (Lần 2)',
+                    'Vui lòng nhập lại chính xác Mã USER_PIN mới vào ô Lần 2 trùng khớp 100% với Lần 1!',
+                    () => { const pinConfirmInput = document.getElementById('hsm-user-pin-confirm'); if (pinConfirmInput) pinConfirmInput.focus(); },
+                    'Xác Nhận Lại USER_PIN',
+                    'warning'
+                );
+                return;
+            }
+            userPin = (hadExistingVault && forceRegenerateKey) ? currentPinInput : rawPin1;
+            newUserPin = rawPin1;
+        } else {
+            // Đã có Buồng HSM -> Bắt buộc nhập đúng Mã USER_PIN HIỆN TẠI (Cũ)
+            if (!currentPinInput || currentPinInput.length < 4) {
+                showCyberAlert(
+                    'Yêu Cầu Mã USER_PIN Hiện Tại (Cũ)',
+                    'Để cập nhật Hồ sơ hoặc đổi sang Mã USER_PIN mới, bạn bắt buộc phải nhập chính xác Mã USER_PIN HIỆN TẠI của Buồng HSM!',
+                    () => { const el = document.getElementById('hsm-current-user-pin'); if (el) el.focus(); },
+                    'Nhập USER_PIN Hiện Tại',
+                    'warning'
+                );
+                return;
+            }
+            userPin = currentPinInput;
+
+            // Nếu người dùng mở khung Đổi Mã USER_PIN Mới (hoặc có gõ vào ô PIN mới)
+            const newPinGroup = document.getElementById('hsm-new-pin-group');
+            const isChangingPin = (newPinGroup && newPinGroup.style.display !== 'none') || rawPin1 || rawPin2;
+            if (isChangingPin) {
+                if (!rawPin1 || rawPin1.length < 4) {
+                    showCyberAlert(
+                        'Yêu Cầu Mã USER_PIN Mới (Lần 1)',
+                        'Vui lòng nhập Mã USER_PIN MỚI (tối thiểu 4 ký tự) vào ô Lần 1, hoặc bấm "Hủy Đổi USER_PIN Mới" nếu chỉ muốn giữ nguyên PIN cũ!',
+                        () => { const pinInput = document.getElementById('hsm-user-pin'); if (pinInput) pinInput.focus(); },
+                        'Nhập USER_PIN Mới',
+                        'warning'
+                    );
+                    return;
+                }
+                if (!rawPin2 || rawPin1 !== rawPin2) {
+                    checkHsmPinMatch();
+                    showCyberAlert(
+                        'Mã USER_PIN Mới Xác Nhận Không Khớp',
+                        'Mã USER_PIN MỚI ở ô Lần 2 không khớp với Lần 1! Vui lòng kiểm tra lại.',
+                        () => { const pinConfirmInput = document.getElementById('hsm-user-pin-confirm'); if (pinConfirmInput) pinConfirmInput.focus(); },
+                        'Kiểm Tra Lại',
+                        'warning'
+                    );
+                    return;
+                }
+                newUserPin = rawPin1;
+            }
         }
 
-        const hadExistingVault = !!window.KryptoHSMSignatureEngine.getActiveHSMVault();
         const vault = await window.KryptoHSMSignatureEngine.provisionPersonalHSMSlot({
             signerName,
             signerEmail,
@@ -3187,6 +3468,7 @@ async function provisionPersonalHSMFromVaultUI(forceRegenerateKey = false) {
             organization,
             personalIdCccd: organization,
             userPin,
+            newUserPin,
             soPin: masterPass || userPin,
             inkPreset,
             customPngDataUrl: __pendingHsmHandwrittenPngDataUrl,
@@ -3194,6 +3476,7 @@ async function provisionPersonalHSMFromVaultUI(forceRegenerateKey = false) {
         });
 
         __pendingHsmHandwrittenPngDataUrl = null;
+        // Xóa trắng toàn bộ các ô PIN ngay lập tức sau khi lưu để không bao giờ lộ PIN qua nút 👁️
         syncHSMVaultToUI(true);
 
         if (forceRegenerateKey || !hadExistingVault) {
@@ -3205,9 +3488,10 @@ async function provisionPersonalHSMFromVaultUI(forceRegenerateKey = false) {
                 'info'
             );
         } else {
+            const pinChangeNote = newUserPin ? '\n• Đã đổi sang Mã USER_PIN MỚI & bọc lại khóa AES-256-GCM thành công!' : '';
             showCyberAlert(
-                '🔒 Đã Tái Ký Chứng Thư (Giữ Nguyên Khóa & Serial)',
-                `Đã xác thực USER_PIN và cập nhật Chứng thư X.509v3 theo chuẩn NIST SP 800-57 Key Retention!\n• Buồng HSM cố định: ${vault.slot_id}\n• Serial KHÔNG ĐỔI: ${vault.certificate.serial_hex.slice(0, 16)}\n• Chủ sở hữu: ${vault.certificate.signer_name} (${vault.certificate.signer_title} - ${vault.certificate.organization})\n• Chữ ký X.509 TBS: ${(vault.certificate.cert_signature_b64 || '').slice(0, 18)}...`,
+                '🔒 Đã Xác Thực & Tái Ký Chứng Thư (Giữ Nguyên Khóa)',
+                `Đã xác thực đúng USER_PIN hiện tại và cập nhật Chứng thư X.509v3 theo chuẩn NIST SP 800-57 Key Retention!${pinChangeNote}\n• Buồng HSM cố định: ${vault.slot_id}\n• Serial KHÔNG ĐỔI: ${vault.certificate.serial_hex.slice(0, 16)}\n• Chủ sở hữu: ${vault.certificate.signer_name} (${vault.certificate.signer_title} - ${vault.certificate.organization})\n• Chữ ký X.509 TBS: ${(vault.certificate.cert_signature_b64 || '').slice(0, 18)}...`,
                 null,
                 'Đã Lưu Chuẩn Quốc Tế',
                 'info'
@@ -3235,10 +3519,10 @@ function confirmReissueNewHSMKeyUI() {
 
 async function exportKryptoHSMBundleUI() {
     try {
-        const userPin = (document.getElementById('hsm-user-pin')?.value || localStorage.getItem('krypto_vault_pin') || '').trim();
-        const masterPass = (document.getElementById('setting-master-password')?.value || localStorage.getItem('krypto_master_password') || userPin).trim();
+        const userPin = (document.getElementById('hsm-current-user-pin')?.value || document.getElementById('hsm-user-pin')?.value || '').trim();
+        const masterPass = (document.getElementById('setting-master-password-current')?.value || localStorage.getItem('krypto_master_password') || userPin).trim();
         if (!userPin || userPin.length < 4) {
-            showCyberAlert('Yêu Cầu USER_PIN', 'Vui lòng nhập mã USER_PIN của HSM trước khi xuất gói di trú .kryptohsm (PKCS#11 C_WrapKey)!', null, 'Đóng', 'warning');
+            showCyberAlert('Yêu Cầu USER_PIN Hiện Tại', 'Vui lòng nhập đúng Mã USER_PIN HIỆN TẠI của HSM trước khi xuất gói di trú .kryptohsm (PKCS#11 C_WrapKey)!', () => { const el = document.getElementById('hsm-current-user-pin'); if (el) el.focus(); }, 'Nhập USER_PIN', 'warning');
             return;
         }
         const effectiveMaster = masterPass.length >= 6 ? masterPass : (userPin + '@Krypto2026');
@@ -3278,8 +3562,8 @@ function importKryptoHSMBundleUI(input) {
     const reader = new FileReader();
     reader.onload = async function(e) {
         try {
-            const userPin = (document.getElementById('hsm-user-pin')?.value || localStorage.getItem('krypto_vault_pin') || '').trim();
-            const masterPass = (document.getElementById('setting-master-password')?.value || localStorage.getItem('krypto_master_password') || '').trim();
+            const userPin = (document.getElementById('hsm-current-user-pin')?.value || document.getElementById('hsm-user-pin')?.value || '').trim();
+            const masterPass = (document.getElementById('setting-master-password-current')?.value || localStorage.getItem('krypto_master_password') || '').trim();
             const effectiveMaster = masterPass.length >= 6 ? masterPass : (userPin ? (userPin + '@Krypto2026') : '');
             if (!effectiveMaster) {
                 showCyberAlert('Yêu Cầu Mật Khẩu Khôi Phục', 'Vui lòng nhập Mật khẩu Két hoặc USER_PIN đã dùng khi xuất tệp .kryptohsm để giải mã (PKCS#11 C_UnwrapKey)!', null, 'Đóng', 'warning');
@@ -3308,7 +3592,7 @@ async function sendSigningRequestEmailUI() {
             showToast('⚠️ Vui lòng khởi tạo Buồng HSM trước!');
             return;
         }
-        const userPin = (document.getElementById('hsm-user-pin')?.value || localStorage.getItem('krypto_vault_pin') || '').trim();
+        const userPin = (document.getElementById('hsm-current-user-pin')?.value || document.getElementById('hsm-user-pin')?.value || '').trim();
         if (!userPin || userPin.length < 4) {
             showCyberAlert('Yêu Cầu USER_PIN', 'Vui lòng nhập mã USER_PIN của HSM để ký gói Email S/MIME (RFC 8551)!', null, 'Đóng', 'warning');
             return;
