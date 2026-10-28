@@ -1027,6 +1027,11 @@
             </div>
         </div>
 
+        <!-- ==================== TAB 6: KHO TRI THỨC CHAT (YOUTUBE / GITHUB / FB / WEB) ==================== -->
+        <div id="tab-knowledge" class="tab-content" style="display: none;">
+            <div id="krypto-chat-vault-mount"></div>
+        </div>
+
         <!-- ==================== SESSION HISTORY CARD ==================== -->
         <div class="card history-card" id="history-card">
             <div class="history-header" onclick="toggleHistoryDrawer()">
@@ -1054,7 +1059,7 @@
             <p>Krypto Vault • Mật Mã Hậu Lượng Tử ML-KEM-768 • Offline 100%</p>
         </footer>
 
-        <!-- Bottom Navigation Bar (Flat 5 Tabs) -->
+        <!-- Bottom Navigation Bar (Flat 6 Tabs) -->
         <nav class="bottom-nav-bar" id="bottom-nav-bar">
             <button type="button" class="bottom-nav-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
                 <span class="nav-icon">🏠</span>
@@ -1067,6 +1072,10 @@
             <button type="button" class="bottom-nav-btn" id="tab-btn-audit" onclick="switchTab('audit')">
                 <span class="nav-icon">🔎</span>
                 <span class="nav-label">Pháp y</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-knowledge" onclick="switchTab('knowledge')">
+                <span class="nav-icon">🧠</span>
+                <span class="nav-label">Tri thức</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-auth" onclick="switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
                 <span class="nav-icon">🔢</span>
@@ -1096,6 +1105,14 @@
         </div>
         <div class="drawer-content">
             <div class="drawer-section-title">HỆ THỐNG & CÀI ĐẶT</div>
+            <div class="drawer-menu-item" onclick="closeAppDrawer(); switchTab('knowledge')">
+                <span class="drawer-menu-icon">🧠</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Kho Tri Thức &amp; Tra Cứu Chat</div>
+                    <div class="drawer-menu-desc">Lưu &amp; phân tích link YouTube [mm:ss], GitHub, FB, Web</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
             <div class="drawer-menu-item" onclick="closeAppDrawer(); switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
                 <span class="drawer-menu-icon">🔢</span>
                 <div class="drawer-menu-text">
@@ -1150,7 +1167,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.9.3 FIPS-140-3</strong>
+                    <strong id="drawer-app-version">v2.9.4 FIPS-140-3</strong>
                 </div>
             </div>
 
@@ -1320,6 +1337,8 @@
     <script src="static/pqc_crypto_engine.js"></script>
     <script src="static/hsm_signature_engine.js"></script>
     <script src="static/krypto_authenticator_engine.js"></script>
+    <script src="static/chat_vault_engine.js"></script>
+    <script src="static/chat_vault_widget_adapter.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>

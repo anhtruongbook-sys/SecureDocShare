@@ -2465,7 +2465,7 @@ body:not(.dark-mode) .vault-auth-card .btn-pin-del {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 6px 12px max(10px, env(safe-area-inset-bottom));
+    padding: 6px 4px max(10px, env(safe-area-inset-bottom));
     z-index: 1000;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -2473,6 +2473,7 @@ body:not(.dark-mode) .vault-auth-card .btn-pin-del {
 
 .bottom-nav-btn {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2481,10 +2482,10 @@ body:not(.dark-mode) .vault-auth-card .btn-pin-del {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 500;
     cursor: pointer;
-    padding: 4px 2px;
+    padding: 4px 1px;
     border-radius: var(--radius-md);
     transition: all 0.18s ease;
     user-select: none;

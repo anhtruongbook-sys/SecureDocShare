@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Quyền truy cập lưu trữ cục bộ, sinh trắc học & máy ảnh quét mã QR 2FA -->
+    <!-- Quyền truy cập lưu trữ cục bộ, sinh trắc học, máy ảnh quét QR 2FA & truy xuất phụ đề YouTube / GitHub / Web -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
@@ -34,7 +35,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- Nhận chia sẻ liên kết trực tiếp từ GitHub, Zalo, YouTube, Trình duyệt vào Tab Tri Thức -->
+            <!-- Nhận chia sẻ liên kết trực tiếp từ GitHub, Zalo, YouTube, Facebook, Trình duyệt vào Tab Tri Thức -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

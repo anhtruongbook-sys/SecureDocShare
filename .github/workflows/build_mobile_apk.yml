@@ -66,10 +66,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.3
-          name: "Krypto v2.9.3 - Khắc Phục Hiển Thị Modal Máy Ảnh (.active.show) & Tích Hợp Camera2 API (YUV_420_888 ImageReader)"
+          tag_name: v2.9.4
+          name: "Krypto v2.9.4 - Khôi Phục Đầy Đủ Kho Tri Thức Chat (YouTube / GitHub / FB / Web) + 2FA OTP Camera2 + HSM PKCS#11"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.3 (Camera2 Hardware Stream + Modal Visibility Fix + Live QR Scanner)
+            ## Ứng dụng Di Động Krypto v2.9.4 (6-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • 2FA OTP • Két sắt)
+            - **Khôi phục đầy đủ Tab `🧠 Tri thức` (`Kho Tri Thức & Phân Tích Link Share`)**:
+              + Lưu giữ, bóc tách phụ đề/nội dung và phân tích thông minh các đường link chia sẻ trực tiếp (`Intent.ACTION_SEND`) từ **YouTube** (`[mm:ss]` transcript wisdom), **GitHub**, **Facebook**, **Zalo**, và **Trình duyệt Web** với cơ chế lưu trữ bền vững 3 lớp (`Triple-Persistence`).
+              + Tích hợp đồng thời đầy đủ cả 6 phân hệ trên thanh điều hướng dưới cùng: **`🏠 Trang chủ` • `🔓 Mở khóa` • `🔎 Pháp y` • `🧠 Tri thức` • `🔢 2FA OTP` • `🛡️ Két sắt`**.
             - **Khắc phục lỗi ẩn Modal Quét QR (`.cyber-dialog-overlay.active.show`)**:
               + Bổ sung gán lớp `.active.show` và `opacity: 1; pointer-events: auto;` khi mở hộp thoại `#kauth-camera-modal-overlay` và `#kauth-qr-modal-overlay`, đồng thời đưa hộp thoại ra cấp gốc `<body>` để hiển thị nổi hoàn toàn trên mọi thiết bị.
             - **Nâng cấp Động cơ Máy ảnh Phần cứng lên chuẩn `Android Camera2 API` (`android.hardware.camera2`)**:
