@@ -66,10 +66,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.0
-          name: "Krypto v2.9.0 - Tích Hợp Bộ Xác Thực 2FA / MFA (HOTP / TOTP / OCRA / Google Auth Migration) & Ký Số HSM PKCS#11"
+          tag_name: v2.9.1
+          name: "Krypto v2.9.1 - Quét Mã QR Trực Tiếp Bằng Máy Ảnh & Loại Bỏ Tài Khoản Giả Định (100% Production Clean)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.0 (Integrated 2FA Authenticator + FIPS 140-3 / PKCS#11 HSM)
+            ## Ứng dụng Di Động Krypto v2.9.1 (Live Camera QR Scanner + Zero Dummy Accounts + Integrated 2FA Authenticator)
+            - **Loại bỏ 100% Tài Khoản & Dữ Liệu Giả Định (`Zero Dummy Accounts`)**:
+              + Xóa sạch toàn bộ các tài khoản mẫu giả định (`IBST-BIM CDE`, `Google security@anhsteam.vn`, `GitHub anhsteam-dev`, `Krypto HSM Root`, `Hardware Token HOTP`) và tự động dọn sạch dữ liệu mẫu cũ trong bộ nhớ thiết bị.
+              + Chỉ hiển thị duy nhất thẻ `Krypto HSM` thật của người dùng và các tài khoản 2FA do chính người dùng quét QR hoặc thêm vào.
+              + Loại bỏ toàn bộ giá trị điền sẵn giả định trong tab Giải Phẫu & Ký Giao Dịch OCRA.
+            - **Tích hợp Quét Mã QR Trực Tiếp Bằng Máy Ảnh (`Live Camera QR Scanner — Offline 100%`)**:
+              + Bổ sung chế độ **`📷 Quét QR Máy Ảnh`** trực tiếp ngay tại màn hình chính `2FA OTP` và mục `➕ Thêm / QR` (hỗ trợ tự động xin quyền Camera Android, chuyển đổi Camera trước/sau và tự động bắt nét giải mã tức thời chuẩn `otpauth://` và `otpauth-migration://` của Google Authenticator).
+              + Bổ sung nút **`📸 Chụp / Chọn Ảnh QR`** (mở trực tiếp ứng dụng Máy ảnh hệ thống để chụp mã QR nét cao hoặc chọn ảnh từ thư viện kèm thuật toán giải mã đa tỷ lệ `Multi-Scale jsQR`).
             - **Tích hợp Bộ Xác Thực Đa Nhân Tố Krypto Authenticator (`2FA / MFA Offline 100%`)**:
               + Hỗ trợ đầy đủ chuẩn `IETF RFC 4226 (HOTP)`, `RFC 6238 (TOTP — SHA1/SHA256/SHA512, 6/8 số)`, và ký xác thực giao dịch theo ngữ cảnh `RFC 6287 (OCRA)`.
               + Tự động liên kết và ghim hạt giống 2FA của Buồng HSM Cá Nhân (`Krypto HSM PKCS#11`) ngay đầu danh sách.

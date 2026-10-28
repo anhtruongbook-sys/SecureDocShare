@@ -1208,6 +1208,15 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
               }
               return;
             }
+
+            if (action == 'request_camera_permission') {
+              if (Platform.isAndroid) {
+                try {
+                  await _nativeChannel.invokeMethod('requestCameraPermission');
+                } catch (_) {}
+              }
+              return;
+            }
           } catch (e) {
             debugPrint('FlutterBridge error: $e');
             final safeErr = e.toString().replaceAll("'", r"\'");
@@ -1218,6 +1227,13 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
 
     if (Platform.isAndroid) {
       final androidController = _controller.platform as AndroidWebViewController;
+      await androidController.setMediaPlaybackRequiresUserGesture(false);
+      await androidController.setOnPlatformPermissionRequest((PlatformWebViewPermissionRequest request) async {
+        try {
+          await _nativeChannel.invokeMethod('requestCameraPermission');
+        } catch (_) {}
+        await request.grant();
+      });
       await androidController.setOnShowFileSelector((FileSelectorParams params) async {
         final allowMultiple = params.mode == FileSelectorMode.openMultiple;
         try {

@@ -1206,6 +1206,20 @@ class MainActivity: FlutterFragmentActivity() {
                         }
                     }
                 }
+                "requestCameraPermission" -> {
+                    runOnUiThread {
+                        try {
+                            val perm = android.Manifest.permission.CAMERA
+                            val granted = ContextCompat.checkSelfPermission(this, perm) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            if (!granted) {
+                                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(perm), 9902)
+                            }
+                            result.success(true)
+                        } catch (_: Throwable) {
+                            result.success(false)
+                        }
+                    }
+                }
                 else -> result.notImplemented()
             }
         }

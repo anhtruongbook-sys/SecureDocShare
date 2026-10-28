@@ -821,7 +821,10 @@
             <!-- SUB-PANEL 1: LIVE OTP LIST -->
             <div id="kauth-panel-live" class="kauth-sub-panel" style="display: block;">
                 <div class="card settings-card" style="margin-bottom: 10px; padding: 10px 12px;">
-                    <input type="search" placeholder="🔍 Tìm tên dịch vụ, email hoặc danh mục..." oninput="window.KryptoAuthenticator.onSearchInput(this.value)" style="width: 100%; font-size: 12px; padding: 8px 10px; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
+                        <input type="search" placeholder="🔍 Tìm tên dịch vụ, email..." oninput="window.KryptoAuthenticator.onSearchInput(this.value)" style="flex: 1; font-size: 12px; padding: 8px 10px; margin: 0;">
+                        <button type="button" class="btn-mobi-solid" style="padding: 8px 10px; font-size: 11.5px; white-space: nowrap; width: auto;" onclick="window.KryptoAuthenticator.openCameraQrScanner()">📷 Quét QR</button>
+                    </div>
                     <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                         <button type="button" class="btn-chip-micro kauth-cat-chip active" onclick="window.KryptoAuthenticator.filterCategory('ALL', this)">Tất cả</button>
                         <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Nội bộ', this)">Nội bộ / HSM</button>
@@ -836,25 +839,45 @@
             <!-- SUB-PANEL 2: ADD ACCOUNT & GOOGLE AUTH MIGRATION -->
             <div id="kauth-panel-add" class="kauth-sub-panel" style="display: none;">
                 <div class="card settings-card">
+                    <!-- Quét QR Trực Tiếp Bằng Máy Ảnh Hoặc Ảnh Chụp -->
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 12.5px; font-weight: 800; color: var(--primary);">📷 QUÉT MÃ QR TÀI KHOẢN 2FA / GOOGLE AUTH</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px;">
+                            <button type="button" class="btn-cyber-dialog-primary" style="padding: 10px 8px; font-size: 12px; margin: 0;" onclick="window.KryptoAuthenticator.openCameraQrScanner()">
+                                <span>📷 Quét QR Máy Ảnh</span>
+                            </button>
+                            <button type="button" class="btn-mobi-outline" style="padding: 10px 8px; font-size: 12px; margin: 0;" onclick="document.getElementById('kauth-qr-camera-capture-input').click()">
+                                📸 Chụp / Chọn Ảnh QR
+                            </button>
+                        </div>
+                        <input type="file" id="kauth-qr-camera-capture-input" accept="image/*" capture="environment" style="display: none;" onchange="window.KryptoAuthenticator.decodeQrFromImageFile(this)">
+                        <input type="file" id="kauth-qr-img-input" accept="image/*" style="display: none;" onchange="window.KryptoAuthenticator.decodeQrFromImageFile(this)">
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button type="button" class="btn-chip-micro" onclick="document.getElementById('kauth-qr-img-input').click()">🖼️ Chọn Ảnh QR Từ Thư Viện Máy</button>
+                        </div>
+                    </div>
+
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 12.5px; font-weight: 700; color: var(--primary);">➕ THÊM TÀI KHOẢN XÁC THỰC 2FA (TOTP / HOTP)</span>
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--primary);">➕ NHẬP THỦ CÔNG KHÓA BÍ MẬT (TOTP / HOTP)</span>
                         <button type="button" class="btn-mini-gen" onclick="window.KryptoAuthenticator.generateRandomSecretUI()">⚡ Sinh Khóa 160-bit</button>
                     </div>
 
                     <div class="dual-inputs-row">
                         <div class="input-col">
                             <label class="micro-label">Nhà cung cấp dịch vụ (Issuer):</label>
-                            <input type="text" id="kauth-add-issuer" placeholder="VD: Google, GitHub, IBST-BIM...">
+                            <input type="text" id="kauth-add-issuer" placeholder="VD: Google, GitHub, Facebook...">
                         </div>
                         <div class="input-col">
                             <label class="micro-label">Tài khoản / Email:</label>
-                            <input type="text" id="kauth-add-account" placeholder="VD: user@domain.vn">
+                            <input type="text" id="kauth-add-account" placeholder="VD: user@gmail.com">
                         </div>
                     </div>
 
                     <div class="form-group-compact" style="margin-top: 6px;">
                         <label class="micro-label">Khóa Bí mật Base32 (RFC 4648):</label>
-                        <input type="text" id="kauth-add-secret" placeholder="JBSWY3DPEHPK3PXP..." style="font-family: monospace;">
+                        <input type="text" id="kauth-add-secret" placeholder="Nhập khóa Base32 do dịch vụ cấp..." style="font-family: monospace;">
                     </div>
 
                     <div class="dual-inputs-row" style="margin-top: 6px;">
@@ -886,8 +909,8 @@
                         <div class="input-col">
                             <label class="micro-label">Danh mục:</label>
                             <select id="kauth-add-category" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
-                                <option value="Nội bộ">Nội bộ / HSM</option>
                                 <option value="Email & Cloud">Email &amp; Cloud</option>
+                                <option value="Nội bộ">Nội bộ / HSM</option>
                                 <option value="Kỹ thuật">Kỹ thuật</option>
                                 <option value="Google Auth">Google Auth</option>
                             </select>
@@ -901,9 +924,7 @@
                     <!-- Nhập / Xuất Google Authenticator Migration (Protobuf) -->
                     <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
-                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">📲 NHẬP / XUẤT GOOGLE AUTHENTICATOR (OTPAUTH &amp; PROTOBUF)</span>
-                            <button type="button" class="btn-chip-micro" onclick="document.getElementById('kauth-qr-img-input').click()">🖼️ Đọc Ảnh QR</button>
-                            <input type="file" id="kauth-qr-img-input" accept="image/*" style="display: none;" onchange="window.KryptoAuthenticator.decodeQrFromImageFile(this)">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">📲 NHẬP / XUẤT CHUỖI URI (OTPAUTH &amp; PROTOBUF)</span>
                         </div>
                         <textarea id="kauth-import-uri-input" rows="2" placeholder="Dán chuỗi otpauth://totp/... hoặc otpauth-migration://offline?data=..." style="width: 100%; font-family: monospace; font-size: 11px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary);"></textarea>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
@@ -924,8 +945,8 @@
                     </div>
                     <div class="dual-inputs-row" style="margin-bottom: 8px;">
                         <div class="input-col">
-                            <label class="micro-label">Khóa Base32:</label>
-                            <input type="text" id="kauth-lab-secret" value="JBSWY3DPEHPK3PXP" oninput="window.KryptoAuthenticator.runLabTrace()" style="font-family: monospace;">
+                            <label class="micro-label">Khóa Base32 cần giải phẫu:</label>
+                            <input type="text" id="kauth-lab-secret" value="" placeholder="Chọn '🔬 Giải phẫu' từ thẻ 2FA hoặc nhập Base32..." oninput="window.KryptoAuthenticator.runLabTrace()" style="font-family: monospace;">
                         </div>
                         <div class="input-col">
                             <label class="micro-label">Hàm băm &amp; Độ dài:</label>
@@ -953,21 +974,21 @@
                         <div class="dual-inputs-row">
                             <div class="input-col">
                                 <label class="micro-label">Khóa Base32:</label>
-                                <input type="text" id="kauth-ocra-secret" value="JBSWY3DPEHPK3PXP" oninput="window.KryptoAuthenticator.runOcraSign()" style="font-family: monospace;">
+                                <input type="text" id="kauth-ocra-secret" value="" placeholder="Tự lấy khóa HSM hoặc nhập Base32..." oninput="window.KryptoAuthenticator.runOcraSign()" style="font-family: monospace;">
                             </div>
                             <div class="input-col">
                                 <label class="micro-label">Đơn vị nhận / Đích:</label>
-                                <input type="text" id="kauth-ocra-recipient" value="IBST-CDE-2026" oninput="window.KryptoAuthenticator.runOcraSign()">
+                                <input type="text" id="kauth-ocra-recipient" value="" placeholder="Nhập mã đơn vị nhận..." oninput="window.KryptoAuthenticator.runOcraSign()">
                             </div>
                         </div>
                         <div class="dual-inputs-row" style="margin-top: 6px;">
                             <div class="input-col">
                                 <label class="micro-label">Giá trị / Số lượng:</label>
-                                <input type="text" id="kauth-ocra-amount" value="150,000,000 VND" oninput="window.KryptoAuthenticator.runOcraSign()">
+                                <input type="text" id="kauth-ocra-amount" value="" placeholder="Nhập giá trị hoặc tham số..." oninput="window.KryptoAuthenticator.runOcraSign()">
                             </div>
                             <div class="input-col">
                                 <label class="micro-label">Mã hồ sơ / Tham chiếu:</label>
-                                <input type="text" id="kauth-ocra-ref" value="HS-2026-089" oninput="window.KryptoAuthenticator.runOcraSign()">
+                                <input type="text" id="kauth-ocra-ref" value="" placeholder="Nhập mã hồ sơ cần ký..." oninput="window.KryptoAuthenticator.runOcraSign()">
                             </div>
                         </div>
                         <div id="kauth-ocra-output"></div>
@@ -1015,6 +1036,31 @@
                 <button type="button" class="btn-cyber-dialog-primary" style="width: 100%; padding: 9px;" onclick="window.KryptoAuthenticator.closeQrModal()">
                     <span>Đóng</span>
                 </button>
+            </div>
+        </div>
+
+        <!-- Modal Quét Mã QR Bằng Máy Ảnh Trực Tiếp (Live Camera QR Scanner) -->
+        <div id="kauth-camera-modal-overlay" class="cyber-dialog-overlay" style="display: none;" onclick="window.KryptoAuthenticator.closeCameraQrScanner()">
+            <div class="cyber-dialog-card" style="max-width: 360px; width: 94%; padding: 16px;" onclick="event.stopPropagation()">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--text-title);">📷 Quét Mã QR Bằng Máy Ảnh</h3>
+                    <button type="button" class="btn-chip-micro" onclick="window.KryptoAuthenticator.switchCameraFacing()">🔄 Đổi Camera</button>
+                </div>
+                <div style="position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 280px; background: #000; border-radius: 12px; overflow: hidden; margin: 0 auto 10px; border: 2px solid var(--primary);">
+                    <video id="kauth-camera-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: block;"></video>
+                    <canvas id="kauth-camera-canvas" style="display: none;"></canvas>
+                    <!-- Khung ngắm QR -->
+                    <div style="position: absolute; inset: 18%; border: 2px dashed rgba(34, 197, 94, 0.85); border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.32);"></div>
+                </div>
+                <p id="kauth-camera-status-text" style="margin: 0 0 10px; font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">Đang khởi động máy ảnh...</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" class="btn-mobi-outline" style="padding: 9px 6px; font-size: 11.5px;" onclick="window.KryptoAuthenticator.closeCameraQrScanner(); document.getElementById('kauth-qr-camera-capture-input').click();">
+                        📸 Chụp Ảnh QR
+                    </button>
+                    <button type="button" class="btn-cyber-dialog-primary" style="padding: 9px 6px; font-size: 11.5px;" onclick="window.KryptoAuthenticator.closeCameraQrScanner()">
+                        <span>Đóng Máy Ảnh</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1141,7 +1187,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.9.0 FIPS-140-3</strong>
+                    <strong id="drawer-app-version">v2.9.1 FIPS-140-3</strong>
                 </div>
             </div>
 
@@ -1268,6 +1314,7 @@
     </div>
 
     <script src="static/qrcode.min.js"></script>
+    <script src="static/jsqr.min.js"></script>
     <script src="static/app.js"></script>
     <script src="static/watermark_presets.js"></script>
     <script src="static/pqc_crypto_engine.js"></script>

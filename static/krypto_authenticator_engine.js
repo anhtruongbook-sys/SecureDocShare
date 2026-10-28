@@ -3,19 +3,27 @@
  * BỘ XÁC THỰC ĐA NHÂN TỐ KRYPTO AUTHENTICATOR (2FA / MFA OFFLINE 100%)
  * Tích hợp trực tiếp vào ứng dụng Krypto (SecureDocShare Web & Mobile APK Offline)
  *
- * Tiêu chuẩn hỗ trợ:
- * - IETF RFC 4648: Base32 Codec
- * - IETF RFC 4226: HOTP (HMAC-SHA1 / SHA256 / SHA512, Dynamic Truncation 31-bit)
- * - IETF RFC 6238: TOTP (Time-Based OTP 30s/60s, Clock Skew Tolerance)
- * - IETF RFC 6287: OCRA (Ký xác thực giao dịch gắn kết ngữ cảnh: Tài khoản + Số tiền + Mã hồ sơ)
- * - Google Authenticator Migration Protocol Buffers (otpauth-migration://offline?data=...)
- * - NIST SP 800-38D: Két khóa 2FA .kryptovault (PBKDF2-HMAC-SHA256 600,000 vòng + AES-256-GCM)
+ * Đặc điểm:
+ * - Zero Dummy Data: Không chứa bất kỳ tài khoản mẫu giả định nào; chỉ hiển thị Buồng HSM thật của người dùng
+ *   và các tài khoản do người dùng trực tiếp quét QR hoặc thêm vào.
+ * - Live Camera QR Scanner & Offline Image QR Decoder (tích hợp jsQR + WebRTC Camera).
+ * - Chuẩn IETF RFC 4648 (Base32), RFC 4226 (HOTP), RFC 6238 (TOTP), RFC 6287 (OCRA).
+ * - Tương thích hai chiều Google Authenticator (otpauth:// & otpauth-migration:// Protobuf).
+ * - Sao lưu Két 2FA .kryptovault (PBKDF2-HMAC-SHA256 600,000 vòng + AES-256-GCM).
  */
 
 (function () {
   "use strict";
 
   const AUTH_STORAGE_KEY = "krypto_integrated_authenticator_v1";
+  const LEGACY_DUMMY_IDS = new Set([
+    "acc_ibst_cde",
+    "acc_google_workspace",
+    "acc_github_ent",
+    "acc_krypto_vault_8",
+    "acc_hotp_token",
+    "acc_ibst_hsm"
+  ]);
   const B32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
   // ==========================================================================
@@ -427,7 +435,7 @@
   function parseOtpAuthUri(uri) {
     const trimmed = String(uri || "").trim();
     if (!trimmed.toLowerCase().startsWith("otpauth://")) {
-      throw new Error("URI phải bắt đầu bằng otpauth://");
+      throw new Error("Mã QR hoặc URI phải bắt đầu bằng otpauth://");
     }
     const url = new URL(trimmed);
     const type = (url.hostname || url.host || "totp").toLowerCase();
@@ -747,50 +755,16 @@
   }
 
   // ==========================================================================
-  // 6. STATE MANAGEMENT & AUTOMATIC HSM 2FA SYNCHRONIZATION
+  // 6. STATE MANAGEMENT (ZERO DUMMY DATA INVARIANT)
   // ==========================================================================
-  const DEFAULT_ACCOUNTS = [
-    {
-      id: "acc_ibst_cde",
-      issuer: "IBST-BIM CDE",
-      accountName: "admin@ibst.vn",
-      secret: "JBSWY3DPEHPK3PXP",
-      otpType: "totp",
-      algorithm: "SHA256",
-      digits: 6,
-      period: 30,
-      counter: 0,
-      category: "Nội bộ"
-    },
-    {
-      id: "acc_google_workspace",
-      issuer: "Google",
-      accountName: "security@anhsteam.vn",
-      secret: "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ",
-      otpType: "totp",
-      algorithm: "SHA1",
-      digits: 6,
-      period: 30,
-      counter: 0,
-      category: "Email & Cloud"
-    },
-    {
-      id: "acc_github_ent",
-      issuer: "GitHub",
-      accountName: "anhsteam-dev",
-      secret: "NB2W45DFOIZA643MMQ4A",
-      otpType: "totp",
-      algorithm: "SHA1",
-      digits: 6,
-      period: 30,
-      counter: 0,
-      category: "Kỹ thuật"
-    }
-  ];
-
   let accounts = [];
   let activeCategory = "ALL";
   let searchQuery = "";
+
+  // Camera Scanner state
+  let activeVideoStream = null;
+  let cameraScanAnimId = null;
+  let currentFacingMode = "environment";
 
   function syncWithKryptoPersonalHSM() {
     try {
@@ -831,16 +805,14 @@
       const raw = localStorage.getItem(AUTH_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          accounts = parsed;
-          syncWithKryptoPersonalHSM();
-          return;
+        if (Array.isArray(parsed)) {
+          // Purge any legacy dummy accounts so only real user accounts remain
+          accounts = parsed.filter((a) => a && a.id && !LEGACY_DUMMY_IDS.has(a.id));
         }
       }
     } catch (e) {
-      console.warn("Load Krypto Authenticator storage fallback:", e);
+      accounts = [];
     }
-    accounts = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
     syncWithKryptoPersonalHSM();
     saveAccounts();
   }
@@ -883,12 +855,17 @@
 
     const list = getFilteredAccounts();
     if (list.length === 0) {
-      grid.innerHTML = `<div class="card settings-card" style="text-align:center; padding:18px;"><p style="font-size:12px; color:var(--text-muted); margin:0;">Không tìm thấy tài khoản 2FA phù hợp.</p></div>`;
+      grid.innerHTML = `
+        <div class="card settings-card" style="text-align:center; padding:20px 16px;">
+          <p style="font-size:12.5px; color:var(--text-title); font-weight:700; margin:0 0 6px;">Chưa có tài khoản 2FA nào trong danh mục này</p>
+          <p style="font-size:11.5px; color:var(--text-muted); margin:0 0 12px;">Hãy bấm nút bên dưới để mở Máy ảnh quét mã QR 2FA hoặc thêm tài khoản mới.</p>
+          <button type="button" class="btn-mobi-solid" style="font-size:12px; padding:8px 16px;" onclick="window.KryptoAuthenticator.openCameraQrScanner()">📷 Quét Mã QR Bằng Máy Ảnh</button>
+        </div>`;
       return;
     }
 
     const nowSec = Math.floor(Date.now() / 1000);
-    const circumference = 2 * Math.PI * 15; // r=15 -> 94.25
+    const circumference = 2 * Math.PI * 15;
 
     grid.innerHTML = list
       .map((acc) => {
@@ -1002,12 +979,30 @@
     }
   }
 
+  function ensureRealDefaultSecretInLab() {
+    const labSecEl = document.getElementById("kauth-lab-secret");
+    const ocraSecEl = document.getElementById("kauth-ocra-secret");
+    const firstSecret = accounts[0]?.secret || "";
+    if (labSecEl && !labSecEl.value.trim() && firstSecret) {
+      labSecEl.value = firstSecret;
+    }
+    if (ocraSecEl && !ocraSecEl.value.trim() && firstSecret) {
+      ocraSecEl.value = firstSecret;
+    }
+  }
+
   function runLabTraceUI() {
-    const secInput = document.getElementById("kauth-lab-secret")?.value.trim() || "JBSWY3DPEHPK3PXP";
+    ensureRealDefaultSecretInLab();
+    const secInput = document.getElementById("kauth-lab-secret")?.value.trim() || "";
     const algoInput = document.getElementById("kauth-lab-algo")?.value || "SHA1";
     const digitsInput = parseInt(document.getElementById("kauth-lab-digits")?.value || "6", 10);
     const outBox = document.getElementById("kauth-lab-trace-box");
     if (!outBox) return;
+
+    if (!secInput) {
+      outBox.innerHTML = `<p style="font-size:11px; color:var(--text-muted); margin:0;">Hãy bấm nút <strong>🔬 Giải phẫu</strong> trên một tài khoản 2FA bất kỳ hoặc nhập Khóa Base32 để xem chi tiết từng byte HMAC.</p>`;
+      return;
+    }
 
     try {
       const nowSec = Math.floor(Date.now() / 1000);
@@ -1058,12 +1053,18 @@
   }
 
   function runOcraSignUI() {
-    const sec = document.getElementById("kauth-ocra-secret")?.value.trim() || "JBSWY3DPEHPK3PXP";
-    const rec = document.getElementById("kauth-ocra-recipient")?.value.trim() || "IBST-CDE-2026";
-    const amt = document.getElementById("kauth-ocra-amount")?.value.trim() || "150,000,000 VND";
-    const ref = document.getElementById("kauth-ocra-ref")?.value.trim() || "HS-2026-089";
+    ensureRealDefaultSecretInLab();
+    const sec = document.getElementById("kauth-ocra-secret")?.value.trim() || "";
+    const rec = document.getElementById("kauth-ocra-recipient")?.value.trim() || "";
+    const amt = document.getElementById("kauth-ocra-amount")?.value.trim() || "";
+    const ref = document.getElementById("kauth-ocra-ref")?.value.trim() || "";
     const out = document.getElementById("kauth-ocra-output");
     if (!out) return;
+
+    if (!sec || (!rec && !amt && !ref)) {
+      out.innerHTML = `<p style="font-size:11px; color:var(--text-muted); margin:6px 0 0;">Nhập thông tin giao dịch/hồ sơ thực tế ở trên để tính mã xác thực OCRA 8 chữ số.</p>`;
+      return;
+    }
 
     try {
       const nowSec = Math.floor(Date.now() / 1000);
@@ -1103,7 +1104,138 @@
   }
 
   // ==========================================================================
-  // 8. PUBLIC CONTROLLER EXPOSED TO KRYPTO UI (window.KryptoAuthenticator)
+  // 8. OFFLINE QR DECODING ENGINE (jsQR + BarcodeDetector + Live Camera Stream)
+  // ==========================================================================
+  function decodeQrFromCanvasContext(ctx, width, height) {
+    if (width <= 0 || height <= 0) return null;
+    const imgData = ctx.getImageData(0, 0, width, height);
+    if (typeof window.jsQR === "function") {
+      const code = window.jsQR(imgData.data, width, height, {
+        inversionAttempts: "attemptBoth"
+      });
+      if (code && code.data) {
+        return code.data.trim();
+      }
+    }
+    return null;
+  }
+
+  function processDecodedQrString(rawText) {
+    const cleaned = String(rawText || "").trim();
+    if (!cleaned) return false;
+    const uriInput = document.getElementById("kauth-import-uri-input");
+    if (uriInput) uriInput.value = cleaned;
+
+    if (
+      cleaned.toLowerCase().startsWith("otpauth://") ||
+      cleaned.toLowerCase().startsWith("otpauth-migration://")
+    ) {
+      window.KryptoAuthenticator.importUriOrMigrationUI(cleaned);
+      return true;
+    } else if (/^[A-Z2-7\s\-=]{12,}$/i.test(cleaned)) {
+      // Raw Base32 secret QR
+      const secEl = document.getElementById("kauth-add-secret");
+      if (secEl) secEl.value = Base32.normalize(cleaned);
+      window.KryptoAuthenticator.switchSubView("add", document.getElementById("kauth-subbtn-add"));
+      notifyUser("✅ Đã quét được Khóa Base32 từ mã QR! Hãy nhập tên dịch vụ và bấm Lưu.");
+      return true;
+    } else {
+      throw new Error("Mã QR không chứa định dạng 2FA (otpauth:// hoặc otpauth-migration://)");
+    }
+  }
+
+  function stopCameraStream() {
+    if (cameraScanAnimId) {
+      cancelAnimationFrame(cameraScanAnimId);
+      cameraScanAnimId = null;
+    }
+    if (activeVideoStream) {
+      activeVideoStream.getTracks().forEach((t) => {
+        try {
+          t.stop();
+        } catch (_) {}
+      });
+      activeVideoStream = null;
+    }
+    const videoEl = document.getElementById("kauth-camera-video");
+    if (videoEl) {
+      videoEl.srcObject = null;
+    }
+  }
+
+  async function startCameraQrStream(facingMode) {
+    stopCameraStream();
+    currentFacingMode = facingMode || "environment";
+
+    // Request native Android camera permission via FlutterBridge if available
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      try {
+        window.FlutterBridge.postMessage(JSON.stringify({ action: "request_camera_permission" }));
+      } catch (_) {}
+    }
+
+    const statusEl = document.getElementById("kauth-camera-status-text");
+    const videoEl = document.getElementById("kauth-camera-video");
+    const canvasEl = document.getElementById("kauth-camera-canvas");
+    if (!videoEl || !canvasEl) return;
+
+    if (statusEl) {
+      statusEl.textContent = "Đang khởi động ống kính máy ảnh...";
+    }
+
+    try {
+      const constraints = {
+        audio: false,
+        video: {
+          facingMode: { ideal: currentFacingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      activeVideoStream = stream;
+      videoEl.srcObject = stream;
+      await videoEl.play();
+
+      if (statusEl) {
+        statusEl.textContent = "Đưa mã QR 2FA (hoặc QR Google Authenticator) vào khung ngắm...";
+      }
+
+      const ctx = canvasEl.getContext("2d", { willReadFrequently: true });
+      const scanFrame = () => {
+        if (!activeVideoStream) return;
+        if (videoEl.readyState === videoEl.HAVE_ENOUGH_DATA) {
+          const vw = videoEl.videoWidth || 640;
+          const vh = videoEl.videoHeight || 480;
+          const targetW = Math.min(640, vw);
+          const targetH = Math.round((vh * targetW) / vw);
+          canvasEl.width = targetW;
+          canvasEl.height = targetH;
+          ctx.drawImage(videoEl, 0, 0, targetW, targetH);
+
+          try {
+            const qrData = decodeQrFromCanvasContext(ctx, targetW, targetH);
+            if (qrData) {
+              window.KryptoAuthenticator.closeCameraQrScanner();
+              processDecodedQrString(qrData);
+              return;
+            }
+          } catch (scanErr) {
+            if (statusEl) statusEl.textContent = scanErr.message;
+          }
+        }
+        cameraScanAnimId = requestAnimationFrame(scanFrame);
+      };
+      cameraScanAnimId = requestAnimationFrame(scanFrame);
+    } catch (err) {
+      if (statusEl) {
+        statusEl.innerHTML = `Không mở được luồng video trực tiếp (${escapeHtml(err.message)}).<br>Hãy bấm nút <strong>📸 Chụp Ảnh QR Bằng Máy Ảnh</strong> ngay bên dưới!`;
+      }
+    }
+  }
+
+  // ==========================================================================
+  // 9. PUBLIC CONTROLLER EXPOSED TO KRYPTO UI (window.KryptoAuthenticator)
   // ==========================================================================
   window.KryptoAuthenticator = {
     switchSubView(subName, btnEl) {
@@ -1172,9 +1304,11 @@
       const acc = accounts.find((a) => a.id === accId);
       if (!acc) return;
       const secEl = document.getElementById("kauth-lab-secret");
+      const ocraSecEl = document.getElementById("kauth-ocra-secret");
       const algoEl = document.getElementById("kauth-lab-algo");
       const digEl = document.getElementById("kauth-lab-digits");
       if (secEl) secEl.value = acc.secret;
+      if (ocraSecEl) ocraSecEl.value = acc.secret;
       if (algoEl) algoEl.value = acc.algorithm || "SHA1";
       if (digEl) digEl.value = String(acc.digits || 6);
 
@@ -1201,6 +1335,23 @@
       if (modal) modal.style.display = "none";
     },
 
+    openCameraQrScanner() {
+      const modal = document.getElementById("kauth-camera-modal-overlay");
+      if (modal) modal.style.display = "flex";
+      startCameraQrStream("environment");
+    },
+
+    switchCameraFacing() {
+      const nextMode = currentFacingMode === "environment" ? "user" : "environment";
+      startCameraQrStream(nextMode);
+    },
+
+    closeCameraQrScanner() {
+      stopCameraStream();
+      const modal = document.getElementById("kauth-camera-modal-overlay");
+      if (modal) modal.style.display = "none";
+    },
+
     generateRandomSecretUI() {
       const el = document.getElementById("kauth-add-secret");
       if (el) el.value = Base32.randomSecret(20);
@@ -1210,7 +1361,7 @@
     addManualAccountUI() {
       try {
         const issuer = document.getElementById("kauth-add-issuer")?.value.trim() || "Dịch vụ 2FA";
-        const accountName = document.getElementById("kauth-add-account")?.value.trim() || "user@domain";
+        const accountName = document.getElementById("kauth-add-account")?.value.trim() || "Tài khoản";
         const secret = Base32.normalize(document.getElementById("kauth-add-secret")?.value || "");
         if (!secret) throw new Error("Vui lòng nhập khóa bí mật Base32");
         const otpType = document.getElementById("kauth-add-type")?.value || "totp";
@@ -1242,10 +1393,10 @@
       }
     },
 
-    importUriOrMigrationUI() {
-      const raw = document.getElementById("kauth-import-uri-input")?.value.trim() || "";
+    importUriOrMigrationUI(directRawUri) {
+      const raw = (directRawUri || document.getElementById("kauth-import-uri-input")?.value || "").trim();
       if (!raw) {
-        notifyUser("⚠️ Vui lòng dán chuỗi otpauth:// hoặc otpauth-migration://");
+        notifyUser("⚠️ Vui lòng quét mã QR hoặc dán chuỗi otpauth:// / otpauth-migration://");
         return;
       }
       try {
@@ -1254,24 +1405,30 @@
           accounts.push(...list);
           saveAccounts();
           renderAuthCards();
-          document.getElementById("kauth-import-uri-input").value = "";
+          const inp = document.getElementById("kauth-import-uri-input");
+          if (inp) inp.value = "";
           this.switchSubView("live", document.getElementById("kauth-subbtn-live"));
-          notifyUser(`✅ Đã nhập ${list.length} tài khoản từ Google Authenticator!`);
+          notifyUser(`✅ Đã nhập ${list.length} tài khoản từ mã QR Google Authenticator!`);
         } else {
           const acc = parseOtpAuthUri(raw);
           accounts.push(acc);
           saveAccounts();
           renderAuthCards();
-          document.getElementById("kauth-import-uri-input").value = "";
+          const inp = document.getElementById("kauth-import-uri-input");
+          if (inp) inp.value = "";
           this.switchSubView("live", document.getElementById("kauth-subbtn-live"));
-          notifyUser(`✅ Đã nhập tài khoản ${acc.issuer}`);
+          notifyUser(`✅ Đã thêm tài khoản ${acc.issuer} (${acc.accountName})`);
         }
       } catch (err) {
-        notifyUser("⚠️ Lỗi giải mã URI: " + err.message);
+        notifyUser("⚠️ Lỗi giải mã QR / URI: " + err.message);
       }
     },
 
     exportGoogleMigrationQrUI() {
+      if (accounts.length === 0) {
+        notifyUser("⚠️ Chưa có tài khoản nào để xuất mã QR.");
+        return;
+      }
       try {
         const uri = GoogleMigration.encodeAccountsToUri(accounts);
         const outInput = document.getElementById("kauth-export-migration-uri");
@@ -1291,25 +1448,56 @@
       }
     },
 
-    async decodeQrFromImageFile(inputEl) {
+    decodeQrFromImageFile(inputEl) {
       const file = inputEl?.files?.[0];
       if (!file) return;
-      try {
-        if ("BarcodeDetector" in window) {
-          const bitmap = await createImageBitmap(file);
-          const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
-          const barcodes = await detector.detect(bitmap);
-          if (barcodes && barcodes.length > 0) {
-            const rawVal = barcodes[0].rawValue;
-            document.getElementById("kauth-import-uri-input").value = rawVal;
-            this.importUriOrMigrationUI();
-            return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = async () => {
+          try {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+            // Try multiple resolutions for reliable QR recognition on high-res mobile screenshots
+            const scales = [1, 800 / Math.max(img.width, img.height, 1), 1200 / Math.max(img.width, img.height, 1)];
+            let decodedText = null;
+
+            for (const sc of scales) {
+              const w = Math.max(64, Math.round(img.width * sc));
+              const h = Math.max(64, Math.round(img.height * sc));
+              canvas.width = w;
+              canvas.height = h;
+              ctx.drawImage(img, 0, 0, w, h);
+              decodedText = decodeQrFromCanvasContext(ctx, w, h);
+              if (decodedText) break;
+            }
+
+            if (!decodedText && "BarcodeDetector" in window) {
+              try {
+                const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+                const barcodes = await detector.detect(img);
+                if (barcodes && barcodes.length > 0) {
+                  decodedText = barcodes[0].rawValue;
+                }
+              } catch (_) {}
+            }
+
+            inputEl.value = "";
+            if (decodedText) {
+              this.closeCameraQrScanner();
+              processDecodedQrString(decodedText);
+            } else {
+              notifyUser("⚠️ Không tìm thấy mã QR hợp lệ trong bức ảnh này. Vui lòng chụp rõ vùng mã QR!");
+            }
+          } catch (err) {
+            notifyUser("⚠️ " + err.message);
           }
-        }
-        notifyUser("💡 Trình duyệt hiện tại chưa bật BarcodeDetector, hãy dán chuỗi otpauth:// hoặc quét bằng camera.");
-      } catch (err) {
-        notifyUser("⚠️ Không đọc được mã QR trong ảnh: " + err.message);
-      }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
     },
 
     runLabTrace: runLabTraceUI,
@@ -1346,12 +1534,12 @@
       try {
         const vaultObj = JSON.parse(jsonStr);
         const restored = await decryptVaultAESGCM(vaultObj, pw);
-        accounts = restored;
+        accounts = restored.filter((a) => a && a.id && !LEGACY_DUMMY_IDS.has(a.id));
         syncWithKryptoPersonalHSM();
         saveAccounts();
         renderAuthCards();
         this.switchSubView("live", document.getElementById("kauth-subbtn-live"));
-        notifyUser(`✅ Đã giải mã và khôi phục ${restored.length} tài khoản 2FA!`);
+        notifyUser(`✅ Đã giải mã và khôi phục ${accounts.length} tài khoản 2FA!`);
       } catch (err) {
         notifyUser("⚠️ " + err.message);
       }
