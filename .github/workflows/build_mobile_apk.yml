@@ -66,10 +66,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.1
-          name: "Krypto v2.9.1 - Quét Mã QR Trực Tiếp Bằng Máy Ảnh & Loại Bỏ Tài Khoản Giả Định (100% Production Clean)"
+          tag_name: v2.9.2
+          name: "Krypto v2.9.2 - Cầu Nối Máy Ảnh Phần Cứng Native Android (startNativeCamera) Quét QR 2FA Trực Tiếp"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.1 (Live Camera QR Scanner + Zero Dummy Accounts + Integrated 2FA Authenticator)
+            ## Ứng dụng Di Động Krypto v2.9.2 (Native Hardware Camera Bridge + Live QR Scanner + Zero Dummy Accounts)
+            - **Khắc phục triệt để lỗi Máy ảnh trên Android WebView (`file://` Non-Secure Context)**:
+              + Do ứng dụng hoạt động Offline 100% qua giao thức `file:///android_asset/...`, trình duyệt Chromium WebView chặn `navigator.mediaDevices.getUserMedia` và `FilePicker` ghi đè `<input type="file">`.
+              + Đã tích hợp **Cầu nối Máy ảnh Phần cứng Native Android** trực tiếp trong `MainActivity.kt` (`android.hardware.Camera` + `SurfaceTexture` + `YuvImage` tự động lấy nét liên tục `FOCUS_MODE_CONTINUOUS_PICTURE` + xoay khung hình chuẩn xác theo cảm biến) truyền luồng hình ảnh thời gian thực sang `Canvas` + `jsQR` để quét mã QR trực tiếp.
+              + Bổ sung lệnh `captureQrPhotoNative` gọi trực tiếp `MediaStore.ACTION_IMAGE_CAPTURE` của hệ thống Android khi bấm **`📸 Chụp Ảnh QR`**.
             - **Loại bỏ 100% Tài Khoản & Dữ Liệu Giả Định (`Zero Dummy Accounts`)**:
               + Xóa sạch toàn bộ các tài khoản mẫu giả định (`IBST-BIM CDE`, `Google security@anhsteam.vn`, `GitHub anhsteam-dev`, `Krypto HSM Root`, `Hardware Token HOTP`) và tự động dọn sạch dữ liệu mẫu cũ trong bộ nhớ thiết bị.
               + Chỉ hiển thị duy nhất thẻ `Krypto HSM` thật của người dùng và các tài khoản 2FA do chính người dùng quét QR hoặc thêm vào.

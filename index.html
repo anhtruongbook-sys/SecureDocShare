@@ -848,8 +848,8 @@
                             <button type="button" class="btn-cyber-dialog-primary" style="padding: 10px 8px; font-size: 12px; margin: 0;" onclick="window.KryptoAuthenticator.openCameraQrScanner()">
                                 <span>📷 Quét QR Máy Ảnh</span>
                             </button>
-                            <button type="button" class="btn-mobi-outline" style="padding: 10px 8px; font-size: 12px; margin: 0;" onclick="document.getElementById('kauth-qr-camera-capture-input').click()">
-                                📸 Chụp / Chọn Ảnh QR
+                            <button type="button" class="btn-mobi-outline" style="padding: 10px 8px; font-size: 12px; margin: 0;" onclick="window.KryptoAuthenticator.captureSystemCameraPhoto()">
+                                📸 Chụp Ảnh QR
                             </button>
                         </div>
                         <input type="file" id="kauth-qr-camera-capture-input" accept="image/*" capture="environment" style="display: none;" onchange="window.KryptoAuthenticator.decodeQrFromImageFile(this)">
@@ -1047,15 +1047,15 @@
                     <button type="button" class="btn-chip-micro" onclick="window.KryptoAuthenticator.switchCameraFacing()">🔄 Đổi Camera</button>
                 </div>
                 <div style="position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 280px; background: #000; border-radius: 12px; overflow: hidden; margin: 0 auto 10px; border: 2px solid var(--primary);">
-                    <video id="kauth-camera-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: block;"></video>
-                    <canvas id="kauth-camera-canvas" style="display: none;"></canvas>
+                    <video id="kauth-camera-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                    <canvas id="kauth-camera-canvas" style="width: 100%; height: 100%; object-fit: cover; display: block;"></canvas>
                     <!-- Khung ngắm QR -->
                     <div style="position: absolute; inset: 18%; border: 2px dashed rgba(34, 197, 94, 0.85); border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.32);"></div>
                 </div>
                 <p id="kauth-camera-status-text" style="margin: 0 0 10px; font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">Đang khởi động máy ảnh...</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button type="button" class="btn-mobi-outline" style="padding: 9px 6px; font-size: 11.5px;" onclick="window.KryptoAuthenticator.closeCameraQrScanner(); document.getElementById('kauth-qr-camera-capture-input').click();">
-                        📸 Chụp Ảnh QR
+                    <button type="button" class="btn-mobi-outline" style="padding: 9px 6px; font-size: 11.5px;" onclick="window.KryptoAuthenticator.closeCameraQrScanner(); document.getElementById('kauth-qr-img-input').click();">
+                        🖼️ Chọn Ảnh QR
                     </button>
                     <button type="button" class="btn-cyber-dialog-primary" style="padding: 9px 6px; font-size: 11.5px;" onclick="window.KryptoAuthenticator.closeCameraQrScanner()">
                         <span>Đóng Máy Ảnh</span>
@@ -1187,7 +1187,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.9.1 FIPS-140-3</strong>
+                    <strong id="drawer-app-version">v2.9.2 FIPS-140-3</strong>
                 </div>
             </div>
 

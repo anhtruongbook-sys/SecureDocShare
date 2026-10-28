@@ -1144,7 +1144,17 @@
     }
   }
 
+  let isNativeCameraActive = false;
+  let isDecodingNativeFrame = false;
+
   function stopCameraStream() {
+    isNativeCameraActive = false;
+    isDecodingNativeFrame = false;
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      try {
+        window.FlutterBridge.postMessage(JSON.stringify({ action: "stop_native_camera" }));
+      } catch (_) {}
+    }
     if (cameraScanAnimId) {
       cancelAnimationFrame(cameraScanAnimId);
       cameraScanAnimId = null;
@@ -1167,18 +1177,39 @@
     stopCameraStream();
     currentFacingMode = facingMode || "environment";
 
-    // Request native Android camera permission via FlutterBridge if available
-    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
-      try {
-        window.FlutterBridge.postMessage(JSON.stringify({ action: "request_camera_permission" }));
-      } catch (_) {}
-    }
-
     const statusEl = document.getElementById("kauth-camera-status-text");
     const videoEl = document.getElementById("kauth-camera-video");
     const canvasEl = document.getElementById("kauth-camera-canvas");
     if (!videoEl || !canvasEl) return;
 
+    // 1. NATIVE ANDROID CAMERA BRIDGE (100% OFFLINE HARDWARE CAMERA ON ANDROID APK)
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      isNativeCameraActive = true;
+      videoEl.style.display = "none";
+      canvasEl.style.display = "block";
+      canvasEl.style.width = "100%";
+      canvasEl.style.height = "100%";
+      canvasEl.style.objectFit = "cover";
+
+      if (statusEl) {
+        statusEl.textContent = "Đang mở máy ảnh thiết bị (hãy bấm 'Cho phép' nếu được hỏi quyền)...";
+      }
+      try {
+        window.FlutterBridge.postMessage(
+          JSON.stringify({
+            action: "start_native_camera",
+            facing: currentFacingMode === "user" ? "front" : "back"
+          })
+        );
+      } catch (e) {
+        if (statusEl) statusEl.textContent = "Lỗi gọi máy ảnh Native: " + e.message;
+      }
+      return;
+    }
+
+    // 2. DESKTOP / WEB BROWSER FALLBACK (WebRTC getUserMedia)
+    videoEl.style.display = "block";
+    canvasEl.style.display = "none";
     if (statusEl) {
       statusEl.textContent = "Đang khởi động ống kính máy ảnh...";
     }
@@ -1229,7 +1260,7 @@
       cameraScanAnimId = requestAnimationFrame(scanFrame);
     } catch (err) {
       if (statusEl) {
-        statusEl.innerHTML = `Không mở được luồng video trực tiếp (${escapeHtml(err.message)}).<br>Hãy bấm nút <strong>📸 Chụp Ảnh QR Bằng Máy Ảnh</strong> ngay bên dưới!`;
+        statusEl.innerHTML = `Không mở được luồng video trực tiếp (${escapeHtml(err.message)}).<br>Hãy bấm nút <strong>📸 Chụp Ảnh QR</strong> ngay bên dưới!`;
       }
     }
   }
@@ -1342,14 +1373,112 @@
     },
 
     switchCameraFacing() {
-      const nextMode = currentFacingMode === "environment" ? "user" : "environment";
-      startCameraQrStream(nextMode);
+      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+        try {
+          window.FlutterBridge.postMessage(JSON.stringify({ action: "switch_native_camera" }));
+          return;
+        } catch (_) {}
+      }
+      startCameraQrStream(currentFacingMode);
     },
 
     closeCameraQrScanner() {
       stopCameraStream();
       const modal = document.getElementById("kauth-camera-modal-overlay");
       if (modal) modal.style.display = "none";
+    },
+
+    captureSystemCameraPhoto() {
+      this.closeCameraQrScanner();
+      if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+        try {
+          window.FlutterBridge.postMessage(JSON.stringify({ action: "capture_qr_photo_native" }));
+          return;
+        } catch (_) {}
+      }
+      const inp = document.getElementById("kauth-qr-camera-capture-input");
+      if (inp) inp.click();
+    },
+
+    onNativeCameraStarted(ok) {
+      const statusEl = document.getElementById("kauth-camera-status-text");
+      if (!statusEl) return;
+      if (ok) {
+        statusEl.textContent = "📷 Đưa mã QR 2FA / Google Authenticator vào khung ngắm để tự động quét...";
+      } else {
+        statusEl.innerHTML = "⚠️ Không thể mở máy ảnh (vui lòng cấp quyền Máy ảnh cho Krypto trong Cài đặt ứng dụng).";
+      }
+    },
+
+    onNativeCameraFrame(b64Jpeg) {
+      if (!isNativeCameraActive || isDecodingNativeFrame || !b64Jpeg) return;
+      const canvasEl = document.getElementById("kauth-camera-canvas");
+      if (!canvasEl) return;
+      isDecodingNativeFrame = true;
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          if (!isNativeCameraActive) {
+            isDecodingNativeFrame = false;
+            return;
+          }
+          const w = img.width || 480;
+          const h = img.height || 640;
+          if (canvasEl.width !== w) canvasEl.width = w;
+          if (canvasEl.height !== h) canvasEl.height = h;
+          const ctx = canvasEl.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, w, h);
+
+          const qrData = decodeQrFromCanvasContext(ctx, w, h);
+          if (qrData) {
+            this.closeCameraQrScanner();
+            try {
+              processDecodedQrString(qrData);
+            } catch (qrErr) {
+              notifyUser("⚠️ " + qrErr.message);
+            }
+          }
+        } catch (_) {
+        } finally {
+          isDecodingNativeFrame = false;
+        }
+      };
+      img.onerror = () => {
+        isDecodingNativeFrame = false;
+      };
+      img.src = "data:image/jpeg;base64," + b64Jpeg;
+    },
+
+    onNativeCapturedPhotoB64(b64Jpeg) {
+      if (!b64Jpeg) return;
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          const scales = [1, 800 / Math.max(img.width, img.height, 1), 1200 / Math.max(img.width, img.height, 1)];
+          let decodedText = null;
+          for (const sc of scales) {
+            const w = Math.max(64, Math.round(img.width * sc));
+            const h = Math.max(64, Math.round(img.height * sc));
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+            decodedText = decodeQrFromCanvasContext(ctx, w, h);
+            if (decodedText) break;
+          }
+          if (decodedText) {
+            processDecodedQrString(decodedText);
+          } else {
+            notifyUser("⚠️ Không tìm thấy mã QR trong ảnh chụp. Hãy dùng '📷 Quét QR Máy Ảnh' để bắt nét trực tiếp!");
+          }
+        } catch (err) {
+          notifyUser("⚠️ " + err.message);
+        }
+      };
+      img.src = "data:image/jpeg;base64," + b64Jpeg;
     },
 
     generateRandomSecretUI() {

@@ -62,8 +62,21 @@ class MainActivity: FlutterFragmentActivity() {
     private val executor = Executors.newSingleThreadExecutor()
     private var pendingBiometricResult: MethodChannel.Result? = null
     private val REQUEST_CODE_BIOMETRIC = 9901
+    private val REQUEST_CODE_CAMERA_PERMISSION = 9902
+    private val REQUEST_CODE_CAPTURE_QR_PHOTO = 9903
+    private var pendingCameraPermissionResult: MethodChannel.Result? = null
+    private var pendingCameraFacing: String = "back"
+    private var pendingCapturePhotoResult: MethodChannel.Result? = null
     private var pendingSharedText: String? = null
     private var methodChannel: MethodChannel? = null
+
+    @Suppress("DEPRECATION")
+    private var nativeCamera: android.hardware.Camera? = null
+    private var nativeSurfaceTexture: android.graphics.SurfaceTexture? = null
+    @Volatile private var latestCameraFrameB64: String? = null
+    @Volatile private var isEncodingCameraFrame: Boolean = false
+    @Volatile private var lastCameraFrameTimeMs: Long = 0L
+    private var currentCameraFacing: String = "back"
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,6 +92,16 @@ class MainActivity: FlutterFragmentActivity() {
     override fun onResume() {
         super.onResume()
         extractSharedIntent(intent)
+    }
+
+    override fun onPause() {
+        stopNativeCameraInternal()
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        stopNativeCameraInternal()
+        super.onDestroy()
     }
 
     private fun extractSharedIntent(intent: Intent?) {
@@ -151,6 +174,176 @@ class MainActivity: FlutterFragmentActivity() {
             val res = (resultCode == Activity.RESULT_OK)
             pendingBiometricResult?.success(res)
             pendingBiometricResult = null
+        } else if (requestCode == REQUEST_CODE_CAPTURE_QR_PHOTO) {
+            val pending = pendingCapturePhotoResult
+            pendingCapturePhotoResult = null
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                try {
+                    @Suppress("DEPRECATION")
+                    val bmp = data.extras?.get("data") as? Bitmap
+                    if (bmp != null) {
+                        val baos = ByteArrayOutputStream()
+                        bmp.compress(Bitmap.CompressFormat.JPEG, 92, baos)
+                        val b64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                        pending?.success(b64)
+                        return
+                    }
+                } catch (_: Throwable) {}
+            }
+            pending?.success(null)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE_CAMERA_PERMISSION) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED
+            val pending = pendingCameraPermissionResult
+            pendingCameraPermissionResult = null
+            if (granted) {
+                val ok = startNativeCameraInternal(pendingCameraFacing)
+                pending?.success(ok)
+            } else {
+                pending?.success(false)
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun stopNativeCameraInternal() {
+        try {
+            nativeCamera?.setPreviewCallback(null)
+        } catch (_: Throwable) {}
+        try {
+            nativeCamera?.stopPreview()
+        } catch (_: Throwable) {}
+        try {
+            nativeCamera?.release()
+        } catch (_: Throwable) {}
+        nativeCamera = null
+        try {
+            nativeSurfaceTexture?.release()
+        } catch (_: Throwable) {}
+        nativeSurfaceTexture = null
+        latestCameraFrameB64 = null
+        isEncodingCameraFrame = false
+    }
+
+    @Suppress("DEPRECATION")
+    private fun startNativeCameraInternal(facing: String): Boolean {
+        stopNativeCameraInternal()
+        currentCameraFacing = facing
+        return try {
+            val targetFacing = if (facing == "front") {
+                android.hardware.Camera.CameraInfo.CAMERA_FACING_FRONT
+            } else {
+                android.hardware.Camera.CameraInfo.CAMERA_FACING_BACK
+            }
+            var selectedCameraId = 0
+            var cameraOrientation = 90
+            var isFrontCamera = false
+            val numCameras = android.hardware.Camera.getNumberOfCameras()
+            if (numCameras <= 0) return false
+            val info = android.hardware.Camera.CameraInfo()
+            for (i in 0 until numCameras) {
+                android.hardware.Camera.getCameraInfo(i, info)
+                if (info.facing == targetFacing) {
+                    selectedCameraId = i
+                    cameraOrientation = info.orientation
+                    isFrontCamera = (info.facing == android.hardware.Camera.CameraInfo.CAMERA_FACING_FRONT)
+                    break
+                }
+            }
+
+            val cam = android.hardware.Camera.open(selectedCameraId) ?: return false
+            val params = cam.parameters
+            params.previewFormat = android.graphics.ImageFormat.NV21
+
+            val supportedSizes = params.supportedPreviewSizes
+            var bestWidth = 640
+            var bestHeight = 480
+            if (supportedSizes != null && supportedSizes.isNotEmpty()) {
+                var minDiff = Int.MAX_VALUE
+                for (sz in supportedSizes) {
+                    val diff = kotlin.math.abs(sz.width - 720) + kotlin.math.abs(sz.height - 540)
+                    if (diff < minDiff) {
+                        minDiff = diff
+                        bestWidth = sz.width
+                        bestHeight = sz.height
+                    }
+                }
+            }
+            params.setPreviewSize(bestWidth, bestHeight)
+
+            val focusModes = params.supportedFocusModes
+            if (focusModes != null) {
+                when {
+                    focusModes.contains(android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) ->
+                        params.focusMode = android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
+                    focusModes.contains(android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO) ->
+                        params.focusMode = android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO
+                    focusModes.contains(android.hardware.Camera.Parameters.FOCUS_MODE_AUTO) ->
+                        params.focusMode = android.hardware.Camera.Parameters.FOCUS_MODE_AUTO
+                }
+            }
+            try {
+                cam.parameters = params
+            } catch (_: Throwable) {}
+
+            val actualSize = cam.parameters?.previewSize
+            val pWidth = actualSize?.width ?: bestWidth
+            val pHeight = actualSize?.height ?: bestHeight
+
+            val surfTex = android.graphics.SurfaceTexture(10)
+            nativeSurfaceTexture = surfTex
+            cam.setPreviewTexture(surfTex)
+
+            cam.setPreviewCallback { data, _ ->
+                val now = System.currentTimeMillis()
+                if (data != null && !isEncodingCameraFrame && (now - lastCameraFrameTimeMs >= 85L)) {
+                    isEncodingCameraFrame = true
+                    lastCameraFrameTimeMs = now
+                    val rawCopy = data.clone()
+                    executor.execute {
+                        try {
+                            val yuv = android.graphics.YuvImage(rawCopy, android.graphics.ImageFormat.NV21, pWidth, pHeight, null)
+                            val rawOut = ByteArrayOutputStream()
+                            yuv.compressToJpeg(android.graphics.Rect(0, 0, pWidth, pHeight), 82, rawOut)
+                            val jpegBytes = rawOut.toByteArray()
+                            val bmp = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+                            if (bmp != null) {
+                                val matrix = android.graphics.Matrix()
+                                matrix.postRotate(cameraOrientation.toFloat())
+                                if (isFrontCamera) {
+                                    matrix.postScale(-1f, 1f)
+                                }
+                                val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+                                if (rotated != bmp) {
+                                    bmp.recycle()
+                                }
+                                val finalOut = ByteArrayOutputStream()
+                                rotated.compress(Bitmap.CompressFormat.JPEG, 80, finalOut)
+                                rotated.recycle()
+                                latestCameraFrameB64 = Base64.encodeToString(finalOut.toByteArray(), Base64.NO_WRAP)
+                            }
+                        } catch (_: Throwable) {
+                        } finally {
+                            isEncodingCameraFrame = false
+                        }
+                    }
+                }
+            }
+
+            cam.startPreview()
+            nativeCamera = cam
+            true
+        } catch (_: Throwable) {
+            stopNativeCameraInternal()
+            false
         }
     }
 
@@ -1212,11 +1405,68 @@ class MainActivity: FlutterFragmentActivity() {
                             val perm = android.Manifest.permission.CAMERA
                             val granted = ContextCompat.checkSelfPermission(this, perm) == android.content.pm.PackageManager.PERMISSION_GRANTED
                             if (!granted) {
-                                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(perm), 9902)
+                                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(perm), REQUEST_CODE_CAMERA_PERMISSION)
                             }
-                            result.success(true)
+                            result.success(granted)
                         } catch (_: Throwable) {
                             result.success(false)
+                        }
+                    }
+                }
+                "startNativeCamera" -> {
+                    val facing = call.argument<String>("facing") ?: "back"
+                    runOnUiThread {
+                        try {
+                            val perm = android.Manifest.permission.CAMERA
+                            val granted = ContextCompat.checkSelfPermission(this, perm) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            if (granted) {
+                                val ok = startNativeCameraInternal(facing)
+                                result.success(ok)
+                            } else {
+                                pendingCameraFacing = facing
+                                pendingCameraPermissionResult = result
+                                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(perm), REQUEST_CODE_CAMERA_PERMISSION)
+                            }
+                        } catch (_: Throwable) {
+                            result.success(false)
+                        }
+                    }
+                }
+                "getNativeCameraFrame" -> {
+                    val frame = latestCameraFrameB64
+                    latestCameraFrameB64 = null
+                    result.success(frame)
+                }
+                "switchNativeCamera" -> {
+                    runOnUiThread {
+                        val nextFacing = if (currentCameraFacing == "back") "front" else "back"
+                        val ok = startNativeCameraInternal(nextFacing)
+                        result.success(ok)
+                    }
+                }
+                "stopNativeCamera" -> {
+                    runOnUiThread {
+                        stopNativeCameraInternal()
+                        result.success(true)
+                    }
+                }
+                "captureQrPhotoNative" -> {
+                    runOnUiThread {
+                        try {
+                            stopNativeCameraInternal()
+                            val perm = android.Manifest.permission.CAMERA
+                            val granted = ContextCompat.checkSelfPermission(this, perm) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            if (!granted) {
+                                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(perm), REQUEST_CODE_CAMERA_PERMISSION)
+                                result.success(null)
+                                return@runOnUiThread
+                            }
+                            val takePicIntent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+                            pendingCapturePhotoResult = result
+                            startActivityForResult(takePicIntent, REQUEST_CODE_CAPTURE_QR_PHOTO)
+                        } catch (_: Throwable) {
+                            pendingCapturePhotoResult = null
+                            result.success(null)
                         }
                     }
                 }

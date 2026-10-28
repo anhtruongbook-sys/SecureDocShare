@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -342,9 +343,39 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
   bool _pageLoaded = false;
   String? _pendingSharedTextInDart;
   bool _isBiometricInProgress = false;
+  bool _isCameraInProgress = false;
+  Timer? _nativeCameraFrameTimer;
+  bool _isPollingCameraFrame = false;
   final Map<String, String> _cachedFilePaths = {};
   String? _latestPickedFilePath;
   String? _latestPickedFileName;
+
+  void _startNativeCameraFramePolling() {
+    _nativeCameraFrameTimer?.cancel();
+    _isPollingCameraFrame = false;
+    _nativeCameraFrameTimer = Timer.periodic(const Duration(milliseconds: 90), (_) async {
+      if (_isPollingCameraFrame) return;
+      _isPollingCameraFrame = true;
+      try {
+        final String? frameB64 = await _nativeChannel.invokeMethod<String>('getNativeCameraFrame');
+        if (frameB64 != null && frameB64.isNotEmpty) {
+          await _controller.runJavaScript(
+            "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCameraFrame) { "
+            "window.KryptoAuthenticator.onNativeCameraFrame('$frameB64'); }",
+          );
+        }
+      } catch (_) {
+      } finally {
+        _isPollingCameraFrame = false;
+      }
+    });
+  }
+
+  void _stopNativeCameraFramePolling() {
+    _nativeCameraFrameTimer?.cancel();
+    _nativeCameraFrameTimer = null;
+    _isPollingCameraFrame = false;
+  }
 
   @override
   void initState() {
@@ -378,6 +409,7 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
 
   @override
   void dispose() {
+    _stopNativeCameraFramePolling();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -385,8 +417,8 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (_isBiometricInProgress) {
-      // Đang hiển thị hộp thoại sinh trắc học vân tay: Không kích hoạt background lock
+    if (_isBiometricInProgress || _isCameraInProgress) {
+      // Đang hiển thị hộp thoại sinh trắc học hoặc cấp quyền máy ảnh: Không kích hoạt background lock
       return;
     }
     // Chỉ kích hoạt onAppBackgrounded khi app THỰC SỰ bị thu nhỏ sang paused/hidden
@@ -1212,8 +1244,81 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
             if (action == 'request_camera_permission') {
               if (Platform.isAndroid) {
                 try {
+                  _isCameraInProgress = true;
                   await _nativeChannel.invokeMethod('requestCameraPermission');
                 } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'start_native_camera') {
+              if (Platform.isAndroid) {
+                try {
+                  _isCameraInProgress = true;
+                  final facing = data['facing'] as String? ?? 'back';
+                  final bool ok = await _nativeChannel.invokeMethod<bool>('startNativeCamera', {'facing': facing}) ?? false;
+                  if (ok) {
+                    _startNativeCameraFramePolling();
+                    await _controller.runJavaScript(
+                      "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCameraStarted) { "
+                      "window.KryptoAuthenticator.onNativeCameraStarted(true); }",
+                    );
+                  } else {
+                    _stopNativeCameraFramePolling();
+                    _isCameraInProgress = false;
+                    await _controller.runJavaScript(
+                      "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCameraStarted) { "
+                      "window.KryptoAuthenticator.onNativeCameraStarted(false); }",
+                    );
+                  }
+                } catch (_) {
+                  _stopNativeCameraFramePolling();
+                  _isCameraInProgress = false;
+                  await _controller.runJavaScript(
+                    "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCameraStarted) { "
+                    "window.KryptoAuthenticator.onNativeCameraStarted(false); }",
+                  );
+                }
+              }
+              return;
+            }
+
+            if (action == 'switch_native_camera') {
+              if (Platform.isAndroid) {
+                try {
+                  await _nativeChannel.invokeMethod<bool>('switchNativeCamera');
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'stop_native_camera') {
+              _stopNativeCameraFramePolling();
+              _isCameraInProgress = false;
+              if (Platform.isAndroid) {
+                try {
+                  await _nativeChannel.invokeMethod('stopNativeCamera');
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'capture_qr_photo_native') {
+              if (Platform.isAndroid) {
+                try {
+                  _stopNativeCameraFramePolling();
+                  _isCameraInProgress = true;
+                  final String? photoB64 = await _nativeChannel.invokeMethod<String>('captureQrPhotoNative');
+                  _isCameraInProgress = false;
+                  if (photoB64 != null && photoB64.isNotEmpty) {
+                    await _controller.runJavaScript(
+                      "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCapturedPhotoB64) { "
+                      "window.KryptoAuthenticator.onNativeCapturedPhotoB64('$photoB64'); }",
+                    );
+                  }
+                } catch (_) {
+                  _isCameraInProgress = false;
+                }
               }
               return;
             }
