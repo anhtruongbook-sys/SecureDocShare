@@ -1013,11 +1013,6 @@ class KryptoHSMSignatureEngine {
         <tr><td style="padding:8px;border:1px solid #e2e8f0;background:#f8fafc;"><strong>Nội dung / Lý do:</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">${signingReason || 'Phê duyệt & phát hành hồ sơ'}</td></tr>
         <tr><td style="padding:8px;border:1px solid #e2e8f0;background:#f8fafc;"><strong>Chữ ký HSM (C_Sign):</strong></td><td style="padding:8px;border:1px solid #e2e8f0;font-family:monospace;font-size:11.5px;word-break:break-all;">${sigRes.signature_b64}</td></tr>
       </table>
-      <div style="margin-top:14px;border:1px dashed #003399;border-radius:8px;padding:12px;text-align:center;background:#f8fafc;">
-        <div style="font-size:12px;color:#475569;margin-bottom:6px;">Mẫu Chữ Ký Tay Gắn Kết Toán Học Trong HSM (<code>CKO_DATA</code>):</div>
-        <img src="${vault.cko_data_handwritten_png.png_data_url}" style="max-height:85px;width:auto;" alt="Chữ ký tay" />
-        <div style="font-weight:bold;color:#003399;margin-top:4px;">${cert.signer_name}</div>
-      </div>
     </div>
   </div>
 </body>
