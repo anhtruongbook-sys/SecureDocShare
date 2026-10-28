@@ -280,31 +280,7 @@ def build_pades_block(start_u=785, target_after_close=1329):
     emit(0x0E0C)                                     # move-result-object v14
     emit(0x306E, 0x76CC, 0x0EDC)                     # invoke-virtual {v12, v13, v14}, PdfDictionary.put(PdfName, PdfObject)V
     emit(0x206E, 0x7C46, 0x00CA)                     # invoke-virtual {v10, v12}, PdfSignatureAppearance.close(PdfDictionary)V
-    emit(0x0B08, 0x002E)                             # move-object/from16 v11, v46 (password)
-    emit(0x1071, 0xD00E, 0x000B)                     # invoke-static {v11}, StringsKt.isBlank(CharSequence)Z
-    emit(0x0B0A)                                     # move-result v11 (1 if blank, 0 if has password)
-    emit(0x1B59, 0x4F44)                             # iput v11, v1, MainActivity->LATTICE_Q:I
-    branch16(0x38, 11, "L_after_signed_copy")        # if-eqz v11, L_after_signed_copy
-    emit(0x0174, 0xA117, 0x0012)                     # invoke-virtual/range {v18}, FileOutputStream.close()V
-    emit(0x081A, 0x75DF)                             # const-string v8, 'SignedProperties_'
-    emit(0x0912)                                     # const/4 v9, 0
-    emit(0x6A12)                                     # const/4 v10, 6
-    emit(0x306E, 0xA32B, 0x0A98)                     # invoke-virtual {v8, v9, v10}, String.substring(II)String
-    emit(0x080C)                                     # move-result-object v8 ('Signed')
-    emit(0x091A, 0x6162)                             # const-string v9, 'Locked'
-    emit(0x0A08, 0x0022)                             # move-object/from16 v10, v34 (destPath)
-    emit(0x306E, 0xA322, 0x089A)                     # invoke-virtual {v10, v9, v8}, String.replace(CharSequence, CharSequence)String
-    emit(0x0B0C)                                     # move-result-object v11 (signedPath)
-    emit(0x0722, 0x1632)                             # new-instance v7, File
-    emit(0x2070, 0xA0DE, 0x00A7)                     # invoke-direct {v7, v10}, File.<init>(String)V
-    emit(0x0822, 0x1632)                             # new-instance v8, File
-    emit(0x2070, 0xA0DE, 0x00B8)                     # invoke-direct {v8, v11}, File.<init>(String)V
-    emit(0x1912)                                     # const/4 v9, 1
-    emit(0x0A12)                                     # const/4 v10, 0
-    emit(0x4B12)                                     # const/4 v11, 4
-    emit(0x0C12)                                     # const/4 v12, 0
-    emit(0x0677, 0xC29C, 0x0007)                     # invoke-static/range {v7..v12}, FilesKt.copyTo$default
-    label("L_after_signed_copy")
+    emit(0x1F59, 0x4F44)                             # iput v15, v1, MainActivity->LATTICE_Q:I (v15 = 1: signed PDF)
     goto16(target_after_close)                       # goto/16 -> 1329
 
     for fix_idx, cur_u, lbl in fixups:
@@ -408,13 +384,13 @@ def main():
     for u_nop in range(703, 1002):
         struct.pack_into("<H", orig_dex, insns_off + u_nop * 2, 0x0000)
     place_units = build_sig_placement_block(start_u=703, target_after_place=1002)
-    assert 703 + len(place_units) <= 784, f"place_units too long: {len(place_units)}"
+    assert 703 + len(place_units) <= 778, f"place_units too long: {len(place_units)}"
     for idx_u, val_u in enumerate(place_units):
         struct.pack_into("<H", orig_dex, insns_off + (703 + idx_u) * 2, val_u)
 
-    pades_start = 785
+    pades_start = 778
     pades_units = build_pades_block(start_u=pades_start, target_after_close=1329)
-    assert pades_start + len(pades_units) <= 1001
+    assert pades_start + len(pades_units) <= 1001, f"pades end={pades_start + len(pades_units)}"
     for idx_u, val_u in enumerate(pades_units):
         struct.pack_into("<H", orig_dex, insns_off + (pades_start + idx_u) * 2, val_u)
     struct.pack_into("<HHH", orig_dex, insns_off + 1326 * 2, 0x0029, (pades_start - 1326) & 0xFFFF, 0x0000)
