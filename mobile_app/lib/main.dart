@@ -730,8 +730,9 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
               final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
               final bool imageNeedsZip = isImage && (password.isNotEmpty && !isViewOnly);
 
+              final isSignOnly = (protectionLevel == 'sign_only') || (password.trim().isEmpty && enableSignature);
               final outFileName = isPdf 
-                  ? (isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf')
+                  ? (isSignOnly ? '${baseName}_Signed.pdf' : (isViewOnly ? '${baseName}_ReadOnly.pdf' : '${baseName}_Locked.pdf'))
                   : (isOffice 
                       ? (isViewOnly ? '${baseName}_ReadOnly$ext' : '${baseName}_Locked$ext')
                       : (isImage && !imageNeedsZip

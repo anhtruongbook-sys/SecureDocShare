@@ -1613,6 +1613,15 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
 
     const isViewOnly = (currentProtectionLevel === "view_only_restricted");
     const isSignOnlyNoPass = (currentProtectionLevel === "sign_only") || (!(document.getElementById('lock-password')?.value || '').trim() && (document.getElementById('enable-digital-signature')?.checked || false));
+    if (isSignOnlyNoPass && isPdf) {
+        outFileName = outFileName.replace(/_Locked\.pdf$/i, '_Signed.pdf');
+        if (tempFilePath) {
+            tempFilePath = tempFilePath.replace(/_Locked\.pdf$/i, '_Signed.pdf');
+        }
+        if (savedPath) {
+            savedPath = savedPath.replace(/_Locked\.pdf$/i, '_Signed.pdf');
+        }
+    }
     let subDesc = "";
     let noteText = "";
     let fileIcon = "📄";

@@ -175,6 +175,8 @@ def build_pades_block(start_u=785, target_after_close=1329):
     branch16(0x3C, 5, "L_do_sign")                   # if-gtz v5, L_do_sign (0x3C = if-gtz!)
 
     label("L_close")
+    emit(0x0B12)                                     # const/4 v11, 0
+    emit(0x1B59, 0x4F44)                             # iput v11, v1, MainActivity->LATTICE_Q:I
     emit(0x106E, 0x7CAD, 0x0003)                     # invoke-virtual {v3}, PdfStamper.close()V
     goto16(target_after_close)                       # goto/16 -> 1329
 
@@ -278,6 +280,31 @@ def build_pades_block(start_u=785, target_after_close=1329):
     emit(0x0E0C)                                     # move-result-object v14
     emit(0x306E, 0x76CC, 0x0EDC)                     # invoke-virtual {v12, v13, v14}, PdfDictionary.put(PdfName, PdfObject)V
     emit(0x206E, 0x7C46, 0x00CA)                     # invoke-virtual {v10, v12}, PdfSignatureAppearance.close(PdfDictionary)V
+    emit(0x0B08, 0x002E)                             # move-object/from16 v11, v46 (password)
+    emit(0x1071, 0xD00E, 0x000B)                     # invoke-static {v11}, StringsKt.isBlank(CharSequence)Z
+    emit(0x0B0A)                                     # move-result v11 (1 if blank, 0 if has password)
+    emit(0x1B59, 0x4F44)                             # iput v11, v1, MainActivity->LATTICE_Q:I
+    branch16(0x38, 11, "L_after_signed_copy")        # if-eqz v11, L_after_signed_copy
+    emit(0x0174, 0xA117, 0x0012)                     # invoke-virtual/range {v18}, FileOutputStream.close()V
+    emit(0x081A, 0x75DF)                             # const-string v8, 'SignedProperties_'
+    emit(0x0912)                                     # const/4 v9, 0
+    emit(0x6A12)                                     # const/4 v10, 6
+    emit(0x306E, 0xA32B, 0x0A98)                     # invoke-virtual {v8, v9, v10}, String.substring(II)String
+    emit(0x080C)                                     # move-result-object v8 ('Signed')
+    emit(0x091A, 0x6162)                             # const-string v9, 'Locked'
+    emit(0x0A08, 0x0022)                             # move-object/from16 v10, v34 (destPath)
+    emit(0x306E, 0xA322, 0x089A)                     # invoke-virtual {v10, v9, v8}, String.replace(CharSequence, CharSequence)String
+    emit(0x0B0C)                                     # move-result-object v11 (signedPath)
+    emit(0x0722, 0x1632)                             # new-instance v7, File
+    emit(0x2070, 0xA0DE, 0x00A7)                     # invoke-direct {v7, v10}, File.<init>(String)V
+    emit(0x0822, 0x1632)                             # new-instance v8, File
+    emit(0x2070, 0xA0DE, 0x00B8)                     # invoke-direct {v8, v11}, File.<init>(String)V
+    emit(0x1912)                                     # const/4 v9, 1
+    emit(0x0A12)                                     # const/4 v10, 0
+    emit(0x4B12)                                     # const/4 v11, 4
+    emit(0x0C12)                                     # const/4 v12, 0
+    emit(0x0677, 0xC29C, 0x0007)                     # invoke-static/range {v7..v12}, FilesKt.copyTo$default
+    label("L_after_signed_copy")
     goto16(target_after_close)                       # goto/16 -> 1329
 
     for fix_idx, cur_u, lbl in fixups:
@@ -405,6 +432,26 @@ def main():
     struct.pack_into("<IHH", orig_dex, try30_off, 686, len(place_units) + (703 - 686), handler_30)
     struct.pack_into("<IHH", orig_dex, try31_off, pades_start, len(pades_units), handler_44)
     struct.pack_into("<IHH", orig_dex, try44_off, 1326, 3, handler_44)
+
+    # 7. Patch saveFileToDownloads (0x383e40, insns at 0x383e50, units 12..31 = 20 units)
+    #    When MainActivity.LATTICE_Q != 0 (sign-only PDF without password), reset LATTICE_Q = 0 and rename "_Locked.pdf" -> "_Signed.pdf"
+    save_dl_insns_off = 0x383E50
+    save_dl_patch = [
+        0x1652, 0x4F44,                 # 12: iget v6, v1, MainActivity->LATTICE_Q:I
+        0x0638, 0x0012,                 # 14: if-eqz v6, -> 32 (14 + 18 = 32)
+        0x0712,                         # 16: const/4 v7, 0
+        0x1759, 0x4F44,                 # 17: iput v7, v1, MainActivity->LATTICE_Q:I
+        0x061A, 0x75DF,                 # 19: const-string v6, 'SignedProperties_'
+        0x6812,                         # 21: const/4 v8, 6
+        0x306E, 0xA32B, 0x0876,         # 22: invoke-virtual {v6, v7, v8}, String.substring(II)String
+        0x060C,                         # 25: move-result-object v6 ('Signed')
+        0x071A, 0x6162,                 # 26: const-string v7, 'Locked'
+        0x306E, 0xA322, 0x0672,         # 28: invoke-virtual {v2, v7, v6}, String.replace(CharSequence, CharSequence)String
+        0x020C,                         # 31: move-result-object v2
+    ]
+    assert len(save_dl_patch) == 20
+    for idx_u, val_u in enumerate(save_dl_patch):
+        struct.pack_into("<H", orig_dex, save_dl_insns_off + (12 + idx_u) * 2, val_u)
 
     # Recompute DEX SHA-1 signature and Adler32 checksum
     orig_dex[12:32] = hashlib.sha1(orig_dex[32:]).digest()
