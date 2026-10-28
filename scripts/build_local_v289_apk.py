@@ -406,6 +406,53 @@ def main():
     struct.pack_into("<IHH", orig_dex, try31_off, pades_start, len(pades_units), handler_44)
     struct.pack_into("<IHH", orig_dex, try44_off, 1326, 3, handler_44)
 
+    # 7. At units 30..59 (30 units) of encryptPdf: when enableSignature (v37 != 0),
+    #    set this.pendingSharedText = "Signed" (field 0x4F4A, mutable instance field)
+    #    and replace "Locked" with "Signed" in v2 and v34 ($outputPath) so cache file is named _Signed.pdf!
+    u30_encrypt_units = [
+        0x2538, 0x001E,                 # 30: if-eqz v37, +30 (-> 60)
+        0x061A, 0x75DF,                 # 32: const-string v6, 'SignedProperties_'
+        0x0312,                         # 34: const/4 v3, 0
+        0x6412,                         # 35: const/4 v4, 6
+        0x306E, 0xA32B, 0x0436,         # 36: invoke-virtual {v6, v3, v4}, String.substring(II)String -> 'Signed'
+        0x060C,                         # 39: move-result-object v6
+        0x165B, 0x4F4A,                 # 40: iput-object v6, v1, MainActivity->pendingSharedText:Ljava/lang/String;
+        0x031A, 0x6162,                 # 42: const-string v3, 'Locked'
+        0x306E, 0xA322, 0x0632,         # 44: invoke-virtual {v2, v3, v6}, String.replace(CharSequence, CharSequence)String
+        0x020C,                         # 47: move-result-object v2
+        0x2208, 0x0002,                 # 48: move-object/from16 v34, v2
+        0x0308, 0x0024,                 # 50: move-object/from16 v3, v36 (restore v3)
+        0x0408, 0x0026,                 # 52: move-object/from16 v4, v38 (restore v4)
+        0x0000, 0x0000, 0x0000,         # 54..56: nop
+        0x0000, 0x0000, 0x0000,         # 57..59: nop
+    ]
+    assert len(u30_encrypt_units) == 30
+    for idx_u, val_u in enumerate(u30_encrypt_units):
+        struct.pack_into("<H", orig_dex, insns_off + (30 + idx_u) * 2, val_u)
+
+    # 8. In MainActivity.saveFileToDownloads (code_item @ 0x383E40, insns @ 0x383E50):
+    #    At units 12..35, check this.pendingSharedText (field 0x4F4A). If non-null ("Signed"),
+    #    clear it to null and replace "Locked" with "Signed" in both v2 (fileName) and v6 (srcPath).
+    save_insns_off = 0x383E50
+    save_patch_units = [
+        0x0608, 0x0011,                 # 12: move-object/from16 v6, v17 (v6 = srcPath)
+        0x1854, 0x4F4A,                 # 14: iget-object v8, v1, MainActivity->pendingSharedText:Ljava/lang/String;
+        0x0838, 0x0010,                 # 16: if-eqz v8, +16 (-> 32)
+        0x0712,                         # 18: const/4 v7, 0
+        0x175B, 0x4F4A,                 # 19: iput-object v7, v1, MainActivity->pendingSharedText:Ljava/lang/String;
+        0x071A, 0x6162,                 # 21: const-string v7, 'Locked'
+        0x306E, 0xA322, 0x0872,         # 23: invoke-virtual {v2, v7, v8}, String.replace(CharSequence, CharSequence)String
+        0x020C,                         # 26: move-result-object v2
+        0x306E, 0xA322, 0x0876,         # 27: invoke-virtual {v6, v7, v8}, String.replace(CharSequence, CharSequence)String
+        0x060C,                         # 30: move-result-object v6
+        0x0000,                         # 31: nop
+        0x0722, 0x1632,                 # 32: new-instance v7, java/io/File (unchanged Try 0 start)
+        0x0000, 0x0000,                 # 34: nop, nop (v6 already holds srcPath)
+    ]
+    assert len(save_patch_units) == 24
+    for idx_u, val_u in enumerate(save_patch_units):
+        struct.pack_into("<H", orig_dex, save_insns_off + (12 + idx_u) * 2, val_u)
+
     # Recompute DEX SHA-1 signature and Adler32 checksum
     orig_dex[12:32] = hashlib.sha1(orig_dex[32:]).digest()
     struct.pack_into("<I", orig_dex, 8, zlib.adler32(orig_dex[12:]) & 0xFFFFFFFF)
