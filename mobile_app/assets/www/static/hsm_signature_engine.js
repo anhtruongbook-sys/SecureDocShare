@@ -1049,11 +1049,28 @@ class KryptoHSMSignatureEngine {
             ''
         ].join('\r\n');
 
+        const baseClean = documentName.replace(/\.[^/.]+$/, '');
+        const plainSummary = [
+            subject,
+            `Người nhận (To): ${targetTo}`,
+            `Tài liệu: ${documentName}`,
+            `Ký bởi: ${cert.signer_name} (${cert.signer_title} — ${cert.organization})`,
+            `Email Ký số S/MIME: ${cert.signer_email}`,
+            `Buồng HSM: ${vault.slot_id} • Số Serial X.509: ${cert.serial_hex}`,
+            `SHA-256 Ảnh chữ ký tay: ${cert.visual_sig_png_sha256}`,
+            `Nội dung / Lý do ký: ${signingReason || 'Phê duyệt & phát hành hồ sơ'}`,
+            `Thời gian ký: ${nowStr}`,
+            `Chữ ký HSM (PKCS#11 C_Sign ECDSA P-256): ${sigRes.signature_b64}`
+        ].join('\n');
+
         return {
             subject,
             to: targetTo,
+            htmlContent,
+            htmlFilename: (mode === 'REQUEST' ? `Yeu_Cau_Ky_So_${reqId}.html` : `Chung_Thu_Email_SMIME_${baseClean}.html`),
             emlContent,
-            emlFilename: (mode === 'REQUEST' ? `Yeu_Cau_Ky_So_${reqId}.eml` : `Ket_Qua_Ky_So_${documentName.replace(/\.[^/.]+$/, '')}.eml`),
+            emlFilename: (mode === 'REQUEST' ? `Yeu_Cau_Ky_So_${reqId}.eml` : `Ket_Qua_Ky_So_${baseClean}.eml`),
+            plainSummary,
             sigRes
         };
     }

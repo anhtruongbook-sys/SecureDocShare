@@ -1376,7 +1376,7 @@ async function executeMobileLockFiles() {
                             }
                             const sendSmime = document.getElementById('enable-smime-email-notify')?.checked;
                             if (sendSmime) {
-                                const emailTarget = document.getElementById('signer-email-input')?.value || hsmVault.certificate.signer_email;
+                                const emailTarget = (document.getElementById('signer-email-input')?.value || hsmVault.certificate.signer_email || 'truongtuananhxd@gmail.com').trim();
                                 window.__lastSignedSmimeEmail = await window.KryptoHSMSignatureEngine.generateSMIMESignedEmail({
                                     mode: 'RESULT',
                                     documentName: file.name,
@@ -1386,6 +1386,8 @@ async function executeMobileLockFiles() {
                                     userPin: enteredHsmPin,
                                     precomputedSigRes: hsmSigRes
                                 });
+                            } else {
+                                window.__lastSignedSmimeEmail = null;
                             }
                             // Xóa trắng ô PIN ký số sau khi ký xong để không lộ PIN qua nút 👁️
                             const pinSignEl = document.getElementById('signer-hsm-pin-input');
@@ -1683,12 +1685,82 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
     const card = document.getElementById('results-lock');
     const list = document.getElementById('results-list-lock');
 
-    const hasDigitalSig = document.getElementById('enable-digital-signature')?.checked || false;
-    const sigPosLabel = (document.querySelector('input[name="sig-pos"]:checked')?.value === 'all_pages') ? 'Tất cả trang' : 'Trang cuối';
+    const hasDigitalSig = (currentProtectionLevel === 'sign_only') || (document.getElementById('enable-digital-signature')?.checked || false);
+    const rawPageOpt = document.querySelector('input[name="sig-pos"]:checked')?.value || 'last_page';
+    const customPageVal = parseInt(document.getElementById('sig-custom-page-input')?.value || '1', 10) || 1;
+    const sigPosLabel = rawPageOpt === 'all_pages'
+        ? 'Tất cả trang'
+        : (rawPageOpt === 'first_page'
+            ? 'Trang đầu (Trang 1)'
+            : (rawPageOpt === 'custom_page' ? `Trang số ${customPageVal}` : 'Trang cuối'));
+    const sigStyleDesc = currentSignatureVisualStyle === 'invisible'
+        ? 'Ký số ngầm PAdES-HSM (Không chèn ảnh)'
+        : (currentSignatureVisualStyle === 'full_stamp'
+            ? 'Chữ ký số PAdES-HSM & Khung dấu thông tin'
+            : 'Chữ ký số PAdES-HSM & Chỉ chữ ký tay (.PNG)');
+
     const sigBadgeHtml = hasDigitalSig ? `
         <div class="saved-status-compact" style="background: rgba(37, 99, 235, 0.1); border-left: 3px solid #2563eb; margin-top: 6px;">
             <span class="saved-status-icon">✍️</span>
-            <span class="saved-status-text" style="color: #1d4ed8;">Đã đóng dấu <strong>Chữ ký số PAdES-HSM & Chữ ký tay (.PNG)</strong> (${sigPosLabel})</span>
+            <span class="saved-status-text" style="color: #1d4ed8;">Đã đóng dấu <strong>${sigStyleDesc}</strong> (${sigPosLabel})</span>
+        </div>
+    ` : '';
+
+    const smimeWanted = hasDigitalSig && (document.getElementById('enable-smime-email-notify')?.checked || false);
+    const smimeData = smimeWanted ? window.__lastSignedSmimeEmail : null;
+    if (smimeData && window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+        try {
+            window.FlutterBridge.postMessage(JSON.stringify({
+                action: 'save',
+                name: smimeData.emlFilename,
+                content: smimeData.emlContent
+            }));
+            if (smimeData.htmlFilename && smimeData.htmlContent) {
+                window.FlutterBridge.postMessage(JSON.stringify({
+                    action: 'save',
+                    name: smimeData.htmlFilename,
+                    content: smimeData.htmlContent
+                }));
+            }
+            showToast(`📧 Đã xuất kèm gói Email S/MIME (${smimeData.emlFilename}) vào Downloads!`);
+        } catch (smimeSaveErr) {
+            console.warn('Auto-save S/MIME warning:', smimeSaveErr);
+        }
+    }
+
+    const smimeBadgeHtml = smimeData ? `
+        <div class="saved-status-compact" style="background: rgba(5, 150, 105, 0.12); border-left: 3px solid #059669; margin-top: 6px;">
+            <span class="saved-status-icon">📧</span>
+            <span class="saved-status-text" style="color: #047857;">Đã xuất kèm <strong>Gói Email S/MIME (.eml &amp; .html)</strong> vào Downloads: <strong>${smimeData.emlFilename}</strong> • Gửi tới: <strong>${smimeData.to}</strong></span>
+        </div>
+    ` : '';
+
+    const smimeActionButtonsHtml = smimeData ? `
+        <button type="button" onclick="shareLastSignedSmimeEml()" style="width: 100%; margin-top: 6px; padding: 11px 14px; border-radius: 9px; border: 1.5px solid #059669; background: linear-gradient(135deg, #059669, #047857); color: #ffffff; font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 3px 10px rgba(5, 150, 105, 0.25);">
+            <span>📧 GỬI GÓI EMAIL KÝ SỐ S/MIME (.EML) QUA GMAIL / OUTLOOK / ZALO</span>
+        </button>
+        <div class="result-extra-buttons-row" style="margin-top: 5px;">
+            <button type="button" class="btn-result-extra-copy" onclick="toggleSmimePreviewBox()" style="border-color: rgba(5, 150, 105, 0.45); color: #059669; font-weight: 700;">
+                <span>👁️ Xem Email S/MIME</span>
+            </button>
+            <button type="button" class="btn-result-extra-copy" onclick="shareLastSignedSmimeHtml()" style="border-color: rgba(37, 99, 235, 0.45); color: #2563eb; font-weight: 700;">
+                <span>📤 Gửi Bản .HTML</span>
+            </button>
+            <button type="button" class="btn-result-extra-copy" onclick="copyLastSmimeTextSummary()" style="border-color: rgba(5, 150, 105, 0.45); color: #047857; font-weight: 700;">
+                <span>📋 Chép Nội Dung</span>
+            </button>
+        </div>
+    ` : '';
+
+    const smimePreviewBoxHtml = smimeData ? `
+        <div id="smime-preview-container" style="display: none; margin-top: 10px; border: 1.5px solid #059669; border-radius: 10px; background: #ffffff; color: #0f172a; overflow: hidden;">
+            <div style="background: #ecfdf5; padding: 8px 12px; border-bottom: 1px solid #a7f3d0; font-size: 11.5px; color: #065f46; display: flex; justify-content: space-between; align-items: center;">
+                <span><strong>📧 Nội dung gói Email S/MIME chuẩn RFC 8551</strong> (<code>${smimeData.emlFilename}</code>)</span>
+                <button type="button" onclick="toggleSmimePreviewBox()" style="background: none; border: none; color: #047857; font-weight: 800; cursor: pointer;">✕</button>
+            </div>
+            <div style="padding: 8px; max-height: 360px; overflow-y: auto; background: #ffffff;">
+                ${smimeData.htmlContent || ''}
+            </div>
         </div>
     ` : '';
 
@@ -1698,7 +1770,8 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
             <span class="saved-status-text">Đã lưu: <strong>Thư mục Downloads của máy</strong></span>
         </div>
         ${sigBadgeHtml}
-    ` : sigBadgeHtml;
+        ${smimeBadgeHtml}
+    ` : (sigBadgeHtml + smimeBadgeHtml);
 
     list.innerHTML = `
         <div class="result-card-box">
@@ -1719,8 +1792,9 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                     </svg>
-                    <span>GỬI QUA ZALO / CHIA SẺ TỆP</span>
+                    <span>GỬI QUA ZALO / CHIA SẺ TỆP ĐÃ KÝ</span>
                 </button>
+                ${smimeActionButtonsHtml}
                 <div class="result-extra-buttons-row">
                     <button type="button" class="btn-result-extra-copy" onclick="reSaveNativePdf('${outFileName}', '${tempFilePath.replace(/\\/g, '\\\\')}')">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1738,6 +1812,7 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
                     </button>
                 </div>
             </div>
+            ${smimePreviewBoxHtml}
             <div id="qr-modal-container" class="qr-modal-box" style="display: none;">
                 <div id="qr-code-target" style="padding: 6px; background: #ffffff; border-radius: 6px;"></div>
                 <div class="qr-caption-text">
@@ -1765,8 +1840,99 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
 
     const btn = document.getElementById('btn-lock-submit');
     btn.disabled = false;
-    btn.innerText = "MÃ HÓA & LƯU TỆP";
+    btn.innerText = currentProtectionLevel === 'sign_only' ? "✍️ KÝ SỐ PAdES-HSM & LƯU TỆP (KHÔNG PASS)" : "MÃ HÓA & LƯU TỆP";
 };
+
+window.onVaultFileSaved = function(fileName, savedPath, tempPath) {
+    if (fileName && (fileName.endsWith('.eml') || fileName.endsWith('.kryptohsm'))) {
+        showToast(`✅ Đã lưu ${fileName} vào Thư mục Downloads!`);
+    }
+};
+
+function shareLastSignedSmimeEml() {
+    const smime = window.__lastSignedSmimeEmail;
+    if (!smime) {
+        showToast('⚠️ Chưa có gói Email S/MIME nào được tạo!');
+        return;
+    }
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'share',
+            name: smime.emlFilename,
+            content: smime.emlContent
+        }));
+        return;
+    }
+    const blob = new Blob([smime.emlContent], { type: 'message/rfc822' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = smime.emlFilename;
+    a.click();
+}
+
+function shareLastSignedSmimeHtml() {
+    const smime = window.__lastSignedSmimeEmail;
+    if (!smime || !smime.htmlContent) {
+        showToast('⚠️ Chưa có chứng thư HTML S/MIME nào được tạo!');
+        return;
+    }
+    const fname = smime.htmlFilename || 'Chung_Thu_Email_SMIME.html';
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+        window.FlutterBridge.postMessage(JSON.stringify({
+            action: 'share',
+            name: fname,
+            content: smime.htmlContent
+        }));
+        return;
+    }
+    const blob = new Blob([smime.htmlContent], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    a.click();
+}
+
+function toggleSmimePreviewBox() {
+    const box = document.getElementById('smime-preview-container');
+    if (!box) return;
+    const isHidden = box.style.display === 'none';
+    box.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function copyLastSmimeTextSummary() {
+    const smime = window.__lastSignedSmimeEmail;
+    if (!smime) {
+        showToast('⚠️ Chưa có nội dung Email S/MIME!');
+        return;
+    }
+    const text = smime.plainSummary || `${smime.subject}\nTo: ${smime.to}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('📋 Đã sao chép nội dung xác thực Email S/MIME! Bạn có thể dán ngay vào Gmail / Outlook / Zalo.');
+        }).catch(() => {
+            fallbackCopyText(text);
+        });
+    } else {
+        fallbackCopyText(text);
+    }
+}
+
+function fallbackCopyText(text) {
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('📋 Đã sao chép nội dung xác thực Email S/MIME!');
+    } catch (_) {}
+}
 
 window.onNativePdfError = function(errMsg) {
     hideProcessingModal();
