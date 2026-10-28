@@ -789,12 +789,232 @@
                             <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="sendSigningRequestEmailUI()">
                                 📧 Gửi Email Yêu Cầu Ký
                             </button>
-                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="showMobileTOTPTransferDialog()">
-                                📱 Mã QR Đổi Điện Thoại
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
+                                🔢 Mở Bộ Xác Thực 2FA
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 5: BỘ XÁC THỰC 2FA / AUTHENTICATOR ==================== -->
+        <div id="tab-auth" class="tab-content" style="display: none;">
+            <div class="card settings-card" style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 14.5px; font-weight: 800; color: var(--text-title);">🔢 Krypto Authenticator (2FA / MFA)</h3>
+                        <p style="margin: 2px 0 0; font-size: 11px; color: var(--text-muted);">Chuẩn IETF RFC 4226 (HOTP) • RFC 6238 (TOTP) • RFC 6287 (OCRA) • Google Auth</p>
+                    </div>
+                    <span id="kauth-unix-clock-pill" style="font-size: 10.5px; font-family: monospace; font-weight: 700; padding: 4px 8px; border-radius: 8px; background: var(--bg-subtle); color: var(--primary); border: 1px solid var(--border);">UTC Step: --</span>
+                </div>
+
+                <!-- Sub-navigation segmented buttons -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 6px;">
+                    <button type="button" id="kauth-subbtn-live" class="btn-chip-micro kauth-sub-btn active" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('live', this)">🔢 Mã 2FA</button>
+                    <button type="button" id="kauth-subbtn-add" class="btn-chip-micro kauth-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('add', this)">➕ Thêm / QR</button>
+                    <button type="button" id="kauth-subbtn-lab" class="btn-chip-micro kauth-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('lab', this)">🔬 Giải Phẫu</button>
+                    <button type="button" id="kauth-subbtn-backup" class="btn-chip-micro kauth-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('backup', this)">💾 Sao Lưu</button>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 1: LIVE OTP LIST -->
+            <div id="kauth-panel-live" class="kauth-sub-panel" style="display: block;">
+                <div class="card settings-card" style="margin-bottom: 10px; padding: 10px 12px;">
+                    <input type="search" placeholder="🔍 Tìm tên dịch vụ, email hoặc danh mục..." oninput="window.KryptoAuthenticator.onSearchInput(this.value)" style="width: 100%; font-size: 12px; padding: 8px 10px; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button type="button" class="btn-chip-micro kauth-cat-chip active" onclick="window.KryptoAuthenticator.filterCategory('ALL', this)">Tất cả</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Nội bộ', this)">Nội bộ / HSM</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Email & Cloud', this)">Email &amp; Cloud</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Kỹ thuật', this)">Kỹ thuật</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Google Auth', this)">Google Auth</button>
+                    </div>
+                </div>
+                <div id="krypto-auth-otp-list"></div>
+            </div>
+
+            <!-- SUB-PANEL 2: ADD ACCOUNT & GOOGLE AUTH MIGRATION -->
+            <div id="kauth-panel-add" class="kauth-sub-panel" style="display: none;">
+                <div class="card settings-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--primary);">➕ THÊM TÀI KHOẢN XÁC THỰC 2FA (TOTP / HOTP)</span>
+                        <button type="button" class="btn-mini-gen" onclick="window.KryptoAuthenticator.generateRandomSecretUI()">⚡ Sinh Khóa 160-bit</button>
+                    </div>
+
+                    <div class="dual-inputs-row">
+                        <div class="input-col">
+                            <label class="micro-label">Nhà cung cấp dịch vụ (Issuer):</label>
+                            <input type="text" id="kauth-add-issuer" placeholder="VD: Google, GitHub, IBST-BIM...">
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Tài khoản / Email:</label>
+                            <input type="text" id="kauth-add-account" placeholder="VD: user@domain.vn">
+                        </div>
+                    </div>
+
+                    <div class="form-group-compact" style="margin-top: 6px;">
+                        <label class="micro-label">Khóa Bí mật Base32 (RFC 4648):</label>
+                        <input type="text" id="kauth-add-secret" placeholder="JBSWY3DPEHPK3PXP..." style="font-family: monospace;">
+                    </div>
+
+                    <div class="dual-inputs-row" style="margin-top: 6px;">
+                        <div class="input-col">
+                            <label class="micro-label">Phương thức:</label>
+                            <select id="kauth-add-type" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="totp">TOTP (30 giây - RFC 6238)</option>
+                                <option value="hotp">HOTP (Bộ đếm - RFC 4226)</option>
+                            </select>
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Thuật toán Băm:</label>
+                            <select id="kauth-add-algo" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="SHA1">HMAC-SHA1 (Google Auth)</option>
+                                <option value="SHA256">HMAC-SHA256</option>
+                                <option value="SHA512">HMAC-SHA512</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="dual-inputs-row" style="margin-top: 6px;">
+                        <div class="input-col">
+                            <label class="micro-label">Độ dài mã:</label>
+                            <select id="kauth-add-digits" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="6">6 chữ số</option>
+                                <option value="8">8 chữ số</option>
+                            </select>
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Danh mục:</label>
+                            <select id="kauth-add-category" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="Nội bộ">Nội bộ / HSM</option>
+                                <option value="Email & Cloud">Email &amp; Cloud</option>
+                                <option value="Kỹ thuật">Kỹ thuật</option>
+                                <option value="Google Auth">Google Auth</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 10px; width: 100%;" onclick="window.KryptoAuthenticator.addManualAccountUI()">
+                        <span>💾 Lưu Tài Khoản Vào Krypto Authenticator</span>
+                    </button>
+
+                    <!-- Nhập / Xuất Google Authenticator Migration (Protobuf) -->
+                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">📲 NHẬP / XUẤT GOOGLE AUTHENTICATOR (OTPAUTH &amp; PROTOBUF)</span>
+                            <button type="button" class="btn-chip-micro" onclick="document.getElementById('kauth-qr-img-input').click()">🖼️ Đọc Ảnh QR</button>
+                            <input type="file" id="kauth-qr-img-input" accept="image/*" style="display: none;" onchange="window.KryptoAuthenticator.decodeQrFromImageFile(this)">
+                        </div>
+                        <textarea id="kauth-import-uri-input" rows="2" placeholder="Dán chuỗi otpauth://totp/... hoặc otpauth-migration://offline?data=..." style="width: 100%; font-family: monospace; font-size: 11px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary);"></textarea>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                            <button type="button" class="btn-mobi-solid" style="font-size: 11.5px; padding: 8px;" onclick="window.KryptoAuthenticator.importUriOrMigrationUI()">📥 Nhập Từ URI</button>
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11.5px; padding: 8px;" onclick="window.KryptoAuthenticator.exportGoogleMigrationQrUI()">📤 Xuất QR Google Auth</button>
+                        </div>
+                        <input type="text" id="kauth-export-migration-uri" readonly placeholder="Chuỗi otpauth-migration:// xuất ra sẽ hiển thị tại đây..." style="width: 100%; margin-top: 6px; font-family: monospace; font-size: 10.5px; padding: 6px 8px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 3: ALGORITHM LAB & OCRA TRANSACTION SIGNING -->
+            <div id="kauth-panel-lab" class="kauth-sub-panel" style="display: none;">
+                <div class="card settings-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--primary);">🔬 GIẢI PHẪU MẢNG BYTE HMAC &amp; CẮT ĐỘNG 31-BIT</span>
+                        <button type="button" class="btn-mini-gen" onclick="window.KryptoAuthenticator.runLabTrace()">⚡ Tính Lại</button>
+                    </div>
+                    <div class="dual-inputs-row" style="margin-bottom: 8px;">
+                        <div class="input-col">
+                            <label class="micro-label">Khóa Base32:</label>
+                            <input type="text" id="kauth-lab-secret" value="JBSWY3DPEHPK3PXP" oninput="window.KryptoAuthenticator.runLabTrace()" style="font-family: monospace;">
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Hàm băm &amp; Độ dài:</label>
+                            <div style="display: flex; gap: 4px;">
+                                <select id="kauth-lab-algo" onchange="window.KryptoAuthenticator.runLabTrace()" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11px;">
+                                    <option value="SHA1">SHA1</option>
+                                    <option value="SHA256">SHA256</option>
+                                    <option value="SHA512">SHA512</option>
+                                </select>
+                                <select id="kauth-lab-digits" onchange="window.KryptoAuthenticator.runLabTrace()" style="width:72px; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11px;">
+                                    <option value="6">6 số</option>
+                                    <option value="8">8 số</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="kauth-lab-trace-box"></div>
+
+                    <!-- OCRA Transaction Signer -->
+                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">✍️ KÝ XÁC THỰC GIAO DỊCH / HỒ SƠ (OCRA RFC 6287)</span>
+                            <button type="button" class="btn-mini-gen" onclick="window.KryptoAuthenticator.runOcraSign()">⚡ Sinh Mã OCRA</button>
+                        </div>
+                        <div class="dual-inputs-row">
+                            <div class="input-col">
+                                <label class="micro-label">Khóa Base32:</label>
+                                <input type="text" id="kauth-ocra-secret" value="JBSWY3DPEHPK3PXP" oninput="window.KryptoAuthenticator.runOcraSign()" style="font-family: monospace;">
+                            </div>
+                            <div class="input-col">
+                                <label class="micro-label">Đơn vị nhận / Đích:</label>
+                                <input type="text" id="kauth-ocra-recipient" value="IBST-CDE-2026" oninput="window.KryptoAuthenticator.runOcraSign()">
+                            </div>
+                        </div>
+                        <div class="dual-inputs-row" style="margin-top: 6px;">
+                            <div class="input-col">
+                                <label class="micro-label">Giá trị / Số lượng:</label>
+                                <input type="text" id="kauth-ocra-amount" value="150,000,000 VND" oninput="window.KryptoAuthenticator.runOcraSign()">
+                            </div>
+                            <div class="input-col">
+                                <label class="micro-label">Mã hồ sơ / Tham chiếu:</label>
+                                <input type="text" id="kauth-ocra-ref" value="HS-2026-089" oninput="window.KryptoAuthenticator.runOcraSign()">
+                            </div>
+                        </div>
+                        <div id="kauth-ocra-output"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 4: AES-256-GCM VAULT BACKUP & RESTORE -->
+            <div id="kauth-panel-backup" class="kauth-sub-panel" style="display: none;">
+                <div class="card settings-card">
+                    <span style="font-size: 12.5px; font-weight: 700; color: var(--primary); display: block; margin-bottom: 4px;">🔒 KÉT SAO LƯU 2FA (.KRYPTOVAULT — AES-256-GCM)</span>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px;">
+                        Mã hóa toàn bộ danh sách hạt giống 2FA bằng <code>PBKDF2-HMAC-SHA256</code> (600,000 vòng) kết hợp <code>AES-256-GCM</code> để lưu trữ độc lập khi đổi máy.
+                    </p>
+                    <div class="form-group-compact">
+                        <label class="micro-label">Mật khẩu chủ để Mã hóa &amp; Tải xuống (.kryptovault):</label>
+                        <input type="password" id="kauth-vault-export-pass" placeholder="Nhập mật khẩu chủ (>= 4 ký tự)...">
+                    </div>
+                    <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 8px; width: 100%;" onclick="window.KryptoAuthenticator.exportEncryptedVaultUI()">
+                        <span>📤 Mã Hóa AES-256-GCM &amp; Xuất Tệp .kryptovault</span>
+                    </button>
+
+                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">📥 KHÔI PHỤC TỪ TỆP .KRYPTOVAULT</span>
+                            <button type="button" class="btn-chip-micro" onclick="document.getElementById('kauth-vault-file-input').click()">📂 Chọn Tệp</button>
+                            <input type="file" id="kauth-vault-file-input" accept=".kryptovault,.json" style="display: none;" onchange="window.KryptoAuthenticator.handleVaultFileSelected(this)">
+                        </div>
+                        <input type="password" id="kauth-vault-import-pass" placeholder="Nhập mật khẩu chủ lúc sao lưu..." style="width: 100%; margin-bottom: 6px;">
+                        <textarea id="kauth-vault-json-box" rows="3" placeholder="Nội dung JSON mã hóa của tệp .kryptovault..." style="width: 100%; font-family: monospace; font-size: 10.5px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary);"></textarea>
+                        <button type="button" class="btn-mobi-outline" style="margin-top: 8px; width: 100%; font-size: 12px;" onclick="window.KryptoAuthenticator.importEncryptedVaultUI()">
+                            🔓 Giải Mã &amp; Khôi Phục Danh Bạ 2FA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Hiển thị Mã QR Cấp phát 2FA / Google Migration -->
+        <div id="kauth-qr-modal-overlay" class="cyber-dialog-overlay" style="display: none;" onclick="window.KryptoAuthenticator.closeQrModal()">
+            <div class="cyber-dialog-card" style="max-width: 340px; width: 92%; padding: 18px;" onclick="event.stopPropagation()">
+                <h3 id="kauth-qr-modal-title" style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--text-title);">Mã QR Xác Thực 2FA</h3>
+                <div id="kauth-qr-modal-canvas-box" style="background: #ffffff; padding: 12px; border-radius: 10px; display: inline-flex; justify-content: center; margin: 0 auto 10px;"></div>
+                <textarea id="kauth-qr-modal-uri" rows="2" readonly style="width: 100%; font-family: monospace; font-size: 10px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); margin-bottom: 10px;"></textarea>
+                <button type="button" class="btn-cyber-dialog-primary" style="width: 100%; padding: 9px;" onclick="window.KryptoAuthenticator.closeQrModal()">
+                    <span>Đóng</span>
+                </button>
             </div>
         </div>
 
@@ -825,7 +1045,7 @@
             <p>Krypto Vault • Mật Mã Hậu Lượng Tử ML-KEM-768 • Offline 100%</p>
         </footer>
 
-        <!-- Bottom Navigation Bar (Flat 4 Tabs) -->
+        <!-- Bottom Navigation Bar (Flat 5 Tabs) -->
         <nav class="bottom-nav-bar" id="bottom-nav-bar">
             <button type="button" class="bottom-nav-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
                 <span class="nav-icon">🏠</span>
@@ -838,6 +1058,10 @@
             <button type="button" class="bottom-nav-btn" id="tab-btn-audit" onclick="switchTab('audit')">
                 <span class="nav-icon">🔎</span>
                 <span class="nav-label">Pháp y</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-auth" onclick="switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
+                <span class="nav-icon">🔢</span>
+                <span class="nav-label">2FA OTP</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-vault" onclick="switchTab('vault')">
                 <span class="nav-icon">🛡️</span>
@@ -863,6 +1087,14 @@
         </div>
         <div class="drawer-content">
             <div class="drawer-section-title">HỆ THỐNG & CÀI ĐẶT</div>
+            <div class="drawer-menu-item" onclick="closeAppDrawer(); switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
+                <span class="drawer-menu-icon">🔢</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Bộ Xác Thực 2FA / Authenticator</div>
+                    <div class="drawer-menu-desc">Sinh mã 6 số TOTP/HOTP/OCRA &amp; Google Auth</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
             <div class="drawer-menu-item" onclick="openVaultSettingsFromMenu()">
                 <span class="drawer-menu-icon">⚙️</span>
                 <div class="drawer-menu-text">
@@ -909,7 +1141,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.8.9 FIPS-140-3</strong>
+                    <strong id="drawer-app-version">v2.9.0 FIPS-140-3</strong>
                 </div>
             </div>
 
@@ -1040,6 +1272,7 @@
     <script src="static/watermark_presets.js"></script>
     <script src="static/pqc_crypto_engine.js"></script>
     <script src="static/hsm_signature_engine.js"></script>
+    <script src="static/krypto_authenticator_engine.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>

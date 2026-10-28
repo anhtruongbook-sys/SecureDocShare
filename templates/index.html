@@ -108,6 +108,11 @@
                             <span class="segment-icon">👁️</span>
                             <span class="segment-text">Chỉ Xem (Cấm Copy)</span>
                         </label>
+                        <label class="level-card segment-card" id="level-card-sign-only" onclick="selectProtectionLevel('sign_only', this)">
+                            <input type="radio" name="protection-level" value="sign_only" style="display: none;">
+                            <span class="segment-icon">✍️</span>
+                            <span class="segment-text">Chỉ Ký Số (Không Pass)</span>
+                        </label>
                     </div>
                     <!-- Phân quyền in ấn khi chọn Chỉ xem -->
                     <div class="allow-print-box" id="allow-print-box" style="display: none; margin-top: 6px; padding: 6px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm);">
@@ -136,7 +141,7 @@
                 </div>
 
                 <!-- Unified Password Input Section -->
-                <div class="form-group-compact">
+                <div class="form-group-compact" id="password-input-section">
                     <div class="label-with-action">
                         <label for="lock-password" id="password-label">MẬT KHẨU MỞ TỆP <span class="required">*</span></label>
                         <button type="button" class="btn-micro-gen" onclick="generateMilitaryPassword()" title="Sinh mã quân sự 16 ký tự">
@@ -296,16 +301,96 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="sig-position-row" style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                                    <div>
-                                        <span class="micro-label">Vị trí đóng dấu:</span>
-                                        <label class="radio-label-micro"><input type="radio" name="sig-pos" value="last_page" checked> Trang cuối</label>
-                                        <label class="radio-label-micro"><input type="radio" name="sig-pos" value="all_pages"> Tất cả trang</label>
+                                <div class="sig-style-section" style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;">
+                                        <span class="micro-label">Kiểu hiển thị trên trang PDF (Vẫn nhúng chứng thư số PAdES):</span>
+                                        <label id="sig-include-name-wrap" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--primary); font-weight: 600; cursor: pointer;">
+                                            <input type="checkbox" id="sig-include-signer-name" style="width: 13px; height: 13px; margin: 0;" onchange="updateInteractiveSigPreview()">
+                                            <span>Kèm họ tên dưới chữ ký</span>
+                                        </label>
                                     </div>
-                                    <label style="display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--primary); font-weight: 600; cursor: pointer;">
-                                        <input type="checkbox" id="enable-smime-email-notify" checked style="width: 14px; height: 14px; margin: 0;">
-                                        <span>📧 Xuất kèm Email S/MIME kết quả</span>
-                                    </label>
+                                    <div class="sig-mode-chips">
+                                        <button type="button" class="btn-sig-chip active" id="sig-visual-handwritten" onclick="setSignatureVisualStyle('handwritten_only')">✒️ Chỉ Chữ Ký Tay (Không Kèm Thông Tin)</button>
+                                        <button type="button" class="btn-sig-chip" id="sig-visual-full" onclick="setSignatureVisualStyle('full_stamp')">🪪 Con Dấu + Khung Thông Tin</button>
+                                        <button type="button" class="btn-sig-chip" id="sig-visual-invisible" onclick="setSignatureVisualStyle('invisible')">🔒 Ký Số Ẩn</button>
+                                    </div>
+                                </div>
+
+                                <div class="sig-position-row" style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); display: block !important;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                            <span class="micro-label">Trang ký:</span>
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="last_page" checked onchange="onSigPageOptionChange()"> Trang cuối</label>
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="first_page" onchange="onSigPageOptionChange()"> Trang đầu</label>
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="custom_page" onchange="onSigPageOptionChange()"> Trang số:</label>
+                                            <input type="number" id="sig-custom-page-input" min="1" max="90" value="1" oninput="onCustomPageInputChange()" style="width: 48px; padding: 2px 5px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-input, transparent); color: var(--text-title); display: none;">
+                                            <label class="radio-label-micro"><input type="radio" name="sig-pos" value="all_pages" onchange="onSigPageOptionChange()"> Tất cả trang</label>
+                                        </div>
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--primary); font-weight: 600; cursor: pointer;">
+                                            <input type="checkbox" id="enable-smime-email-notify" checked style="width: 14px; height: 14px; margin: 0;">
+                                            <span>📧 Xuất kèm Email S/MIME</span>
+                                        </label>
+                                    </div>
+
+                                    <div id="sig-placement-controls" style="margin-top: 8px; width: 100%;">
+                                        <span class="micro-label" style="display: block; margin-bottom: 4px;">Vị trí đặt chữ ký tay trên trang PDF:</span>
+                                        <div class="sig-mode-chips">
+                                            <button type="button" class="btn-sig-chip active" id="sig-place-br" onclick="setSignaturePlacementPreset('bottom_right')">↘️ Góc dưới bên phải</button>
+                                            <button type="button" class="btn-sig-chip" id="sig-place-bc" onclick="setSignaturePlacementPreset('bottom_center')">⬇️ Giữa dưới</button>
+                                            <button type="button" class="btn-sig-chip" id="sig-place-bl" onclick="setSignaturePlacementPreset('bottom_left')">↙️ Góc dưới trái</button>
+                                            <button type="button" class="btn-sig-chip" id="sig-place-custom" onclick="setSignaturePlacementPreset('custom')">🎯 Căn trực tiếp trên trang PDF</button>
+                                        </div>
+
+                                        <div id="sig-custom-xy-panel" style="display: block; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; padding: 4px 8px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 6px;">
+                                                <span id="sig-pdf-file-status" style="font-size: 10.5px; font-weight: 600; color: var(--text-title);">📄 Chọn tệp PDF ở trên để hiển thị trang thực</span>
+                                                <div style="display: inline-flex; align-items: center; gap: 5px;">
+                                                    <button type="button" class="btn-mini-gen" onclick="stepSigPreviewPage(-1)" style="padding: 2px 7px; font-size: 10.5px;">◀</button>
+                                                    <span id="sig-preview-page-indicator" style="font-size: 10.5px; font-weight: 700; color: var(--primary); min-width: 72px; text-align: center;">Trang 1 / 1</span>
+                                                    <button type="button" class="btn-mini-gen" onclick="stepSigPreviewPage(1)" style="padding: 2px 7px; font-size: 10.5px;">▶</button>
+                                                </div>
+                                            </div>
+                                            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; text-align: center;">
+                                                👆 Chạm hoặc kéo chữ ký tay vào đúng ô ký trên trang PDF thực tế:
+                                            </div>
+                                            <div id="sig-interactive-page-pad" style="position: relative; width: 100%; max-width: 280px; height: 396px; margin: 0 auto 8px auto; background: #ffffff; border: 1.5px solid #475569; border-radius: 6px; box-shadow: 0 3px 10px rgba(15, 23, 42, 0.12); overflow: hidden; touch-action: none; cursor: crosshair; user-select: none;">
+                                                <canvas id="sig-pdf-page-canvas" style="width: 100%; height: 100%; display: none; pointer-events: none;"></canvas>
+                                                <div id="sig-pdf-fallback-mockup" style="padding: 16px 18px; font-size: 8px; color: #94a3b8; line-height: 1.75; pointer-events: none;">
+                                                    <div id="sig-pdf-fallback-title" style="text-align: center; font-weight: 700; color: #475569; margin-bottom: 6px; font-size: 9px;">MÔ PHỎNG TRANG PDF (CHỌN FILE PDF ĐỂ XEM TRANG THỰC)</div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 5px; width: 85%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 5px; width: 100%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 5px; width: 92%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 10px; width: 70%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 5px; width: 96%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 5px; width: 88%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 12px; width: 60%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 5px; width: 94%;"></div>
+                                                    <div style="height: 4px; background: #e2e8f0; margin-bottom: 5px; width: 80%;"></div>
+                                                    <div style="display: flex; justify-content: space-between; margin-top: 120px; color: #475569; font-weight: 700; font-size: 8.5px;">
+                                                        <span>Nơi nhận</span>
+                                                        <span>NGƯỜI KÝ / PHÊ DUYỆT</span>
+                                                    </div>
+                                                </div>
+                                                <div id="sig-draggable-marker" style="position: absolute; left: 64%; bottom: 6%; width: 26%; border: 1.5px dashed #003399; background: rgba(0, 51, 153, 0.08); border-radius: 3px; padding: 2px; text-align: center; pointer-events: none; box-shadow: 0 1px 4px rgba(0, 51, 153, 0.18);">
+                                                    <img id="sig-draggable-img" src="" alt="Chữ ký" style="width: 100%; height: auto; display: block;" />
+                                                </div>
+                                            </div>
+                                            <div class="dual-inputs-row" style="gap: 8px;">
+                                                <div class="input-col">
+                                                    <label class="micro-label">Ngang từ lề trái (<span id="sig-x-val-label">64</span>%):</label>
+                                                    <input type="range" id="sig-x-pct-slider" min="2" max="85" value="64" oninput="onSigSliderChange()" style="width: 100%;">
+                                                </div>
+                                                <div class="input-col">
+                                                    <label class="micro-label">Cách đáy trang (<span id="sig-y-val-label">6</span>%):</label>
+                                                    <input type="range" id="sig-y-pct-slider" min="2" max="88" value="6" oninput="onSigSliderChange()" style="width: 100%;">
+                                                </div>
+                                                <div class="input-col">
+                                                    <label class="micro-label">Độ rộng chữ ký (<span id="sig-w-val-label">26</span>%):</label>
+                                                    <input type="range" id="sig-w-pct-slider" min="12" max="50" value="26" oninput="onSigSliderChange()" style="width: 100%;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -704,12 +789,232 @@
                             <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="sendSigningRequestEmailUI()">
                                 📧 Gửi Email Yêu Cầu Ký
                             </button>
-                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="showMobileTOTPTransferDialog()">
-                                📱 Mã QR Đổi Điện Thoại
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11px; padding: 8px 6px; min-width: 0; width: 100%; box-sizing: border-box;" onclick="switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
+                                🔢 Mở Bộ Xác Thực 2FA
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 5: BỘ XÁC THỰC 2FA / AUTHENTICATOR ==================== -->
+        <div id="tab-auth" class="tab-content" style="display: none;">
+            <div class="card settings-card" style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 14.5px; font-weight: 800; color: var(--text-title);">🔢 Krypto Authenticator (2FA / MFA)</h3>
+                        <p style="margin: 2px 0 0; font-size: 11px; color: var(--text-muted);">Chuẩn IETF RFC 4226 (HOTP) • RFC 6238 (TOTP) • RFC 6287 (OCRA) • Google Auth</p>
+                    </div>
+                    <span id="kauth-unix-clock-pill" style="font-size: 10.5px; font-family: monospace; font-weight: 700; padding: 4px 8px; border-radius: 8px; background: var(--bg-subtle); color: var(--primary); border: 1px solid var(--border);">UTC Step: --</span>
+                </div>
+
+                <!-- Sub-navigation segmented buttons -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 6px;">
+                    <button type="button" id="kauth-subbtn-live" class="btn-chip-micro kauth-sub-btn active" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('live', this)">🔢 Mã 2FA</button>
+                    <button type="button" id="kauth-subbtn-add" class="btn-chip-micro kauth-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('add', this)">➕ Thêm / QR</button>
+                    <button type="button" id="kauth-subbtn-lab" class="btn-chip-micro kauth-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('lab', this)">🔬 Giải Phẫu</button>
+                    <button type="button" id="kauth-subbtn-backup" class="btn-chip-micro kauth-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoAuthenticator.switchSubView('backup', this)">💾 Sao Lưu</button>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 1: LIVE OTP LIST -->
+            <div id="kauth-panel-live" class="kauth-sub-panel" style="display: block;">
+                <div class="card settings-card" style="margin-bottom: 10px; padding: 10px 12px;">
+                    <input type="search" placeholder="🔍 Tìm tên dịch vụ, email hoặc danh mục..." oninput="window.KryptoAuthenticator.onSearchInput(this.value)" style="width: 100%; font-size: 12px; padding: 8px 10px; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button type="button" class="btn-chip-micro kauth-cat-chip active" onclick="window.KryptoAuthenticator.filterCategory('ALL', this)">Tất cả</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Nội bộ', this)">Nội bộ / HSM</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Email & Cloud', this)">Email &amp; Cloud</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Kỹ thuật', this)">Kỹ thuật</button>
+                        <button type="button" class="btn-chip-micro kauth-cat-chip" onclick="window.KryptoAuthenticator.filterCategory('Google Auth', this)">Google Auth</button>
+                    </div>
+                </div>
+                <div id="krypto-auth-otp-list"></div>
+            </div>
+
+            <!-- SUB-PANEL 2: ADD ACCOUNT & GOOGLE AUTH MIGRATION -->
+            <div id="kauth-panel-add" class="kauth-sub-panel" style="display: none;">
+                <div class="card settings-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--primary);">➕ THÊM TÀI KHOẢN XÁC THỰC 2FA (TOTP / HOTP)</span>
+                        <button type="button" class="btn-mini-gen" onclick="window.KryptoAuthenticator.generateRandomSecretUI()">⚡ Sinh Khóa 160-bit</button>
+                    </div>
+
+                    <div class="dual-inputs-row">
+                        <div class="input-col">
+                            <label class="micro-label">Nhà cung cấp dịch vụ (Issuer):</label>
+                            <input type="text" id="kauth-add-issuer" placeholder="VD: Google, GitHub, IBST-BIM...">
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Tài khoản / Email:</label>
+                            <input type="text" id="kauth-add-account" placeholder="VD: user@domain.vn">
+                        </div>
+                    </div>
+
+                    <div class="form-group-compact" style="margin-top: 6px;">
+                        <label class="micro-label">Khóa Bí mật Base32 (RFC 4648):</label>
+                        <input type="text" id="kauth-add-secret" placeholder="JBSWY3DPEHPK3PXP..." style="font-family: monospace;">
+                    </div>
+
+                    <div class="dual-inputs-row" style="margin-top: 6px;">
+                        <div class="input-col">
+                            <label class="micro-label">Phương thức:</label>
+                            <select id="kauth-add-type" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="totp">TOTP (30 giây - RFC 6238)</option>
+                                <option value="hotp">HOTP (Bộ đếm - RFC 4226)</option>
+                            </select>
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Thuật toán Băm:</label>
+                            <select id="kauth-add-algo" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="SHA1">HMAC-SHA1 (Google Auth)</option>
+                                <option value="SHA256">HMAC-SHA256</option>
+                                <option value="SHA512">HMAC-SHA512</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="dual-inputs-row" style="margin-top: 6px;">
+                        <div class="input-col">
+                            <label class="micro-label">Độ dài mã:</label>
+                            <select id="kauth-add-digits" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="6">6 chữ số</option>
+                                <option value="8">8 chữ số</option>
+                            </select>
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Danh mục:</label>
+                            <select id="kauth-add-category" style="width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px;">
+                                <option value="Nội bộ">Nội bộ / HSM</option>
+                                <option value="Email & Cloud">Email &amp; Cloud</option>
+                                <option value="Kỹ thuật">Kỹ thuật</option>
+                                <option value="Google Auth">Google Auth</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 10px; width: 100%;" onclick="window.KryptoAuthenticator.addManualAccountUI()">
+                        <span>💾 Lưu Tài Khoản Vào Krypto Authenticator</span>
+                    </button>
+
+                    <!-- Nhập / Xuất Google Authenticator Migration (Protobuf) -->
+                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">📲 NHẬP / XUẤT GOOGLE AUTHENTICATOR (OTPAUTH &amp; PROTOBUF)</span>
+                            <button type="button" class="btn-chip-micro" onclick="document.getElementById('kauth-qr-img-input').click()">🖼️ Đọc Ảnh QR</button>
+                            <input type="file" id="kauth-qr-img-input" accept="image/*" style="display: none;" onchange="window.KryptoAuthenticator.decodeQrFromImageFile(this)">
+                        </div>
+                        <textarea id="kauth-import-uri-input" rows="2" placeholder="Dán chuỗi otpauth://totp/... hoặc otpauth-migration://offline?data=..." style="width: 100%; font-family: monospace; font-size: 11px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary);"></textarea>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                            <button type="button" class="btn-mobi-solid" style="font-size: 11.5px; padding: 8px;" onclick="window.KryptoAuthenticator.importUriOrMigrationUI()">📥 Nhập Từ URI</button>
+                            <button type="button" class="btn-mobi-outline" style="font-size: 11.5px; padding: 8px;" onclick="window.KryptoAuthenticator.exportGoogleMigrationQrUI()">📤 Xuất QR Google Auth</button>
+                        </div>
+                        <input type="text" id="kauth-export-migration-uri" readonly placeholder="Chuỗi otpauth-migration:// xuất ra sẽ hiển thị tại đây..." style="width: 100%; margin-top: 6px; font-family: monospace; font-size: 10.5px; padding: 6px 8px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 3: ALGORITHM LAB & OCRA TRANSACTION SIGNING -->
+            <div id="kauth-panel-lab" class="kauth-sub-panel" style="display: none;">
+                <div class="card settings-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--primary);">🔬 GIẢI PHẪU MẢNG BYTE HMAC &amp; CẮT ĐỘNG 31-BIT</span>
+                        <button type="button" class="btn-mini-gen" onclick="window.KryptoAuthenticator.runLabTrace()">⚡ Tính Lại</button>
+                    </div>
+                    <div class="dual-inputs-row" style="margin-bottom: 8px;">
+                        <div class="input-col">
+                            <label class="micro-label">Khóa Base32:</label>
+                            <input type="text" id="kauth-lab-secret" value="JBSWY3DPEHPK3PXP" oninput="window.KryptoAuthenticator.runLabTrace()" style="font-family: monospace;">
+                        </div>
+                        <div class="input-col">
+                            <label class="micro-label">Hàm băm &amp; Độ dài:</label>
+                            <div style="display: flex; gap: 4px;">
+                                <select id="kauth-lab-algo" onchange="window.KryptoAuthenticator.runLabTrace()" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11px;">
+                                    <option value="SHA1">SHA1</option>
+                                    <option value="SHA256">SHA256</option>
+                                    <option value="SHA512">SHA512</option>
+                                </select>
+                                <select id="kauth-lab-digits" onchange="window.KryptoAuthenticator.runLabTrace()" style="width:72px; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11px;">
+                                    <option value="6">6 số</option>
+                                    <option value="8">8 số</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="kauth-lab-trace-box"></div>
+
+                    <!-- OCRA Transaction Signer -->
+                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">✍️ KÝ XÁC THỰC GIAO DỊCH / HỒ SƠ (OCRA RFC 6287)</span>
+                            <button type="button" class="btn-mini-gen" onclick="window.KryptoAuthenticator.runOcraSign()">⚡ Sinh Mã OCRA</button>
+                        </div>
+                        <div class="dual-inputs-row">
+                            <div class="input-col">
+                                <label class="micro-label">Khóa Base32:</label>
+                                <input type="text" id="kauth-ocra-secret" value="JBSWY3DPEHPK3PXP" oninput="window.KryptoAuthenticator.runOcraSign()" style="font-family: monospace;">
+                            </div>
+                            <div class="input-col">
+                                <label class="micro-label">Đơn vị nhận / Đích:</label>
+                                <input type="text" id="kauth-ocra-recipient" value="IBST-CDE-2026" oninput="window.KryptoAuthenticator.runOcraSign()">
+                            </div>
+                        </div>
+                        <div class="dual-inputs-row" style="margin-top: 6px;">
+                            <div class="input-col">
+                                <label class="micro-label">Giá trị / Số lượng:</label>
+                                <input type="text" id="kauth-ocra-amount" value="150,000,000 VND" oninput="window.KryptoAuthenticator.runOcraSign()">
+                            </div>
+                            <div class="input-col">
+                                <label class="micro-label">Mã hồ sơ / Tham chiếu:</label>
+                                <input type="text" id="kauth-ocra-ref" value="HS-2026-089" oninput="window.KryptoAuthenticator.runOcraSign()">
+                            </div>
+                        </div>
+                        <div id="kauth-ocra-output"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 4: AES-256-GCM VAULT BACKUP & RESTORE -->
+            <div id="kauth-panel-backup" class="kauth-sub-panel" style="display: none;">
+                <div class="card settings-card">
+                    <span style="font-size: 12.5px; font-weight: 700; color: var(--primary); display: block; margin-bottom: 4px;">🔒 KÉT SAO LƯU 2FA (.KRYPTOVAULT — AES-256-GCM)</span>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px;">
+                        Mã hóa toàn bộ danh sách hạt giống 2FA bằng <code>PBKDF2-HMAC-SHA256</code> (600,000 vòng) kết hợp <code>AES-256-GCM</code> để lưu trữ độc lập khi đổi máy.
+                    </p>
+                    <div class="form-group-compact">
+                        <label class="micro-label">Mật khẩu chủ để Mã hóa &amp; Tải xuống (.kryptovault):</label>
+                        <input type="password" id="kauth-vault-export-pass" placeholder="Nhập mật khẩu chủ (>= 4 ký tự)...">
+                    </div>
+                    <button type="button" class="btn-cyber-dialog-primary" style="margin-top: 8px; width: 100%;" onclick="window.KryptoAuthenticator.exportEncryptedVaultUI()">
+                        <span>📤 Mã Hóa AES-256-GCM &amp; Xuất Tệp .kryptovault</span>
+                    </button>
+
+                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-title);">📥 KHÔI PHỤC TỪ TỆP .KRYPTOVAULT</span>
+                            <button type="button" class="btn-chip-micro" onclick="document.getElementById('kauth-vault-file-input').click()">📂 Chọn Tệp</button>
+                            <input type="file" id="kauth-vault-file-input" accept=".kryptovault,.json" style="display: none;" onchange="window.KryptoAuthenticator.handleVaultFileSelected(this)">
+                        </div>
+                        <input type="password" id="kauth-vault-import-pass" placeholder="Nhập mật khẩu chủ lúc sao lưu..." style="width: 100%; margin-bottom: 6px;">
+                        <textarea id="kauth-vault-json-box" rows="3" placeholder="Nội dung JSON mã hóa của tệp .kryptovault..." style="width: 100%; font-family: monospace; font-size: 10.5px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary);"></textarea>
+                        <button type="button" class="btn-mobi-outline" style="margin-top: 8px; width: 100%; font-size: 12px;" onclick="window.KryptoAuthenticator.importEncryptedVaultUI()">
+                            🔓 Giải Mã &amp; Khôi Phục Danh Bạ 2FA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Hiển thị Mã QR Cấp phát 2FA / Google Migration -->
+        <div id="kauth-qr-modal-overlay" class="cyber-dialog-overlay" style="display: none;" onclick="window.KryptoAuthenticator.closeQrModal()">
+            <div class="cyber-dialog-card" style="max-width: 340px; width: 92%; padding: 18px;" onclick="event.stopPropagation()">
+                <h3 id="kauth-qr-modal-title" style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--text-title);">Mã QR Xác Thực 2FA</h3>
+                <div id="kauth-qr-modal-canvas-box" style="background: #ffffff; padding: 12px; border-radius: 10px; display: inline-flex; justify-content: center; margin: 0 auto 10px;"></div>
+                <textarea id="kauth-qr-modal-uri" rows="2" readonly style="width: 100%; font-family: monospace; font-size: 10px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); margin-bottom: 10px;"></textarea>
+                <button type="button" class="btn-cyber-dialog-primary" style="width: 100%; padding: 9px;" onclick="window.KryptoAuthenticator.closeQrModal()">
+                    <span>Đóng</span>
+                </button>
             </div>
         </div>
 
@@ -740,7 +1045,7 @@
             <p>Krypto Vault • Mật Mã Hậu Lượng Tử ML-KEM-768 • Offline 100%</p>
         </footer>
 
-        <!-- Bottom Navigation Bar (Flat 4 Tabs) -->
+        <!-- Bottom Navigation Bar (Flat 5 Tabs) -->
         <nav class="bottom-nav-bar" id="bottom-nav-bar">
             <button type="button" class="bottom-nav-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
                 <span class="nav-icon">🏠</span>
@@ -753,6 +1058,10 @@
             <button type="button" class="bottom-nav-btn" id="tab-btn-audit" onclick="switchTab('audit')">
                 <span class="nav-icon">🔎</span>
                 <span class="nav-label">Pháp y</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-auth" onclick="switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
+                <span class="nav-icon">🔢</span>
+                <span class="nav-label">2FA OTP</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-vault" onclick="switchTab('vault')">
                 <span class="nav-icon">🛡️</span>
@@ -778,6 +1087,14 @@
         </div>
         <div class="drawer-content">
             <div class="drawer-section-title">HỆ THỐNG & CÀI ĐẶT</div>
+            <div class="drawer-menu-item" onclick="closeAppDrawer(); switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
+                <span class="drawer-menu-icon">🔢</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Bộ Xác Thực 2FA / Authenticator</div>
+                    <div class="drawer-menu-desc">Sinh mã 6 số TOTP/HOTP/OCRA &amp; Google Auth</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
             <div class="drawer-menu-item" onclick="openVaultSettingsFromMenu()">
                 <span class="drawer-menu-icon">⚙️</span>
                 <div class="drawer-menu-text">
@@ -824,7 +1141,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.8.9 FIPS-140-3</strong>
+                    <strong id="drawer-app-version">v2.9.0 FIPS-140-3</strong>
                 </div>
             </div>
 
@@ -951,9 +1268,11 @@
     </div>
 
     <script src="static/qrcode.min.js"></script>
+    <script src="static/app.js"></script>
     <script src="static/watermark_presets.js"></script>
     <script src="static/pqc_crypto_engine.js"></script>
     <script src="static/hsm_signature_engine.js"></script>
+    <script src="static/krypto_authenticator_engine.js"></script>
     <script src="static/mobile_app.js"></script>
 </body>
 </html>

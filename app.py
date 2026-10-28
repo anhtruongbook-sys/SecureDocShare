@@ -26,6 +26,15 @@ from core.hsm_signature import (
     PDFPAdESHSMSigner,
     SMIMEEmailWorkflowEngine,
 )
+from core.authenticator import (
+    AuthenticatorAccount,
+    Base32Codec,
+    EncryptedAuthenticatorVault,
+    GoogleAuthMigrationCodec,
+    HOTPEngine,
+    OCRAEngine,
+    TOTPEngine,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
@@ -425,4 +434,115 @@ async def api_hsm_import_migration(
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# =========================================================================
+# CÁC API BỘ XÁC THỰC KRYPTO AUTHENTICATOR (HOTP / TOTP / OCRA / GOOGLE AUTH)
+# =========================================================================
+
+@app.post("/api/authenticator/generate")
+async def api_authenticator_generate(
+    secret: str = Form(...),
+    otp_type: str = Form("totp"),
+    algorithm: str = Form("SHA1"),
+    digits: int = Form(6),
+    period: int = Form(30),
+    counter: int = Form(0),
+    timestamp: Optional[float] = Form(None),
+    ocra_recipient: Optional[str] = Form(None),
+    ocra_amount: Optional[str] = Form(None),
+    ocra_reference: Optional[str] = Form(None),
+):
+    """Sinh mã xác thực TOTP (RFC 6238), HOTP (RFC 4226) hoặc OCRA (RFC 6287) kèm vết giải phẫu byte."""
+    try:
+        kind = otp_type.strip().lower()
+        if kind == "ocra":
+            res = OCRAEngine.generate_transaction_otp(
+                secret_b32_or_bytes=secret,
+                recipient=ocra_recipient or "",
+                amount=ocra_amount or "",
+                reference=ocra_reference or "",
+                timestamp=timestamp,
+                period=period,
+                digits=digits if digits in (6, 7, 8) else 8,
+            )
+            return {"status": "SUCCESS", "mode": "ocra", "result": res}
+        elif kind == "hotp":
+            secret_bytes = Base32Codec.decode(secret)
+            trace = HOTPEngine.compute_with_trace(
+                secret_bytes=secret_bytes,
+                counter=counter,
+                digits=digits,
+                algorithm=algorithm,
+            )
+            return {"status": "SUCCESS", "mode": "hotp", "otp": trace.otp, "trace": trace.__dict__}
+        else:
+            res = TOTPEngine.compute_with_trace(
+                secret_b32_or_bytes=secret,
+                timestamp=timestamp,
+                period=period,
+                digits=digits,
+                algorithm=algorithm,
+            )
+            return {"status": "SUCCESS", "mode": "totp", **res}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/authenticator/verify")
+async def api_authenticator_verify(
+    secret: str = Form(...),
+    candidate_otp: str = Form(...),
+    algorithm: str = Form("SHA1"),
+    digits: int = Form(6),
+    period: int = Form(30),
+    window: int = Form(1),
+    timestamp: Optional[float] = Form(None),
+):
+    """Kiểm tra mã TOTP với cửa sổ dung sai lệch đồng hồ [-window, +window]."""
+    try:
+        is_valid, delta = TOTPEngine.verify(
+            secret_b32_or_bytes=secret,
+            candidate_otp=candidate_otp,
+            timestamp=timestamp,
+            period=period,
+            digits=digits,
+            algorithm=algorithm,
+            window=window,
+        )
+        return {
+            "status": "SUCCESS",
+            "valid": is_valid,
+            "matched_step_delta": delta,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/authenticator/migration/decode")
+async def api_authenticator_migration_decode(
+    uri: str = Form(...),
+):
+    """Giải mã chuỗi otpauth:// hoặc chuỗi chuyển vùng Google Authenticator (otpauth-migration://offline?data=...)."""
+    try:
+        cleaned = uri.strip()
+        if cleaned.lower().startswith("otpauth-migration://"):
+            accounts = GoogleAuthMigrationCodec.decode_migration_uri(cleaned)
+            return {
+                "status": "SUCCESS",
+                "source": "google_authenticator_migration",
+                "count": len(accounts),
+                "accounts": [a.__dict__ for a in accounts],
+            }
+        else:
+            acc = AuthenticatorAccount.from_otpauth_uri(cleaned)
+            return {
+                "status": "SUCCESS",
+                "source": "otpauth_uri",
+                "count": 1,
+                "accounts": [acc.__dict__],
+            }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 

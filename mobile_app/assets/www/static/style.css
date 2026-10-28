@@ -3480,4 +3480,119 @@ body.theme-light .audit-report-table td {
     }
 }
 
+/* ==========================================================================
+   TAB 5: KRYPTO AUTHENTICATOR (2FA / MFA OFFLINE — SINGLE-LEVEL CARD RULE 14)
+   ========================================================================== */
+#tab-auth,
+.kauth-sub-panel,
+#krypto-auth-otp-list {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.krypto-otp-item-card {
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s ease;
+}
+
+.krypto-otp-item-card:hover {
+    border-color: var(--primary);
+}
+
+.krypto-otp-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.krypto-otp-issuer {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-title);
+}
+
+.krypto-otp-account {
+    font-size: 11px;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.krypto-otp-badge {
+    font-size: 10px;
+    font-weight: 600;
+    font-family: monospace;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.krypto-otp-code-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.krypto-otp-digits {
+    font-family: "JetBrains Mono", "Consolas", monospace;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    color: var(--primary);
+}
+
+.krypto-otp-digits.expiring {
+    color: #ef4444;
+}
+
+.krypto-timer-ring {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.krypto-timer-sec {
+    position: absolute;
+    font-size: 10.5px;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--text-title);
+}
+
+.krypto-otp-footer {
+    border-top: 1px dashed var(--border);
+    padding-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.krypto-otp-next {
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--text-muted);
+}
+
+.kauth-cat-chip.active,
+.kauth-sub-btn.active {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border-color: var(--primary) !important;
+}
+
+
 

@@ -66,10 +66,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.8.9
-          name: "Krypto v2.8.9 - Chuẩn Bảo Mật Quốc Tế Nghiêm Ngặt (FIPS 140-3 / PKCS#11 / NIST SP 800-57 Key Retention / RFC 5280)"
+          tag_name: v2.9.0
+          name: "Krypto v2.9.0 - Tích Hợp Bộ Xác Thực 2FA / MFA (HOTP / TOTP / OCRA / Google Auth Migration) & Ký Số HSM PKCS#11"
           body: |
-            ## Ứng dụng Di Động Krypto v2.8.9 (Strict FIPS 140-3 / PKCS#11 / NIST SP 800-57 Key Retention)
+            ## Ứng dụng Di Động Krypto v2.9.0 (Integrated 2FA Authenticator + FIPS 140-3 / PKCS#11 HSM)
+            - **Tích hợp Bộ Xác Thực Đa Nhân Tố Krypto Authenticator (`2FA / MFA Offline 100%`)**:
+              + Hỗ trợ đầy đủ chuẩn `IETF RFC 4226 (HOTP)`, `RFC 6238 (TOTP — SHA1/SHA256/SHA512, 6/8 số)`, và ký xác thực giao dịch theo ngữ cảnh `RFC 6287 (OCRA)`.
+              + Tự động liên kết và ghim hạt giống 2FA của Buồng HSM Cá Nhân (`Krypto HSM PKCS#11`) ngay đầu danh sách.
+              + Hỗ trợ nhập/xuất hai chiều với Google Authenticator qua định dạng chuẩn `otpauth://` và chuỗi nhị phân `Protocol Buffers` (`otpauth-migration://offline?data=...`).
+              + Bảo vệ danh bạ khóa 2FA bằng tệp két sắt `.kryptovault` (`PBKDF2-HMAC-SHA256 600.000 vòng` + `AES-256-GCM`).
             - **Zero Hardcoded Key & Zero Hidden Anchor (`FIPS 140-3` & `OASIS PKCS#11 v3.0`)**:
               + Xóa bỏ hoàn toàn khóa nhúng tĩnh và khóa neo ngầm (`device_anchor_wrapped`).
               + Cặp khóa `ECDSA P-256` được sinh ngẫu nhiên 100% ngay trên thiết bị (`On-Device CSPRNG`) và chỉ bọc bởi `USER_PIN` + `SO_PIN` (`PBKDF2-HMAC-SHA512 250.000 vòng lặp` + `AES-256-GCM`).
