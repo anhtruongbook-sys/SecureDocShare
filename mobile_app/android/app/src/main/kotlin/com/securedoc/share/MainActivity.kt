@@ -73,6 +73,11 @@ class MainActivity: FlutterFragmentActivity() {
     @Suppress("DEPRECATION")
     private var nativeCamera: android.hardware.Camera? = null
     private var nativeSurfaceTexture: android.graphics.SurfaceTexture? = null
+    private var camera2Device: android.hardware.camera2.CameraDevice? = null
+    private var camera2Session: android.hardware.camera2.CameraCaptureSession? = null
+    private var camera2ImageReader: android.media.ImageReader? = null
+    private var camera2Thread: android.os.HandlerThread? = null
+    private var camera2Handler: android.os.Handler? = null
     @Volatile private var latestCameraFrameB64: String? = null
     @Volatile private var isEncodingCameraFrame: Boolean = false
     @Volatile private var lastCameraFrameTimeMs: Long = 0L
@@ -95,7 +100,9 @@ class MainActivity: FlutterFragmentActivity() {
     }
 
     override fun onPause() {
-        stopNativeCameraInternal()
+        if (pendingCameraPermissionResult == null) {
+            stopNativeCameraInternal()
+        }
         super.onPause()
     }
 
@@ -216,6 +223,24 @@ class MainActivity: FlutterFragmentActivity() {
     @Suppress("DEPRECATION")
     private fun stopNativeCameraInternal() {
         try {
+            camera2Session?.close()
+        } catch (_: Throwable) {}
+        camera2Session = null
+        try {
+            camera2Device?.close()
+        } catch (_: Throwable) {}
+        camera2Device = null
+        try {
+            camera2ImageReader?.close()
+        } catch (_: Throwable) {}
+        camera2ImageReader = null
+        try {
+            camera2Thread?.quitSafely()
+        } catch (_: Throwable) {}
+        camera2Thread = null
+        camera2Handler = null
+
+        try {
             nativeCamera?.setPreviewCallback(null)
         } catch (_: Throwable) {}
         try {
@@ -233,10 +258,195 @@ class MainActivity: FlutterFragmentActivity() {
         isEncodingCameraFrame = false
     }
 
+    private fun yuv420ToNv21(image: android.media.Image): ByteArray {
+        val width = image.width
+        val height = image.height
+        val ySize = width * height
+        val uvSize = width * height / 2
+        val nv21 = ByteArray(ySize + uvSize)
+
+        val yBuffer = image.planes[0].buffer
+        val uBuffer = image.planes[1].buffer
+        val vBuffer = image.planes[2].buffer
+
+        val yRowStride = image.planes[0].rowStride
+        val yPixelStride = image.planes[0].pixelStride
+
+        var pos = 0
+        for (row in 0 until height) {
+            val rowStart = row * yRowStride
+            for (col in 0 until width) {
+                val idx = rowStart + col * yPixelStride
+                if (idx < yBuffer.limit()) {
+                    nv21[pos++] = yBuffer.get(idx)
+                } else {
+                    pos++
+                }
+            }
+        }
+
+        val vRowStride = image.planes[2].rowStride
+        val vPixelStride = image.planes[2].pixelStride
+        val uRowStride = image.planes[1].rowStride
+        val uPixelStride = image.planes[1].pixelStride
+        val uvHeight = height / 2
+        val uvWidth = width / 2
+
+        for (row in 0 until uvHeight) {
+            for (col in 0 until uvWidth) {
+                val vIdx = row * vRowStride + col * vPixelStride
+                val uIdx = row * uRowStride + col * uPixelStride
+                if (pos + 1 < nv21.size) {
+                    nv21[pos++] = if (vIdx < vBuffer.limit()) vBuffer.get(vIdx) else 128.toByte()
+                    nv21[pos++] = if (uIdx < uBuffer.limit()) uBuffer.get(uIdx) else 128.toByte()
+                }
+            }
+        }
+        return nv21
+    }
+
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun startCamera2Internal(facing: String): Boolean {
+        return try {
+            val manager = getSystemService(Context.CAMERA_SERVICE) as? android.hardware.camera2.CameraManager ?: return false
+            val targetLens = if (facing == "front") {
+                android.hardware.camera2.CameraCharacteristics.LENS_FACING_FRONT
+            } else {
+                android.hardware.camera2.CameraCharacteristics.LENS_FACING_BACK
+            }
+            var selectedId: String? = null
+            var sensorOrientation = 90
+            var isFront = false
+
+            for (cid in manager.cameraIdList) {
+                val chars = manager.getCameraCharacteristics(cid)
+                val lens = chars.get(android.hardware.camera2.CameraCharacteristics.LENS_FACING)
+                if (lens == targetLens) {
+                    selectedId = cid
+                    sensorOrientation = chars.get(android.hardware.camera2.CameraCharacteristics.SENSOR_ORIENTATION) ?: 90
+                    isFront = (lens == android.hardware.camera2.CameraCharacteristics.LENS_FACING_FRONT)
+                    break
+                }
+            }
+            if (selectedId == null && manager.cameraIdList.isNotEmpty()) {
+                selectedId = manager.cameraIdList[0]
+                val chars = manager.getCameraCharacteristics(selectedId!!)
+                sensorOrientation = chars.get(android.hardware.camera2.CameraCharacteristics.SENSOR_ORIENTATION) ?: 90
+                isFront = (chars.get(android.hardware.camera2.CameraCharacteristics.LENS_FACING) == android.hardware.camera2.CameraCharacteristics.LENS_FACING_FRONT)
+            }
+            val finalCamId = selectedId ?: return false
+
+            val thread = android.os.HandlerThread("KryptoCamera2Thread")
+            thread.start()
+            val handler = android.os.Handler(thread.looper)
+            camera2Thread = thread
+            camera2Handler = handler
+
+            val pWidth = 640
+            val pHeight = 480
+            val reader = android.media.ImageReader.newInstance(pWidth, pHeight, android.graphics.ImageFormat.YUV_420_888, 2)
+            camera2ImageReader = reader
+
+            reader.setOnImageAvailableListener({ ir ->
+                val img = try { ir.acquireLatestImage() } catch (_: Throwable) { null } ?: return@setOnImageAvailableListener
+                try {
+                    val now = System.currentTimeMillis()
+                    if (!isEncodingCameraFrame && (now - lastCameraFrameTimeMs >= 80L)) {
+                        isEncodingCameraFrame = true
+                        lastCameraFrameTimeMs = now
+                        val nv21Bytes = yuv420ToNv21(img)
+                        val w = img.width
+                        val h = img.height
+                        executor.execute {
+                            try {
+                                val yuv = android.graphics.YuvImage(nv21Bytes, android.graphics.ImageFormat.NV21, w, h, null)
+                                val rawOut = ByteArrayOutputStream()
+                                yuv.compressToJpeg(android.graphics.Rect(0, 0, w, h), 82, rawOut)
+                                val jpegBytes = rawOut.toByteArray()
+                                val bmp = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+                                if (bmp != null) {
+                                    val matrix = android.graphics.Matrix()
+                                    matrix.postRotate(sensorOrientation.toFloat())
+                                    if (isFront) {
+                                        matrix.postScale(-1f, 1f)
+                                    }
+                                    val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+                                    if (rotated != bmp) {
+                                        bmp.recycle()
+                                    }
+                                    val finalOut = ByteArrayOutputStream()
+                                    rotated.compress(Bitmap.CompressFormat.JPEG, 80, finalOut)
+                                    rotated.recycle()
+                                    latestCameraFrameB64 = Base64.encodeToString(finalOut.toByteArray(), Base64.NO_WRAP)
+                                }
+                            } catch (_: Throwable) {
+                            } finally {
+                                isEncodingCameraFrame = false
+                            }
+                        }
+                    }
+                } catch (_: Throwable) {
+                } finally {
+                    try { img.close() } catch (_: Throwable) {}
+                }
+            }, handler)
+
+            manager.openCamera(finalCamId, object : android.hardware.camera2.CameraDevice.StateCallback() {
+                override fun onOpened(camera: android.hardware.camera2.CameraDevice) {
+                    camera2Device = camera
+                    try {
+                        @Suppress("DEPRECATION")
+                        camera.createCaptureSession(
+                            listOf(reader.surface),
+                            object : android.hardware.camera2.CameraCaptureSession.StateCallback() {
+                                override fun onConfigured(session: android.hardware.camera2.CameraCaptureSession) {
+                                    camera2Session = session
+                                    try {
+                                        val reqBuilder = camera.createCaptureRequest(android.hardware.camera2.CameraDevice.TEMPLATE_PREVIEW)
+                                        reqBuilder.addTarget(reader.surface)
+                                        reqBuilder.set(
+                                            android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE,
+                                            android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                                        )
+                                        reqBuilder.set(
+                                            android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE,
+                                            android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_ON
+                                        )
+                                        session.setRepeatingRequest(reqBuilder.build(), null, handler)
+                                    } catch (_: Throwable) {}
+                                }
+
+                                override fun onConfigureFailed(session: android.hardware.camera2.CameraCaptureSession) {}
+                            },
+                            handler
+                        )
+                    } catch (_: Throwable) {}
+                }
+
+                override fun onDisconnected(camera: android.hardware.camera2.CameraDevice) {
+                    try { camera.close() } catch (_: Throwable) {}
+                    camera2Device = null
+                }
+
+                override fun onError(camera: android.hardware.camera2.CameraDevice, error: Int) {
+                    try { camera.close() } catch (_: Throwable) {}
+                    camera2Device = null
+                }
+            }, handler)
+
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
     @Suppress("DEPRECATION")
     private fun startNativeCameraInternal(facing: String): Boolean {
         stopNativeCameraInternal()
         currentCameraFacing = facing
+        if (startCamera2Internal(facing)) {
+            return true
+        }
         return try {
             val targetFacing = if (facing == "front") {
                 android.hardware.Camera.CameraInfo.CAMERA_FACING_FRONT
@@ -299,6 +509,7 @@ class MainActivity: FlutterFragmentActivity() {
             val pHeight = actualSize?.height ?: bestHeight
 
             val surfTex = android.graphics.SurfaceTexture(10)
+            try { surfTex.detachFromGLContext() } catch (_: Throwable) {}
             nativeSurfaceTexture = surfTex
             cam.setPreviewTexture(surfTex)
 

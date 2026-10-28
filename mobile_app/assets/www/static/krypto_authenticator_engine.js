@@ -1358,17 +1358,32 @@
       if (titleEl) titleEl.textContent = `${acc.issuer} (${acc.accountName})`;
       if (uriEl) uriEl.value = uri;
       renderRealQrCode(boxEl, uri);
-      if (modal) modal.style.display = "flex";
+      if (modal) {
+        modal.style.display = "flex";
+        modal.style.opacity = "1";
+        modal.style.pointerEvents = "auto";
+        modal.classList.add("active", "show");
+      }
     },
 
     closeQrModal() {
       const modal = document.getElementById("kauth-qr-modal-overlay");
-      if (modal) modal.style.display = "none";
+      if (modal) {
+        modal.classList.remove("active", "show");
+        modal.style.opacity = "0";
+        modal.style.pointerEvents = "none";
+        modal.style.display = "none";
+      }
     },
 
     openCameraQrScanner() {
       const modal = document.getElementById("kauth-camera-modal-overlay");
-      if (modal) modal.style.display = "flex";
+      if (modal) {
+        modal.style.display = "flex";
+        modal.style.opacity = "1";
+        modal.style.pointerEvents = "auto";
+        modal.classList.add("active", "show");
+      }
       startCameraQrStream("environment");
     },
 
@@ -1386,7 +1401,12 @@
     closeCameraQrScanner() {
       stopCameraStream();
       const modal = document.getElementById("kauth-camera-modal-overlay");
-      if (modal) modal.style.display = "none";
+      if (modal) {
+        modal.classList.remove("active", "show");
+        modal.style.opacity = "0";
+        modal.style.pointerEvents = "none";
+        modal.style.display = "none";
+      }
     },
 
     captureSystemCameraPhoto() {
@@ -1570,7 +1590,12 @@
         if (titleEl) titleEl.textContent = `Google Auth Migration (${accounts.length} tài khoản)`;
         if (uriEl) uriEl.value = uri;
         renderRealQrCode(boxEl, uri);
-        if (modal) modal.style.display = "flex";
+        if (modal) {
+          modal.style.display = "flex";
+          modal.style.opacity = "1";
+          modal.style.pointerEvents = "auto";
+          modal.classList.add("active", "show");
+        }
         notifyUser("📱 Quét mã QR này từ Google Authenticator để chuyển toàn bộ tài khoản");
       } catch (err) {
         notifyUser("⚠️ " + err.message);

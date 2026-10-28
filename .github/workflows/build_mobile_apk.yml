@@ -66,10 +66,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.2
-          name: "Krypto v2.9.2 - Cầu Nối Máy Ảnh Phần Cứng Native Android (startNativeCamera) Quét QR 2FA Trực Tiếp"
+          tag_name: v2.9.3
+          name: "Krypto v2.9.3 - Khắc Phục Hiển Thị Modal Máy Ảnh (.active.show) & Tích Hợp Camera2 API (YUV_420_888 ImageReader)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.2 (Native Hardware Camera Bridge + Live QR Scanner + Zero Dummy Accounts)
+            ## Ứng dụng Di Động Krypto v2.9.3 (Camera2 Hardware Stream + Modal Visibility Fix + Live QR Scanner)
+            - **Khắc phục lỗi ẩn Modal Quét QR (`.cyber-dialog-overlay.active.show`)**:
+              + Bổ sung gán lớp `.active.show` và `opacity: 1; pointer-events: auto;` khi mở hộp thoại `#kauth-camera-modal-overlay` và `#kauth-qr-modal-overlay`, đồng thời đưa hộp thoại ra cấp gốc `<body>` để hiển thị nổi hoàn toàn trên mọi thiết bị.
+            - **Nâng cấp Động cơ Máy ảnh Phần cứng lên chuẩn `Android Camera2 API` (`android.hardware.camera2`)**:
+              + Sử dụng trực tiếp `CameraManager` + `ImageReader (YUV_420_888)` trên luồng độc lập `HandlerThread` với cơ chế giải phóng buffer tức thời (`img.close()`), tương thích 100% với Samsung One UI (HAL3) mà không bị nghẽn `SurfaceTexture`.
             - **Khắc phục triệt để lỗi Máy ảnh trên Android WebView (`file://` Non-Secure Context)**:
               + Do ứng dụng hoạt động Offline 100% qua giao thức `file:///android_asset/...`, trình duyệt Chromium WebView chặn `navigator.mediaDevices.getUserMedia` và `FilePicker` ghi đè `<input type="file">`.
               + Đã tích hợp **Cầu nối Máy ảnh Phần cứng Native Android** trực tiếp trong `MainActivity.kt` (`android.hardware.Camera` + `SurfaceTexture` + `YuvImage` tự động lấy nét liên tục `FOCUS_MODE_CONTINUOUS_PICTURE` + xoay khung hình chuẩn xác theo cảm biến) truyền luồng hình ảnh thời gian thực sang `Canvas` + `jsQR` để quét mã QR trực tiếp.
