@@ -66,10 +66,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.4
-          name: "Krypto v2.9.4 - Khôi Phục Đầy Đủ Kho Tri Thức Chat (YouTube / GitHub / FB / Web) + 2FA OTP Camera2 + HSM PKCS#11"
+          tag_name: v2.9.5
+          name: "Krypto v2.9.5 - Giao Diện Quét Mã QR Phẳng Toàn Màn Hình (Full-Screen Flat QR Scanner + Đèn Flash + Vùng Quét Lớn)"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.4 (6-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • 2FA OTP • Két sắt)
+            ## Ứng dụng Di Động Krypto v2.9.5 (6-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • 2FA OTP • Két sắt)
+            - **Thiết kế lại toàn diện Giao Diện Quét Mã QR Phẳng Toàn Màn Hình (`Full-Screen Flat QR Scanner`)**:
+              + Thay thế hộp thoại popup nhỏ hẹp cũ bằng giao diện phẳng tràn viền toàn màn hình (`100vw x 100dvh`), không lồng thẻ, hiển thị luồng máy ảnh độ phân giải cao sắc nét.
+              + Mở rộng vùng ngắm quét mã QR lên kích thước lớn (`min(82vw, 330px)` — diện tích lớn gấp 4 lần khung cũ) với 4 góc định vị phẳng sắc nét và tia quét ngang tự động.
+              + Tích hợp thanh điều khiển phẳng phía trên (**`← Đóng`**, **`🔦 Đèn Flash`** bật/tắt trực tiếp trên phần cứng Camera2, **`🔄 Lật`** máy ảnh trước/sau) và thanh tác vụ phẳng 3 nút phía dưới (**`🖼️ Chọn ảnh QR`**, **`📸 Chụp nét cao`**, **`⌨️ Nhập khóa tay`**).
+              + Bổ sung thuật toán quét kép (`Dual-Pass Multi-Zone jsQR`) vừa quét toàn khung hình vừa cắt vùng trung tâm để nhận diện tức thời cả mã QR cỡ lớn lẫn mã QR nhỏ trên màn hình máy tính/điện thoại.
             - **Khôi phục đầy đủ Tab `🧠 Tri thức` (`Kho Tri Thức & Phân Tích Link Share`)**:
               + Lưu giữ, bóc tách phụ đề/nội dung và phân tích thông minh các đường link chia sẻ trực tiếp (`Intent.ACTION_SEND`) từ **YouTube** (`[mm:ss]` transcript wisdom), **GitHub**, **Facebook**, **Zalo**, và **Trình duyệt Web** với cơ chế lưu trữ bền vững 3 lớp (`Triple-Persistence`).
               + Tích hợp đồng thời đầy đủ cả 6 phân hệ trên thanh điều hướng dưới cùng: **`🏠 Trang chủ` • `🔓 Mở khóa` • `🔎 Pháp y` • `🧠 Tri thức` • `🔢 2FA OTP` • `🛡️ Két sắt`**.

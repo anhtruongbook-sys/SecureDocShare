@@ -75,9 +75,11 @@ class MainActivity: FlutterFragmentActivity() {
     private var nativeSurfaceTexture: android.graphics.SurfaceTexture? = null
     private var camera2Device: android.hardware.camera2.CameraDevice? = null
     private var camera2Session: android.hardware.camera2.CameraCaptureSession? = null
+    private var camera2CaptureRequestBuilder: android.hardware.camera2.CaptureRequest.Builder? = null
     private var camera2ImageReader: android.media.ImageReader? = null
     private var camera2Thread: android.os.HandlerThread? = null
     private var camera2Handler: android.os.Handler? = null
+    private var isCamera2TorchOn: Boolean = false
     @Volatile private var latestCameraFrameB64: String? = null
     @Volatile private var isEncodingCameraFrame: Boolean = false
     @Volatile private var lastCameraFrameTimeMs: Long = 0L
@@ -222,6 +224,8 @@ class MainActivity: FlutterFragmentActivity() {
 
     @Suppress("DEPRECATION")
     private fun stopNativeCameraInternal() {
+        isCamera2TorchOn = false
+        camera2CaptureRequestBuilder = null
         try {
             camera2Session?.close()
         } catch (_: Throwable) {}
@@ -256,6 +260,40 @@ class MainActivity: FlutterFragmentActivity() {
         nativeSurfaceTexture = null
         latestCameraFrameB64 = null
         isEncodingCameraFrame = false
+    }
+
+    @Suppress("DEPRECATION")
+    private fun toggleNativeCameraTorchInternal(): Boolean {
+        try {
+            val session = camera2Session
+            val reqBuilder = camera2CaptureRequestBuilder
+            if (session != null && reqBuilder != null) {
+                isCamera2TorchOn = !isCamera2TorchOn
+                reqBuilder.set(
+                    android.hardware.camera2.CaptureRequest.FLASH_MODE,
+                    if (isCamera2TorchOn) android.hardware.camera2.CaptureRequest.FLASH_MODE_TORCH
+                    else android.hardware.camera2.CaptureRequest.FLASH_MODE_OFF
+                )
+                session.setRepeatingRequest(reqBuilder.build(), null, camera2Handler)
+                return isCamera2TorchOn
+            }
+            val cam = nativeCamera
+            if (cam != null) {
+                val params = cam.parameters
+                val modes = params.supportedFlashModes
+                if (modes != null && modes.contains(android.hardware.Camera.Parameters.FLASH_MODE_TORCH)) {
+                    isCamera2TorchOn = !isCamera2TorchOn
+                    params.flashMode = if (isCamera2TorchOn) {
+                        android.hardware.Camera.Parameters.FLASH_MODE_TORCH
+                    } else {
+                        android.hardware.Camera.Parameters.FLASH_MODE_OFF
+                    }
+                    cam.parameters = params
+                    return isCamera2TorchOn
+                }
+            }
+        } catch (_: Throwable) {}
+        return false
     }
 
     private fun yuv420ToNv21(image: android.media.Image): ByteArray {
@@ -335,6 +373,24 @@ class MainActivity: FlutterFragmentActivity() {
                 isFront = (chars.get(android.hardware.camera2.CameraCharacteristics.LENS_FACING) == android.hardware.camera2.CameraCharacteristics.LENS_FACING_FRONT)
             }
             val finalCamId = selectedId ?: return false
+            val finalChars = manager.getCameraCharacteristics(finalCamId)
+            val streamMap = finalChars.get(android.hardware.camera2.CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+            val yuvSizes = streamMap?.getOutputSizes(android.graphics.ImageFormat.YUV_420_888)
+            var pWidth = 640
+            var pHeight = 480
+            if (yuvSizes != null && yuvSizes.isNotEmpty()) {
+                var bestDiff = Int.MAX_VALUE
+                for (sz in yuvSizes) {
+                    if (sz.width <= 1280 && sz.height <= 960) {
+                        val diff = kotlin.math.abs(sz.width - 960) + kotlin.math.abs(sz.height - 720)
+                        if (diff < bestDiff) {
+                            bestDiff = diff
+                            pWidth = sz.width
+                            pHeight = sz.height
+                        }
+                    }
+                }
+            }
 
             val thread = android.os.HandlerThread("KryptoCamera2Thread")
             thread.start()
@@ -342,8 +398,6 @@ class MainActivity: FlutterFragmentActivity() {
             camera2Thread = thread
             camera2Handler = handler
 
-            val pWidth = 640
-            val pHeight = 480
             val reader = android.media.ImageReader.newInstance(pWidth, pHeight, android.graphics.ImageFormat.YUV_420_888, 2)
             camera2ImageReader = reader
 
@@ -412,6 +466,7 @@ class MainActivity: FlutterFragmentActivity() {
                                             android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE,
                                             android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_ON
                                         )
+                                        camera2CaptureRequestBuilder = reqBuilder
                                         session.setRepeatingRequest(reqBuilder.build(), null, handler)
                                     } catch (_: Throwable) {}
                                 }
@@ -1653,6 +1708,12 @@ class MainActivity: FlutterFragmentActivity() {
                         val nextFacing = if (currentCameraFacing == "back") "front" else "back"
                         val ok = startNativeCameraInternal(nextFacing)
                         result.success(ok)
+                    }
+                }
+                "toggleNativeCameraTorch" -> {
+                    runOnUiThread {
+                        val torchState = toggleNativeCameraTorchInternal()
+                        result.success(torchState)
                     }
                 }
                 "stopNativeCamera" -> {

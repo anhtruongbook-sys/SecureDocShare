@@ -1108,13 +1108,27 @@
   // ==========================================================================
   function decodeQrFromCanvasContext(ctx, width, height) {
     if (width <= 0 || height <= 0) return null;
-    const imgData = ctx.getImageData(0, 0, width, height);
     if (typeof window.jsQR === "function") {
+      const imgData = ctx.getImageData(0, 0, width, height);
       const code = window.jsQR(imgData.data, width, height, {
         inversionAttempts: "attemptBoth"
       });
       if (code && code.data) {
         return code.data.trim();
+      }
+      // Second pass: cropped center region (68% x 68%) for small or distant QR codes inside the large scan box
+      const cropW = Math.floor(width * 0.68);
+      const cropH = Math.floor(height * 0.68);
+      if (cropW >= 120 && cropH >= 120) {
+        const startX = Math.floor((width - cropW) / 2);
+        const startY = Math.floor((height - cropH) / 2);
+        const centerData = ctx.getImageData(startX, startY, cropW, cropH);
+        const centerCode = window.jsQR(centerData.data, cropW, cropH, {
+          inversionAttempts: "attemptBoth"
+        });
+        if (centerCode && centerCode.data) {
+          return centerCode.data.trim();
+        }
       }
     }
     return null;
@@ -1150,6 +1164,10 @@
   function stopCameraStream() {
     isNativeCameraActive = false;
     isDecodingNativeFrame = false;
+    const torchBtn = document.getElementById("kauth-btn-torch");
+    if (torchBtn) {
+      torchBtn.classList.remove("torch-on");
+    }
     if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
       try {
         window.FlutterBridge.postMessage(JSON.stringify({ action: "stop_native_camera" }));
@@ -1389,6 +1407,8 @@
 
     switchCameraFacing() {
       currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      const torchBtn = document.getElementById("kauth-btn-torch");
+      if (torchBtn) torchBtn.classList.remove("torch-on");
       if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
         try {
           window.FlutterBridge.postMessage(JSON.stringify({ action: "switch_native_camera" }));
@@ -1396,6 +1416,46 @@
         } catch (_) {}
       }
       startCameraQrStream(currentFacingMode);
+    },
+
+    toggleCameraTorch() {
+      if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+        try {
+          window.FlutterBridge.postMessage(JSON.stringify({ action: "toggle_native_camera_torch" }));
+          return;
+        } catch (_) {}
+      }
+      if (activeVideoStream) {
+        try {
+          const track = activeVideoStream.getVideoTracks()[0];
+          if (track && typeof track.applyConstraints === "function") {
+            const settings = track.getSettings ? track.getSettings() : {};
+            const nextTorch = !settings.torch;
+            track.applyConstraints({ advanced: [{ torch: nextTorch }] }).then(() => {
+              this.onNativeTorchToggled(nextTorch);
+            }).catch(() => {});
+          }
+        } catch (_) {}
+      }
+    },
+
+    onNativeTorchToggled(isOn) {
+      const torchBtn = document.getElementById("kauth-btn-torch");
+      if (!torchBtn) return;
+      if (isOn) {
+        torchBtn.classList.add("torch-on");
+      } else {
+        torchBtn.classList.remove("torch-on");
+      }
+    },
+
+    switchScannerToManualInput() {
+      this.closeCameraQrScanner();
+      this.switchSubView("add", document.getElementById("kauth-subbtn-add"));
+      const issuerInput = document.getElementById("kauth-add-issuer");
+      if (issuerInput) {
+        setTimeout(() => issuerInput.focus(), 120);
+      }
     },
 
     closeCameraQrScanner() {
@@ -1425,9 +1485,9 @@
       const statusEl = document.getElementById("kauth-camera-status-text");
       if (!statusEl) return;
       if (ok) {
-        statusEl.textContent = "📷 Đưa mã QR 2FA / Google Authenticator vào khung ngắm để tự động quét...";
+        statusEl.textContent = "Đưa mã QR 2FA hoặc Google Authenticator vào vùng quét";
       } else {
-        statusEl.innerHTML = "⚠️ Không thể mở máy ảnh (vui lòng cấp quyền Máy ảnh cho Krypto trong Cài đặt ứng dụng).";
+        statusEl.innerHTML = "⚠️ Không thể mở máy ảnh (vui lòng cấp quyền Máy ảnh cho Krypto trong Cài đặt).";
       }
     },
 

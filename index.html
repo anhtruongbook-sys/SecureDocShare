@@ -1167,7 +1167,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.9.4 FIPS-140-3</strong>
+                    <strong id="drawer-app-version">v2.9.5 FIPS-140-3</strong>
                 </div>
             </div>
 
@@ -1195,26 +1195,58 @@
         </div>
     </div>
 
-    <!-- Modal Quét Mã QR Bằng Máy Ảnh Trực Tiếp (Live Camera QR Scanner) -->
-    <div id="kauth-camera-modal-overlay" class="cyber-dialog-overlay" style="display: none;" onclick="window.KryptoAuthenticator.closeCameraQrScanner()">
-        <div class="cyber-dialog-card" style="max-width: 360px; width: 94%; padding: 16px;" onclick="event.stopPropagation()">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--text-title);">📷 Quét Mã QR Bằng Máy Ảnh</h3>
-                <button type="button" class="btn-chip-micro" onclick="window.KryptoAuthenticator.switchCameraFacing()">🔄 Đổi Camera</button>
-            </div>
-            <div style="position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 280px; background: #000; border-radius: 12px; overflow: hidden; margin: 0 auto 10px; border: 2px solid var(--primary);">
-                <video id="kauth-camera-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                <canvas id="kauth-camera-canvas" style="width: 100%; height: 100%; object-fit: cover; display: block;"></canvas>
-                <!-- Khung ngắm QR -->
-                <div style="position: absolute; inset: 18%; border: 2px dashed rgba(34, 197, 94, 0.85); border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.32);"></div>
-            </div>
-            <p id="kauth-camera-status-text" style="margin: 0 0 10px; font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">Đang khởi động máy ảnh...</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <button type="button" class="btn-mobi-outline" style="padding: 9px 6px; font-size: 11.5px;" onclick="window.KryptoAuthenticator.captureSystemCameraPhoto()">
-                    📸 Chụp Ảnh QR
+    <!-- Giao Diện Quét Mã QR Phẳng Toàn Màn Hình (Full-Screen Flat Live Camera QR Scanner) -->
+    <div id="kauth-camera-modal-overlay" class="kauth-flat-scanner" style="display: none;">
+        <!-- Luồng hình ảnh Camera toàn màn hình -->
+        <div class="kauth-flat-scanner-feed">
+            <video id="kauth-camera-video" autoplay playsinline muted style="display: none;"></video>
+            <canvas id="kauth-camera-canvas" style="display: block;"></canvas>
+        </div>
+
+        <!-- Thanh công cụ phẳng phía trên (Flat Top Bar) -->
+        <div class="kauth-flat-scanner-topbar">
+            <button type="button" class="kauth-flat-top-btn" onclick="window.KryptoAuthenticator.closeCameraQrScanner()">
+                <span>← Đóng</span>
+            </button>
+            <h3 class="kauth-flat-scanner-title">Quét mã QR 2FA</h3>
+            <div class="kauth-flat-top-actions">
+                <button type="button" id="kauth-btn-torch" class="kauth-flat-top-btn" onclick="window.KryptoAuthenticator.toggleCameraTorch()" title="Bật / Tắt đèn Flash">
+                    <span>🔦 Đèn</span>
                 </button>
-                <button type="button" class="btn-cyber-dialog-primary" style="padding: 9px 6px; font-size: 11.5px;" onclick="window.KryptoAuthenticator.closeCameraQrScanner()">
-                    <span>Đóng Máy Ảnh</span>
+                <button type="button" class="kauth-flat-top-btn" onclick="window.KryptoAuthenticator.switchCameraFacing()" title="Đổi máy ảnh trước / sau">
+                    <span>🔄 Lật</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Vùng ngắm quét mã QR phẳng cỡ lớn (82vw x 82vw, tối đa 330x330px) -->
+        <div class="kauth-flat-scanner-stage">
+            <div class="kauth-flat-reticle">
+                <div class="kauth-reticle-corner tl"></div>
+                <div class="kauth-reticle-corner tr"></div>
+                <div class="kauth-reticle-corner bl"></div>
+                <div class="kauth-reticle-corner br"></div>
+                <div class="kauth-flat-scan-laser"></div>
+            </div>
+            <div id="kauth-camera-status-text" class="kauth-flat-status-pill">
+                Đưa mã QR 2FA hoặc Google Authenticator vào vùng quét
+            </div>
+        </div>
+
+        <!-- Thanh tác vụ phẳng phía dưới (Flat Bottom Dock) -->
+        <div class="kauth-flat-scanner-bottombar">
+            <div class="kauth-flat-bottom-grid">
+                <button type="button" class="kauth-flat-dock-btn" onclick="document.getElementById('kauth-qr-file-input').click()">
+                    <span class="kauth-flat-dock-icon">🖼️</span>
+                    <span>Chọn ảnh QR</span>
+                </button>
+                <button type="button" class="kauth-flat-dock-btn primary" onclick="window.KryptoAuthenticator.captureSystemCameraPhoto()">
+                    <span class="kauth-flat-dock-icon">📸</span>
+                    <span>Chụp nét cao</span>
+                </button>
+                <button type="button" class="kauth-flat-dock-btn" onclick="window.KryptoAuthenticator.switchScannerToManualInput()">
+                    <span class="kauth-flat-dock-icon">⌨️</span>
+                    <span>Nhập khóa tay</span>
                 </button>
             </div>
         </div>

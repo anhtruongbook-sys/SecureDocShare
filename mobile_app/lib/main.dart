@@ -1287,6 +1287,23 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
               if (Platform.isAndroid) {
                 try {
                   await _nativeChannel.invokeMethod<bool>('switchNativeCamera');
+                  await _controller.runJavaScript(
+                    "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeTorchToggled) { "
+                    "window.KryptoAuthenticator.onNativeTorchToggled(false); }",
+                  );
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'toggle_native_camera_torch') {
+              if (Platform.isAndroid) {
+                try {
+                  final bool isOn = await _nativeChannel.invokeMethod<bool>('toggleNativeCameraTorch') ?? false;
+                  await _controller.runJavaScript(
+                    "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeTorchToggled) { "
+                    "window.KryptoAuthenticator.onNativeTorchToggled(${isOn ? 'true' : 'false'}); }",
+                  );
                 } catch (_) {}
               }
               return;
