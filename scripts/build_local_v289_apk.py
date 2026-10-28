@@ -175,8 +175,6 @@ def build_pades_block(start_u=785, target_after_close=1329):
     branch16(0x3C, 5, "L_do_sign")                   # if-gtz v5, L_do_sign (0x3C = if-gtz!)
 
     label("L_close")
-    emit(0x0B12)                                     # const/4 v11, 0
-    emit(0x1B59, 0x4F44)                             # iput v11, v1, MainActivity->LATTICE_Q:I
     emit(0x106E, 0x7CAD, 0x0003)                     # invoke-virtual {v3}, PdfStamper.close()V
     goto16(target_after_close)                       # goto/16 -> 1329
 
@@ -280,7 +278,6 @@ def build_pades_block(start_u=785, target_after_close=1329):
     emit(0x0E0C)                                     # move-result-object v14
     emit(0x306E, 0x76CC, 0x0EDC)                     # invoke-virtual {v12, v13, v14}, PdfDictionary.put(PdfName, PdfObject)V
     emit(0x206E, 0x7C46, 0x00CA)                     # invoke-virtual {v10, v12}, PdfSignatureAppearance.close(PdfDictionary)V
-    emit(0x1F59, 0x4F44)                             # iput v15, v1, MainActivity->LATTICE_Q:I (v15 = 1: signed PDF)
     goto16(target_after_close)                       # goto/16 -> 1329
 
     for fix_idx, cur_u, lbl in fixups:
@@ -384,13 +381,13 @@ def main():
     for u_nop in range(703, 1002):
         struct.pack_into("<H", orig_dex, insns_off + u_nop * 2, 0x0000)
     place_units = build_sig_placement_block(start_u=703, target_after_place=1002)
-    assert 703 + len(place_units) <= 778, f"place_units too long: {len(place_units)}"
+    assert 703 + len(place_units) <= 784, f"place_units too long: {len(place_units)}"
     for idx_u, val_u in enumerate(place_units):
         struct.pack_into("<H", orig_dex, insns_off + (703 + idx_u) * 2, val_u)
 
-    pades_start = 778
+    pades_start = 785
     pades_units = build_pades_block(start_u=pades_start, target_after_close=1329)
-    assert pades_start + len(pades_units) <= 1001, f"pades end={pades_start + len(pades_units)}"
+    assert pades_start + len(pades_units) <= 1001
     for idx_u, val_u in enumerate(pades_units):
         struct.pack_into("<H", orig_dex, insns_off + (pades_start + idx_u) * 2, val_u)
     struct.pack_into("<HHH", orig_dex, insns_off + 1326 * 2, 0x0029, (pades_start - 1326) & 0xFFFF, 0x0000)
@@ -408,26 +405,6 @@ def main():
     struct.pack_into("<IHH", orig_dex, try30_off, 686, len(place_units) + (703 - 686), handler_30)
     struct.pack_into("<IHH", orig_dex, try31_off, pades_start, len(pades_units), handler_44)
     struct.pack_into("<IHH", orig_dex, try44_off, 1326, 3, handler_44)
-
-    # 7. Patch saveFileToDownloads (0x383e40, insns at 0x383e50, units 12..31 = 20 units)
-    #    When MainActivity.LATTICE_Q != 0 (sign-only PDF without password), reset LATTICE_Q = 0 and rename "_Locked.pdf" -> "_Signed.pdf"
-    save_dl_insns_off = 0x383E50
-    save_dl_patch = [
-        0x1652, 0x4F44,                 # 12: iget v6, v1, MainActivity->LATTICE_Q:I
-        0x0638, 0x0012,                 # 14: if-eqz v6, -> 32 (14 + 18 = 32)
-        0x0712,                         # 16: const/4 v7, 0
-        0x1759, 0x4F44,                 # 17: iput v7, v1, MainActivity->LATTICE_Q:I
-        0x061A, 0x75DF,                 # 19: const-string v6, 'SignedProperties_'
-        0x6812,                         # 21: const/4 v8, 6
-        0x306E, 0xA32B, 0x0876,         # 22: invoke-virtual {v6, v7, v8}, String.substring(II)String
-        0x060C,                         # 25: move-result-object v6 ('Signed')
-        0x071A, 0x6162,                 # 26: const-string v7, 'Locked'
-        0x306E, 0xA322, 0x0672,         # 28: invoke-virtual {v2, v7, v6}, String.replace(CharSequence, CharSequence)String
-        0x020C,                         # 31: move-result-object v2
-    ]
-    assert len(save_dl_patch) == 20
-    for idx_u, val_u in enumerate(save_dl_patch):
-        struct.pack_into("<H", orig_dex, save_dl_insns_off + (12 + idx_u) * 2, val_u)
 
     # Recompute DEX SHA-1 signature and Adler32 checksum
     orig_dex[12:32] = hashlib.sha1(orig_dex[32:]).digest()

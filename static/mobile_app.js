@@ -1613,13 +1613,19 @@ window.onNativePdfLocked = function(outFileName, tempFilePath, savedPath, isPdf)
 
     const isViewOnly = (currentProtectionLevel === "view_only_restricted");
     const isSignOnlyNoPass = (currentProtectionLevel === "sign_only") || (!(document.getElementById('lock-password')?.value || '').trim() && (document.getElementById('enable-digital-signature')?.checked || false));
-    if (isSignOnlyNoPass && isPdf) {
+    if (isSignOnlyNoPass && isPdf && /_Locked\.pdf$/i.test(outFileName)) {
         outFileName = outFileName.replace(/_Locked\.pdf$/i, '_Signed.pdf');
         if (savedPath) {
             savedPath = savedPath.replace(/_Locked\.pdf$/i, '_Signed.pdf');
-            if (savedPath.startsWith('/')) {
-                tempFilePath = savedPath;
-            }
+        }
+        if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function' && tempFilePath) {
+            try {
+                window.FlutterBridge.postMessage(JSON.stringify({
+                    action: 'save_file_again',
+                    name: outFileName,
+                    path: tempFilePath
+                }));
+            } catch (_) {}
         }
     }
     let subDesc = "";
