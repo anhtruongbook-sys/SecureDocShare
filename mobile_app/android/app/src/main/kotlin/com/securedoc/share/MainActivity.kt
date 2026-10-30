@@ -1876,75 +1876,115 @@ class MainActivity: FlutterFragmentActivity() {
                         try {
                             val cleanB64 = if (imageB64.contains(",")) imageB64.substringAfter(",") else imageB64
                             val bytes = Base64.decode(cleanB64, Base64.DEFAULT)
-                            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                            if (bmp == null) {
+                            val bmp0 = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            if (bmp0 == null) {
                                 runOnUiThread { result.success(null) }
                                 return@execute
                             }
-                            val inputImage = com.google.mlkit.vision.common.InputImage.fromBitmap(bmp, 0)
+
+                            // Tạo thêm ảnh xoay 180 độ để ML Kit tự đối sánh chiều xuôi (0°) vs chiều ngược (180°)
+                            // Đảm bảo đúng chiều 100% cho mọi loại thẻ: CCCD, Giấy phép lái xe (GPLX), Thẻ ngân hàng, Thẻ BHYT!
+                            val mat180 = android.graphics.Matrix().apply { postRotate(180f) }
+                            val bmp180 = Bitmap.createBitmap(bmp0, 0, 0, bmp0.width, bmp0.height, mat180, true)
+
                             val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(
                                 com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS
                             )
                             val barcodeScanner = com.google.mlkit.vision.barcode.BarcodeScanning.getClient()
 
-                            var ocrTextResult = ""
-                            var qrRawResult = ""
-                            val latch = java.util.concurrent.CountDownLatch(3)
-
-                            recognizer.process(inputImage)
-                                .addOnSuccessListener { visionText ->
-                                    // Sắp xếp tất cả các dòng (Text.Line) theo thứ tự tọa độ Y (từ trên xuống dưới) và gộp các từ cùng dòng ngang
-                                    val allLines = mutableListOf<com.google.mlkit.vision.text.Text.Line>()
-                                    for (block in visionText.textBlocks) {
-                                        allLines.addAll(block.lines)
+                            fun mergeVisionLines(visionText: com.google.mlkit.vision.text.Text): String {
+                                val allLines = mutableListOf<com.google.mlkit.vision.text.Text.Line>()
+                                for (block in visionText.textBlocks) {
+                                    allLines.addAll(block.lines)
+                                }
+                                allLines.sortWith(Comparator { a, b ->
+                                    val ay = a.boundingBox?.centerY() ?: 0
+                                    val by = b.boundingBox?.centerY() ?: 0
+                                    val ah = a.boundingBox?.height() ?: 20
+                                    if (kotlin.math.abs(ay - by) <= ah / 2) {
+                                        val ax = a.boundingBox?.left ?: 0
+                                        val bx = b.boundingBox?.left ?: 0
+                                        ax.compareTo(bx)
+                                    } else {
+                                        ay.compareTo(by)
                                     }
-                                    allLines.sortWith(Comparator { a, b ->
-                                        val ay = a.boundingBox?.centerY() ?: 0
-                                        val by = b.boundingBox?.centerY() ?: 0
-                                        val ah = a.boundingBox?.height() ?: 20
-                                        if (kotlin.math.abs(ay - by) <= ah / 2) {
-                                            val ax = a.boundingBox?.left ?: 0
-                                            val bx = b.boundingBox?.left ?: 0
-                                            ax.compareTo(bx)
-                                        } else {
-                                            ay.compareTo(by)
-                                        }
-                                    })
-                                    // Gộp các đoạn trên cùng 1 hàng ngang (chênh lệch Y <= half height) thành 1 dòng hoàn chỉnh
-                                    val mergedRows = mutableListOf<String>()
-                                    var curRowY = -9999
-                                    var curRowH = 24
-                                    var curRowBuilder = StringBuilder()
-                                    for (ln in allLines) {
-                                        val ly = ln.boundingBox?.centerY() ?: 0
-                                        val lh = ln.boundingBox?.height() ?: 24
-                                        val txt = ln.text.trim()
-                                        if (txt.isEmpty()) continue
-                                        if (curRowY == -9999 || kotlin.math.abs(ly - curRowY) <= kotlin.math.max(curRowH, lh) * 0.55) {
-                                            if (curRowBuilder.isNotEmpty()) curRowBuilder.append(" ")
-                                            curRowBuilder.append(txt)
-                                            if (curRowY == -9999) {
-                                                curRowY = ly
-                                                curRowH = lh
-                                            }
-                                        } else {
-                                            mergedRows.add(curRowBuilder.toString())
-                                            curRowBuilder = StringBuilder(txt)
+                                })
+                                val mergedRows = mutableListOf<String>()
+                                var curRowY = -9999
+                                var curRowH = 24
+                                var curRowBuilder = StringBuilder()
+                                for (ln in allLines) {
+                                    val ly = ln.boundingBox?.centerY() ?: 0
+                                    val lh = ln.boundingBox?.height() ?: 24
+                                    val txt = ln.text.trim()
+                                    if (txt.isEmpty()) continue
+                                    if (curRowY == -9999 || kotlin.math.abs(ly - curRowY) <= kotlin.math.max(curRowH, lh) * 0.55) {
+                                        if (curRowBuilder.isNotEmpty()) curRowBuilder.append(" ")
+                                        curRowBuilder.append(txt)
+                                        if (curRowY == -9999) {
                                             curRowY = ly
                                             curRowH = lh
                                         }
-                                    }
-                                    if (curRowBuilder.isNotEmpty()) {
+                                    } else {
                                         mergedRows.add(curRowBuilder.toString())
+                                        curRowBuilder = StringBuilder(txt)
+                                        curRowY = ly
+                                        curRowH = lh
                                     }
-                                    ocrTextResult = if (mergedRows.isNotEmpty()) mergedRows.joinToString("\n") else (visionText.text ?: "")
-                                    latch.countDown()
                                 }
-                                .addOnFailureListener {
-                                    latch.countDown()
+                                if (curRowBuilder.isNotEmpty()) {
+                                    mergedRows.add(curRowBuilder.toString())
                                 }
+                                return if (mergedRows.isNotEmpty()) mergedRows.joinToString("\n") else (visionText.text ?: "")
+                            }
 
-                            barcodeScanner.process(inputImage)
+                            fun scoreOcrTextReadability(txt: String): Int {
+                                if (txt.isBlank()) return 0
+                                val up = txt.uppercase()
+                                var sc = txt.replace(Regex("\\s+"), "").length
+                                val keywords = listOf(
+                                    "CỘNG HÒA", "CONG HOA", "XÃ HỘI", "XA HOI", "VIỆT NAM", "VIET NAM",
+                                    "ĐỘC LẬP", "DOC LAP", "HẠNH PHÚC", "HANH PHUC",
+                                    "CĂN CƯỚC", "CAN CUOC", "CITIZEN", "IDENTITY", "IDVNM",
+                                    "GIẤY PHÉP", "GIAY PHEP", "LÁI XE", "LAI XE", "DRIVER", "LICENSE", "BỘ GTVT", "BO GTVT",
+                                    "CLASSIFICATION", "MOTOR", "VEHICLES", "BEGINNING", "EXPIRES",
+                                    "HỌ VÀ TÊN", "HO VA TEN", "HỌ TÊN", "HO TEN", "FULL NAME",
+                                    "NGÀY SINH", "NGAY SINH", "DATE OF BIRTH", "QUỐC TỊCH", "QUOC TICH",
+                                    "NƠI CƯ TRÚ", "NOI CU TRU", "THƯỜNG TRÚ", "THUONG TRU", "ADDRESS", "RESIDENCE",
+                                    "VISA", "MASTERCARD", "NAPAS", "VALID", "THRU"
+                                )
+                                for (kw in keywords) {
+                                    if (up.contains(kw)) sc += 60
+                                }
+                                val dates = Regex("\\b\\d{2}/\\d{2}/\\d{4}\\b").findAll(txt).count()
+                                sc += dates * 50
+                                if (Regex("\\b0\\d{11}\\b").containsMatchIn(txt)) sc += 90
+                                return sc
+                            }
+
+                            var text0 = ""
+                            var text180 = ""
+                            var qrRawResult = ""
+                            val latch = java.util.concurrent.CountDownLatch(4)
+
+                            val img0 = com.google.mlkit.vision.common.InputImage.fromBitmap(bmp0, 0)
+                            val img180 = com.google.mlkit.vision.common.InputImage.fromBitmap(bmp180, 0)
+
+                            recognizer.process(img0)
+                                .addOnSuccessListener { vt ->
+                                    text0 = mergeVisionLines(vt)
+                                    latch.countDown()
+                                }
+                                .addOnFailureListener { latch.countDown() }
+
+                            recognizer.process(img180)
+                                .addOnSuccessListener { vt ->
+                                    text180 = mergeVisionLines(vt)
+                                    latch.countDown()
+                                }
+                                .addOnFailureListener { latch.countDown() }
+
+                            barcodeScanner.process(img0)
                                 .addOnSuccessListener { barcodes ->
                                     for (bc in barcodes) {
                                         val raw = bc.rawValue
@@ -1955,17 +1995,14 @@ class MainActivity: FlutterFragmentActivity() {
                                     }
                                     latch.countDown()
                                 }
-                                .addOnFailureListener {
-                                    latch.countDown()
-                                }
+                                .addOnFailureListener { latch.countDown() }
 
-                            // Quét thêm vùng Góc Trên-Phải (Top-Right QR Zoom 2.5x) để bắt nhạy 100% mã QR nhỏ trên mặt trước CCCD
+                            // Quét thêm vùng góc QR phóng đại 2x
                             try {
-                                val qx = (bmp.width * 0.62).toInt().coerceIn(0, bmp.width - 10)
-                                val qy = 0
-                                val qw = (bmp.width - qx).coerceAtLeast(10)
-                                val qh = (bmp.height * 0.48).toInt().coerceIn(10, bmp.height)
-                                val qrCrop = Bitmap.createBitmap(bmp, qx, qy, qw, qh)
+                                val qx = (bmp0.width * 0.60).toInt().coerceIn(0, bmp0.width - 10)
+                                val qw = (bmp0.width - qx).coerceAtLeast(10)
+                                val qh = (bmp0.height * 0.50).toInt().coerceIn(10, bmp0.height)
+                                val qrCrop = Bitmap.createBitmap(bmp0, qx, 0, qw, qh)
                                 val qrZoom = Bitmap.createScaledBitmap(qrCrop, qw * 2, qh * 2, true)
                                 val qrImg = com.google.mlkit.vision.common.InputImage.fromBitmap(qrZoom, 0)
                                 barcodeScanner.process(qrImg)
@@ -1990,12 +2027,29 @@ class MainActivity: FlutterFragmentActivity() {
                                 latch.countDown()
                             }
 
-                            latch.await(6, java.util.concurrent.TimeUnit.SECONDS)
-                            try { bmp.recycle() } catch (_: Throwable) {}
+                            latch.await(7, java.util.concurrent.TimeUnit.SECONDS)
+
+                            val s0 = scoreOcrTextReadability(text0)
+                            val s180 = scoreOcrTextReadability(text180)
+                            val isFlipped180 = s180 > s0 + 25
+                            val bestText = if (isFlipped180) text180 else text0
+                            var rotatedDataUrl = ""
+
+                            if (isFlipped180) {
+                                val baos = ByteArrayOutputStream()
+                                bmp180.compress(Bitmap.CompressFormat.PNG, 100, baos)
+                                rotatedDataUrl = "data:image/png;base64," + Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                            }
+
+                            try { bmp0.recycle(); bmp180.recycle() } catch (_: Throwable) {}
 
                             val outJson = JSONObject()
-                            outJson.put("text", ocrTextResult)
+                            outJson.put("text", bestText)
                             outJson.put("qr", qrRawResult)
+                            outJson.put("flipped180", isFlipped180)
+                            if (rotatedDataUrl.isNotEmpty()) {
+                                outJson.put("rotatedImageB64", rotatedDataUrl)
+                            }
                             runOnUiThread { result.success(outJson.toString()) }
                         } catch (e: Throwable) {
                             runOnUiThread { result.success(null) }

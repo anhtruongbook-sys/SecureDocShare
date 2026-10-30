@@ -1661,7 +1661,180 @@
       .filter(Boolean);
     const upperText = rawText.toUpperCase();
 
-    // CASE 3: Nhận diện Căn cước công dân Việt Nam (Mặt trước hoặc Mặt sau có MRZ ICAO 9303 IDVNM)
+    // CASE 3: Nhận diện GIẤY PHÉP LÁI XE / BẰNG LÁI XE (DRIVER'S LICENSE - BỘ GTVT)
+    const isDriverLicense =
+      upperText.includes("GIẤY PHÉP LÁI XE") ||
+      upperText.includes("GIAY PHEP LAI XE") ||
+      upperText.includes("DRIVER'S LICENSE") ||
+      upperText.includes("DRIVERS LICENSE") ||
+      upperText.includes("DRIVER LICENSE") ||
+      upperText.includes("BỘ GTVT") ||
+      upperText.includes("BO GTVT") ||
+      upperText.includes("CLASSIFICATION OF MOTOR") ||
+      upperText.includes("ĐƯỢC ĐIỀU KHIỂN") ||
+      upperText.includes("DUOC DIEU KHIEN") ||
+      upperText.includes("BEGINNING DATE") ||
+      upperText.includes("HẠNG/CLASS") ||
+      upperText.includes("HANG/CLASS") ||
+      (titleInp && (titleInp.value || "").toUpperCase().startsWith("GPLX"));
+
+    if (isDriverLicense) {
+      if (typeSel) typeSel.value = "IDENTITY";
+      if (
+        folderInp &&
+        (!folderInp.value ||
+          folderInp.value === "Mặc định" ||
+          folderInp.value.includes("CCCD"))
+      ) {
+        folderInp.value = "Giấy phép lái xe (GPLX)";
+      }
+
+      const detectedFields = [];
+      let gplxNo = "";
+      let fullName = "";
+      let dob = "";
+      let expiry = "";
+      let beginDate = "";
+      let licenseClass = "";
+      let serialNo = "";
+
+      // 3A. Tìm Số GPLX (12 chữ số, ví dụ: 010070000011)
+      const m12 = rawText.match(/(?:^|[^0-9])(0\d{11})(?:[^0-9]|$)/);
+      if (m12) {
+        gplxNo = m12[1];
+      }
+
+      // 3B. Tìm Hạng bằng lái xe (A1, A2, A3, A4, B1, B2, C, D, E, FB2, FC, FD, FE)
+      const classMatch =
+        rawText.match(/(?:Hạng|Hang|Class)[:.\s/]*\b(A[1-4]|B[12]|FB2|F[CDE]|[CDE])\b/i) ||
+        rawText.match(/\bClass[:.\s/]*([A-F][1-4]?)\b/i);
+      if (classMatch) {
+        licenseClass = classMatch[1].toUpperCase();
+      }
+
+      // 3C. Tìm Số phôi mặt sau GPLX (VD: BP887917)
+      const serialMatch = rawText.match(/\b([A-Z]{2}\d{6,8})\b/);
+      if (serialMatch && !serialMatch[1].startsWith("ID")) {
+        serialNo = serialMatch[1];
+      }
+
+      // 3D. Tìm Họ tên trên GPLX (dòng chứa Họ tên/Full name hoặc dòng IN HOA ngay dưới Số/No)
+      for (let i = 0; i < lines.length; i++) {
+        if (/full\s*name|họ\s*tên|ho\s*ten|họ\s*và\s*tên/i.test(lines[i])) {
+          const afterColon = lines[i]
+            .replace(/.*(?:full\s*name|họ\s*tên|ho\s*ten|họ\s*và\s*tên)[:.\s/]*/i, "")
+            .trim();
+          const nameParts = [];
+          if (afterColon && /^[A-ZÀ-Ỹ\s]{4,}$/.test(afterColon)) {
+            nameParts.push(afterColon);
+          }
+          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 2); k++) {
+            const nxt = lines[k].trim();
+            if (/ngày\s*sinh|date\s*of\s*birth|quốc\s*tịch|nationality|\d/i.test(nxt)) {
+              break;
+            }
+            const cleanNxt = nxt.replace(/[^A-ZÀ-Ỹ\s]/gi, "").trim();
+            if (cleanNxt && cleanNxt === cleanNxt.toUpperCase() && cleanNxt.length >= 2) {
+              nameParts.push(cleanNxt);
+            }
+          }
+          if (nameParts.length > 0) {
+            fullName = nameParts.join(" ").replace(/\s+/g, " ").trim();
+            break;
+          }
+        }
+      }
+
+      if (!fullName || fullName.split(/\s+/).length < 2) {
+        for (const l of lines) {
+          const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
+          const words = cleanL.split(/\s+/).filter(Boolean);
+          if (
+            cleanL === l.trim() &&
+            words.length >= 2 &&
+            words.length <= 5 &&
+            cleanL.length >= 7 &&
+            !/CONG HOA|CỘNG HÒA|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|GIAY PHEP|GIẤY PHÉP|LAI XE|LÁI XE|DRIVER|LICENSE|BO GTVT|BỘ GTVT|MOTOR|VEHICLE|CLASSIFICATION|GIÁM ĐỐC|GIAM DOC|CỤC ĐƯỜNG BỘ/i.test(
+              cleanL
+            )
+          ) {
+            fullName = cleanL;
+            break;
+          }
+        }
+      }
+
+      // 3E. Tìm Ngày sinh, Ngày trúng tuyển (Beginning date), Có giá trị đến (Expires)
+      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      for (const l of lines) {
+        const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
+        if (!dm) continue;
+        if (/sinh|birth/i.test(l)) dob = dm[1];
+        else if (/giá trị|expires|expiry/i.test(l)) expiry = dm[1];
+        else if (/trúng tuyển|beginning/i.test(l)) beginDate = dm[1];
+      }
+      if (slot === "front") {
+        if (!dob && dates.length >= 1) dob = dates[0];
+        if (!expiry && dates.length >= 2) expiry = dates[dates.length - 1];
+      } else if (slot === "back") {
+        if (!beginDate && dates.length >= 1) beginDate = dates[0];
+      }
+
+      // Cập nhật Tên dịch vụ / Tên thẻ: "GPLX Hạng B1: TRƯƠNG TUẤN ANH"
+      const classPrefix = licenseClass ? `GPLX Hạng ${licenseClass}` : "GPLX";
+      if (titleInp) {
+        const curTitle = (titleInp.value || "")
+          .replace(/^(?:GPLX(?:\s+Hạng\s+[A-Z0-9]+)?|CCCD):\s*/i, "")
+          .trim();
+        const bestName =
+          fullName && fullName.split(/\s+/).length >= 2
+            ? fullName
+            : curTitle && !/^\d+$/.test(curTitle)
+            ? curTitle
+            : gplxNo;
+        if (bestName) {
+          titleInp.value = `${classPrefix}: ${bestName}`;
+        }
+      }
+
+      if (userInp && gplxNo) {
+        userInp.value = gplxNo + (licenseClass ? ` (Hạng ${licenseClass})` : "");
+        detectedFields.push(`Số GPLX: ${gplxNo}`);
+      }
+      if (fullName) detectedFields.push(`Họ tên: ${fullName}`);
+      if (licenseClass) detectedFields.push(`Hạng: ${licenseClass}`);
+
+      if (passInp) {
+        // Xóa bỏ các trường CVV/HSD giả nếu trước đó bị nhận nhầm
+        let curPass = (passInp.value || "")
+          .replace(/\s*\|?\s*HSD:\s*\d{2}\/\d{4}/g, "")
+          .replace(/\s*\|?\s*CVV:\s*\d{3}/g, "")
+          .trim();
+        const metaParts = [];
+        if (licenseClass && !curPass.includes(`Hạng: ${licenseClass}`))
+          metaParts.push(`Hạng: ${licenseClass}`);
+        if (dob && !curPass.includes(dob)) metaParts.push(`NS: ${dob}`);
+        if (expiry && !curPass.includes(expiry)) metaParts.push(`HSD: ${expiry}`);
+        if (beginDate && !curPass.includes(beginDate))
+          metaParts.push(`Trúng tuyển: ${beginDate}`);
+        if (serialNo && !curPass.includes(serialNo))
+          metaParts.push(`Số phôi: ${serialNo}`);
+        if (metaParts.length > 0) {
+          passInp.value = curPass
+            ? `${curPass} | ${metaParts.join(" | ")}`
+            : metaParts.join(" | ");
+        }
+      }
+
+      if (detectedFields.length > 0 && typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(
+          `🤖 Đã nhận dạng chuẩn xác Bằng lái xe (GPLX): ${detectedFields.join(" • ")}!`
+        );
+      }
+      return;
+    }
+
+    // CASE 4: Nhận diện Căn cước công dân Việt Nam (Mặt trước hoặc Mặt sau có MRZ ICAO 9303 IDVNM)
     const isCccd =
       upperText.includes("IDVNM") ||
       upperText.includes("CĂN CƯỚC") ||
@@ -1683,15 +1856,13 @@
       let expiry = "";
       let issueDate = "";
 
-      // 3A. ƯU TIÊN 1: Tìm Số CCCD 12 chữ số đứng độc lập trên Mặt trước (VD: Số / No.: 035079004448)
+      // 4A. ƯU TIÊN 1: Tìm Số CCCD 12 chữ số đứng độc lập trên Mặt trước (VD: Số / No.: 035079004448)
       const standalone12 = rawText.match(/(?:^|[^0-9])(0\d{11})(?:[^0-9]|$)/);
       if (standalone12) {
         cccdNo = standalone12[1];
       }
 
-      // 3B. ƯU TIÊN 2: Giải mã chuẩn ICAO 9303 TD1 MRZ trên Mặt sau CCCD:
-      // Dòng 1 (30 ký tự): IDVNM + [9 số cuối CCCD (pos 5..13)] + [1 số kiểm tra (pos 14)] + [12 số đầy đủ CCCD (pos 15..26)] + << + check
-      // Ví dụ thực tế: IDVNM0790044482035079004448<<6 -> 12 số CCCD nằm ở vị trí [15..27] ("035079004448"), tuyệt đối KHÔNG lấy 12 số đầu ("079004448203")!
+      // 4B. ƯU TIÊN 2: Giải mã chuẩn ICAO 9303 TD1 MRZ trên Mặt sau CCCD:
       const mrzLine1 = lines.find((l) => l.toUpperCase().replace(/\s+/g, "").includes("IDVNM"));
       if (mrzLine1 && !cccdNo) {
         const cleanMrz1 = mrzLine1
@@ -1700,21 +1871,17 @@
           .replace(/O/g, "0");
         const idvnmIdx = cleanMrz1.indexOf("IDVNM");
         if (idvnmIdx >= 0) {
-          const afterIdvnm = cleanMrz1.slice(idvnmIdx + 5); // "0790044482035079004448<<6"
-          // Vị trí 10..22 sau IDVNM chính là 12 số CCCD đầy đủ!
+          const afterIdvnm = cleanMrz1.slice(idvnmIdx + 5);
           const candidate12 = afterIdvnm.slice(10, 22);
           if (/^0\d{11}$/.test(candidate12)) {
             cccdNo = candidate12;
           } else {
-            // Tìm chuỗi 12 chữ số bắt đầu bằng 0 nằm ngay trước dấu '<'
             const beforeLt = afterIdvnm.match(/(0\d{11})<+/);
             if (beforeLt) cccdNo = beforeLt[1];
           }
         }
       }
 
-      // Dòng 2 MRZ ICAO 9303: YYMMDD (Ngày sinh) + Check + M/F + YYMMDD (Hết hạn) + Check + VNM
-      // Ví dụ: 7912126M3912128VNM<<<<<<<<<<<4 -> NS: 12/12/1979, HSD: 12/12/2039
       const mrzLine2 = lines.find((l) => {
         const cl = l.toUpperCase().replace(/\s+/g, "");
         return /^\d{6,7}[MF<]\d{6,7}VNM/.test(cl);
@@ -1732,16 +1899,14 @@
         }
       }
 
-      // 3C. Tìm Họ và tên đầy đủ trên Mặt trước (ghép cả trường hợp ML Kit ngắt dòng hoặc trên cùng dòng)
+      // 4C. Tìm Họ và tên đầy đủ trên Mặt trước
       for (let i = 0; i < lines.length; i++) {
         if (/full\s*name|họ\s*và\s*tên|ho\s*va\s*ten/i.test(lines[i])) {
-          // Kiểm tra xem tên có nằm ngay sau dấu ':' trên cùng dòng không
           const sameLinePart = lines[i].split(/[:.]/).slice(1).join(" ").trim();
           const nameParts = [];
           if (sameLinePart && /^[A-ZÀ-Ỹ\s]{4,}$/.test(sameLinePart)) {
             nameParts.push(sameLinePart);
           }
-          // Quét tối đa 2 dòng kế tiếp nếu là chữ IN HOA (không chứa nhãn Ngày sinh / Date of birth / Số)
           for (let k = i + 1; k <= Math.min(lines.length - 1, i + 2); k++) {
             const nxt = lines[k].trim();
             if (/ngày\s*sinh|date\s*of\s*birth|giới\s*tính|sex|quốc\s*tịch|\d/i.test(nxt)) {
@@ -1759,7 +1924,6 @@
         }
       }
 
-      // Nếu chưa đủ họ tên (chỉ có 1 từ như "TRƯƠNG"), tìm dòng chữ IN HOA có từ 2-5 từ tiếng Việt trên mặt trước
       if (!fullName || fullName.split(/\s+/).length < 2) {
         for (const l of lines) {
           const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
@@ -1779,7 +1943,6 @@
         }
       }
 
-      // Dự phòng lấy Họ tên từ Dòng 3 MRZ (TRUONG<<TUAN<ANH<<<<<<) nếu chụp Mặt sau trước hoặc Mặt trước chưa có dấu
       if (!fullName || fullName.split(/\s+/).length < 2) {
         const mrzNameLine = lines.find(
           (l) =>
@@ -1799,7 +1962,6 @@
         }
       }
 
-      // 3D. Tìm Ngày sinh, Có giá trị đến, Ngày cấp từ văn bản
       const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
       for (const l of lines) {
         const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
@@ -1812,7 +1974,6 @@
       if (!expiry && dates.length >= 2 && slot === "front") expiry = dates[dates.length - 1];
       if (!issueDate && dates.length >= 1 && slot === "back") issueDate = dates[0];
 
-      // Tìm Nơi thường trú
       let placeInfo = "";
       for (let i = 0; i < lines.length; i++) {
         if (/thường trú|residence/i.test(lines[i])) {
@@ -1827,7 +1988,6 @@
         }
       }
 
-      // Cập nhật Tên bản ghi (Chỉ ghi đè nếu tên mới đầy đủ hơn tên cũ hoặc có dấu tiếng Việt)
       if (titleInp && fullName) {
         const curTitle = (titleInp.value || "").replace(/^CCCD:\s*/i, "").trim();
         const curWords = curTitle ? curTitle.split(/\s+/).length : 0;
@@ -1836,6 +1996,7 @@
         const newHasAccent = /[À-Ỹà-ỹ]/.test(fullName);
         if (
           !curTitle ||
+          /^\d+$/.test(curTitle) ||
           newWords > curWords ||
           (newWords === curWords && newHasAccent && !curHasAccent)
         ) {
@@ -1845,7 +2006,6 @@
         titleInp.value = `CCCD: ${cccdNo}`;
       }
 
-      // Cập nhật Số CCCD 12 số (Ưu tiên số hợp lệ bắt đầu bằng '0' và dài đúng 12 chữ số)
       if (userInp && cccdNo && /^0\d{11}$/.test(cccdNo)) {
         const curUser = (userInp.value || "").trim();
         if (!/^0\d{11}/.test(curUser) || slot === "front") {
@@ -1873,10 +2033,15 @@
       return;
     }
 
-    // CASE 4: Nhận diện Thẻ Ngân hàng / Tín dụng (Visa / Mastercard / Napas / JCB - 16 chữ số)
+    // CASE 5: Nhận diện Thẻ Ngân hàng / Tín dụng (Visa / Mastercard / Napas / JCB - 16 chữ số)
+    // CHỈ KÍCH HOẠT KHI KHÔNG PHẢI LÀ GIẤY TỜ TÙY THÂN (IDENTITY)!
     const cardMatch = rawText.match(/\b(?:\d{4}[\s\-]?){3}\d{4}\b/);
-    const expMatch = rawText.match(/\b(0[1-9]|1[0-2])\/(\d{2}|\d{4})\b/);
-    const cvvMatch = slot === "back" ? rawText.match(/\b(\d{3})\b/) : null;
+    // HSD thẻ ngân hàng chỉ dùng định dạng MM/YY (2 chữ số năm, đứng độc lập không có DD/ ở trước)
+    const expMatch = rawText.match(/(?:^|[^0-9\/])(0[1-9]|1[0-2])\/(\d{2})(?:[^0-9\/]|$)/);
+    const cvvMatch =
+      slot === "back" && (!typeSel || typeSel.value === "PAYMENT_CARD")
+        ? rawText.match(/(?:CVV|CVC)[:.\s]*(\d{3})\b/i)
+        : null;
 
     if (cardMatch) {
       const cardDigits = cardMatch[0].replace(/\D/g, "");
@@ -1899,7 +2064,7 @@
       }
       if (passInp) {
         const parts = [];
-        if (expMatch) parts.push(`HSD: ${expMatch[0]}`);
+        if (expMatch) parts.push(`HSD: ${expMatch[1]}/${expMatch[2]}`);
         if (cvvMatch) parts.push(`CVV: ${cvvMatch[1]}`);
         if (parts.length > 0) {
           passInp.value = passInp.value ? `${passInp.value} | ${parts.join(" | ")}` : parts.join(" | ");
@@ -1908,16 +2073,19 @@
       if (typeof window.showKryptoToast === "function") {
         window.showKryptoToast(`🤖 Đã tự động nhận dạng ${brand}: ${formattedCard}!`);
       }
-    } else if (slot === "back" && (expMatch || cvvMatch)) {
+    } else if (
+      slot === "back" &&
+      typeSel &&
+      typeSel.value === "PAYMENT_CARD" &&
+      (expMatch || cvvMatch)
+    ) {
       if (passInp) {
         const parts = [];
-        if (expMatch && !passInp.value.includes(expMatch[0])) parts.push(`HSD: ${expMatch[0]}`);
+        const expStr = expMatch ? `${expMatch[1]}/${expMatch[2]}` : "";
+        if (expStr && !passInp.value.includes(expStr)) parts.push(`HSD: ${expStr}`);
         if (cvvMatch && !passInp.value.includes(cvvMatch[1])) parts.push(`CVV: ${cvvMatch[1]}`);
         if (parts.length > 0) {
           passInp.value = passInp.value ? `${passInp.value} | ${parts.join(" | ")}` : parts.join(" | ");
-          if (typeof window.showKryptoToast === "function") {
-            window.showKryptoToast(`🤖 Đã tự động bóc tách mặt sau thẻ: ${parts.join(" • ")}!`);
-          }
         }
       }
     }
@@ -3687,6 +3855,14 @@
       if (!ocrJsonStr) return;
       try {
         const parsed = typeof ocrJsonStr === "string" ? JSON.parse(ocrJsonStr) : ocrJsonStr;
+        if (parsed.flipped180 && parsed.rotatedImageB64) {
+          if (slot === "front") {
+            state.pendingFrontDataUrl = parsed.rotatedImageB64;
+          } else if (slot === "back") {
+            state.pendingBackDataUrl = parsed.rotatedImageB64;
+          }
+          updateCroppedSlotPreviews();
+        }
         parseAndAutoFillCardFields(parsed.text || "", parsed.qr || "", slot);
       } catch (_) {}
     },
