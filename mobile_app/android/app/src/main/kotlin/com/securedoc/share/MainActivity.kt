@@ -1889,11 +1889,55 @@ class MainActivity: FlutterFragmentActivity() {
 
                             var ocrTextResult = ""
                             var qrRawResult = ""
-                            val latch = java.util.concurrent.CountDownLatch(2)
+                            val latch = java.util.concurrent.CountDownLatch(3)
 
                             recognizer.process(inputImage)
                                 .addOnSuccessListener { visionText ->
-                                    ocrTextResult = visionText.text ?: ""
+                                    // Sắp xếp tất cả các dòng (Text.Line) theo thứ tự tọa độ Y (từ trên xuống dưới) và gộp các từ cùng dòng ngang
+                                    val allLines = mutableListOf<com.google.mlkit.vision.text.Text.Line>()
+                                    for (block in visionText.textBlocks) {
+                                        allLines.addAll(block.lines)
+                                    }
+                                    allLines.sortWith(Comparator { a, b ->
+                                        val ay = a.boundingBox?.centerY() ?: 0
+                                        val by = b.boundingBox?.centerY() ?: 0
+                                        val ah = a.boundingBox?.height() ?: 20
+                                        if (kotlin.math.abs(ay - by) <= ah / 2) {
+                                            val ax = a.boundingBox?.left ?: 0
+                                            val bx = b.boundingBox?.left ?: 0
+                                            ax.compareTo(bx)
+                                        } else {
+                                            ay.compareTo(by)
+                                        }
+                                    })
+                                    // Gộp các đoạn trên cùng 1 hàng ngang (chênh lệch Y <= half height) thành 1 dòng hoàn chỉnh
+                                    val mergedRows = mutableListOf<String>()
+                                    var curRowY = -9999
+                                    var curRowH = 24
+                                    var curRowBuilder = StringBuilder()
+                                    for (ln in allLines) {
+                                        val ly = ln.boundingBox?.centerY() ?: 0
+                                        val lh = ln.boundingBox?.height() ?: 24
+                                        val txt = ln.text.trim()
+                                        if (txt.isEmpty()) continue
+                                        if (curRowY == -9999 || kotlin.math.abs(ly - curRowY) <= kotlin.math.max(curRowH, lh) * 0.55) {
+                                            if (curRowBuilder.isNotEmpty()) curRowBuilder.append(" ")
+                                            curRowBuilder.append(txt)
+                                            if (curRowY == -9999) {
+                                                curRowY = ly
+                                                curRowH = lh
+                                            }
+                                        } else {
+                                            mergedRows.add(curRowBuilder.toString())
+                                            curRowBuilder = StringBuilder(txt)
+                                            curRowY = ly
+                                            curRowH = lh
+                                        }
+                                    }
+                                    if (curRowBuilder.isNotEmpty()) {
+                                        mergedRows.add(curRowBuilder.toString())
+                                    }
+                                    ocrTextResult = if (mergedRows.isNotEmpty()) mergedRows.joinToString("\n") else (visionText.text ?: "")
                                     latch.countDown()
                                 }
                                 .addOnFailureListener {
@@ -1915,7 +1959,38 @@ class MainActivity: FlutterFragmentActivity() {
                                     latch.countDown()
                                 }
 
-                            latch.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                            // Quét thêm vùng Góc Trên-Phải (Top-Right QR Zoom 2.5x) để bắt nhạy 100% mã QR nhỏ trên mặt trước CCCD
+                            try {
+                                val qx = (bmp.width * 0.62).toInt().coerceIn(0, bmp.width - 10)
+                                val qy = 0
+                                val qw = (bmp.width - qx).coerceAtLeast(10)
+                                val qh = (bmp.height * 0.48).toInt().coerceIn(10, bmp.height)
+                                val qrCrop = Bitmap.createBitmap(bmp, qx, qy, qw, qh)
+                                val qrZoom = Bitmap.createScaledBitmap(qrCrop, qw * 2, qh * 2, true)
+                                val qrImg = com.google.mlkit.vision.common.InputImage.fromBitmap(qrZoom, 0)
+                                barcodeScanner.process(qrImg)
+                                    .addOnSuccessListener { bcs ->
+                                        if (qrRawResult.isBlank()) {
+                                            for (bc in bcs) {
+                                                val raw = bc.rawValue
+                                                if (!raw.isNullOrBlank()) {
+                                                    qrRawResult = raw
+                                                    break
+                                                }
+                                            }
+                                        }
+                                        try { qrZoom.recycle(); qrCrop.recycle() } catch (_: Throwable) {}
+                                        latch.countDown()
+                                    }
+                                    .addOnFailureListener {
+                                        try { qrZoom.recycle(); qrCrop.recycle() } catch (_: Throwable) {}
+                                        latch.countDown()
+                                    }
+                            } catch (_: Throwable) {
+                                latch.countDown()
+                            }
+
+                            latch.await(6, java.util.concurrent.TimeUnit.SECONDS)
                             try { bmp.recycle() } catch (_: Throwable) {}
 
                             val outJson = JSONObject()

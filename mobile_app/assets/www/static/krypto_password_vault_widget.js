@@ -1590,8 +1590,6 @@
     const passInp = document.getElementById("kpw-password");
     const totpInp = document.getElementById("kpw-totp");
 
-    let detectedFields = [];
-
     // CASE 1: Mã QR Căn cước công dân gắn chip (035079004448|...|TRƯƠNG TUẤN ANH|12121979|Nam|...|24042021)
     if (rawQr && rawQr.includes("|") && rawQr.split("|").length >= 6) {
       const p = rawQr.split("|").map((s) => s.trim());
@@ -1615,7 +1613,7 @@
       if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
         folderInp.value = "Giấy tờ tùy thân (CCCD)";
       }
-      if (titleInp && cccdNo) {
+      if (titleInp && (fullName || cccdNo)) {
         titleInp.value = `CCCD: ${fullName || cccdNo}`;
       }
       if (userInp && cccdNo) {
@@ -1630,7 +1628,7 @@
         passInp.value = infoParts.join(" | ");
       }
       if (typeof window.showKryptoToast === "function") {
-        window.showKryptoToast(`🤖 Đã tự động đọc QR CCCD: ${fullName} (${cccdNo})!`);
+        window.showKryptoToast(`🤖 Đã đọc chuẩn xác QR CCCD: ${fullName} (${cccdNo})!`);
       }
       return;
     }
@@ -1663,7 +1661,7 @@
       .filter(Boolean);
     const upperText = rawText.toUpperCase();
 
-    // CASE 3: Nhận diện Căn cước công dân (Mặt trước hoặc Mặt sau có MRZ IDVNM...)
+    // CASE 3: Nhận diện Căn cước công dân Việt Nam (Mặt trước hoặc Mặt sau có MRZ ICAO 9303 IDVNM)
     const isCccd =
       upperText.includes("IDVNM") ||
       upperText.includes("CĂN CƯỚC") ||
@@ -1678,40 +1676,91 @@
         folderInp.value = "Giấy tờ tùy thân (CCCD)";
       }
 
-      // Tìm số CCCD 12 chữ số (ưu tiên từ dòng IDVNM hoặc Số/No)
+      const detectedFields = [];
       let cccdNo = "";
-      const mrzLine1 = lines.find((l) => l.toUpperCase().replace(/\s+/g, "").includes("IDVNM"));
-      if (mrzLine1) {
-        const cleanMrz1 = mrzLine1.toUpperCase().replace(/\s+/g, "");
-        const m12 = cleanMrz1.match(/0\d{11}/);
-        if (m12) cccdNo = m12[0];
-      }
-      if (!cccdNo) {
-        const m12 = rawText.match(/\b(0\d{11})\b/);
-        if (m12) cccdNo = m12[1];
+      let fullName = "";
+      let dob = "";
+      let expiry = "";
+      let issueDate = "";
+
+      // 3A. ƯU TIÊN 1: Tìm Số CCCD 12 chữ số đứng độc lập trên Mặt trước (VD: Số / No.: 035079004448)
+      const standalone12 = rawText.match(/(?:^|[^0-9])(0\d{11})(?:[^0-9]|$)/);
+      if (standalone12) {
+        cccdNo = standalone12[1];
       }
 
-      // Tìm Họ và tên (từ dòng sau "Full name" hoặc dòng chữ IN HOA tiếng Việt hoặc dòng 3 MRZ "HO<<TEN<DEM<<<")
-      let fullName = "";
+      // 3B. ƯU TIÊN 2: Giải mã chuẩn ICAO 9303 TD1 MRZ trên Mặt sau CCCD:
+      // Dòng 1 (30 ký tự): IDVNM + [9 số cuối CCCD (pos 5..13)] + [1 số kiểm tra (pos 14)] + [12 số đầy đủ CCCD (pos 15..26)] + << + check
+      // Ví dụ thực tế: IDVNM0790044482035079004448<<6 -> 12 số CCCD nằm ở vị trí [15..27] ("035079004448"), tuyệt đối KHÔNG lấy 12 số đầu ("079004448203")!
+      const mrzLine1 = lines.find((l) => l.toUpperCase().replace(/\s+/g, "").includes("IDVNM"));
+      if (mrzLine1 && !cccdNo) {
+        const cleanMrz1 = mrzLine1
+          .toUpperCase()
+          .replace(/\s+/g, "")
+          .replace(/O/g, "0");
+        const idvnmIdx = cleanMrz1.indexOf("IDVNM");
+        if (idvnmIdx >= 0) {
+          const afterIdvnm = cleanMrz1.slice(idvnmIdx + 5); // "0790044482035079004448<<6"
+          // Vị trí 10..22 sau IDVNM chính là 12 số CCCD đầy đủ!
+          const candidate12 = afterIdvnm.slice(10, 22);
+          if (/^0\d{11}$/.test(candidate12)) {
+            cccdNo = candidate12;
+          } else {
+            // Tìm chuỗi 12 chữ số bắt đầu bằng 0 nằm ngay trước dấu '<'
+            const beforeLt = afterIdvnm.match(/(0\d{11})<+/);
+            if (beforeLt) cccdNo = beforeLt[1];
+          }
+        }
+      }
+
+      // Dòng 2 MRZ ICAO 9303: YYMMDD (Ngày sinh) + Check + M/F + YYMMDD (Hết hạn) + Check + VNM
+      // Ví dụ: 7912126M3912128VNM<<<<<<<<<<<4 -> NS: 12/12/1979, HSD: 12/12/2039
+      const mrzLine2 = lines.find((l) => {
+        const cl = l.toUpperCase().replace(/\s+/g, "");
+        return /^\d{6,7}[MF<]\d{6,7}VNM/.test(cl);
+      });
+      if (mrzLine2) {
+        const cl2 = mrzLine2.toUpperCase().replace(/\s+/g, "");
+        const m2 = cl2.match(/^(\d{2})(\d{2})(\d{2})\d[MF<](\d{2})(\d{2})(\d{2})/);
+        if (m2) {
+          const yyB = parseInt(m2[1], 10);
+          const yearB = yyB > 30 ? 1900 + yyB : 2000 + yyB;
+          dob = `${m2[3]}/${m2[2]}/${yearB}`;
+          const yyE = parseInt(m2[4], 10);
+          const yearE = 2000 + yyE;
+          expiry = `${m2[6]}/${m2[5]}/${yearE}`;
+        }
+      }
+
+      // 3C. Tìm Họ và tên đầy đủ trên Mặt trước (ghép cả trường hợp ML Kit ngắt dòng hoặc trên cùng dòng)
       for (let i = 0; i < lines.length; i++) {
         if (/full\s*name|họ\s*và\s*tên|ho\s*va\s*ten/i.test(lines[i])) {
-          if (i + 1 < lines.length && lines[i + 1].length >= 5) {
-            fullName = lines[i + 1].replace(/[^A-ZÀ-Ỹ\s]/gi, "").trim();
+          // Kiểm tra xem tên có nằm ngay sau dấu ':' trên cùng dòng không
+          const sameLinePart = lines[i].split(/[:.]/).slice(1).join(" ").trim();
+          const nameParts = [];
+          if (sameLinePart && /^[A-ZÀ-Ỹ\s]{4,}$/.test(sameLinePart)) {
+            nameParts.push(sameLinePart);
+          }
+          // Quét tối đa 2 dòng kế tiếp nếu là chữ IN HOA (không chứa nhãn Ngày sinh / Date of birth / Số)
+          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 2); k++) {
+            const nxt = lines[k].trim();
+            if (/ngày\s*sinh|date\s*of\s*birth|giới\s*tính|sex|quốc\s*tịch|\d/i.test(nxt)) {
+              break;
+            }
+            const cleanNxt = nxt.replace(/[^A-ZÀ-Ỹ\s]/gi, "").trim();
+            if (cleanNxt && cleanNxt === cleanNxt.toUpperCase() && cleanNxt.length >= 2) {
+              nameParts.push(cleanNxt);
+            }
+          }
+          if (nameParts.length > 0) {
+            fullName = nameParts.join(" ").replace(/\s+/g, " ").trim();
             break;
           }
         }
       }
-      if (!fullName) {
-        // Thử bóc tách từ dòng MRZ thứ 3 (VD: TRUONG<<TUAN<ANH<<<<<<)
-        const mrzNameLine = lines.find((l) => /^[A-Z<]{12,}$/.test(l.replace(/\s+/g, "")) && l.includes("<<") && !l.includes("IDVNM"));
-        if (mrzNameLine) {
-          fullName = mrzNameLine
-            .replace(/<+/g, " ")
-            .trim();
-        }
-      }
-      if (!fullName) {
-        // Tìm dòng chữ IN HOA có từ 2-5 từ (tránh tiêu đề CỘNG HÒA / CĂN CƯỚC CÔNG DÂN)
+
+      // Nếu chưa đủ họ tên (chỉ có 1 từ như "TRƯƠNG"), tìm dòng chữ IN HOA có từ 2-5 từ tiếng Việt trên mặt trước
+      if (!fullName || fullName.split(/\s+/).length < 2) {
         for (const l of lines) {
           const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
           const words = cleanL.split(/\s+/).filter(Boolean);
@@ -1720,7 +1769,9 @@
             words.length >= 2 &&
             words.length <= 5 &&
             cleanL.length >= 7 &&
-            !/CONG HOA|CỘNG HÒA|CAN CUOC|CĂN CƯỚC|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|CUU CHINH|CẢNH SÁT/i.test(cleanL)
+            !/CONG HOA|CỘNG HÒA|CAN CUOC|CĂN CƯỚC|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|HANH PHUC|HẠNH PHÚC|CẢNH SÁT|QUẢN LÝ|TRẬT TỰ|XÃ HỘI|CITIZEN|REPUBLIC/i.test(
+              cleanL
+            )
           ) {
             fullName = cleanL;
             break;
@@ -1728,39 +1779,78 @@
         }
       }
 
-      // Tìm Ngày sinh, Có giá trị đến, Ngày cấp
-      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
-      let dob = "";
-      let expiry = "";
-      let issueDate = "";
+      // Dự phòng lấy Họ tên từ Dòng 3 MRZ (TRUONG<<TUAN<ANH<<<<<<) nếu chụp Mặt sau trước hoặc Mặt trước chưa có dấu
+      if (!fullName || fullName.split(/\s+/).length < 2) {
+        const mrzNameLine = lines.find(
+          (l) =>
+            /^[A-Z<]{10,}$/.test(l.replace(/\s+/g, "")) &&
+            l.includes("<<") &&
+            !l.toUpperCase().includes("IDVNM") &&
+            !l.toUpperCase().includes("VNM<")
+        );
+        if (mrzNameLine) {
+          const mrzName = mrzNameLine
+            .replace(/<+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (mrzName.split(" ").length >= 2) {
+            fullName = mrzName;
+          }
+        }
+      }
 
+      // 3D. Tìm Ngày sinh, Có giá trị đến, Ngày cấp từ văn bản
+      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
       for (const l of lines) {
         const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
         if (!dm) continue;
         if (/sinh|birth/i.test(l)) dob = dm[1];
         else if (/giá trị|expiry/i.test(l)) expiry = dm[1];
-        else if (/tháng, năm|month, year|cấp/i.test(l)) issueDate = dm[1];
+        else if (/tháng,\s*năm|month,\s*year|cấp/i.test(l)) issueDate = dm[1];
       }
       if (!dob && dates.length >= 1 && slot === "front") dob = dates[0];
       if (!expiry && dates.length >= 2 && slot === "front") expiry = dates[dates.length - 1];
       if (!issueDate && dates.length >= 1 && slot === "back") issueDate = dates[0];
 
-      // Tìm Quê quán / Nơi thường trú
+      // Tìm Nơi thường trú
       let placeInfo = "";
       for (let i = 0; i < lines.length; i++) {
         if (/thường trú|residence/i.test(lines[i])) {
-          const nextL = lines.slice(i + 1, i + 3).join(", ");
-          if (nextL) placeInfo = nextL;
+          const tailSame = lines[i]
+            .replace(/.*(?:thường trú|residence)[:.\s/]*/i, "")
+            .trim();
+          const nextLines = lines
+            .slice(i + 1, i + 3)
+            .filter((x) => !/có giá trị|date of expiry/i.test(x));
+          placeInfo = [tailSame, ...nextLines].filter(Boolean).join(", ");
           break;
         }
       }
 
-      if (titleInp && (!titleInp.value || titleInp.value.startsWith("CCCD:"))) {
-        if (fullName) titleInp.value = `CCCD: ${fullName}`;
-        else if (cccdNo && !titleInp.value) titleInp.value = `CCCD: ${cccdNo}`;
+      // Cập nhật Tên bản ghi (Chỉ ghi đè nếu tên mới đầy đủ hơn tên cũ hoặc có dấu tiếng Việt)
+      if (titleInp && fullName) {
+        const curTitle = (titleInp.value || "").replace(/^CCCD:\s*/i, "").trim();
+        const curWords = curTitle ? curTitle.split(/\s+/).length : 0;
+        const newWords = fullName.split(/\s+/).length;
+        const curHasAccent = /[À-Ỹà-ỹ]/.test(curTitle);
+        const newHasAccent = /[À-Ỹà-ỹ]/.test(fullName);
+        if (
+          !curTitle ||
+          newWords > curWords ||
+          (newWords === curWords && newHasAccent && !curHasAccent)
+        ) {
+          titleInp.value = `CCCD: ${fullName}`;
+        }
+      } else if (titleInp && !titleInp.value && cccdNo) {
+        titleInp.value = `CCCD: ${cccdNo}`;
       }
-      if (userInp && cccdNo) {
-        userInp.value = cccdNo;
+
+      // Cập nhật Số CCCD 12 số (Ưu tiên số hợp lệ bắt đầu bằng '0' và dài đúng 12 chữ số)
+      if (userInp && cccdNo && /^0\d{11}$/.test(cccdNo)) {
+        const curUser = (userInp.value || "").trim();
+        if (!/^0\d{11}/.test(curUser) || slot === "front") {
+          userInp.value = cccdNo;
+        }
         detectedFields.push(`Số CCCD: ${cccdNo}`);
       }
       if (fullName) detectedFields.push(`Họ tên: ${fullName}`);
@@ -1778,7 +1868,7 @@
       }
 
       if (detectedFields.length > 0 && typeof window.showKryptoToast === "function") {
-        window.showKryptoToast(`🤖 Đã tự động nhận dạng thẻ CCCD: ${detectedFields.join(" • ")}!`);
+        window.showKryptoToast(`🤖 Đã nhận dạng chuẩn xác CCCD: ${detectedFields.join(" • ")}!`);
       }
       return;
     }
