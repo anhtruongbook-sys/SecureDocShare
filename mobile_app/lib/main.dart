@@ -1450,6 +1450,27 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
               return;
             }
 
+            if (action == 'recognize_card_text_native') {
+              if (Platform.isAndroid) {
+                try {
+                  final imgB64 = data['imageB64'] as String? ?? '';
+                  final slot = data['slot'] as String? ?? 'front';
+                  final String? ocrJson = await _nativeChannel.invokeMethod<String>('recognizeCardTextNative', {
+                    'imageB64': imgB64,
+                  });
+                  if (ocrJson != null && ocrJson.isNotEmpty) {
+                    final escJson = jsonEncode(ocrJson);
+                    final escSlot = jsonEncode(slot);
+                    await _controller.runJavaScript(
+                      "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNativeCardOcrResult) { "
+                      "window.KryptoPasswordVault.onNativeCardOcrResult($escJson, $escSlot); }",
+                    );
+                  }
+                } catch (_) {}
+              }
+              return;
+            }
+
             if (action == 'set_screenshot_protection') {
               if (Platform.isAndroid) {
                 try {

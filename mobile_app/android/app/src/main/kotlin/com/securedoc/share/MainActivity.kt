@@ -1866,6 +1866,67 @@ class MainActivity: FlutterFragmentActivity() {
                         .getString(GDRIVE_URI_KEY, null)
                     result.success(uriStr)
                 }
+                "recognizeCardTextNative" -> {
+                    val imageB64 = call.argument<String>("imageB64") ?: ""
+                    if (imageB64.isBlank()) {
+                        result.success(null)
+                        return@setMethodCallHandler
+                    }
+                    executor.execute {
+                        try {
+                            val cleanB64 = if (imageB64.contains(",")) imageB64.substringAfter(",") else imageB64
+                            val bytes = Base64.decode(cleanB64, Base64.DEFAULT)
+                            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            if (bmp == null) {
+                                runOnUiThread { result.success(null) }
+                                return@execute
+                            }
+                            val inputImage = com.google.mlkit.vision.common.InputImage.fromBitmap(bmp, 0)
+                            val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(
+                                com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS
+                            )
+                            val barcodeScanner = com.google.mlkit.vision.barcode.BarcodeScanning.getClient()
+
+                            var ocrTextResult = ""
+                            var qrRawResult = ""
+                            val latch = java.util.concurrent.CountDownLatch(2)
+
+                            recognizer.process(inputImage)
+                                .addOnSuccessListener { visionText ->
+                                    ocrTextResult = visionText.text ?: ""
+                                    latch.countDown()
+                                }
+                                .addOnFailureListener {
+                                    latch.countDown()
+                                }
+
+                            barcodeScanner.process(inputImage)
+                                .addOnSuccessListener { barcodes ->
+                                    for (bc in barcodes) {
+                                        val raw = bc.rawValue
+                                        if (!raw.isNullOrBlank()) {
+                                            qrRawResult = raw
+                                            break
+                                        }
+                                    }
+                                    latch.countDown()
+                                }
+                                .addOnFailureListener {
+                                    latch.countDown()
+                                }
+
+                            latch.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                            try { bmp.recycle() } catch (_: Throwable) {}
+
+                            val outJson = JSONObject()
+                            outJson.put("text", ocrTextResult)
+                            outJson.put("qr", qrRawResult)
+                            runOnUiThread { result.success(outJson.toString()) }
+                        } catch (e: Throwable) {
+                            runOnUiThread { result.success(null) }
+                        }
+                    }
+                }
                 "setScreenshotProtection" -> {
                     val blockScreenshot = call.argument<Boolean>("blockScreenshot") ?: false
                     runOnUiThread {

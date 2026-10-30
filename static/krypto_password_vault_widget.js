@@ -1366,6 +1366,153 @@
     return out;
   }
 
+  // --------------------------------------------------------------------------
+  // THUẬT TOÁN TỰ ĐỘNG XOAY VUÔNG GÓC KHỬ NGHIÊNG (RADON HORIZONTAL PROJECTION DESKEW ±15°)
+  // & CẮT GỌT SÁT VIỀN THẺ SAU KHI XOAY VUÔNG
+  // --------------------------------------------------------------------------
+  function autoDeskewAndTrimCardCanvas(cardCanvas) {
+    try {
+      const W = 210;
+      const H = 132;
+      const small = document.createElement("canvas");
+      small.width = W;
+      small.height = H;
+      const sCtx = small.getContext("2d");
+      sCtx.drawImage(cardCanvas, 0, 0, W, H);
+      const data = sCtx.getImageData(0, 0, W, H).data;
+
+      const luma = new Float32Array(W * H);
+      for (let i = 0; i < W * H; i++) {
+        luma[i] = 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2];
+      }
+
+      // Tính năng lượng cạnh ngang (Horizontal Text/Border Edge Energy: |Gy| - 0.35*|Gx|)
+      const hEdge = new Float32Array(W * H);
+      for (let y = 1; y < H - 1; y++) {
+        const rOff = y * W;
+        for (let x = 1; x < W - 1; x++) {
+          const gy = Math.abs(luma[(y + 1) * W + x] - luma[(y - 1) * W + x]);
+          const gx = Math.abs(luma[rOff + (x + 1)] - luma[rOff + (x - 1)]);
+          const v = gy - 0.35 * gx;
+          hEdge[rOff + x] = v > 0 ? v : 0;
+        }
+      }
+
+      const xStart = Math.floor(W * 0.12);
+      const xEnd = Math.floor(W * 0.88);
+      const yStart = Math.floor(H * 0.08);
+      const yEnd = Math.floor(H * 0.92);
+      const cx = W * 0.5;
+      const cy = H * 0.5;
+      const numRows = yEnd - yStart;
+      const rowSums = new Float32Array(numRows);
+
+      let bestAngle = 0;
+      let bestScore = -1;
+
+      // Quét góc nghiêng từ -14° đến +14° (bước 0.25°) tìm góc có các dòng chữ và mép thẻ nằm ngang sắc nét nhất
+      for (let ang = -14.0; ang <= 14.0; ang += 0.25) {
+        const rad = (-ang * Math.PI) / 180.0;
+        const cosA = Math.cos(rad);
+        const sinA = Math.sin(rad);
+        rowSums.fill(0);
+
+        for (let ry = yStart; ry < yEnd; ry++) {
+          const dy = ry - cy;
+          let rSum = 0;
+          for (let rx = xStart; rx < xEnd; rx += 2) {
+            const dx = rx - cx;
+            const sx = Math.round(cx + dx * cosA - dy * sinA);
+            const sy = Math.round(cy + dx * sinA + dy * cosA);
+            if (sx >= 1 && sx < W - 1 && sy >= 1 && sy < H - 1) {
+              rSum += hEdge[sy * W + sx];
+            }
+          }
+          rowSums[ry - yStart] = rSum;
+        }
+
+        let sharpScore = 0;
+        for (let r = 1; r < numRows; r++) {
+          const d = rowSums[r] - rowSums[r - 1];
+          sharpScore += d * d;
+        }
+        if (sharpScore > bestScore) {
+          bestScore = sharpScore;
+          bestAngle = ang;
+        }
+      }
+
+      let outCanvas = cardCanvas;
+      if (Math.abs(bestAngle) >= 0.35) {
+        const rotC = document.createElement("canvas");
+        rotC.width = cardCanvas.width;
+        rotC.height = cardCanvas.height;
+        const rCtx = rotC.getContext("2d");
+        // Phóng nhẹ 1.03x để không lộ góc đen sau khi xoay khử nghiêng
+        const zoom = 1.0 + Math.min(0.08, Math.abs((bestAngle * Math.PI) / 180.0) * 0.65);
+        rCtx.translate(rotC.width / 2, rotC.height / 2);
+        rCtx.rotate((-bestAngle * Math.PI) / 180.0);
+        rCtx.scale(zoom, zoom);
+        rCtx.drawImage(cardCanvas, -cardCanvas.width / 2, -cardCanvas.height / 2);
+        outCanvas = rotC;
+      }
+
+      // Cắt gọt sát 4 mép nhựa thẻ sau khi đã xoay vuông góc (loại bỏ tam giác nền bàn ở 4 góc)
+      const tw = 200;
+      const th = 126;
+      const tc = document.createElement("canvas");
+      tc.width = tw;
+      tc.height = th;
+      const tCtx = tc.getContext("2d");
+      tCtx.drawImage(outCanvas, 0, 0, tw, th);
+      const tData = tCtx.getImageData(0, 0, tw, th).data;
+
+      const isCardPx = new Uint8Array(tw * th);
+      for (let i = 0; i < tw * th; i++) {
+        const R = tData[i * 4];
+        const G = tData[i * 4 + 1];
+        const B = tData[i * 4 + 2];
+        const l = 0.299 * R + 0.587 * G + 0.114 * B;
+        const s = Math.max(R, G, B) - Math.min(R, G, B);
+        const cyanTint = Math.max(0, B - R) + Math.max(0, G - R);
+        if (l > 202 || cyanTint > 7 || s > 26) {
+          isCardPx[i] = 1;
+        }
+      }
+
+      const validCols = [];
+      const validRows = [];
+      for (let x = 0; x < tw; x++) {
+        let sum = 0;
+        for (let y = 0; y < th; y++) sum += isCardPx[y * tw + x];
+        if (sum / th > 0.34) validCols.push(x);
+      }
+      for (let y = 0; y < th; y++) {
+        let sum = 0;
+        for (let x = 0; x < tw; x++) sum += isCardPx[y * tw + x];
+        if (sum / tw > 0.34) validRows.push(y);
+      }
+
+      if (validCols.length >= Math.floor(tw * 0.72) && validRows.length >= Math.floor(th * 0.72)) {
+        const x0 = Math.floor((validCols[0] / tw) * outCanvas.width);
+        const x1 = Math.ceil(((validCols[validCols.length - 1] + 1) / tw) * outCanvas.width);
+        const y0 = Math.floor((validRows[0] / th) * outCanvas.height);
+        const y1 = Math.ceil(((validRows[validRows.length - 1] + 1) / th) * outCanvas.height);
+        const cw = Math.max(60, x1 - x0);
+        const ch = Math.max(40, y1 - y0);
+        const trimmed = document.createElement("canvas");
+        trimmed.width = cw;
+        trimmed.height = ch;
+        trimmed.getContext("2d").drawImage(outCanvas, x0, y0, cw, ch, 0, 0, cw, ch);
+        return trimmed;
+      }
+
+      return outCanvas;
+    } catch (_) {
+      return cardCanvas;
+    }
+  }
+
   function renderCroppedAndOrientedCardDataUrl(img, rect, enhanceClarity, slot = "front") {
     const sx = Math.max(0, Math.round(rect.x * img.width));
     const sy = Math.max(0, Math.round(rect.y * img.height));
@@ -1386,7 +1533,7 @@
       return rawCropCanvas.toDataURL("image/png");
     }
 
-    // Đảm bảo thẻ đã cắt luôn nằm ngang (width >= height) và đúng chiều xuôi 100% (Quốc huy Top-Left / QR Top-Right)
+    // 1. Đảm bảo thẻ đã cắt luôn nằm ngang (width >= height) và đúng chiều xuôi 100% (Quốc huy Top-Left / QR Top-Right)
     let finalCanvas = rawCropCanvas;
     if (rawCropCanvas.height > rawCropCanvas.width * 1.03) {
       const candCW = rotateCanvasByDeg(rawCropCanvas, 90);
@@ -1402,7 +1549,288 @@
       finalCanvas = score180 > score0 ? cand180 : cand0;
     }
 
+    // 2. Tự động xoay vuông góc khử nghiêng (Fine Deskew ±14°) và cắt gọt sát 4 mép thẻ!
+    finalCanvas = autoDeskewAndTrimCardCanvas(finalCanvas);
+
     return finalCanvas.toDataURL("image/png");
+  }
+
+  // --------------------------------------------------------------------------
+  // BỘ BÓC TÁCH THÔNG MINH NỘI DUNG THẺ CCCD / MRZ / QR / THẺ NGÂN HÀNG (AUTO-FILL OCR)
+  // --------------------------------------------------------------------------
+  function triggerNativeCardOcr(croppedDataUrl, slot = "front") {
+    if (!croppedDataUrl) return;
+    // 1. Quét nhanh QR trên ảnh đã cắt bằng jsQR
+    decodeQrFromImageDataUrl(croppedDataUrl).then((qrStr) => {
+      if (qrStr) {
+        parseAndAutoFillCardFields("", qrStr, slot);
+      }
+    });
+    // 2. Gọi Google ML Kit Text Recognition & Barcode Scanner Offline trên Android Native
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: "recognize_card_text_native",
+          imageB64: croppedDataUrl,
+          slot,
+        })
+      );
+    }
+  }
+
+  function parseAndAutoFillCardFields(ocrText, qrText, slot = "front") {
+    const rawText = String(ocrText || "").trim();
+    const rawQr = String(qrText || "").trim();
+    if (!rawText && !rawQr) return;
+
+    const typeSel = document.getElementById("kpw-item-type");
+    const folderInp = document.getElementById("kpw-folder");
+    const titleInp = document.getElementById("kpw-title");
+    const userInp = document.getElementById("kpw-username");
+    const passInp = document.getElementById("kpw-password");
+    const totpInp = document.getElementById("kpw-totp");
+
+    let detectedFields = [];
+
+    // CASE 1: Mã QR Căn cước công dân gắn chip (035079004448|...|TRƯƠNG TUẤN ANH|12121979|Nam|...|24042021)
+    if (rawQr && rawQr.includes("|") && rawQr.split("|").length >= 6) {
+      const p = rawQr.split("|").map((s) => s.trim());
+      const cccdNo = p[0] || "";
+      const oldCmnd = p[1] || "";
+      const fullName = p[2] || "";
+      const dobRaw = p[3] || "";
+      const dob =
+        dobRaw.length === 8
+          ? `${dobRaw.slice(0, 2)}/${dobRaw.slice(2, 4)}/${dobRaw.slice(4)}`
+          : dobRaw;
+      const gender = p[4] || "";
+      const addr = p[5] || "";
+      const issueRaw = p[6] || "";
+      const issueDate =
+        issueRaw.length === 8
+          ? `${issueRaw.slice(0, 2)}/${issueRaw.slice(2, 4)}/${issueRaw.slice(4)}`
+          : issueRaw;
+
+      if (typeSel) typeSel.value = "IDENTITY";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Giấy tờ tùy thân (CCCD)";
+      }
+      if (titleInp && cccdNo) {
+        titleInp.value = `CCCD: ${fullName || cccdNo}`;
+      }
+      if (userInp && cccdNo) {
+        userInp.value = cccdNo + (oldCmnd ? ` (CMND cũ: ${oldCmnd})` : "");
+      }
+      if (passInp) {
+        const infoParts = [];
+        if (dob) infoParts.push(`NS: ${dob}`);
+        if (gender) infoParts.push(`GT: ${gender}`);
+        if (issueDate) infoParts.push(`Cấp: ${issueDate}`);
+        if (addr) infoParts.push(`Đ/c: ${addr}`);
+        passInp.value = infoParts.join(" | ");
+      }
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã tự động đọc QR CCCD: ${fullName} (${cccdNo})!`);
+      }
+      return;
+    }
+
+    // CASE 2: Mã QR 2FA (otpauth://)
+    if (rawQr && rawQr.toLowerCase().startsWith("otpauth://")) {
+      try {
+        const u = new URL(rawQr);
+        const label = decodeURIComponent(u.pathname.replace(/^\/+/, ""));
+        const secret = (u.searchParams.get("secret") || "").toUpperCase();
+        const issuer =
+          u.searchParams.get("issuer") ||
+          (label.includes(":") ? label.split(":")[0] : "Tài khoản 2FA");
+        const username = label.includes(":") ? label.split(":").slice(1).join(":") : label;
+        if (typeSel) typeSel.value = "LOGIN";
+        if (titleInp && !titleInp.value) titleInp.value = issuer;
+        if (userInp && !userInp.value) userInp.value = username;
+        if (totpInp && secret) totpInp.value = secret;
+        if (typeof window.showKryptoToast === "function") {
+          window.showKryptoToast(`🤖 Đã tự động điền khóa 2FA TOTP (${issuer})!`);
+        }
+        return;
+      } catch (_) {}
+    }
+
+    if (!rawText) return;
+    const lines = rawText
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const upperText = rawText.toUpperCase();
+
+    // CASE 3: Nhận diện Căn cước công dân (Mặt trước hoặc Mặt sau có MRZ IDVNM...)
+    const isCccd =
+      upperText.includes("IDVNM") ||
+      upperText.includes("CĂN CƯỚC") ||
+      upperText.includes("CAN CUOC") ||
+      upperText.includes("CITIZEN IDENTITY") ||
+      upperText.includes("SOCIALIST REPUBLIC") ||
+      /\b0\d{11}\b/.test(rawText);
+
+    if (isCccd) {
+      if (typeSel) typeSel.value = "IDENTITY";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Giấy tờ tùy thân (CCCD)";
+      }
+
+      // Tìm số CCCD 12 chữ số (ưu tiên từ dòng IDVNM hoặc Số/No)
+      let cccdNo = "";
+      const mrzLine1 = lines.find((l) => l.toUpperCase().replace(/\s+/g, "").includes("IDVNM"));
+      if (mrzLine1) {
+        const cleanMrz1 = mrzLine1.toUpperCase().replace(/\s+/g, "");
+        const m12 = cleanMrz1.match(/0\d{11}/);
+        if (m12) cccdNo = m12[0];
+      }
+      if (!cccdNo) {
+        const m12 = rawText.match(/\b(0\d{11})\b/);
+        if (m12) cccdNo = m12[1];
+      }
+
+      // Tìm Họ và tên (từ dòng sau "Full name" hoặc dòng chữ IN HOA tiếng Việt hoặc dòng 3 MRZ "HO<<TEN<DEM<<<")
+      let fullName = "";
+      for (let i = 0; i < lines.length; i++) {
+        if (/full\s*name|họ\s*và\s*tên|ho\s*va\s*ten/i.test(lines[i])) {
+          if (i + 1 < lines.length && lines[i + 1].length >= 5) {
+            fullName = lines[i + 1].replace(/[^A-ZÀ-Ỹ\s]/gi, "").trim();
+            break;
+          }
+        }
+      }
+      if (!fullName) {
+        // Thử bóc tách từ dòng MRZ thứ 3 (VD: TRUONG<<TUAN<ANH<<<<<<)
+        const mrzNameLine = lines.find((l) => /^[A-Z<]{12,}$/.test(l.replace(/\s+/g, "")) && l.includes("<<") && !l.includes("IDVNM"));
+        if (mrzNameLine) {
+          fullName = mrzNameLine
+            .replace(/<+/g, " ")
+            .trim();
+        }
+      }
+      if (!fullName) {
+        // Tìm dòng chữ IN HOA có từ 2-5 từ (tránh tiêu đề CỘNG HÒA / CĂN CƯỚC CÔNG DÂN)
+        for (const l of lines) {
+          const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
+          const words = cleanL.split(/\s+/).filter(Boolean);
+          if (
+            cleanL === l.trim() &&
+            words.length >= 2 &&
+            words.length <= 5 &&
+            cleanL.length >= 7 &&
+            !/CONG HOA|CỘNG HÒA|CAN CUOC|CĂN CƯỚC|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|CUU CHINH|CẢNH SÁT/i.test(cleanL)
+          ) {
+            fullName = cleanL;
+            break;
+          }
+        }
+      }
+
+      // Tìm Ngày sinh, Có giá trị đến, Ngày cấp
+      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      let dob = "";
+      let expiry = "";
+      let issueDate = "";
+
+      for (const l of lines) {
+        const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
+        if (!dm) continue;
+        if (/sinh|birth/i.test(l)) dob = dm[1];
+        else if (/giá trị|expiry/i.test(l)) expiry = dm[1];
+        else if (/tháng, năm|month, year|cấp/i.test(l)) issueDate = dm[1];
+      }
+      if (!dob && dates.length >= 1 && slot === "front") dob = dates[0];
+      if (!expiry && dates.length >= 2 && slot === "front") expiry = dates[dates.length - 1];
+      if (!issueDate && dates.length >= 1 && slot === "back") issueDate = dates[0];
+
+      // Tìm Quê quán / Nơi thường trú
+      let placeInfo = "";
+      for (let i = 0; i < lines.length; i++) {
+        if (/thường trú|residence/i.test(lines[i])) {
+          const nextL = lines.slice(i + 1, i + 3).join(", ");
+          if (nextL) placeInfo = nextL;
+          break;
+        }
+      }
+
+      if (titleInp && (!titleInp.value || titleInp.value.startsWith("CCCD:"))) {
+        if (fullName) titleInp.value = `CCCD: ${fullName}`;
+        else if (cccdNo && !titleInp.value) titleInp.value = `CCCD: ${cccdNo}`;
+      }
+      if (userInp && cccdNo) {
+        userInp.value = cccdNo;
+        detectedFields.push(`Số CCCD: ${cccdNo}`);
+      }
+      if (fullName) detectedFields.push(`Họ tên: ${fullName}`);
+
+      if (passInp) {
+        const curPass = passInp.value || "";
+        const metaParts = [];
+        if (dob && !curPass.includes(dob)) metaParts.push(`NS: ${dob}`);
+        if (expiry && !curPass.includes(expiry)) metaParts.push(`HSD: ${expiry}`);
+        if (issueDate && !curPass.includes(issueDate)) metaParts.push(`Ngày cấp: ${issueDate}`);
+        if (placeInfo && !curPass.includes(placeInfo)) metaParts.push(`Đ/c: ${placeInfo}`);
+        if (metaParts.length > 0) {
+          passInp.value = curPass ? `${curPass} | ${metaParts.join(" | ")}` : metaParts.join(" | ");
+        }
+      }
+
+      if (detectedFields.length > 0 && typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã tự động nhận dạng thẻ CCCD: ${detectedFields.join(" • ")}!`);
+      }
+      return;
+    }
+
+    // CASE 4: Nhận diện Thẻ Ngân hàng / Tín dụng (Visa / Mastercard / Napas / JCB - 16 chữ số)
+    const cardMatch = rawText.match(/\b(?:\d{4}[\s\-]?){3}\d{4}\b/);
+    const expMatch = rawText.match(/\b(0[1-9]|1[0-2])\/(\d{2}|\d{4})\b/);
+    const cvvMatch = slot === "back" ? rawText.match(/\b(\d{3})\b/) : null;
+
+    if (cardMatch) {
+      const cardDigits = cardMatch[0].replace(/\D/g, "");
+      const formattedCard = cardDigits.replace(/(\d{4})(?=\d)/g, "$1 ");
+      if (typeSel) typeSel.value = "PAYMENT_CARD";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Thẻ Ngân hàng";
+      }
+      let brand = "Thẻ Ngân hàng";
+      if (cardDigits.startsWith("4")) brand = "Thẻ VISA";
+      else if (/^5[1-5]/.test(cardDigits) || /^2[2-7]/.test(cardDigits)) brand = "Thẻ Mastercard";
+      else if (cardDigits.startsWith("9704")) brand = "Thẻ NAPAS";
+      else if (cardDigits.startsWith("35")) brand = "Thẻ JCB";
+
+      if (titleInp && !titleInp.value) {
+        titleInp.value = `${brand} (*${cardDigits.slice(-4)})`;
+      }
+      if (userInp) {
+        userInp.value = formattedCard;
+      }
+      if (passInp) {
+        const parts = [];
+        if (expMatch) parts.push(`HSD: ${expMatch[0]}`);
+        if (cvvMatch) parts.push(`CVV: ${cvvMatch[1]}`);
+        if (parts.length > 0) {
+          passInp.value = passInp.value ? `${passInp.value} | ${parts.join(" | ")}` : parts.join(" | ");
+        }
+      }
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã tự động nhận dạng ${brand}: ${formattedCard}!`);
+      }
+    } else if (slot === "back" && (expMatch || cvvMatch)) {
+      if (passInp) {
+        const parts = [];
+        if (expMatch && !passInp.value.includes(expMatch[0])) parts.push(`HSD: ${expMatch[0]}`);
+        if (cvvMatch && !passInp.value.includes(cvvMatch[1])) parts.push(`CVV: ${cvvMatch[1]}`);
+        if (parts.length > 0) {
+          passInp.value = passInp.value ? `${passInp.value} | ${parts.join(" | ")}` : parts.join(" | ");
+          if (typeof window.showKryptoToast === "function") {
+            window.showKryptoToast(`🤖 Đã tự động bóc tách mặt sau thẻ: ${parts.join(" • ")}!`);
+          }
+        }
+      }
+    }
   }
 
   function processIncomingCardPhoto(dataUrl, slot = "front") {
@@ -1419,7 +1847,7 @@
       if (slot === "front") state.pendingFrontRawDataUrl = dataUrl;
       if (slot === "back") state.pendingBackRawDataUrl = dataUrl;
 
-      // 1. Tự động phát hiện 4 viền thẻ trực tiếp trên ảnh gốc (khử nền bàn gỗ / nền tường)
+      // 1. Tự động phát hiện 4 viền thẻ trực tiếp trên ảnh gốc (khử nền bàn gỗ / bàn di chuột / nền phức tạp)
       const autoRect = autoDetectCardBounds(rawImg);
       state.cropRect = {
         x: autoRect.x,
@@ -1429,7 +1857,7 @@
       };
       state.cropAspectMode = "auto";
 
-      // 2. Nếu bật Tự Động Crop -> Cắt sát 4 viền thẻ + Tự xoay đúng chiều ngang xuôi ngay lập tức!
+      // 2. Nếu bật Tự Động Crop -> Cắt sát 4 viền thẻ + Tự xoay đúng chiều ngang xuôi + Tự xoay vuông góc (Deskew) + Tự OCR đọc nội dung thẻ!
       if (state.autoCropEnabled) {
         const croppedDataUrl = renderCroppedAndOrientedCardDataUrl(
           rawImg,
@@ -1443,17 +1871,19 @@
         if (slot === "front") {
           state.pendingFrontDataUrl = croppedDataUrl;
           updateCroppedSlotPreviews();
+          triggerNativeCardOcr(croppedDataUrl, "front");
           if (typeof window.showKryptoToast === "function") {
             window.showKryptoToast(
-              "🤖 Đã tự động cắt 4 viền thẻ và xoay đúng chiều Mặt Trước!"
+              "🤖 Đã tự cắt, xoay vuông góc Mặt Trước và đang nhận dạng chữ trên thẻ..."
             );
           }
         } else if (slot === "back") {
           state.pendingBackDataUrl = croppedDataUrl;
           updateCroppedSlotPreviews();
+          triggerNativeCardOcr(croppedDataUrl, "back");
           if (typeof window.showKryptoToast === "function") {
             window.showKryptoToast(
-              "🤖 Đã tự động cắt 4 viền thẻ và xoay đúng chiều Mặt Sau!"
+              "🤖 Đã tự cắt, xoay vuông góc Mặt Sau và đang nhận dạng chữ trên thẻ..."
             );
           }
         } else if (slot === "qr") {
@@ -1790,12 +2220,14 @@
     if (slot === "front") {
       state.pendingFrontDataUrl = croppedDataUrl;
       updateCroppedSlotPreviews();
+      triggerNativeCardOcr(croppedDataUrl, "front");
       if (typeof window.showKryptoToast === "function") {
         window.showKryptoToast("✓ Đã cắt (Crop) ảnh Mặt Trước thẻ sắc nét!");
       }
     } else if (slot === "back") {
       state.pendingBackDataUrl = croppedDataUrl;
       updateCroppedSlotPreviews();
+      triggerNativeCardOcr(croppedDataUrl, "back");
       if (typeof window.showKryptoToast === "function") {
         window.showKryptoToast("✓ Đã cắt (Crop) ảnh Mặt Sau thẻ sắc nét!");
       }
@@ -3159,6 +3591,14 @@
         ? String(photoB64)
         : `data:image/jpeg;base64,${photoB64}`;
       processIncomingCardPhoto(dataUrl, state.activePhotoSlot || "front", false);
+    },
+
+    onNativeCardOcrResult(ocrJsonStr, slot = "front") {
+      if (!ocrJsonStr) return;
+      try {
+        const parsed = typeof ocrJsonStr === "string" ? JSON.parse(ocrJsonStr) : ocrJsonStr;
+        parseAndAutoFillCardFields(parsed.text || "", parsed.qr || "", slot);
+      } catch (_) {}
     },
 
     async restoreNativePermanentVault(rawJson) {
