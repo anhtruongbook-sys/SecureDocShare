@@ -1495,7 +1495,14 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
             if (action == 'start_nfc_card_scan') {
               if (Platform.isAndroid) {
                 try {
-                  final bool ok = await _nativeChannel.invokeMethod<bool>('startNfcCardScan') ?? false;
+                  final docNo = data['docNo'] as String? ?? '';
+                  final dob = data['dob'] as String? ?? '';
+                  final expiry = data['expiry'] as String? ?? '';
+                  final bool ok = await _nativeChannel.invokeMethod<bool>('startNfcCardScan', {
+                    'docNo': docNo,
+                    'dob': dob,
+                    'expiry': expiry,
+                  }) ?? false;
                   await _controller.runJavaScript(
                     "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNfcScanStatus) { "
                     "window.KryptoPasswordVault.onNfcScanStatus(${ok ? 'true' : 'false'}); }",

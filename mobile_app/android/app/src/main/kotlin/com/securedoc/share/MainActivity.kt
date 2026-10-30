@@ -280,6 +280,33 @@ class MainActivity: FlutterFragmentActivity() {
         return out
     }
 
+
+    private fun computeIcaocdCheckDigit(s: String): Char {
+        val weights = intArrayOf(7, 3, 1)
+        var sum = 0
+        for (i in s.indices) {
+            val ch = s[i]
+            val v = when {
+                ch in '0'..'9' -> ch - '0'
+                ch in 'A'..'Z' -> ch - 'A' + 10
+                else -> 0
+            }
+            sum += v * weights[i % 3]
+        }
+        return ('0' + (sum % 10))
+    }
+
+    private fun computeIcao9303BacKeySeedHex(docNoRaw: String, dobYYMMDD: String, expYYMMDD: String): String {
+        val cleanDoc = docNoRaw.uppercase().replace(Regex("[^A-Z0-9]"), "")
+        val doc9 = if (cleanDoc.length >= 9) cleanDoc.takeLast(9) else cleanDoc.padEnd(9, '<')
+        val docCheck = computeIcaocdCheckDigit(doc9)
+        val dobCheck = computeIcaocdCheckDigit(dobYYMMDD)
+        val expCheck = computeIcaocdCheckDigit(expYYMMDD)
+        val mrzInfo = "$doc9$docCheck$dobYYMMDD$dobCheck$expYYMMDD$expCheck"
+        val sha1 = java.security.MessageDigest.getInstance("SHA-1").digest(mrzInfo.toByteArray(Charsets.US_ASCII))
+        return bytesToHex(sha1.copyOfRange(0, 16))
+    }
+
     private fun parseEmvPanAndExpiry(respHex: String): Pair<String, String>? {
         val up = respHex.uppercase()
         // EMV Tag 57 (Track 2 Equivalent Data): 57 + len + PAN + 'D' + YYMM
@@ -2285,7 +2312,7 @@ class MainActivity: FlutterFragmentActivity() {
                     executor.execute {
                         try {
                             val doc = com.itextpdf.text.Document(com.itextpdf.text.PageSize.A4, 36f, 36f, 36f, 36f)
-                            val safeName = title.replace(Regex("[^a-zA-Z0-9_\-]"), "_").take(32)
+                            val safeName = title.replace(Regex("[^a-zA-Z0-9_-]"), "_").take(32)
                             val fileName = "Krypto_BanIn2Mat_${safeName}_${System.currentTimeMillis() / 1000}.pdf"
                             val tmpFile = File(cacheDir, fileName)
                             val writer = PdfWriter.getInstance(doc, FileOutputStream(tmpFile))
@@ -2334,7 +2361,7 @@ class MainActivity: FlutterFragmentActivity() {
 
                                 if (watermarkText.isNotBlank()) {
                                     val gs = PdfGState()
-                                    gs.fillOpacity = 0.24f
+                                    gs.setFillOpacity(0.24f)
                                     cb.saveState()
                                     cb.setGState(gs)
                                     cb.beginText()

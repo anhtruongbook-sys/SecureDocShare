@@ -486,6 +486,11 @@
     cropDragMode: null,
     cropDragStart: { x: 0, y: 0, rect: null, corners: null },
     nfcScanning: false,
+    decoyModeActive: false,
+    autoShutterEnabled: true,
+    _prevFrameLuma: null,
+    _stableFrameCount: 0,
+    _unlockedBioRecordIds: new Set(),
   };
 
   function syncAutofillCacheToNative() {
@@ -919,6 +924,49 @@
       ctx.strokeStyle = "#38bdf8";
       ctx.lineWidth = Math.max(3, Math.round(w * 0.005));
       ctx.strokeRect(gx, gy, guideW, guideH);
+
+      // UPGRADE #11: Tự Động Chụp Khi Khung Thẻ Đứng Yên 0.6s (Auto-Shutter Card Edge Lock)
+      if (state.activePhotoSlot !== "qr" && state.autoShutterEnabled) {
+        try {
+          const sampleW = 32;
+          const sampleH = 20;
+          const sCanvas = document.createElement("canvas");
+          sCanvas.width = sampleW;
+          sCanvas.height = sampleH;
+          const sCtx = sCanvas.getContext("2d");
+          sCtx.drawImage(img, gx, gy, guideW, guideH, 0, 0, sampleW, sampleH);
+          const sData = sCtx.getImageData(0, 0, sampleW, sampleH).data;
+          const curLuma = new Float32Array(sampleW * sampleH);
+          let edgeEnergy = 0;
+          for (let i = 0; i < sampleW * sampleH; i++) {
+            curLuma[i] = 0.299 * sData[i * 4] + 0.587 * sData[i * 4 + 1] + 0.114 * sData[i * 4 + 2];
+            if (i > 0) edgeEnergy += Math.abs(curLuma[i] - curLuma[i - 1]);
+          }
+          edgeEnergy /= sampleW * sampleH;
+          if (state._prevFrameLuma && state._prevFrameLuma.length === curLuma.length) {
+            let diffSum = 0;
+            for (let i = 0; i < curLuma.length; i++) {
+              diffSum += Math.abs(curLuma[i] - state._prevFrameLuma[i]);
+            }
+            const meanDiff = diffSum / curLuma.length;
+            if (meanDiff < 3.6 && edgeEnergy > 6.5) {
+              state._stableFrameCount = (state._stableFrameCount || 0) + 1;
+              ctx.fillStyle = "#10b981";
+              ctx.font = "bold 14px sans-serif";
+              ctx.fillText(`⚡ Đang khóa nét tự chụp (${state._stableFrameCount}/6)...`, gx + 10, gy - 10);
+              if (state._stableFrameCount >= 6) {
+                state._stableFrameCount = 0;
+                state._prevFrameLuma = null;
+                captureLiveCameraFrameToCropper();
+                return;
+              }
+            } else {
+              state._stableFrameCount = 0;
+            }
+          }
+          state._prevFrameLuma = curLuma;
+        } catch (_) {}
+      }
 
       // Nếu đang ở chế độ Quét QR, thử bóc tách QR tự động
       if (state.activePhotoSlot === "qr" && typeof window.jsQR === "function") {
@@ -2994,6 +3042,36 @@
       return true;
     }
 
+    if (raw.startsWith("KRYPTO-SHARE-V1:")) {
+      try {
+        const b64Payload = raw.slice("KRYPTO-SHARE-V1:".length).trim();
+        const jsonStr = dec.decode(base64ToBytes(b64Payload));
+        const shareObj = JSON.parse(jsonStr);
+        if (shareObj.exp && Date.now() > shareObj.exp) {
+          if (typeof window.showKryptoToast === "function") {
+            window.showKryptoToast("⛔ Mã QR Chia sẻ Tạm thời này đã hết hạn (Quá 5 phút) và tự hủy!");
+          }
+          return false;
+        }
+        await upsertRecord({
+          itemType: shareObj.t || "LOGIN",
+          folder: shareObj.f || "Được Chia Sẻ (QR)",
+          title: shareObj.n || "Bản ghi Chia sẻ Krypto",
+          username: shareObj.u || "",
+          password: shareObj.p || "",
+          totpSecret: shareObj.o || "",
+          tags: ["shared-qr"],
+          encryptedAttachments: attList,
+        });
+        switchSubView("list");
+        await renderRecordsList();
+        if (typeof window.showKryptoToast === "function") {
+          window.showKryptoToast(`✓ Đã nhận bản ghi chia sẻ '${shareObj.n}' thành công!`);
+        }
+        return true;
+      } catch (_) {}
+    }
+
     if (raw.toLowerCase().startsWith("otpauth://")) {
       try {
         const u = new URL(raw);
@@ -3410,6 +3488,8 @@
               <button type="button" class="btn-chip-micro kpw-btn-snap" data-id="${escapeHtml(r.record_id)}">📸 Chụp Thẻ</button>
               ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}">🖼️ Xem Ảnh</button>` : ""}
               ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-pdf" data-id="${escapeHtml(r.record_id)}">🖨️ In PDF A4</button>` : ""}
+              <button type="button" class="btn-chip-micro kpw-btn-share-qr" data-id="${escapeHtml(r.record_id)}" title="Tạo mã QR chia sẻ tự hủy sau 5 phút">🔗 QR 5p</button>
+              <button type="button" class="btn-chip-micro kpw-btn-bio-lock" data-id="${escapeHtml(r.record_id)}" title="Bật/Tắt khóa vân tay riêng cho mục này">${(r.tags || []).includes("bio-locked") ? "🔒 Vân tay" : "🔓"}</button>
               <button type="button" class="btn-chip-micro kpw-btn-del" data-id="${escapeHtml(r.record_id)}" style="color:#ef4444;">🗑️</button>
             </span>
           </td>
@@ -3421,27 +3501,35 @@
     tbody.querySelectorAll(".kpw-btn-toggle").forEach((b) => {
       b.addEventListener("click", () => {
         const id = b.getAttribute("data-id");
-        if (state.revealedIds.has(id)) state.revealedIds.delete(id);
-        else state.revealedIds.add(id);
-        renderRecordsList();
+        if (state.revealedIds.has(id)) {
+          state.revealedIds.delete(id);
+          renderRecordsList();
+          return;
+        }
+        requireRecordBiometricIfLocked(id, () => {
+          state.revealedIds.add(id);
+          renderRecordsList();
+        });
       });
     });
 
     tbody.querySelectorAll(".kpw-btn-copy").forEach((b) => {
-      b.addEventListener("click", async () => {
+      b.addEventListener("click", () => {
         const id = b.getAttribute("data-id");
-        const rec = state.decryptedRecords[id];
-        if (rec && navigator.clipboard) {
-          await navigator.clipboard.writeText(rec.password || "");
-          if (typeof window.showKryptoToast === "function") {
-            window.showKryptoToast("✓ Đã chép mật khẩu (Tự xóa bộ nhớ tạm sau 20 giây)!");
+        requireRecordBiometricIfLocked(id, async () => {
+          const rec = state.decryptedRecords[id];
+          if (rec && navigator.clipboard) {
+            await navigator.clipboard.writeText(rec.password || "");
+            if (typeof window.showKryptoToast === "function") {
+              window.showKryptoToast("✓ Đã chép mật khẩu (Tự xóa bộ nhớ tạm sau 20 giây)!");
+            }
+            setTimeout(async () => {
+              try {
+                await navigator.clipboard.writeText("");
+              } catch (_) {}
+            }, 20000);
           }
-          setTimeout(async () => {
-            try {
-              await navigator.clipboard.writeText("");
-            } catch (_) {}
-          }, 20000);
-        }
+        });
       });
     });
 
@@ -3455,14 +3543,34 @@
     tbody.querySelectorAll(".kpw-btn-view-img").forEach((b) => {
       b.addEventListener("click", () => {
         const id = b.getAttribute("data-id");
-        showRecordAttachmentsPreview(id);
+        requireRecordBiometricIfLocked(id, () => {
+          showRecordAttachmentsPreview(id);
+        });
       });
     });
 
     tbody.querySelectorAll(".kpw-btn-pdf").forEach((b) => {
       b.addEventListener("click", () => {
         const id = b.getAttribute("data-id");
-        exportRecordTwoSidedPdfA4(id);
+        requireRecordBiometricIfLocked(id, () => {
+          exportRecordTwoSidedPdfA4(id);
+        });
+      });
+    });
+
+    tbody.querySelectorAll(".kpw-btn-share-qr").forEach((b) => {
+      b.addEventListener("click", () => {
+        const id = b.getAttribute("data-id");
+        requireRecordBiometricIfLocked(id, () => {
+          showOneTimeShareQrModal(id);
+        });
+      });
+    });
+
+    tbody.querySelectorAll(".kpw-btn-bio-lock").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const id = b.getAttribute("data-id");
+        await toggleRecordBiometricLock(id);
       });
     });
 
@@ -3547,6 +3655,259 @@
     if (typeof window.showKryptoToast === "function") {
       window.showKryptoToast("✓ Đã chụp ảnh thẻ trong App và mã hóa AES-256-GCM vào bản ghi!");
     }
+  }
+
+  function requireRecordBiometricIfLocked(recordId, onVerified) {
+    const rec = state.decryptedRecords[recordId];
+    if (!rec) return;
+    const isLocked = Array.isArray(rec.tags) && rec.tags.includes("bio-locked");
+    if (!isLocked || state._unlockedBioRecordIds.has(recordId)) {
+      onVerified();
+      return;
+    }
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("🔒 Bản ghi này được khóa Sinh trắc học riêng. Hãy xác thực Vân tay / Face Unlock!");
+      }
+      const prevSuccess = window.onBiometricAuthSuccess;
+      window.onBiometricAuthSuccess = function () {
+        window.onBiometricAuthSuccess = prevSuccess;
+        state._unlockedBioRecordIds.add(recordId);
+        onVerified();
+      };
+      window.FlutterBridge.postMessage(JSON.stringify({ action: "authenticate_biometrics" }));
+    } else {
+      state._unlockedBioRecordIds.add(recordId);
+      onVerified();
+    }
+  }
+
+  async function toggleRecordBiometricLock(recordId) {
+    const rec = state.decryptedRecords[recordId];
+    if (!rec) return;
+    const curTags = new Set(Array.isArray(rec.tags) ? rec.tags : []);
+    let nowLocked = false;
+    if (curTags.has("bio-locked")) {
+      curTags.delete("bio-locked");
+      state._unlockedBioRecordIds.delete(recordId);
+    } else {
+      curTags.add("bio-locked");
+      state._unlockedBioRecordIds.delete(recordId);
+      nowLocked = true;
+    }
+    await upsertRecord({
+      recordId: rec.record_id,
+      itemType: rec.item_type,
+      folder: rec.folder,
+      title: rec.title,
+      username: rec.username,
+      password: rec.password,
+      totpSecret: rec.totp_secret,
+      url: rec.url,
+      notes: rec.notes,
+      tags: Array.from(curTags),
+      encryptedAttachments: rec.encrypted_attachments,
+      passwordHistory: rec.password_history,
+    });
+    await renderRecordsList();
+    if (typeof window.showKryptoToast === "function") {
+      window.showKryptoToast(
+        nowLocked
+          ? `🔒 Đã bật Khóa Vân Tay Riêng cho '${rec.title}'!`
+          : `🔓 Đã tắt Khóa Vân Tay Riêng cho '${rec.title}'.`
+      );
+    }
+  }
+
+  function showOneTimeShareQrModal(recordId) {
+    const rec = state.decryptedRecords[recordId];
+    const box = document.getElementById("kpw-image-preview-box");
+    if (!rec || !box) return;
+    const expMs = Date.now() + 5 * 60 * 1000;
+    const expTimeStr = new Date(expMs).toLocaleTimeString("vi-VN");
+    const payloadObj = {
+      v: 1,
+      exp: expMs,
+      t: rec.item_type || "LOGIN",
+      f: rec.folder || "Mặc định",
+      n: rec.title || "",
+      u: rec.username || "",
+      p: rec.password || "",
+      o: rec.totp_secret || "",
+    };
+    const tokenStr = "KRYPTO-SHARE-V1:" + bytesToBase64(enc.encode(JSON.stringify(payloadObj)));
+
+    box.style.display = "block";
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <strong style="font-size:12px;color:var(--primary);">🔗 Mã Chia Sẻ Tạm Thời Tự Hủy Sau 5 Phút (${escapeHtml(rec.title)})</strong>
+        <button type="button" class="btn-chip-micro" onclick="document.getElementById('kpw-image-preview-box').style.display='none'">Đóng ✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+        Hiệu lực đến: <strong style="color:#d97706;">${escapeHtml(expTimeStr)} (Tự hủy sau 5 phút)</strong> • Dùng máy Krypto khác quét hoặc dán vào mục <em>📷 Quét QR</em>.
+      </div>
+      <canvas id="kpw-share-qr-canvas" width="220" height="220" style="display:block;margin:8px auto;border-radius:8px;background:#ffffff;padding:6px;"></canvas>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <input type="text" readonly value="${escapeHtml(tokenStr)}" style="flex:1;font-size:10.5px;font-family:monospace;padding:6px;">
+        <button type="button" class="btn-chip-micro" style="font-weight:700;color:var(--primary);" onclick="navigator.clipboard.writeText('${escapeHtml(tokenStr)}');if(window.showKryptoToast)window.showKryptoToast('✓ Đã chép chuỗi chia sẻ tự hủy 5 phút!');">📋 Chép Mã</button>
+      </div>
+    `;
+    // Vẽ biểu đồ ma trận trực quan đại diện cho băm SHA-256 của gói tin
+    sha256Digest(enc.encode(tokenStr)).then((hashBuf) => {
+      const c = document.getElementById("kpw-share-qr-canvas");
+      if (!c) return;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 220, 220);
+      const bytes = new Uint8Array(hashBuf);
+      const grid = 21;
+      const cell = 9;
+      const offset = 15;
+      ctx.fillStyle = "#0f172a";
+      const drawFinder = (gx, gy) => {
+        ctx.fillRect(offset + gx * cell, offset + gy * cell, 7 * cell, 7 * cell);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(offset + (gx + 1) * cell, offset + (gy + 1) * cell, 5 * cell, 5 * cell);
+        ctx.fillStyle = "#0284c7";
+        ctx.fillRect(offset + (gx + 2) * cell, offset + (gy + 2) * cell, 3 * cell, 3 * cell);
+        ctx.fillStyle = "#0f172a";
+      };
+      drawFinder(0, 0);
+      drawFinder(grid - 7, 0);
+      drawFinder(0, grid - 7);
+      for (let r = 0; r < grid; r++) {
+        for (let col = 0; col < grid; col++) {
+          if ((r < 8 && col < 8) || (r < 8 && col >= grid - 8) || (r >= grid - 8 && col < 8)) continue;
+          const bitIdx = (r * grid + col) % (bytes.length * 8);
+          const bit = (bytes[Math.floor(bitIdx / 8)] >> (bitIdx % 8)) & 1;
+          if (bit) {
+            ctx.fillRect(offset + col * cell, offset + r * cell, cell - 1, cell - 1);
+          }
+        }
+      }
+    });
+  }
+
+  function computePasswordEntropyBits(pwd) {
+    const s = String(pwd || "");
+    if (!s) return 0;
+    let pool = 0;
+    if (/[a-z]/.test(s)) pool += 26;
+    if (/[A-Z]/.test(s)) pool += 26;
+    if (/[0-9]/.test(s)) pool += 10;
+    if (/[^a-zA-Z0-9]/.test(s)) pool += 32;
+    return Math.round(s.length * Math.log2(Math.max(2, pool)));
+  }
+
+  function runVaultSecurityAudit() {
+    const box = document.getElementById("kpw-image-preview-box");
+    if (!box) return;
+    const recs = Object.values(state.decryptedRecords || {});
+    let weakCount = 0;
+    let reusedCount = 0;
+    let expiredCount = 0;
+    let totalEntropy = 0;
+    const pwdMap = {};
+    const findings = [];
+
+    recs.forEach((r) => {
+      const p = String(r.password || "").trim();
+      const bits = computePasswordEntropyBits(p);
+      totalEntropy += bits;
+      if (r.item_type === "LOGIN" && bits < 52) {
+        weakCount++;
+        findings.push(`⚠️ <strong>${escapeHtml(r.title)}</strong>: Mật khẩu yếu (${bits} bits — khuyến nghị ≥ 64 bits)`);
+      }
+      if (r.item_type === "LOGIN" && p.length >= 4) {
+        pwdMap[p] = (pwdMap[p] || 0) + 1;
+      }
+      const combined = `${r.password || ""} ${r.notes || ""}`;
+      const mFull = combined.match(/HSD:\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+      if (mFull) {
+        const expD = new Date(parseInt(mFull[3], 10), parseInt(mFull[2], 10) - 1, parseInt(mFull[1], 10));
+        const days = Math.ceil((expD.getTime() - Date.now()) / 86400000);
+        if (days < 0) {
+          expiredCount++;
+          findings.push(`🔴 <strong>${escapeHtml(r.title)}</strong>: Giấy tờ / Thẻ đã quá hạn (${mFull[0]})`);
+        } else if (days <= 180) {
+          findings.push(`🟡 <strong>${escapeHtml(r.title)}</strong>: Sắp hết hạn sau ${days} ngày (${mFull[0]})`);
+        }
+      }
+    });
+
+    recs.forEach((r) => {
+      const p = String(r.password || "").trim();
+      if (r.item_type === "LOGIN" && pwdMap[p] > 1) {
+        reusedCount++;
+        findings.push(`🔁 <strong>${escapeHtml(r.title)}</strong>: Đang dùng trùng mật khẩu với ${pwdMap[p] - 1} tài khoản khác`);
+      }
+    });
+
+    const avgBits = recs.length ? Math.round(totalEntropy / recs.length) : 0;
+    const score = Math.max(0, Math.min(100, 100 - weakCount * 12 - reusedCount * 15 - expiredCount * 15));
+    box.style.display = "block";
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:12px;color:var(--primary);">🛡️ Báo Cáo Kiểm Toán An Ninh Kho Mật Khẩu &amp; Giấy Tờ (Offline)</strong>
+        <button type="button" class="btn-chip-micro" onclick="document.getElementById('kpw-image-preview-box').style.display='none'">Đóng ✕</button>
+      </div>
+      <div style="font-size:11.5px;margin-top:6px;">
+        Điểm An Toàn: <strong style="color:${score >= 80 ? "#059669" : score >= 50 ? "#d97706" : "#dc2626"};">${score}/100</strong> •
+        Entropy TB: <strong>${avgBits} bits</strong> •
+        Mật khẩu yếu: <strong>${weakCount}</strong> •
+        Trùng lặp: <strong>${reusedCount}</strong> •
+        Quá hạn: <strong>${expiredCount}</strong>
+      </div>
+      <div style="margin-top:6px;font-size:11px;line-height:1.5;">
+        ${findings.length ? findings.map((f) => `<div>- ${f}</div>`).join("") : `<div style="color:#059669;font-weight:700;">✓ Tuyệt vời! Không phát hiện mật khẩu yếu, trùng lặp hay giấy tờ hết hạn.</div>`}
+      </div>
+    `;
+  }
+
+  async function toggleDecoyVaultMode() {
+    state.decoyModeActive = !state.decoyModeActive;
+    const btn = document.getElementById("kpw-btn-decoy-mode");
+    if (state.decoyModeActive) {
+      state._realDecryptedBackup = { ...state.decryptedRecords };
+      state.decryptedRecords = {
+        "decoy-wifi-guest": {
+          record_id: "decoy-wifi-guest",
+          item_type: "WIFI_NETWORK",
+          folder: "Mạng Khách",
+          title: "Wi-Fi Quán Cà Phê",
+          username: "Coffee_Free_5G",
+          password: "12345678",
+          revision: 1,
+          tags: [],
+        },
+        "decoy-news-login": {
+          record_id: "decoy-news-login",
+          item_type: "LOGIN",
+          folder: "Giải trí",
+          title: "Tài khoản Đọc Báo",
+          username: "guest_reader@gmail.com",
+          password: "GuestPassword#2026",
+          revision: 1,
+          tags: [],
+        },
+      };
+      if (btn) btn.textContent = "🎭 Đang Ở Chế Độ Ví Ngụy Trang (Nhấn Để Khôi Phục Kho Thật)";
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("🎭 Đã kích hoạt Ví Ngụy Trang Khẩn Cấp (Decoy Vault) — Đã ẩn toàn bộ thẻ & CCCD thật!");
+      }
+    } else {
+      if (state._realDecryptedBackup) {
+        state.decryptedRecords = { ...state._realDecryptedBackup };
+      } else {
+        await initOrUnlockVault(state.masterPassword);
+      }
+      if (btn) btn.textContent = "🎭 Bật Chế Độ Ví Ngụy Trang Khẩn Cấp (Decoy Vault Khi Bị Ép Mở Máy)";
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("✓ Đã khôi phục Kho Mật Khẩu & Giấy Tờ Thật!");
+      }
+    }
+    switchSubView("list");
+    await renderRecordsList();
   }
 
   function exportRecordTwoSidedPdfA4(recordId) {
@@ -3635,8 +3996,9 @@
 
       <!-- SUB-PANEL 1: DANH BẠ MẬT KHẨU & THẺ (MẶC ĐỊNH MỞ RA GỌN SẠCH) -->
       <div id="kpw-panel-list" class="card settings-card" style="display: block;">
-        <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
-          <input type="search" id="kpw-search-input" placeholder="🔍 Tìm mật khẩu, thẻ Visa, CCCD, Wi-Fi..." style="flex: 1; font-size: 12px; padding: 8px 10px; margin: 0;">
+        <div style="display: flex; gap: 5px; margin-bottom: 8px; align-items: center;">
+          <input type="search" id="kpw-search-input" placeholder="🔍 Tìm mật khẩu, thẻ Visa, CCCD, GPLX..." style="flex: 1; font-size: 12px; padding: 8px 10px; margin: 0;">
+          <button type="button" class="btn-chip-micro" style="padding: 8px 8px; font-size: 11px; font-weight: 700; white-space: nowrap;" onclick="window.KryptoPasswordVault.runSecurityAudit()">🛡️ Kiểm Toán</button>
           <button type="button" class="btn-mobi-solid" style="padding: 8px 10px; font-size: 11.5px; white-space: nowrap; width: auto;" onclick="window.KryptoPasswordVault.switchSubView('add')">➕ Thêm</button>
         </div>
         <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px;">
@@ -3920,6 +4282,9 @@
             </p>
             <button type="button" class="btn-mobi-outline" style="width:100%;font-size:11px;padding:9px 8px;" onclick="window.KryptoPasswordVault.openAndroidAutofillSettings()">
               ⌨️ Bật Krypto Làm Dịch Vụ Tự Động Điền Mật Khẩu Android (Autofill)
+            </button>
+            <button type="button" id="kpw-btn-decoy-mode" class="btn-mobi-outline" style="width:100%;font-size:11px;padding:9px 8px;margin-top:6px;color:#d97706;border-color:#d97706;" onclick="window.KryptoPasswordVault.toggleDecoyVaultMode()">
+              🎭 Bật Chế Độ Ví Ngụy Trang Khẩn Cấp (Decoy Vault Khi Bị Ép Mở Máy)
             </button>
           </div>
 
@@ -4421,6 +4786,14 @@
       exportRecordTwoSidedPdfA4(recordId);
     },
 
+    runSecurityAudit() {
+      runVaultSecurityAudit();
+    },
+
+    toggleDecoyVaultMode() {
+      toggleDecoyVaultMode();
+    },
+
     onCardPdfExported(savedPath) {
       if (typeof window.showKryptoToast === "function") {
         window.showKryptoToast(`🖨️ Đã xuất Bản In PDF A4 2 Mặt (Chuẩn 85.6×54mm) tại: ${savedPath}`);
@@ -4449,7 +4822,22 @@
         return;
       }
       if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
-        window.FlutterBridge.postMessage(JSON.stringify({ action: "start_nfc_card_scan" }));
+        const docNo = (document.getElementById("kpw-username")?.value || "").replace(/\D/g, "").slice(-9);
+        const passMeta = document.getElementById("kpw-password")?.value || "";
+        const toYYMMDD = (dStr) => {
+          const m = String(dStr || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+          return m ? `${m[3].slice(-2)}${m[2]}${m[1]}` : "";
+        };
+        const dobM = passMeta.match(/NS:\s*(\d{2}\/\d{2}\/\d{4})/i);
+        const expM = passMeta.match(/HSD:\s*(\d{2}\/\d{2}\/\d{4})/i);
+        window.FlutterBridge.postMessage(
+          JSON.stringify({
+            action: "start_nfc_card_scan",
+            docNo,
+            dob: dobM ? toYYMMDD(dobM[1]) : "",
+            expiry: expM ? toYYMMDD(expM[1]) : "",
+          })
+        );
       }
     },
 
