@@ -1,16 +1,11 @@
 /**
  * krypto_password_vault_widget.js
- * PHÂN HỆ KÉT MẬT KHẨU HẬU LƯỢNG TỬ, LƯU ẢNH THẺ/SCREENSHOT & ĐỒNG BỘ 2 CHIỀU GOOGLE DRIVE (SAF + CRDT)
- * Tích hợp trực tiếp vào ứng dụng Krypto (Android APK Offline & Web)
- *
- * Kiến trúc bảo mật:
- * - Mã hóa Phong bì 2 tầng (Envelope Encryption): PBKDF2-HMAC-SHA256 -> HKDF-SHA256 (RFC 5869) -> KEK bọc DEK -> AES-256-GCM (AAD).
- * - Phong bì Khóa Hậu Lượng Tử: NIST FIPS 203 (ML-KEM-768, ek=1184B, dk=2400B, ct=1088B).
- * - Lược đồ 6 loại bản ghi đa hình: LOGIN, PAYMENT_CARD, IDENTITY (CCCD Gắn chip), WIFI_NETWORK, SSH_API_KEY, SECURE_NOTE.
- * - Lưu ảnh chụp thẻ (Mặt trước / Mặt sau), Ảnh chụp màn hình (Screenshots) và Chụp ảnh thẻ từ trong App (.PNG).
- * - Quét mã QR đa định dạng (otpauth://, otpauth-migration://, WIFI:S:..., CCCD Gắn chip 12 số) qua jsQR & Native Camera2.
- * - Đồng bộ 2 chiều Google Drive qua Android SAF (PersistableUriPermission) + Hợp nhất CRDT LWW-Element-Set theo HLC.
- * - Tuân thủ nghiêm ngặt Rule 14 (Single-Level Card & Borderless Responsive Mobile Table Cells).
+ * TAB ĐỘC LẬP: KHO MẬT KHẨU, THẺ NGÂN HÀNG / CCCD & ĐỒNG BỘ 2 CHIỀU GOOGLE DRIVE (SAF + CRDT)
+ * Tách biệt hoàn toàn khỏi Tab Két sắt (PIN/HSM) và chia thành 4 Sub-Tab gọn gàng:
+ *   1. [🗂️ Danh bạ]   : Tìm kiếm, lọc theo 6 danh mục và xem/sao chép/chụp thẻ từng bản ghi.
+ *   2. [➕ Thêm / Thẻ]: Biểu mẫu thêm Mật khẩu / Thẻ tín dụng / CCCD kèm ảnh mặt trước & mặt sau.
+ *   3. [📷 Quét QR]   : Quét QR máy ảnh trực tiếp, chọn ảnh chụp màn hình hoặc dán từ Clipboard.
+ *   4. [☁️ Drive]     : Đồng bộ 2 chiều Google Drive (Android SAF + CRDT Merge) & Xuất/Nhập .kryptopass.
  */
 
 (function (global) {
@@ -311,6 +306,8 @@
     vaultData: null,
     decryptedRecords: {},
     revealedIds: new Set(),
+    activeCategory: "ALL",
+    activeSubTab: "list",
     linkedGDriveUri: localStorage.getItem(STORAGE_KEY_SAVED_URI) || "",
     blockSystemScreenshot: false,
     pendingFrontFile: null,
@@ -623,9 +620,10 @@
         tags: ["screenshot", "encrypted-image"],
         encryptedAttachments: attList,
       });
+      switchSubView("list");
       await renderRecordsList();
       if (typeof window.showKryptoToast === "function") {
-        window.showKryptoToast("✓ Đã mã hóa AES-256-GCM và lưu Ảnh chụp màn hình vào Kho!");
+        window.showKryptoToast("✓ Đã mã hóa AES-256-GCM và lưu Ảnh chụp màn hình vào Danh bạ!");
       }
       return true;
     }
@@ -688,9 +686,10 @@
       });
     }
 
+    switchSubView("list");
     await renderRecordsList();
     if (typeof window.showKryptoToast === "function") {
-      window.showKryptoToast("✓ Đã giải mã QR và lưu bản ghi mã hóa AES-256-GCM vào Kho!");
+      window.showKryptoToast("✓ Đã giải mã QR và lưu vào Danh bạ Mật khẩu!");
     }
     return true;
   }
@@ -704,7 +703,6 @@
     let updated = 0;
     let conflicts = 0;
 
-    // Thử giải mã các bản ghi của remoteVaultObj bằng cùng Master Password
     let remoteDecrypted = {};
     try {
       const remDomainKeys = await deriveDomainKeys(state.masterPassword, remoteVaultObj.kdf);
@@ -770,7 +768,6 @@
         const winner = remWins ? remRec : locRec;
         const loser = remWins ? locRec : remRec;
 
-        // Hợp nhất lịch sử mật khẩu không mất dữ liệu
         const mergedHist = [...(winner.password_history || [])];
         if (loser.password && loser.password !== winner.password) {
           const exists = mergedHist.some((h) => h.password === loser.password);
@@ -784,7 +781,6 @@
           conflicts += 1;
         }
 
-        // Hợp nhất ảnh chụp thẻ / ảnh chụp màn hình khử trùng lặp theo sha256_plain
         const attMap = {};
         [...(winner.encrypted_attachments || []), ...(loser.encrypted_attachments || [])].forEach((a) => {
           if (a && a.sha256_plain) attMap[a.sha256_plain] = a;
@@ -813,33 +809,28 @@
   }
 
   // ==========================================================================
-  // 7. GIAO DIỆN PHẲNG TRONG TAB KÉT SẮT (RULE 14 SINGLE-LEVEL CARD)
+  // 7. GIAO DIỆN 4 SUB-TAB TÁCH BIỆT TRONG TAB #tab-passwords (RULE 14)
   // ==========================================================================
   function injectStyles() {
     if (document.getElementById("kpw-vault-styles")) return;
     const style = document.createElement("style");
     style.id = "kpw-vault-styles";
     style.textContent = `
-      .kpw-section-divider {
-        margin-top: 16px;
-        padding-top: 14px;
-        border: none !important;
-        border-top: 1px dashed var(--border) !important;
-        background: transparent !important;
+      .kpw-sub-btn.active {
+        background: var(--primary) !important;
+        color: #ffffff !important;
+        border-color: var(--primary) !important;
       }
-      .kpw-status-bar {
-        border: none !important;
-        border-left: 3px solid var(--primary) !important;
-        padding: 6px 10px !important;
-        background: transparent !important;
-        font-size: 11px;
-        color: var(--text-muted);
-        margin-bottom: 10px;
+      .kpw-cat-chip.active {
+        background: var(--primary-light) !important;
+        color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        font-weight: 700 !important;
       }
       .kpw-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 8px;
+        margin-top: 6px;
       }
       .kpw-table th {
         text-align: left;
@@ -910,14 +901,41 @@
     document.head.appendChild(style);
   }
 
+  function switchSubView(viewName) {
+    state.activeSubTab = viewName;
+    ["list", "add", "qr", "sync"].forEach((v) => {
+      const panel = document.getElementById(`kpw-panel-${v}`);
+      const btn = document.getElementById(`kpw-subbtn-${v}`);
+      if (panel) panel.style.display = v === viewName ? "block" : "none";
+      if (btn) {
+        if (v === viewName) btn.classList.add("active");
+        else btn.classList.remove("active");
+      }
+    });
+    if (viewName === "list") {
+      renderRecordsList();
+    }
+  }
+
+  function filterCategory(cat, btnEl) {
+    state.activeCategory = cat;
+    document.querySelectorAll(".kpw-cat-chip").forEach((b) => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+    renderRecordsList();
+  }
+
   async function renderRecordsList() {
     const tbody = document.getElementById("kpw-records-tbody");
-    const summaryEl = document.getElementById("kpw-watchtower-summary");
+    const countBadge = document.getElementById("kpw-count-pill");
+    const gdriveStatusEl = document.getElementById("kpw-gdrive-status-text");
     if (!tbody) return;
 
     const query = (document.getElementById("kpw-search-input")?.value || "").toLowerCase().trim();
     const allRecs = Object.values(state.decryptedRecords);
     const filtered = allRecs.filter((r) => {
+      if (state.activeCategory !== "ALL" && r.item_type !== state.activeCategory) {
+        return false;
+      }
       if (!query) return true;
       return (
         (r.title || "").toLowerCase().includes(query) ||
@@ -927,21 +945,21 @@
       );
     });
 
-    if (summaryEl) {
-      const gdriveStatus = state.linkedGDriveUri
-        ? "Đã liên kết Google Drive 2 chiều (SAF)"
-        : "Lưu cục bộ (Chưa liên kết tệp Google Drive)";
-      summaryEl.innerHTML =
-        `<strong>🛡️ Két Mật Khẩu Hậu Lượng Tử (FIPS 203 ML-KEM-768 + AES-256-GCM):</strong> ` +
-        `Đang lưu <strong>${allRecs.length}</strong> bản ghi | Đồng bộ: <strong>${escapeHtml(gdriveStatus)}</strong>`;
+    if (countBadge) {
+      countBadge.textContent = `${allRecs.length} mục`;
+    }
+    if (gdriveStatusEl) {
+      gdriveStatusEl.textContent = state.linkedGDriveUri
+        ? "✓ Đã liên kết tệp Google Drive 2 chiều (SAF Persistable URI)"
+        : "Chưa liên kết tệp trên Google Drive (Đang lưu mã hóa cục bộ)";
     }
 
     if (filtered.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td data-label="Trạng thái" colspan="4">
+          <td data-label="Danh bạ" colspan="4">
             <span class="table-cell-val" style="color:var(--text-muted);">
-              Chưa có bản ghi mật khẩu / thẻ nào. Hãy thêm bản ghi mới, chụp ảnh thẻ hoặc quét mã QR ở trên.
+              Chưa có mục nào trong danh mục này. Nhấn <strong>➕ Thêm / Thẻ</strong> hoặc <strong>📷 Quét QR</strong> để thêm mới.
             </span>
           </td>
         </tr>`;
@@ -1158,19 +1176,60 @@
     injectStyles();
 
     host.innerHTML = `
-      <div class="kpw-section-divider">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-          <span style="font-size:12.5px;font-weight:800;color:var(--primary);">
-            🔑 KHO MẬT KHẨU, THẺ NGÂN HÀNG / CCCD &amp; ĐỒNG BỘ GOOGLE DRIVE 2 CHIỀU
-          </span>
-          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(2,132,199,0.14);color:#0284c7;">
-            FIPS 203 ML-KEM-768 + AES-256-GCM
-          </span>
+      <!-- Thanh Tiêu đề & Điều hướng 4 Sub-Tab Ngang (Giống chuẩn 2FA OTP) -->
+      <div class="card settings-card" style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+          <div>
+            <h3 style="margin: 0; font-size: 14.5px; font-weight: 800; color: var(--text-title);">🔑 Kho Mật Khẩu &amp; Thẻ Mã Hóa</h3>
+            <p style="margin: 2px 0 0; font-size: 11px; color: var(--text-muted);">Hậu Lượng Tử FIPS 203 (ML-KEM-768) • AES-256-GCM • Google Drive 2 Chiều</p>
+          </div>
+          <span id="kpw-count-pill" style="font-size: 10.5px; font-weight: 700; padding: 4px 8px; border-radius: 8px; background: var(--bg-subtle); color: var(--primary); border: 1px solid var(--border);">0 mục</span>
         </div>
 
-        <div id="kpw-watchtower-summary" class="kpw-status-bar"></div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 6px;">
+          <button type="button" id="kpw-subbtn-list" class="btn-chip-micro kpw-sub-btn active" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoPasswordVault.switchSubView('list')">🗂️ Danh Bạ</button>
+          <button type="button" id="kpw-subbtn-add" class="btn-chip-micro kpw-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoPasswordVault.switchSubView('add')">➕ Thêm / Thẻ</button>
+          <button type="button" id="kpw-subbtn-qr" class="btn-chip-micro kpw-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoPasswordVault.switchSubView('qr')">📷 Quét QR</button>
+          <button type="button" id="kpw-subbtn-sync" class="btn-chip-micro kpw-sub-btn" style="padding: 7px 4px; font-weight: 700;" onclick="window.KryptoPasswordVault.switchSubView('sync')">☁️ Drive</button>
+        </div>
+      </div>
 
-        <!-- Form thêm bản ghi đa hình + Đính kèm Ảnh Thẻ / Ảnh Chụp Màn Hình -->
+      <!-- SUB-PANEL 1: DANH BẠ MẬT KHẨU & THẺ (MẶC ĐỊNH MỞ RA GỌN SẠCH) -->
+      <div id="kpw-panel-list" class="card settings-card" style="display: block;">
+        <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
+          <input type="search" id="kpw-search-input" placeholder="🔍 Tìm mật khẩu, thẻ Visa, CCCD, Wi-Fi..." style="flex: 1; font-size: 12px; padding: 8px 10px; margin: 0;">
+          <button type="button" class="btn-mobi-solid" style="padding: 8px 10px; font-size: 11.5px; white-space: nowrap; width: auto;" onclick="window.KryptoPasswordVault.switchSubView('add')">➕ Thêm</button>
+        </div>
+        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px;">
+          <button type="button" class="btn-chip-micro kpw-cat-chip active" onclick="window.KryptoPasswordVault.filterCategory('ALL', this)">Tất cả</button>
+          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('LOGIN', this)">🌐 Đăng nhập</button>
+          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('PAYMENT_CARD', this)">💳 Thẻ NH</button>
+          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('IDENTITY', this)">🪪 CCCD</button>
+          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('WIFI_NETWORK', this)">📶 Wi-Fi</button>
+          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('SECURE_NOTE', this)">📝 Ghi chú / Ảnh</button>
+        </div>
+
+        <div id="kpw-image-preview-box" style="display:none;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--border);"></div>
+
+        <table class="kpw-table">
+          <thead>
+            <tr>
+              <th>Phân loại &amp; Tên</th>
+              <th>Tài khoản / Số thẻ</th>
+              <th>Mật khẩu &amp; 2FA</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="kpw-records-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- SUB-PANEL 2: THÊM MỚI MẬT KHẨU / THẺ / CCCD & ĐÍNH KÈM ẢNH THẺ -->
+      <div id="kpw-panel-add" class="card settings-card" style="display: none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:12.5px;font-weight:800;color:var(--primary);">➕ THÊM MẬT KHẨU, THẺ TÍN DỤNG HOẶC GIẤY TỜ MỚI</span>
+        </div>
+
         <div class="dual-inputs-row">
           <div class="input-col">
             <label class="micro-label">Loại bản ghi:</label>
@@ -1185,14 +1244,14 @@
           </div>
           <div class="input-col">
             <label class="micro-label">Thư mục phân loại:</label>
-            <input type="text" id="kpw-folder" value="Mặc định" placeholder="VD: Ngân hàng, Công việc, Cá nhân...">
+            <input type="text" id="kpw-folder" value="Mặc định" placeholder="VD: Ngân hàng, Công việc...">
           </div>
         </div>
 
         <div class="dual-inputs-row" style="margin-top:6px;">
           <div class="input-col">
             <label class="micro-label">Tên dịch vụ / Tên thẻ (*):</label>
-            <input type="text" id="kpw-title" placeholder="VD: Vietcombank Visa, Google Cloud, CCCD...">
+            <input type="text" id="kpw-title" placeholder="VD: Vietcombank Visa, Google Cloud...">
           </div>
           <div class="input-col">
             <label class="micro-label">Tài khoản / Số thẻ / Số CCCD:</label>
@@ -1214,87 +1273,96 @@
           </div>
         </div>
 
-        <!-- Đính kèm ảnh chụp mặt trước / mặt sau thẻ hoặc ảnh chụp màn hình -->
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px;">
-          <button type="button" class="btn-mobi-outline" style="font-size:11px;padding:7px 6px;" onclick="document.getElementById('kpw-front-img-input').click()">
-            🖼️ Ảnh Mặt Trước / Screenshot (<span id="kpw-front-label">Chưa chọn</span>)
-          </button>
-          <button type="button" class="btn-mobi-outline" style="font-size:11px;padding:7px 6px;" onclick="document.getElementById('kpw-back-img-input').click()">
-            🖼️ Ảnh Mặt Sau / QR Dự Phòng (<span id="kpw-back-label">Chưa chọn</span>)
-          </button>
-          <input type="file" id="kpw-front-img-input" accept="image/*" style="display:none;">
-          <input type="file" id="kpw-back-img-input" accept="image/*" style="display:none;">
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
+          <label class="micro-label">🖼️ ĐÍNH KÈM ẢNH CHỤP THẺ (MẶT TRƯỚC / MẶT SAU) HOẶC ẢNH CHỤP MÀN HÌNH:</label>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px;">
+            <button type="button" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;" onclick="document.getElementById('kpw-front-img-input').click()">
+              🖼️ Mặt Trước / Screenshot (<span id="kpw-front-label">Chưa chọn</span>)
+            </button>
+            <button type="button" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;" onclick="document.getElementById('kpw-back-img-input').click()">
+              🖼️ Mặt Sau / QR (<span id="kpw-back-label">Chưa chọn</span>)
+            </button>
+            <input type="file" id="kpw-front-img-input" accept="image/*" style="display:none;">
+            <input type="file" id="kpw-back-img-input" accept="image/*" style="display:none;">
+          </div>
         </div>
 
-        <button type="button" id="kpw-btn-save-record" class="btn-cyber-dialog-primary" style="margin-top:8px;width:100%;">
-          <span>🔒 Mã Hóa AES-256-GCM (Kèm Ảnh Thẻ / Screenshot) &amp; Lưu Vào Két</span>
+        <button type="button" id="kpw-btn-save-record" class="btn-cyber-dialog-primary" style="margin-top:12px;width:100%;">
+          <span>🔒 Mã Hóa AES-256-GCM &amp; Lưu Vào Danh Bạ</span>
+        </button>
+      </div>
+
+      <!-- SUB-PANEL 3: QUÉT MÃ QR ĐA ĐỊNH DẠNG & LƯU ẢNH CHỤP MÀN HÌNH -->
+      <div id="kpw-panel-qr" class="card settings-card" style="display: none;">
+        <span style="font-size:12.5px;font-weight:800;color:var(--primary);display:block;margin-bottom:4px;">
+          📷 QUÉT MÃ QR ĐA ĐỊNH DẠNG &amp; LƯU ẢNH CHỤP MÀN HÌNH
+        </span>
+        <p style="font-size:11px;color:var(--text-muted);margin:0 0 10px;">
+          Hỗ trợ tự động bóc tách: <strong>QR 2FA (`otpauth://`)</strong>, <strong>QR Wi-Fi (`WIFI:S:...`)</strong>, <strong>QR CCCD Gắn chip 12 số</strong> và lưu nguyên bản ảnh chụp màn hình đã mã hóa <code>AES-256-GCM</code>.
+        </p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;">
+          <button type="button" id="kpw-btn-scan-qr-img" class="btn-cyber-dialog-primary" style="font-size:11.5px;padding:10px 6px;margin:0;">
+            <span>🖼️ Chọn Ảnh Chụp Màn Hình / QR</span>
+          </button>
+          <button type="button" id="kpw-btn-paste-screenshot" class="btn-mobi-outline" style="font-size:11.5px;padding:10px 6px;margin:0;">
+            📋 Dán Ảnh Chụp Màn Hình
+          </button>
+          <input type="file" id="kpw-qr-screenshot-input" accept="image/*" style="display:none;">
+        </div>
+
+        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
+          <label class="micro-label">Hoặc dán trực tiếp chuỗi dữ liệu QR:</label>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <input type="text" id="kpw-qr-raw-input" placeholder="otpauth://... hoặc WIFI:S:... hoặc 001085099887|..." style="flex:1;font-size:11px;font-family:monospace;">
+            <button type="button" id="kpw-btn-import-qr-str" class="btn-mobi-solid" style="padding:8px 12px;font-size:11.5px;width:auto;">Nhập QR</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANEL 4: ĐỒNG BỘ 2 CHIỀU GOOGLE DRIVE (SAF + CRDT) & BẢO MẬT -->
+      <div id="kpw-panel-sync" class="card settings-card" style="display: none;">
+        <span style="font-size:12.5px;font-weight:800;color:var(--primary);display:block;margin-bottom:4px;">
+          ☁️ ĐỒNG BỘ 2 CHIỀU GOOGLE DRIVE (ANDROID SAF + CRDT)
+        </span>
+        <p id="kpw-gdrive-status-text" style="font-size:11px;color:var(--text-muted);margin:0 0 10px;">
+          Chưa liên kết tệp trên Google Drive.
+        </p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;">
+          <button type="button" id="kpw-btn-gdrive-create" class="btn-mobi-outline" style="font-size:11px;padding:9px 6px;">
+            ☁️ Tạo Tệp Mới Trên Google Drive
+          </button>
+          <button type="button" id="kpw-btn-gdrive-open" class="btn-mobi-outline" style="font-size:11px;padding:9px 6px;">
+            📂 Mở Tệp Từ Google Drive
+          </button>
+        </div>
+
+        <button type="button" id="kpw-btn-gdrive-sync-now" class="btn-cyber-dialog-primary" style="margin-top:8px;width:100%;">
+          <span>🔄 Đồng Bộ 2 Chiều Ngay (Đọc &amp; Ghi Hợp Nhất CRDT)</span>
         </button>
 
-        <!-- Khu vực Quét QR Đa Định Dạng & Lưu Ảnh Chụp Màn Hình Nhanh -->
         <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
-          <label class="micro-label">📷 QUÉT MÃ QR ĐA ĐỊNH DẠNG (2FA, WI-FI, CCCD GẮN CHIP) &amp; LƯU ẢNH CHỤP MÀN HÌNH:</label>
+          <label class="micro-label">SAO LƯU TỆP ĐỘC LẬP (.KRYPTOPASS) &amp; CHỐNG CHỤP MÀN HÌNH:</label>
           <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px;">
-            <button type="button" id="kpw-btn-scan-qr-img" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;">
-              🖼️ Chọn Ảnh Chụp Màn Hình / QR
-            </button>
-            <button type="button" id="kpw-btn-paste-screenshot" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;">
-              📋 Dán Ảnh Chụp Màn Hình
-            </button>
-            <input type="file" id="kpw-qr-screenshot-input" accept="image/*" style="display:none;">
-          </div>
-          <div style="display:flex;gap:6px;margin-top:6px;">
-            <input type="text" id="kpw-qr-raw-input" placeholder="Hoặc dán chuỗi otpauth://, WIFI:S:..., CCCD 12 số|..." style="flex:1;font-size:11px;font-family:monospace;">
-            <button type="button" id="kpw-btn-import-qr-str" class="btn-chip-micro" style="padding:6px 10px;font-weight:700;">Nhập QR</button>
-          </div>
-        </div>
-
-        <!-- Khu vực Đồng bộ 2 chiều Google Drive (SAF) & Xuất/Nhập .kryptopass -->
-        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
-          <label class="micro-label">☁️ ĐỒNG BỘ 2 CHIỀU GOOGLE DRIVE (ANDROID SAF + CRDT MERGE KHÔNG MẤT DỮ LIỆU):</label>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px;">
-            <button type="button" id="kpw-btn-gdrive-create" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;">
-              ☁️ Tạo Tệp Mới Trên Google Drive
-            </button>
-            <button type="button" id="kpw-btn-gdrive-open" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;">
-              📂 Mở Tệp Từ Google Drive
-            </button>
-          </div>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px;">
-            <button type="button" id="kpw-btn-gdrive-sync-now" class="btn-cyber-dialog-primary" style="font-size:11px;padding:8px 6px;margin:0;">
-              <span>🔄 Đồng Bộ 2 Chiều Ngay (CRDT)</span>
-            </button>
             <button type="button" id="kpw-btn-export-file" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;">
               📤 Xuất Tệp .kryptopass
             </button>
+            <button type="button" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;" onclick="document.getElementById('kpw-import-file-input').click()">
+              📥 Nhập &amp; Gộp .kryptopass
+            </button>
+            <input type="file" id="kpw-import-file-input" accept=".kryptopass,.json" style="display:none;">
           </div>
-          <div style="margin-top:8px;">
+
+          <div style="margin-top:10px;">
             <label class="setting-toggle-row" style="padding:4px 0;">
               <div class="toggle-info">
-                <span class="toggle-name" style="font-size:11.5px;">🛡️ Chặn Chụp Màn Hình Trái Phép (Android FLAG_SECURE)</span>
-                <span class="toggle-desc" style="font-size:10.5px;">Tắt khi bạn muốn dùng phím cứng điện thoại chụp màn hình ứng dụng</span>
+                <span class="toggle-name" style="font-size:11.5px;">🛡️ Chặn Chụp Màn Hình Hệ Thống (FLAG_SECURE)</span>
+                <span class="toggle-desc" style="font-size:10.5px;">Tắt khi bạn muốn dùng phím cứng điện thoại chụp màn hình</span>
               </div>
               <input type="checkbox" id="kpw-flag-secure-toggle" style="width:17px;height:17px;cursor:pointer;">
             </label>
           </div>
-        </div>
-
-        <!-- Khung hiển thị ảnh chụp thẻ / ảnh chụp màn hình giải mã -->
-        <div id="kpw-image-preview-box" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);"></div>
-
-        <!-- Danh sách bản ghi mật khẩu & thẻ -->
-        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
-          <input type="search" id="kpw-search-input" placeholder="🔍 Tìm kiếm mật khẩu, thẻ Visa, CCCD, Wi-Fi..." style="width:100%;font-size:12px;padding:8px 10px;margin-bottom:6px;">
-          <table class="kpw-table">
-            <thead>
-              <tr>
-                <th>Phân loại &amp; Tên</th>
-                <th>Tài khoản / Số thẻ</th>
-                <th>Mật khẩu &amp; 2FA</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="kpw-records-tbody"></tbody>
-          </table>
         </div>
       </div>
     `;
@@ -1375,9 +1443,9 @@
         document.getElementById("kpw-front-label").textContent = "Chưa chọn";
         document.getElementById("kpw-back-label").textContent = "Chưa chọn";
 
-        await renderRecordsList();
+        switchSubView("list");
         if (typeof window.showKryptoToast === "function") {
-          window.showKryptoToast("✓ Đã mã hóa AES-256-GCM và lưu vào Kho Mật Khẩu!");
+          window.showKryptoToast("✓ Đã mã hóa AES-256-GCM và lưu vào Danh bạ!");
         }
       });
     }
@@ -1492,6 +1560,21 @@
       exportBtn.addEventListener("click", () => exportVaultFileDownload());
     }
 
+    const importFileInput = document.getElementById("kpw-import-file-input");
+    if (importFileInput) {
+      importFileInput.addEventListener("change", (ev) => {
+        const f = ev.target.files && ev.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = async () => {
+          await global.KryptoPasswordVault.onGDriveRemoteReadForMerge(String(reader.result));
+          switchSubView("list");
+        };
+        reader.readAsText(f);
+        importFileInput.value = "";
+      });
+    }
+
     const flagSecureToggle = document.getElementById("kpw-flag-secure-toggle");
     if (flagSecureToggle) {
       flagSecureToggle.checked = state.blockSystemScreenshot;
@@ -1532,12 +1615,24 @@
   }
 
   // ==========================================================================
-  // 8. PUBLIC API CHO NATIVE ANDROID SAF BRIDGE
+  // 8. PUBLIC API CHO NATIVE ANDROID SAF BRIDGE & SUB-TAB NAVIGATION
   // ==========================================================================
   global.KryptoPasswordVault = {
     async init() {
       await initOrUnlockVault(state.masterPassword);
       mountWidget();
+    },
+
+    switchSubView(viewName) {
+      switchSubView(viewName);
+    },
+
+    filterCategory(cat, btnEl) {
+      filterCategory(cat, btnEl);
+    },
+
+    refreshUI() {
+      renderRecordsList();
     },
 
     async restoreNativePermanentVault(rawJson) {
@@ -1614,8 +1709,13 @@
   });
 
   setInterval(() => {
-    const tabVault = document.getElementById("tab-vault");
-    if (tabVault && tabVault.style.display !== "none" && Object.keys(state.decryptedRecords).length > 0) {
+    const tabPw = document.getElementById("tab-passwords");
+    if (
+      tabPw &&
+      tabPw.style.display !== "none" &&
+      state.activeSubTab === "list" &&
+      Object.keys(state.decryptedRecords).length > 0
+    ) {
       renderRecordsList();
     }
   }, 5000);

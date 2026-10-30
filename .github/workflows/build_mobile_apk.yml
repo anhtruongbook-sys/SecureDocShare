@@ -66,10 +66,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.6
-          name: "Krypto v2.9.6 - Tích Hợp Kho Mật Khẩu Hậu Lượng Tử (FIPS 203 ML-KEM-768), Lưu Ảnh Thẻ/Screenshot & Đồng Bộ 2 Chiều Google Drive"
+          tag_name: v2.9.7
+          name: "Krypto v2.9.7 - Tách Riêng Phân Hệ 🔑 Mật Khẩu (4 Sub-Tab Ngang: Danh Bạ • Thêm/Thẻ • Quét QR • Drive) Khỏi Két Sắt"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.6 (6-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • 2FA OTP • Két sắt)
+            ## Ứng dụng Di Động Krypto v2.9.7 (7-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • Mật khẩu • 2FA OTP • Két sắt)
+            - **Tách riêng Phân hệ `🔑 Mật khẩu` (`#tab-passwords`) độc lập khỏi `🛡️ Két sắt` (`#tab-vault`)**:
+              + Tách hoàn toàn Kho Mật Khẩu & Thẻ ra khỏi màn hình Cấu hình Két sắt & Chữ ký số HSM để tránh chồng chéo chức năng.
+              + Tổ chức giao diện `🔑 Mật khẩu` thành **4 Sub-Tab ngang độc lập** (chỉ hiển thị duy nhất 1 chức năng tại một thời điểm):
+                1. **`🗂️ Danh Bạ`**: Tìm kiếm tức thời, lọc theo danh mục (`🌐 Đăng nhập`, `💳 Thẻ NH`, `🪪 CCCD`, `📶 Wi-Fi`, `📝 Ghi chú / Ảnh`), sao chép 1 chạm, xem ảnh thẻ/screenshot và chụp thẻ `.PNG` ngay trong ứng dụng.
+                2. **`➕ Thêm / Thẻ`**: Thêm mới bản ghi mật khẩu/thẻ, sinh mật khẩu ngẫu nhiên `CSPRNG` và đính kèm ảnh chụp mặt trước/mặt sau hoặc ảnh chụp màn hình.
+                3. **`📷 Quét QR`**: Chọn ảnh chụp màn hình chứa mã QR, dán ảnh từ Clipboard hoặc nhập chuỗi `otpauth://`, `WIFI:S:...`, `CCCD Gắn chip 12 số`.
+                4. **`☁️ Drive`**: Đồng bộ 2 chiều Google Drive qua `Android SAF PersistableUriPermission` + hợp nhất không mất dữ liệu `CRDT LWW-Element-Set`, xuất/nhập tệp `.kryptopass`, và bật/tắt chống chụp màn hình `FLAG_SECURE`.
             - **Tích hợp Phân hệ Kho Mật Khẩu Hậu Lượng Tử & Thẻ Tín Dụng / CCCD (`KryptoPasswordVault` — `NIST FIPS 203 ML-KEM-768` + `AES-256-GCM`)**:
               + Kiến trúc Mã hóa Phong bì 2 tầng (`PBKDF2-HMAC-SHA256` -> `HKDF-SHA256 RFC 5869` -> `KEK` bọc `DEK` -> `AES-256-GCM` với `AAD`) kết hợp Phong bì Khóa Hậu Lượng Tử `NIST FIPS 203 (ML-KEM-768)`.
               + Hỗ trợ 6 loại bản ghi đa hình chuẩn quốc tế: `LOGIN` (Tài khoản & 2FA TOTP), `PAYMENT_CARD` (Thẻ tín dụng Visa/Mastercard), `IDENTITY` (CCCD gắn chip 12 số & Hộ chiếu), `WIFI_NETWORK`, `SSH_API_KEY` (Seed Phrase 12/24 từ), `SECURE_NOTE`.

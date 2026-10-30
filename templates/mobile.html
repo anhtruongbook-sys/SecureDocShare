@@ -795,9 +795,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- PHÂN KHU KÉT MẬT KHẨU HẬU LƯỢNG TỬ, ẢNH THẺ/SCREENSHOT & ĐỒNG BỘ 2 CHIỀU GOOGLE DRIVE (SAF + CRDT) -->
-                <div id="krypto-password-vault-mount"></div>
             </div>
         </div>
 
@@ -1035,6 +1032,11 @@
             <div id="krypto-chat-vault-mount"></div>
         </div>
 
+        <!-- ==================== TAB 7: KHO MẬT KHẨU, THẺ, QR & ĐỒNG BỘ 2 CHIỀU GOOGLE DRIVE ==================== -->
+        <div id="tab-passwords" class="tab-content" style="display: none;">
+            <div id="krypto-password-vault-mount"></div>
+        </div>
+
         <!-- ==================== SESSION HISTORY CARD ==================== -->
         <div class="card history-card" id="history-card">
             <div class="history-header" onclick="toggleHistoryDrawer()">
@@ -1062,7 +1064,7 @@
             <p>Krypto Vault • Mật Mã Hậu Lượng Tử ML-KEM-768 • Offline 100%</p>
         </footer>
 
-        <!-- Bottom Navigation Bar (Flat 6 Tabs) -->
+        <!-- Bottom Navigation Bar (Flat 7 Tabs) -->
         <nav class="bottom-nav-bar" id="bottom-nav-bar">
             <button type="button" class="bottom-nav-btn active" id="tab-btn-lock" onclick="switchTab('lock')">
                 <span class="nav-icon">🏠</span>
@@ -1079,6 +1081,10 @@
             <button type="button" class="bottom-nav-btn" id="tab-btn-knowledge" onclick="switchTab('knowledge')">
                 <span class="nav-icon">🧠</span>
                 <span class="nav-label">Tri thức</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="tab-btn-passwords" onclick="switchTab('passwords'); window.KryptoPasswordVault?.refreshUI();">
+                <span class="nav-icon">🔑</span>
+                <span class="nav-label">Mật khẩu</span>
             </button>
             <button type="button" class="bottom-nav-btn" id="tab-btn-auth" onclick="switchTab('auth'); window.KryptoAuthenticator?.refreshUI();">
                 <span class="nav-icon">🔢</span>
@@ -1108,6 +1114,14 @@
         </div>
         <div class="drawer-content">
             <div class="drawer-section-title">HỆ THỐNG & CÀI ĐẶT</div>
+            <div class="drawer-menu-item" onclick="closeAppDrawer(); switchTab('passwords'); window.KryptoPasswordVault?.refreshUI();">
+                <span class="drawer-menu-icon">🔑</span>
+                <div class="drawer-menu-text">
+                    <div class="drawer-menu-name">Kho Mật Khẩu, Thẻ &amp; Google Drive</div>
+                    <div class="drawer-menu-desc">Lưu pass, Visa/CCCD, chụp thẻ, quét QR &amp; đồng bộ 2 chiều</div>
+                </div>
+                <span class="drawer-menu-arrow">›</span>
+            </div>
             <div class="drawer-menu-item" onclick="closeAppDrawer(); switchTab('knowledge')">
                 <span class="drawer-menu-icon">🧠</span>
                 <div class="drawer-menu-text">
@@ -1170,7 +1184,7 @@
                 </div>
                 <div class="drawer-info-row">
                     <span>Phiên bản:</span>
-                    <strong id="drawer-app-version">v2.9.6 FIPS-140-3</strong>
+                    <strong id="drawer-app-version">v2.9.7 FIPS-140-3</strong>
                 </div>
             </div>
 
