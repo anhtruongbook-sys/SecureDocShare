@@ -928,10 +928,18 @@
     };
   }
 
+  function percentileFloat(arr, q) {
+    if (!arr || !arr.length) return 0;
+    const copy = Array.from(arr);
+    copy.sort((a, b) => a - b);
+    const idx = Math.min(copy.length - 1, Math.max(0, Math.floor((copy.length * q) / 100.0)));
+    return copy[idx];
+  }
+
   function autoDetectCardBounds(img) {
     try {
-      const W = 240;
-      const H = 180;
+      const W = 200;
+      const H = 200;
       const c = document.createElement("canvas");
       c.width = W;
       c.height = H;
@@ -939,113 +947,174 @@
       ctx.drawImage(img, 0, 0, W, H);
       const data = ctx.getImageData(0, 0, W, H).data;
 
-      // 1. Lấy mẫu màu nền xung quanh viền ngoài cùng (4% mép ảnh: mặt bàn, nền tường...)
-      let sumR = 0,
-        sumG = 0,
-        sumB = 0,
-        cnt = 0;
-      const borderX = Math.max(3, Math.round(W * 0.045));
-      const borderY = Math.max(3, Math.round(H * 0.045));
+      const r_n = new Float32Array(W * H);
+      const g_n = new Float32Array(W * H);
+      const b_n = new Float32Array(W * H);
+      const sat = new Float32Array(W * H);
+      const luma = new Float32Array(W * H);
+
+      const borderRN = [];
+      const borderGN = [];
+      const borderBN = [];
+      const borderSat = [];
+      const borderLuma = [];
+
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
-          if (x < borderX || x >= W - borderX || y < borderY || y >= H - borderY) {
-            const idx = (y * W + x) * 4;
-            sumR += data[idx];
-            sumG += data[idx + 1];
-            sumB += data[idx + 2];
-            cnt++;
+          const i = y * W + x;
+          const R = data[i * 4];
+          const G = data[i * 4 + 1];
+          const B = data[i * 4 + 2];
+          const S = R + G + B + 1.0;
+          const rn = R / S;
+          const gn = G / S;
+          const bn = B / S;
+          const st = Math.max(R, G, B) - Math.min(R, G, B);
+          const lm = 0.299 * R + 0.587 * G + 0.114 * B;
+
+          r_n[i] = rn;
+          g_n[i] = gn;
+          b_n[i] = bn;
+          sat[i] = st;
+          luma[i] = lm;
+
+          if (x < 14 || x >= W - 14 || y < 14 || y >= H - 14) {
+            borderRN.push(rn);
+            borderGN.push(gn);
+            borderBN.push(bn);
+            borderSat.push(st);
+            borderLuma.push(lm);
           }
         }
       }
-      const bgR = cnt ? sumR / cnt : 128;
-      const bgG = cnt ? sumG / cnt : 128;
-      const bgB = cnt ? sumB / cnt : 128;
 
-      // 2. Tính bản đồ độ xám (Luminance) và độ lệch màu so với nền (Color Distance)
-      const lum = new Float32Array(W * H);
-      const dist = new Float32Array(W * H);
-      for (let i = 0; i < W * H; i++) {
-        const r = data[i * 4];
-        const g = data[i * 4 + 1];
-        const b = data[i * 4 + 2];
-        lum[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-        dist[i] = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+      const bg_r = percentileFloat(borderRN, 50);
+      const bg_g = percentileFloat(borderGN, 50);
+      const bg_b = percentileFloat(borderBN, 50);
+      const bg_sat = percentileFloat(borderSat, 50);
+      const bg_luma = percentileFloat(borderLuma, 50);
+
+      // Tính xác suất điểm ảnh thuộc Thẻ (khử hoàn toàn vân gỗ 1 chiều bằng min(|Gx|, |Gy|))
+      const cardProb = new Float32Array(W * H);
+      const borderProbs = [];
+
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const i = y * W + x;
+          const chromaDist =
+            (Math.abs(r_n[i] - bg_r) + Math.abs(g_n[i] - bg_g) + Math.abs(b_n[i] - bg_b)) * 500.0;
+          const brightDiff = Math.max(0, luma[i] - bg_luma - 14.0) * 1.4;
+          const satDiff = Math.max(0, sat[i] - bg_sat - 8.0) * 1.8;
+
+          const xNext = Math.min(W - 1, x + 1);
+          const xPrev = Math.max(0, x - 1);
+          const yNext = Math.min(H - 1, y + 1);
+          const yPrev = Math.max(0, y - 1);
+
+          const gx = Math.abs(luma[y * W + xNext] - luma[y * W + xPrev]);
+          const gy = Math.abs(luma[yNext * W + x] - luma[yPrev * W + x]);
+          const isoGrad = Math.min(gx, gy) * 2.0;
+
+          const p = chromaDist + brightDiff + satDiff + isoGrad;
+          cardProb[i] = p;
+          if (x < 14 || x >= W - 14 || y < 14 || y >= H - 14) {
+            borderProbs.push(p);
+          }
+        }
       }
 
-      // 3. Tính đạo hàm biên Sobel (|Gx| + |Gy|) kết hợp độ lệch màu nền
-      const scoreMap = new Float32Array(W * H);
-      let totalScore = 0;
-      let validCnt = 0;
+      const bg_p75 = percentileFloat(borderProbs, 75);
+      const fg_p90 = percentileFloat(cardProb, 90);
+      const thr = Math.max(28.0, bg_p75 + (fg_p90 - bg_p75) * 0.32);
+
+      // Vòng 1: Chiếu mật độ theo cột X
+      const colFrac = new Float32Array(W);
+      for (let x = 0; x < W; x++) {
+        let cnt = 0;
+        for (let y = 10; y < H - 10; y++) {
+          if (cardProb[y * W + x] >= thr) cnt++;
+        }
+        colFrac[x] = cnt / (H - 20);
+      }
+
+      let lx = -1;
+      let rx = -1;
+      for (let x = 2; x < W - 2; x++) {
+        if (colFrac[x] >= 0.22 && colFrac[x + 1] >= 0.18) {
+          lx = x;
+          break;
+        }
+      }
+      for (let x = W - 3; x >= 2; x--) {
+        if (colFrac[x] >= 0.22 && colFrac[x - 1] >= 0.18) {
+          rx = x;
+          break;
+        }
+      }
+      if (lx < 0 || rx <= lx + 16) {
+        lx = 12;
+        rx = W - 12;
+      }
+
+      // Vòng 2: Chiếu mật độ theo hàng Y nằm trong [lx, rx]
+      const rowFrac = new Float32Array(H);
+      const spanW = Math.max(1, rx - lx + 1);
+      for (let y = 0; y < H; y++) {
+        let cnt = 0;
+        for (let x = lx; x <= rx; x++) {
+          if (cardProb[y * W + x] >= thr) cnt++;
+        }
+        rowFrac[y] = cnt / spanW;
+      }
+
+      let ty = -1;
+      let by_ = -1;
       for (let y = 2; y < H - 2; y++) {
-        for (let x = 2; x < W - 2; x++) {
-          const idx = y * W + x;
-          const gx =
-            -lum[(y - 1) * W + (x - 1)] +
-            lum[(y - 1) * W + (x + 1)] -
-            2 * lum[y * W + (x - 1)] +
-            2 * lum[y * W + (x + 1)] -
-            lum[(y + 1) * W + (x - 1)] +
-            lum[(y + 1) * W + (x + 1)];
-          const gy =
-            -lum[(y - 1) * W + (x - 1)] -
-            2 * lum[(y - 1) * W + x] -
-            lum[(y - 1) * W + (x + 1)] +
-            lum[(y + 1) * W + (x - 1)] +
-            2 * lum[(y + 1) * W + x] +
-            lum[(y + 1) * W + (x + 1)];
-          const grad = (Math.abs(gx) + Math.abs(gy)) * 0.25;
-          const s = dist[idx] * 0.65 + grad * 0.55;
-          scoreMap[idx] = s;
-          totalScore += s;
-          validCnt++;
+        if (rowFrac[y] >= 0.22 && rowFrac[y + 1] >= 0.18) {
+          ty = y;
+          break;
+        }
+      }
+      for (let y = H - 3; y >= 2; y--) {
+        if (rowFrac[y] >= 0.22 && rowFrac[y - 1] >= 0.18) {
+          by_ = y;
+          break;
+        }
+      }
+      if (ty < 0 || by_ <= ty + 16) {
+        ty = 12;
+        by_ = H - 12;
+      }
+
+      // Vòng 3: Tinh chỉnh lại [lx, rx] nằm trong [ty, by_]
+      const spanH = Math.max(1, by_ - ty + 1);
+      for (let x = 0; x < W; x++) {
+        let cnt = 0;
+        for (let y = ty; y <= by_; y++) {
+          if (cardProb[y * W + x] >= thr) cnt++;
+        }
+        colFrac[x] = cnt / spanH;
+      }
+      for (let x = 2; x < W - 2; x++) {
+        if (colFrac[x] >= 0.22 && colFrac[x + 1] >= 0.18) {
+          lx = x;
+          break;
+        }
+      }
+      for (let x = W - 3; x >= 2; x--) {
+        if (colFrac[x] >= 0.22 && colFrac[x - 1] >= 0.18) {
+          rx = x;
+          break;
         }
       }
 
-      const meanScore = validCnt ? totalScore / validCnt : 40;
-      const threshold = Math.max(36, meanScore * 1.12);
+      let nx = lx / W;
+      let ny = ty / H;
+      let nw = (rx - lx + 1) / W;
+      let nh = (by_ - ty + 1) / H;
 
-      // 4. Chiếu mật độ điểm kích hoạt theo Hàng ngang (Row Projection) và Cột dọc (Col Projection)
-      const rowDensity = new Float32Array(H);
-      const colDensity = new Float32Array(W);
-      const xStart = Math.round(W * 0.03);
-      const xEnd = Math.round(W * 0.97);
-      const yStart = Math.round(H * 0.03);
-      const yEnd = Math.round(H * 0.97);
-
-      for (let y = yStart; y < yEnd; y++) {
-        let active = 0;
-        for (let x = xStart; x < xEnd; x++) {
-          if (scoreMap[y * W + x] >= threshold) active++;
-        }
-        rowDensity[y] = active / Math.max(1, xEnd - xStart);
-      }
-
-      for (let x = xStart; x < xEnd; x++) {
-        let active = 0;
-        for (let y = yStart; y < yEnd; y++) {
-          if (scoreMap[y * W + x] >= threshold) active++;
-        }
-        colDensity[x] = active / Math.max(1, yEnd - yStart);
-      }
-
-      let topY = yStart;
-      while (topY < H * 0.45 && rowDensity[topY] < 0.15) topY++;
-      let botY = yEnd - 1;
-      while (botY > H * 0.55 && rowDensity[botY] < 0.15) botY--;
-
-      let leftX = xStart;
-      while (leftX < W * 0.45 && colDensity[leftX] < 0.15) leftX++;
-      let rightX = xEnd - 1;
-      while (rightX > W * 0.55 && colDensity[rightX] < 0.15) rightX--;
-
-      let nx = leftX / W;
-      let ny = topY / H;
-      let nw = (rightX - leftX) / W;
-      let nh = (botY - topY) / H;
-
-      // Nếu phát hiện được vùng thẻ hợp lệ (không quá nhỏ và không tràn 100% mép)
-      if (nw >= 0.32 && nh >= 0.24 && (nw < 0.94 || nh < 0.94)) {
-        const pad = 0.012;
+      if (nw >= 0.22 && nh >= 0.22) {
+        const pad = 0.008;
         nx = Math.max(0, nx - pad);
         ny = Math.max(0, ny - pad);
         nw = Math.min(1 - nx, nw + pad * 2);
@@ -1054,29 +1123,116 @@
       }
     } catch (_) {}
 
-    // Fallback chuẩn khung thẻ ID-1 (85.6 : 54) chính giữa ảnh
     return computeLiveGuideNormalizedRect(img.width || 640, img.height || 480);
   }
 
-  function renderCroppedImageDataUrl(img, rect, enhanceClarity) {
+  function scoreCardUprightness(cardCanvas) {
+    try {
+      const W = 160;
+      const H = 100;
+      const c = document.createElement("canvas");
+      c.width = W;
+      c.height = H;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(cardCanvas, 0, 0, W, H);
+      const data = ctx.getImageData(0, 0, W, H).data;
+
+      let topRed = 0;
+      let botRed = 0;
+      let trQr = 0;
+      let blQr = 0;
+      let botMrz = 0;
+      let topMrz = 0;
+
+      for (let y = 4; y < H - 4; y++) {
+        for (let x = 4; x < W - 4; x++) {
+          const i = (y * W + x) * 4;
+          const R = data[i];
+          const G = data[i + 1];
+          const B = data[i + 2];
+          const luma = 0.299 * R + 0.587 * G + 0.114 * B;
+
+          const isRed = R > 145 && R - B > 50 && R - G > 20;
+          const isDark = luma < 88;
+
+          if (isRed) {
+            if (y < 46 && x < 115) topRed++;
+            if (y > 54 && x > 45) botRed++;
+          }
+          if (isDark) {
+            if (y < 44 && x > 108) trQr++;
+            if (y > 56 && x < 52) blQr++;
+            if (y > 68 && x > 14 && x < 146) botMrz++;
+            if (y < 32 && x > 14 && x < 146) topMrz++;
+          }
+        }
+      }
+
+      if (topRed + botRed >= 10) {
+        return (topRed - botRed) * 5.0 + (trQr - blQr) * 2.5;
+      }
+      return (trQr - blQr) * 2.0 + (botMrz - topMrz) * 1.5;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function rotateCanvasByDeg(srcCanvas, deg) {
+    const out = document.createElement("canvas");
+    if (Math.abs(deg) === 90) {
+      out.width = srcCanvas.height;
+      out.height = srcCanvas.width;
+    } else {
+      out.width = srcCanvas.width;
+      out.height = srcCanvas.height;
+    }
+    const ctx = out.getContext("2d");
+    ctx.translate(out.width / 2, out.height / 2);
+    ctx.rotate((deg * Math.PI) / 180);
+    ctx.drawImage(srcCanvas, -srcCanvas.width / 2, -srcCanvas.height / 2);
+    return out;
+  }
+
+  function renderCroppedAndOrientedCardDataUrl(img, rect, enhanceClarity, slot = "front") {
     const sx = Math.max(0, Math.round(rect.x * img.width));
     const sy = Math.max(0, Math.round(rect.y * img.height));
     const sw = Math.max(40, Math.min(img.width - sx, Math.round(rect.w * img.width)));
     const sh = Math.max(40, Math.min(img.height - sy, Math.round(rect.h * img.height)));
 
-    const outCanvas = document.createElement("canvas");
+    const rawCropCanvas = document.createElement("canvas");
     const maxDim = 1280;
     const scale = Math.max(sw, sh) > maxDim ? maxDim / Math.max(sw, sh) : 1;
-    outCanvas.width = Math.round(sw * scale);
-    outCanvas.height = Math.round(sh * scale);
-    const outCtx = outCanvas.getContext("2d");
-    outCtx.filter = enhanceClarity ? "contrast(1.18) brightness(1.03) saturate(1.08)" : "none";
-    outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
+    rawCropCanvas.width = Math.round(sw * scale);
+    rawCropCanvas.height = Math.round(sh * scale);
+    const outCtx = rawCropCanvas.getContext("2d");
+    outCtx.filter = enhanceClarity ? "contrast(1.16) brightness(1.03) saturate(1.06)" : "none";
+    outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, rawCropCanvas.width, rawCropCanvas.height);
     outCtx.filter = "none";
-    return outCanvas.toDataURL("image/png");
+
+    if (slot === "qr") {
+      return rawCropCanvas.toDataURL("image/png");
+    }
+
+    // Đảm bảo thẻ đã cắt luôn nằm ngang (width >= height) và đúng chiều xuôi (Quốc huy / QR / MRZ)
+    let finalCanvas = rawCropCanvas;
+    if (rawCropCanvas.height > rawCropCanvas.width * 1.04) {
+      const candCW = rotateCanvasByDeg(rawCropCanvas, 90);
+      const candCCW = rotateCanvasByDeg(rawCropCanvas, -90);
+      const scoreCW = scoreCardUprightness(candCW);
+      const scoreCCW = scoreCardUprightness(candCCW);
+      finalCanvas = scoreCW >= scoreCCW ? candCW : candCCW;
+    } else {
+      const cand0 = rawCropCanvas;
+      const cand180 = rotateCanvasByDeg(rawCropCanvas, 180);
+      const score0 = scoreCardUprightness(cand0);
+      const score180 = scoreCardUprightness(cand180);
+      finalCanvas = score180 > score0 + 120 ? cand180 : cand0;
+    }
+
+    return finalCanvas.toDataURL("image/png");
   }
 
-  function processIncomingCardPhoto(dataUrl, slot = "front", fromLiveGuide = false) {
+  function processIncomingCardPhoto(dataUrl, slot = "front") {
     if (!dataUrl) return;
     if (state.activeSubTab !== "add") {
       switchSubView("add");
@@ -1085,35 +1241,13 @@
 
     const rawImg = new Image();
     rawImg.onload = async () => {
-      let workingDataUrl = dataUrl;
-      let workingImg = rawImg;
+      state.cropSourceDataUrl = dataUrl;
+      state.cropSourceImg = rawImg;
+      if (slot === "front") state.pendingFrontRawDataUrl = dataUrl;
+      if (slot === "back") state.pendingBackRawDataUrl = dataUrl;
 
-      // Tự động xoay ngang 90° nếu người dùng cầm dọc điện thoại chụp thẻ ngân hàng / CCCD
-      if (slot !== "qr" && rawImg.height > rawImg.width * 1.12) {
-        const rotCanvas = document.createElement("canvas");
-        rotCanvas.width = rawImg.height;
-        rotCanvas.height = rawImg.width;
-        const rCtx = rotCanvas.getContext("2d");
-        rCtx.translate(rotCanvas.width / 2, rotCanvas.height / 2);
-        rCtx.rotate((-90 * Math.PI) / 180);
-        rCtx.drawImage(rawImg, -rawImg.width / 2, -rawImg.height / 2);
-        workingDataUrl = rotCanvas.toDataURL("image/png");
-        workingImg = await new Promise((res) => {
-          const im2 = new Image();
-          im2.onload = () => res(im2);
-          im2.src = workingDataUrl;
-        });
-      }
-
-      state.cropSourceDataUrl = workingDataUrl;
-      state.cropSourceImg = workingImg;
-      if (slot === "front") state.pendingFrontRawDataUrl = workingDataUrl;
-      if (slot === "back") state.pendingBackRawDataUrl = workingDataUrl;
-
-      // Tính khung cắt tự động (Auto-Crop)
-      const autoRect = fromLiveGuide
-        ? computeLiveGuideNormalizedRect(workingImg.width, workingImg.height)
-        : autoDetectCardBounds(workingImg);
+      // 1. Tự động phát hiện 4 viền thẻ trực tiếp trên ảnh gốc (khử nền bàn gỗ / nền tường)
+      const autoRect = autoDetectCardBounds(rawImg);
       state.cropRect = {
         x: autoRect.x,
         y: autoRect.y,
@@ -1122,12 +1256,13 @@
       };
       state.cropAspectMode = "auto";
 
-      // Nếu đang bật Tự Động Cắt (Auto-Crop) -> Cắt ngay lập tức và hiển thị ảnh thẻ đã cắt!
+      // 2. Nếu bật Tự Động Crop -> Cắt sát 4 viền thẻ + Tự xoay đúng chiều ngang xuôi ngay lập tức!
       if (state.autoCropEnabled) {
-        const croppedDataUrl = renderCroppedImageDataUrl(
-          workingImg,
+        const croppedDataUrl = renderCroppedAndOrientedCardDataUrl(
+          rawImg,
           state.cropRect,
-          state.cropEnhanceClarity
+          state.cropEnhanceClarity,
+          slot
         );
         const cropBox = document.getElementById("kpw-card-cropper-box");
         if (cropBox) cropBox.style.display = "none";
@@ -1137,7 +1272,7 @@
           updateCroppedSlotPreviews();
           if (typeof window.showKryptoToast === "function") {
             window.showKryptoToast(
-              "🤖 Đã tự động nhận diện viền thẻ & Tự Crop ảnh Mặt Trước!"
+              "🤖 Đã tự động cắt 4 viền thẻ và xoay đúng chiều Mặt Trước!"
             );
           }
         } else if (slot === "back") {
@@ -1145,7 +1280,7 @@
           updateCroppedSlotPreviews();
           if (typeof window.showKryptoToast === "function") {
             window.showKryptoToast(
-              "🤖 Đã tự động nhận diện viền thẻ & Tự Crop ảnh Mặt Sau!"
+              "🤖 Đã tự động cắt 4 viền thẻ và xoay đúng chiều Mặt Sau!"
             );
           }
         } else if (slot === "qr") {
@@ -1158,10 +1293,28 @@
           await importQrOrScreenshotToVault(qrStr, att);
         }
       } else {
-        openCardCropperWithDataUrl(workingDataUrl, slot, true);
+        openCardCropperWithDataUrl(dataUrl, slot, true);
       }
     };
     rawImg.src = dataUrl;
+  }
+
+  function quickRotateCroppedSlot(slot = "front", deg = 90) {
+    const currentUrl = slot === "front" ? state.pendingFrontDataUrl : state.pendingBackDataUrl;
+    if (!currentUrl) return;
+    const im = new Image();
+    im.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = im.width;
+      c.height = im.height;
+      c.getContext("2d").drawImage(im, 0, 0);
+      const rot = rotateCanvasByDeg(c, deg);
+      const nextUrl = rot.toDataURL("image/png");
+      if (slot === "front") state.pendingFrontDataUrl = nextUrl;
+      if (slot === "back") state.pendingBackDataUrl = nextUrl;
+      updateCroppedSlotPreviews();
+    };
+    im.src = currentUrl;
   }
 
   function captureLiveCameraFrameToCropper() {
@@ -1172,7 +1325,7 @@
     const capturedDataUrl = state.latestLiveFrameDataUrl;
     const slot = state.activePhotoSlot || "front";
     closeLiveCardCamera();
-    processIncomingCardPhoto(capturedDataUrl, slot, true);
+    processIncomingCardPhoto(capturedDataUrl, slot);
   }
 
   function openCardCropperWithDataUrl(dataUrl, slot = "front", forceOpenEditor = true) {
@@ -2265,6 +2418,7 @@
               <img id="kpw-front-cropped-img" alt="Mặt trước đã cắt" style="max-width:100%;max-height:175px;border-radius:8px;display:block;margin:0 auto 6px;" />
               <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;">
                 <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.autoReCropSlot('front')">🤖 Tự Crop Lại</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.quickRotateCroppedSlot('front', 90)">↻ Xoay 90°</button>
                 <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('front')">✂️ Tinh Chỉnh 4 Góc / Xoay</button>
                 <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('front')">🗑️ Xóa</button>
               </div>
@@ -2294,6 +2448,7 @@
               <img id="kpw-back-cropped-img" alt="Mặt sau đã cắt" style="max-width:100%;max-height:175px;border-radius:8px;display:block;margin:0 auto 6px;" />
               <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;">
                 <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.autoReCropSlot('back')">🤖 Tự Crop Lại</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.quickRotateCroppedSlot('back', 90)">↻ Xoay 90°</button>
                 <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('back')">✂️ Tinh Chỉnh 4 Góc / Xoay</button>
                 <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('back')">🗑️ Xóa</button>
               </div>
@@ -2784,6 +2939,10 @@
 
     applyCardCropAndAttach() {
       applyCardCropAndAttach();
+    },
+
+    quickRotateCroppedSlot(slot = "front", deg = 90) {
+      quickRotateCroppedSlot(slot, deg);
     },
 
     autoReCropSlot(slot = "front") {

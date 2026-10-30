@@ -66,10 +66,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v3.0.0
-          name: "Krypto v3.0.0 - Tự Động Nhận Diện Viền Thẻ & Tự Crop (Auto-Crop 1-Chạm) + Chụp Khung Thẻ ID-1"
+          tag_name: v3.0.1
+          name: "Krypto v3.0.1 - Tự Động Nhận Diện Viền Thẻ & Tự Crop (Auto-Crop 1-Chạm) + Chụp Khung Thẻ ID-1"
           body: |
-            ## Ứng dụng Di Động Krypto v3.0.0 (7-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • Mật khẩu • 2FA OTP • Két sắt)
+            ## Ứng dụng Di Động Krypto v3.0.1 (7-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • Mật khẩu • 2FA OTP • Két sắt)
             - **Bổ sung Tự Động Nhận Diện 4 Viền Thẻ, Tự Xoay Ngang 90° & Tự Động Cắt (`🤖 Auto-Crop 1-Chạm`)**:
               + Tích hợp thuật toán thị giác máy tính **Sobel Edge Gradient + Độ lệch tương phản màu nền (`autoDetectCardBounds`)** tự động tìm 4 viền thẻ Ngân hàng / CCCD trên mặt bàn, lòng bàn tay hoặc ảnh chụp màn hình.
               + **Tự động xoay ngang 90°** nếu người dùng cầm dọc điện thoại chụp thẻ, tự động cắt sát 4 viền thẻ và tăng độ nét số thẻ dập nổi (`contrast(1.18)`) ngay lập tức chỉ với 1 chạm khi chụp hoặc chọn ảnh.
