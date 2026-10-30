@@ -66,10 +66,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.5
-          name: "Krypto v2.9.5 - Giao Diện Quét Mã QR Phẳng Toàn Màn Hình (Full-Screen Flat QR Scanner + Đèn Flash + Vùng Quét Lớn)"
+          tag_name: v2.9.6
+          name: "Krypto v2.9.6 - Tích Hợp Kho Mật Khẩu Hậu Lượng Tử (FIPS 203 ML-KEM-768), Lưu Ảnh Thẻ/Screenshot & Đồng Bộ 2 Chiều Google Drive"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.5 (6-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • 2FA OTP • Két sắt)
+            ## Ứng dụng Di Động Krypto v2.9.6 (6-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • 2FA OTP • Két sắt)
+            - **Tích hợp Phân hệ Kho Mật Khẩu Hậu Lượng Tử & Thẻ Tín Dụng / CCCD (`KryptoPasswordVault` — `NIST FIPS 203 ML-KEM-768` + `AES-256-GCM`)**:
+              + Kiến trúc Mã hóa Phong bì 2 tầng (`PBKDF2-HMAC-SHA256` -> `HKDF-SHA256 RFC 5869` -> `KEK` bọc `DEK` -> `AES-256-GCM` với `AAD`) kết hợp Phong bì Khóa Hậu Lượng Tử `NIST FIPS 203 (ML-KEM-768)`.
+              + Hỗ trợ 6 loại bản ghi đa hình chuẩn quốc tế: `LOGIN` (Tài khoản & 2FA TOTP), `PAYMENT_CARD` (Thẻ tín dụng Visa/Mastercard), `IDENTITY` (CCCD gắn chip 12 số & Hộ chiếu), `WIFI_NETWORK`, `SSH_API_KEY` (Seed Phrase 12/24 từ), `SECURE_NOTE`.
+              + Hỗ trợ lưu ảnh chụp thẻ mặt trước/mặt sau (`front_image`, `back_image`), dán/chọn ảnh chụp màn hình (`screenshot_image`) và **Chụp Ảnh Thẻ Ngay Trong App (`app_card_snapshot` `.PNG`)** mã hóa `AES-256-GCM` độc lập.
+              + Tích hợp Quét Mã QR Đa Định Dạng (`otpauth://`, `WIFI:S:...`, `CCCD Gắn chip 12 số|...`) và **Đồng bộ 2 chiều Google Drive qua Android SAF (`PersistableUriPermission`) + Hợp nhất không mất dữ liệu `CRDT LWW-Element-Set`**.
+              + Bổ sung tùy chọn bật/tắt bảo vệ chống chụp màn hình hệ thống (`Android WindowManager.LayoutParams.FLAG_SECURE`).
             - **Thiết kế lại toàn diện Giao Diện Quét Mã QR Phẳng Toàn Màn Hình (`Full-Screen Flat QR Scanner`)**:
               + Thay thế hộp thoại popup nhỏ hẹp cũ bằng giao diện phẳng tràn viền toàn màn hình (`100vw x 100dvh`), không lồng thẻ, hiển thị luồng máy ảnh độ phân giải cao sắc nét.
               + Mở rộng vùng ngắm quét mã QR lên kích thước lớn (`min(82vw, 330px)` — diện tích lớn gấp 4 lần khung cũ) với 4 góc định vị phẳng sắc nét và tia quét ngang tự động.

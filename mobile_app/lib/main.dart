@@ -554,8 +554,29 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
           );
         }
       }
+      final pwFile = File('${appDocDir.path}/krypto_password_vault_permanent.json');
+      if (await pwFile.exists()) {
+        final rawPwJson = await pwFile.readAsString();
+        if (rawPwJson.trim().isNotEmpty) {
+          final escPw = jsonEncode(rawPwJson);
+          await _controller.runJavaScript(
+            "if (window.KryptoPasswordVault && window.KryptoPasswordVault.restoreNativePermanentVault) { "
+            "window.KryptoPasswordVault.restoreNativePermanentVault($escPw); }",
+          );
+        }
+      }
+      if (Platform.isAndroid) {
+        final String? gdriveUri = await _nativeChannel.invokeMethod<String>('getGDriveSavedUri');
+        if (gdriveUri != null && gdriveUri.isNotEmpty) {
+          final escUri = jsonEncode(gdriveUri);
+          await _controller.runJavaScript(
+            "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onGDriveSafLinked) { "
+            "window.KryptoPasswordVault.onGDriveSafLinked($escUri); }",
+          );
+        }
+      }
     } catch (e) {
-      debugPrint('Lỗi đọc HSM Vault vĩnh viễn: $e');
+      debugPrint('Lỗi đọc HSM / Password Vault vĩnh viễn: $e');
     }
   }
 
@@ -1336,6 +1357,97 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                 } catch (_) {
                   _isCameraInProgress = false;
                 }
+              }
+              return;
+            }
+
+            if (action == 'gdrive_create_vault_saf') {
+              if (Platform.isAndroid) {
+                try {
+                  final fName = data['fileName'] as String? ?? 'vault.kryptopass';
+                  final initJson = data['initialJson'] as String? ?? '';
+                  final String? uriStr = await _nativeChannel.invokeMethod<String>('createGDriveVaultDocument', {
+                    'fileName': fName,
+                    'initialJson': initJson,
+                  });
+                  final escUri = jsonEncode(uriStr ?? '');
+                  await _controller.runJavaScript(
+                    "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onGDriveSafLinked) { "
+                    "window.KryptoPasswordVault.onGDriveSafLinked($escUri); }",
+                  );
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'gdrive_open_vault_saf') {
+              if (Platform.isAndroid) {
+                try {
+                  final String? uriStr = await _nativeChannel.invokeMethod<String>('openGDriveVaultDocument');
+                  final String? remoteJson = (uriStr != null && uriStr.isNotEmpty)
+                      ? await _nativeChannel.invokeMethod<String>('readGDriveVaultDocument')
+                      : null;
+                  final escUri = jsonEncode(uriStr ?? '');
+                  final escRemote = jsonEncode(remoteJson ?? '');
+                  await _controller.runJavaScript(
+                    "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onGDriveSafOpened) { "
+                    "window.KryptoPasswordVault.onGDriveSafOpened($escUri, $escRemote); }",
+                  );
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'gdrive_sync_2way_saf') {
+              if (Platform.isAndroid) {
+                try {
+                  final String? remoteJson = await _nativeChannel.invokeMethod<String>('readGDriveVaultDocument');
+                  final escRemote = jsonEncode(remoteJson ?? '');
+                  await _controller.runJavaScript(
+                    "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onGDriveRemoteReadForMerge) { "
+                    "window.KryptoPasswordVault.onGDriveRemoteReadForMerge($escRemote); }",
+                  );
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'gdrive_write_merged_saf') {
+              if (Platform.isAndroid) {
+                try {
+                  final jsonContent = data['jsonContent'] as String? ?? '';
+                  final bool ok = await _nativeChannel.invokeMethod<bool>('writeGDriveVaultDocument', {
+                    'jsonContent': jsonContent,
+                  }) ?? false;
+                  await _controller.runJavaScript(
+                    "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onGDriveMergedWritten) { "
+                    "window.KryptoPasswordVault.onGDriveMergedWritten(${ok ? 'true' : 'false'}); }",
+                  );
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'persist_password_vault_native') {
+              final content = data['content'] as String? ?? '';
+              if (content.isNotEmpty) {
+                try {
+                  final appDocDir = await getApplicationDocumentsDirectory();
+                  final pwFile = File('${appDocDir.path}/krypto_password_vault_permanent.json');
+                  await pwFile.writeAsString(content, flush: true);
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'set_screenshot_protection') {
+              if (Platform.isAndroid) {
+                try {
+                  final block = data['blockScreenshot'] as bool? ?? false;
+                  await _nativeChannel.invokeMethod<bool>('setScreenshotProtection', {
+                    'blockScreenshot': block,
+                  });
+                } catch (_) {}
               }
               return;
             }

@@ -64,9 +64,15 @@ class MainActivity: FlutterFragmentActivity() {
     private val REQUEST_CODE_BIOMETRIC = 9901
     private val REQUEST_CODE_CAMERA_PERMISSION = 9902
     private val REQUEST_CODE_CAPTURE_QR_PHOTO = 9903
+    private val REQUEST_CODE_GDRIVE_CREATE_DOC = 9904
+    private val REQUEST_CODE_GDRIVE_OPEN_DOC = 9905
     private var pendingCameraPermissionResult: MethodChannel.Result? = null
     private var pendingCameraFacing: String = "back"
     private var pendingCapturePhotoResult: MethodChannel.Result? = null
+    private var pendingGDriveSafResult: MethodChannel.Result? = null
+    private var pendingGDriveInitialContent: String? = null
+    private val GDRIVE_PREFS_NAME = "krypto_gdrive_saf_prefs"
+    private val GDRIVE_URI_KEY = "saved_gdrive_vault_uri"
     private var pendingSharedText: String? = null
     private var methodChannel: MethodChannel? = null
 
@@ -197,6 +203,36 @@ class MainActivity: FlutterFragmentActivity() {
                         pending?.success(b64)
                         return
                     }
+                } catch (_: Throwable) {}
+            }
+            pending?.success(null)
+        } else if (requestCode == REQUEST_CODE_GDRIVE_CREATE_DOC || requestCode == REQUEST_CODE_GDRIVE_OPEN_DOC) {
+            val pending = pendingGDriveSafResult
+            val initContent = pendingGDriveInitialContent
+            pendingGDriveSafResult = null
+            pendingGDriveInitialContent = null
+            if (resultCode == Activity.RESULT_OK && data?.data != null) {
+                try {
+                    val uri = data.data!!
+                    val takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    try {
+                        contentResolver.takePersistableUriPermission(uri, takeFlags)
+                    } catch (_: Throwable) {}
+                    getSharedPreferences(GDRIVE_PREFS_NAME, Context.MODE_PRIVATE)
+                        .edit()
+                        .putString(GDRIVE_URI_KEY, uri.toString())
+                        .apply()
+
+                    if (requestCode == REQUEST_CODE_GDRIVE_CREATE_DOC && !initContent.isNullOrBlank()) {
+                        try {
+                            contentResolver.openOutputStream(uri, "wt")?.use { os ->
+                                os.write(initContent.toByteArray(Charsets.UTF_8))
+                                os.flush()
+                            }
+                        } catch (_: Throwable) {}
+                    }
+                    pending?.success(uri.toString())
+                    return
                 } catch (_: Throwable) {}
             }
             pending?.success(null)
@@ -1739,6 +1775,112 @@ class MainActivity: FlutterFragmentActivity() {
                         } catch (_: Throwable) {
                             pendingCapturePhotoResult = null
                             result.success(null)
+                        }
+                    }
+                }
+                "createGDriveVaultDocument" -> {
+                    val fileName = call.argument<String>("fileName") ?: "vault.kryptopass"
+                    val initialJson = call.argument<String>("initialJson") ?: ""
+                    runOnUiThread {
+                        try {
+                            pendingGDriveSafResult = result
+                            pendingGDriveInitialContent = initialJson
+                            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "application/json"
+                                putExtra(Intent.EXTRA_TITLE, fileName)
+                                addFlags(
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                                )
+                            }
+                            startActivityForResult(intent, REQUEST_CODE_GDRIVE_CREATE_DOC)
+                        } catch (_: Throwable) {
+                            pendingGDriveSafResult = null
+                            pendingGDriveInitialContent = null
+                            result.success(null)
+                        }
+                    }
+                }
+                "openGDriveVaultDocument" -> {
+                    runOnUiThread {
+                        try {
+                            pendingGDriveSafResult = result
+                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "*/*"
+                                addFlags(
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                                )
+                            }
+                            startActivityForResult(intent, REQUEST_CODE_GDRIVE_OPEN_DOC)
+                        } catch (_: Throwable) {
+                            pendingGDriveSafResult = null
+                            result.success(null)
+                        }
+                    }
+                }
+                "readGDriveVaultDocument" -> {
+                    executor.execute {
+                        try {
+                            val uriStr = getSharedPreferences(GDRIVE_PREFS_NAME, Context.MODE_PRIVATE)
+                                .getString(GDRIVE_URI_KEY, null)
+                            if (uriStr.isNullOrBlank()) {
+                                runOnUiThread { result.success(null) }
+                                return@execute
+                            }
+                            val uri = android.net.Uri.parse(uriStr)
+                            val content = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                            runOnUiThread { result.success(content) }
+                        } catch (_: Throwable) {
+                            runOnUiThread { result.success(null) }
+                        }
+                    }
+                }
+                "writeGDriveVaultDocument" -> {
+                    val jsonContent = call.argument<String>("jsonContent") ?: ""
+                    executor.execute {
+                        try {
+                            val uriStr = getSharedPreferences(GDRIVE_PREFS_NAME, Context.MODE_PRIVATE)
+                                .getString(GDRIVE_URI_KEY, null)
+                            if (uriStr.isNullOrBlank() || jsonContent.isBlank()) {
+                                runOnUiThread { result.success(false) }
+                                return@execute
+                            }
+                            val uri = android.net.Uri.parse(uriStr)
+                            contentResolver.openOutputStream(uri, "wt")?.use { os ->
+                                os.write(jsonContent.toByteArray(Charsets.UTF_8))
+                                os.flush()
+                            }
+                            runOnUiThread { result.success(true) }
+                        } catch (_: Throwable) {
+                            runOnUiThread { result.success(false) }
+                        }
+                    }
+                }
+                "getGDriveSavedUri" -> {
+                    val uriStr = getSharedPreferences(GDRIVE_PREFS_NAME, Context.MODE_PRIVATE)
+                        .getString(GDRIVE_URI_KEY, null)
+                    result.success(uriStr)
+                }
+                "setScreenshotProtection" -> {
+                    val blockScreenshot = call.argument<Boolean>("blockScreenshot") ?: false
+                    runOnUiThread {
+                        try {
+                            if (blockScreenshot) {
+                                window.setFlags(
+                                    android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                                    android.view.WindowManager.LayoutParams.FLAG_SECURE
+                                )
+                            } else {
+                                window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                            }
+                            result.success(true)
+                        } catch (_: Throwable) {
+                            result.success(false)
                         }
                     }
                 }
