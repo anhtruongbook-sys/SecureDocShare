@@ -936,8 +936,78 @@
     return copy[idx];
   }
 
+  function boxMean2D(arr, W, H, r = 2) {
+    const out = new Float32Array(W * H);
+    for (let y = 0; y < H; y++) {
+      const y0 = Math.max(0, y - r);
+      const y1 = Math.min(H - 1, y + r);
+      for (let x = 0; x < W; x++) {
+        const x0 = Math.max(0, x - r);
+        const x1 = Math.min(W - 1, x + r);
+        let sum = 0;
+        let cnt = 0;
+        for (let yy = y0; yy <= y1; yy++) {
+          const rowOff = yy * W;
+          for (let xx = x0; xx <= x1; xx++) {
+            sum += arr[rowOff + xx];
+            cnt++;
+          }
+        }
+        out[y * W + x] = sum / cnt;
+      }
+    }
+    return out;
+  }
+
+  function morphCloseMask2D(mask, W, H, r = 1) {
+    if (r <= 0) return mask;
+    const dil = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) {
+      const y0 = Math.max(0, y - r);
+      const y1 = Math.min(H - 1, y + r);
+      for (let x = 0; x < W; x++) {
+        const x0 = Math.max(0, x - r);
+        const x1 = Math.min(W - 1, x + r);
+        let mx = 0;
+        for (let yy = y0; yy <= y1 && !mx; yy++) {
+          const rowOff = yy * W;
+          for (let xx = x0; xx <= x1; xx++) {
+            if (mask[rowOff + xx]) {
+              mx = 1;
+              break;
+            }
+          }
+        }
+        dil[y * W + x] = mx;
+      }
+    }
+    const ero = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) {
+      const y0 = Math.max(0, y - r);
+      const y1 = Math.min(H - 1, y + r);
+      for (let x = 0; x < W; x++) {
+        const x0 = Math.max(0, x - r);
+        const x1 = Math.min(W - 1, x + r);
+        let mn = 1;
+        for (let yy = y0; yy <= y1 && mn; yy++) {
+          const rowOff = yy * W;
+          for (let xx = x0; xx <= x1; xx++) {
+            if (!dil[rowOff + xx]) {
+              mn = 0;
+              break;
+            }
+          }
+        }
+        ero[y * W + x] = mn;
+      }
+    }
+    return ero;
+  }
+
   function autoDetectCardBounds(img) {
     try {
+      const origW = img.width || 640;
+      const origH = img.height || 480;
       const W = 160;
       const H = 160;
       const c = document.createElement("canvas");
@@ -952,10 +1022,7 @@
       const B_arr = new Float32Array(W * H);
       const sat = new Float32Array(W * H);
       const luma = new Float32Array(W * H);
-
-      // 1. Lấy tập mẫu đa nền dọc theo viền ngoài 8px (xử lý hoàn hảo cả nền 2 màu: bìa da nâu + ga trắng / mặt bàn gỗ)
-      const borderSamples = [];
-      let borderStep = 0;
+      const grad2d = new Float32Array(W * H);
 
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
@@ -968,111 +1035,245 @@
           B_arr[i] = B;
           sat[i] = Math.max(R, G, B) - Math.min(R, G, B);
           luma[i] = 0.299 * R + 0.587 * G + 0.114 * B;
-
-          if (x < 8 || x >= W - 8 || y < 8 || y >= H - 8) {
-            borderStep++;
-            if (borderStep % 4 === 0) {
-              borderSamples.push([R, G, B]);
-            }
-          }
         }
       }
 
-      const numB = borderSamples.length;
-      const kthIdx = Math.max(1, Math.floor(numB * 0.08));
-      const rawScore = new Float32Array(W * H);
-      const distBuf = new Float32Array(numB);
-
       for (let y = 0; y < H; y++) {
+        const yPrev = Math.max(0, y - 1);
+        const yNext = Math.min(H - 1, y + 1);
         for (let x = 0; x < W; x++) {
-          const i = y * W + x;
-          const R = R_arr[i];
-          const G = G_arr[i];
-          const B = B_arr[i];
-
-          // Tính khoảng cách màu tới tập mẫu đa nền xung quanh mép ảnh (bách phân vị 8%)
-          for (let k = 0; k < numB; k++) {
-            const bp = borderSamples[k];
-            distBuf[k] = Math.abs(R - bp[0]) + Math.abs(G - bp[1]) + Math.abs(B - bp[2]);
-          }
-          // Tìm giá trị nhỏ thứ kthIdx (Selection nhanh cho 8th percentile)
-          distBuf.sort();
-          const minBgDist = distBuf[kthIdx];
-
-          const xNext = Math.min(W - 1, x + 1);
           const xPrev = Math.max(0, x - 1);
-          const yNext = Math.min(H - 1, y + 1);
-          const yPrev = Math.max(0, y - 1);
-
+          const xNext = Math.min(W - 1, x + 1);
           const gx = Math.abs(luma[y * W + xNext] - luma[y * W + xPrev]);
           const gy = Math.abs(luma[yNext * W + x] - luma[yPrev * W + x]);
-          const isoGrad = Math.min(gx, gy);
-
-          rawScore[i] = Math.max(0, minBgDist - 22.0) * 1.2 + sat[i] * 1.5 + isoGrad * 2.8;
+          grad2d[y * W + x] = Math.min(gx, gy) + 0.3 * Math.max(gx, gy);
         }
       }
 
-      // 2. Làm mượt 9x9 (Box Filter) để tạo khối đặc (Solid Blob) phủ kín bề mặt thẻ
-      const blob = new Float32Array(W * H);
-      const borderBlobVals = [];
-      const rad = 4;
+      const luma_m = boxMean2D(luma, W, H, 2);
+      const sat_m = boxMean2D(sat, W, H, 2);
+      const grad_m = boxMean2D(grad2d, W, H, 2);
+      const R_m = boxMean2D(R_arr, W, H, 2);
+      const G_m = boxMean2D(G_arr, W, H, 2);
+      const B_m = boxMean2D(B_arr, W, H, 2);
+
+      // 1. Lấy 5 cụm màu nền đại diện (Multi-Background Border Palette) dọc 4 viền ngoài
+      const borderPts = [];
       for (let y = 0; y < H; y++) {
-        const y0 = Math.max(0, y - rad);
-        const y1 = Math.min(H - 1, y + rad);
         for (let x = 0; x < W; x++) {
-          const x0 = Math.max(0, x - rad);
-          const x1 = Math.min(W - 1, x + rad);
-          let sum = 0;
-          let cnt = 0;
-          for (let yy = y0; yy <= y1; yy++) {
-            const rowOff = yy * W;
-            for (let xx = x0; xx <= x1; xx++) {
-              sum += rawScore[rowOff + xx];
-              cnt++;
+          if (x < 6 || x >= W - 6 || y < 6 || y >= H - 6) {
+            const idx = y * W + x;
+            borderPts.push({
+              r: R_m[idx],
+              g: G_m[idx],
+              b: B_m[idx],
+              l: luma_m[idx],
+            });
+          }
+        }
+      }
+      borderPts.sort((a, b) => a.l - b.l);
+
+      const palette = [];
+      const quantiles = [
+        [0.0, 0.2],
+        [0.2, 0.4],
+        [0.4, 0.6],
+        [0.6, 0.8],
+        [0.8, 1.0],
+      ];
+      for (const [q0, q1] of quantiles) {
+        const i0 = Math.floor(borderPts.length * q0);
+        const i1 = Math.max(i0 + 1, Math.floor(borderPts.length * q1));
+        const mid = borderPts[Math.floor((i0 + i1) / 2)] || borderPts[0];
+        palette.push([mid.r, mid.g, mid.b]);
+      }
+
+      const bg_dist = new Float32Array(W * H);
+      for (let i = 0; i < W * H; i++) {
+        let bestD = 1e9;
+        const r = R_m[i];
+        const g = G_m[i];
+        const b = B_m[i];
+        for (let k = 0; k < palette.length; k++) {
+          const c = palette[k];
+          const d = Math.abs(r - c[0]) + Math.abs(g - c[1]) + Math.abs(b - c[2]);
+          if (d < bestD) bestD = d;
+        }
+        bg_dist[i] = bestD;
+      }
+      const bg_dist_m = boxMean2D(bg_dist, W, H, 2);
+
+      const card_energy = new Float32Array(W * H);
+      for (let i = 0; i < W * H; i++) {
+        card_energy[i] = bg_dist_m[i] * 1.1 + sat_m[i] * 2.2 + grad_m[i] * 3.5;
+      }
+
+      // 2. Phân tách các vùng liên thông độc lập (BFS Connected Components) và chấm điểm Hình Chữ Nhật Đặc (Rectangular Solidity + ISO ID-1 Aspect)
+      // Loại bỏ 100% chuột máy tính, logo bàn di chuột Razer, dây cáp và nền bàn phức tạp!
+      const candidateConfigs = [
+        [60, 105, 1],
+        [65, 108, 1],
+        [65, 118, 0],
+        [70, 118, 0],
+        [75, 125, 0],
+      ];
+
+      let bestComp = null;
+      let bestCompScore = -1e9;
+      const qX = new Int32Array(W * H);
+      const qY = new Int32Array(W * H);
+
+      for (let cfgIdx = 0; cfgIdx < candidateConfigs.length; cfgIdx++) {
+        const [pct, lumaMin, closeR] = candidateConfigs[cfgIdx];
+        const th = percentileFloat(card_energy, pct);
+        const rawMask = new Uint8Array(W * H);
+        for (let i = 0; i < W * H; i++) {
+          if (card_energy[i] >= th && luma_m[i] > lumaMin) {
+            rawMask[i] = 1;
+          }
+        }
+        const mask = morphCloseMask2D(rawMask, W, H, closeR);
+        const visited = new Uint8Array(W * H);
+
+        for (let sy = 2; sy < H - 2; sy++) {
+          for (let sx = 2; sx < W - 2; sx++) {
+            const startIdx = sy * W + sx;
+            if (!mask[startIdx] || visited[startIdx]) continue;
+
+            let head = 0;
+            let tail = 0;
+            qX[tail] = sx;
+            qY[tail] = sy;
+            tail++;
+            visited[startIdx] = 1;
+
+            let x0 = sx;
+            let x1 = sx;
+            let y0 = sy;
+            let y1 = sy;
+
+            while (head < tail) {
+              const cx = qX[head];
+              const cy = qY[head];
+              head++;
+              if (cx < x0) x0 = cx;
+              if (cx > x1) x1 = cx;
+              if (cy < y0) y0 = cy;
+              if (cy > y1) y1 = cy;
+
+              const neighbors = [
+                [cx - 1, cy],
+                [cx + 1, cy],
+                [cx, cy - 1],
+                [cx, cy + 1],
+              ];
+              for (let n = 0; n < 4; n++) {
+                const nx = neighbors[n][0];
+                const ny = neighbors[n][1];
+                if (nx >= 1 && nx < W - 1 && ny >= 1 && ny < H - 1) {
+                  const nIdx = ny * W + nx;
+                  if (mask[nIdx] && !visited[nIdx]) {
+                    visited[nIdx] = 1;
+                    qX[tail] = nx;
+                    qY[tail] = ny;
+                    tail++;
+                  }
+                }
+              }
+            }
+
+            const area = tail;
+            if (area < 150 || area > W * H * 0.85) continue;
+
+            // Cắt bỏ râu ria / bóng đổ mỏng ở mép bằng mật độ dòng/cột >= 0.40
+            const rawBw = x1 - x0 + 1;
+            const rawBh = y1 - y0 + 1;
+            const validCols = [];
+            const validRows = [];
+
+            for (let cx = x0; cx <= x1; cx++) {
+              let colSum = 0;
+              for (let cy = y0; cy <= y1; cy++) {
+                colSum += mask[cy * W + cx];
+              }
+              if (colSum / rawBh >= 0.4) validCols.push(cx);
+            }
+            for (let cy = y0; cy <= y1; cy++) {
+              let rowSum = 0;
+              for (let cx = x0; cx <= x1; cx++) {
+                rowSum += mask[cy * W + cx];
+              }
+              if (rowSum / rawBw >= 0.4) validRows.push(cy);
+            }
+
+            let x0_t = x0;
+            let x1_t = x1;
+            let y0_t = y0;
+            let y1_t = y1;
+            if (validCols.length >= 10 && validRows.length >= 10) {
+              x0_t = validCols[0];
+              x1_t = validCols[validCols.length - 1];
+              y0_t = validRows[0];
+              y1_t = validRows[validRows.length - 1];
+            }
+
+            const bw = x1_t - x0_t + 1;
+            const bh = y1_t - y0_t + 1;
+            if (bw < 12 || bh < 12) continue;
+
+            let maskSum = 0;
+            let satSum = 0;
+            let gradSum = 0;
+            const boxCount = bw * bh;
+            for (let cy = y0_t; cy <= y1_t; cy++) {
+              const rOff = cy * W;
+              for (let cx = x0_t; cx <= x1_t; cx++) {
+                const idx = rOff + cx;
+                maskSum += mask[idx];
+                satSum += sat_m[idx];
+                gradSum += grad_m[idx];
+              }
+            }
+
+            const fillRatio = maskSum / boxCount;
+            if (fillRatio < 0.55) continue;
+
+            const pxW = (bw / W) * origW;
+            const pxH = (bh / H) * origH;
+            const aspect = Math.max(pxW, pxH) / Math.max(1.0, Math.min(pxW, pxH));
+            if (aspect < 1.15 || aspect > 2.25) continue;
+
+            const aspectErr = Math.abs(aspect - 1.585);
+            const richness = (satSum / boxCount) * 1.5 + (gradSum / boxCount) * 2.5;
+            const trimmedArea = boxCount * fillRatio;
+
+            const cScore =
+              richness *
+              Math.pow(fillRatio, 1.8) *
+              (1.0 / (1.0 + 1.2 * aspectErr)) *
+              Math.pow(Math.min(trimmedArea, 5000), 0.35);
+
+            if (cScore > bestCompScore) {
+              bestCompScore = cScore;
+              bestComp = {
+                x: x0_t / W,
+                y: y0_t / H,
+                w: bw / W,
+                h: bh / H,
+              };
             }
           }
-          const val = sum / cnt;
-          blob[y * W + x] = val;
-          if (x < 8 || x >= W - 8 || y < 8 || y >= H - 8) {
-            borderBlobVals.push(val);
-          }
         }
       }
 
-      const bgP82 = percentileFloat(borderBlobVals, 82);
-      const fgP92 = percentileFloat(blob, 92);
-      const thr = bgP82 + (fgP92 - bgP82) * 0.35;
-
-      const xs = [];
-      const ys = [];
-      for (let y = 1; y < H - 1; y++) {
-        for (let x = 1; x < W - 1; x++) {
-          if (blob[y * W + x] >= thr) {
-            xs.push(x);
-            ys.push(y);
-          }
-        }
-      }
-
-      if (xs.length >= 60) {
-        const lx = percentileFloat(xs, 2);
-        const rx = percentileFloat(xs, 98);
-        const ty = percentileFloat(ys, 2);
-        const by_ = percentileFloat(ys, 98);
-
-        let nx = lx / W;
-        let ny = ty / H;
-        let nw = (rx - lx) / W;
-        let nh = (by_ - ty) / H;
-
-        if (nw >= 0.18 && nh >= 0.18) {
-          const pad = 0.008;
-          nx = Math.max(0, nx - pad);
-          ny = Math.max(0, ny - pad);
-          nw = Math.min(1 - nx, nw + pad * 2);
-          nh = Math.min(1 - ny, nh + pad * 2);
-          return { x: nx, y: ny, w: nw, h: nh, detected: true };
-        }
+      if (bestComp) {
+        const pad = 0.008;
+        const nx = Math.max(0, bestComp.x - pad);
+        const ny = Math.max(0, bestComp.y - pad);
+        const nw = Math.min(1 - nx, bestComp.w + pad * 2);
+        const nh = Math.min(1 - ny, bestComp.h + pad * 2);
+        return { x: nx, y: ny, w: nw, h: nh, detected: true };
       }
     } catch (_) {}
 
@@ -1090,41 +1291,60 @@
       ctx.drawImage(cardCanvas, 0, 0, W, H);
       const data = ctx.getImageData(0, 0, W, H).data;
 
-      let topRed = 0;
-      let botRed = 0;
-      let trQr = 0;
-      let blQr = 0;
-      let botMrz = 0;
-      let topMrz = 0;
-
-      for (let y = 4; y < H - 4; y++) {
-        for (let x = 4; x < W - 4; x++) {
-          const i = (y * W + x) * 4;
-          const R = data[i];
-          const G = data[i + 1];
-          const B = data[i + 2];
-          const luma = 0.299 * R + 0.587 * G + 0.114 * B;
-
-          const isRed = R > 145 && R - B > 50 && R - G > 20;
-          const isDark = luma < 88;
-
-          if (isRed) {
-            if (y < 46 && x < 115) topRed++;
-            if (y > 54 && x > 45) botRed++;
-          }
-          if (isDark) {
-            if (y < 44 && x > 108) trQr++;
-            if (y > 56 && x < 52) blQr++;
-            if (y > 68 && x > 14 && x < 146) botMrz++;
-            if (y < 32 && x > 14 && x < 146) topMrz++;
-          }
+      const luma = new Float32Array(W * H);
+      const redGold = new Float32Array(W * H);
+      for (let i = 0; i < W * H; i++) {
+        const R = data[i * 4];
+        const G = data[i * 4 + 1];
+        const B = data[i * 4 + 2];
+        luma[i] = 0.299 * R + 0.587 * G + 0.114 * B;
+        if (R > 125 && G > 35 && B < 150) {
+          redGold[i] = Math.max(0, (R - B) * 1.2 + (R - G) * 0.5);
         }
       }
 
-      if (topRed + botRed >= 10) {
-        return (topRed - botRed) * 5.0 + (trQr - blQr) * 2.5;
+      const darkEdge = new Float32Array(W * H);
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const idx = y * W + x;
+          const gx = Math.abs(luma[y * W + (x + 1)] - luma[y * W + (x - 1)]);
+          const gy = Math.abs(luma[(y + 1) * W + x] - luma[(y - 1) * W + x]);
+          darkEdge[idx] = (gx + gy) * (luma[idx] < 145 ? 1.35 : 0.45);
+        }
       }
-      return (trQr - blQr) * 2.0 + (botMrz - topMrz) * 1.5;
+
+      function regionMean(arr, y0f, y1f, x0f, x1f) {
+        const y0 = Math.floor(H * y0f);
+        const y1 = Math.floor(H * y1f);
+        const x0 = Math.floor(W * x0f);
+        const x1 = Math.floor(W * x1f);
+        let sum = 0;
+        let cnt = 0;
+        for (let y = y0; y < y1; y++) {
+          const rOff = y * W;
+          for (let x = x0; x < x1; x++) {
+            sum += arr[rOff + x];
+            cnt++;
+          }
+        }
+        return cnt > 0 ? sum / cnt : 0;
+      }
+
+      // Quốc huy đỏ/vàng ở Góc Trên-Trái (Top-Left) và Mã QR đen đậm ở Góc Trên-Phải (Top-Right)
+      const tlRg = regionMean(redGold, 0.04, 0.46, 0.03, 0.35);
+      const trRg = regionMean(redGold, 0.04, 0.46, 0.65, 0.97);
+      const blRg = regionMean(redGold, 0.54, 0.96, 0.03, 0.35);
+      const brRg = regionMean(redGold, 0.54, 0.96, 0.65, 0.97);
+
+      const trDe = regionMean(darkEdge, 0.04, 0.46, 0.65, 0.97);
+      const blDe = regionMean(darkEdge, 0.54, 0.96, 0.03, 0.35);
+
+      return (
+        (tlRg - brRg) * 3.2 +
+        (tlRg - blRg) * 1.5 +
+        (tlRg - trRg) * 1.8 +
+        (trDe - blDe) * 1.6
+      );
     } catch (_) {
       return 0;
     }
@@ -1166,9 +1386,9 @@
       return rawCropCanvas.toDataURL("image/png");
     }
 
-    // Đảm bảo thẻ đã cắt luôn nằm ngang (width >= height) và đúng chiều xuôi (Quốc huy / QR / MRZ)
+    // Đảm bảo thẻ đã cắt luôn nằm ngang (width >= height) và đúng chiều xuôi 100% (Quốc huy Top-Left / QR Top-Right)
     let finalCanvas = rawCropCanvas;
-    if (rawCropCanvas.height > rawCropCanvas.width * 1.04) {
+    if (rawCropCanvas.height > rawCropCanvas.width * 1.03) {
       const candCW = rotateCanvasByDeg(rawCropCanvas, 90);
       const candCCW = rotateCanvasByDeg(rawCropCanvas, -90);
       const scoreCW = scoreCardUprightness(candCW);
@@ -1179,7 +1399,7 @@
       const cand180 = rotateCanvasByDeg(rawCropCanvas, 180);
       const score0 = scoreCardUprightness(cand0);
       const score180 = scoreCardUprightness(cand180);
-      finalCanvas = score180 > score0 + 120 ? cand180 : cand0;
+      finalCanvas = score180 > score0 ? cand180 : cand0;
     }
 
     return finalCanvas.toDataURL("image/png");
