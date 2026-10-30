@@ -304,7 +304,7 @@ class MainActivity: FlutterFragmentActivity() {
         val expCheck = computeIcaocdCheckDigit(expYYMMDD)
         val mrzInfo = "$doc9$docCheck$dobYYMMDD$dobCheck$expYYMMDD$expCheck"
         val sha1 = java.security.MessageDigest.getInstance("SHA-1").digest(mrzInfo.toByteArray(Charsets.US_ASCII))
-        return bytesToHex(sha1.copyOfRange(0, 16))
+        return sha1.copyOfRange(0, 16).joinToString("") { "%02X".format(it) }
     }
 
     private fun parseEmvPanAndExpiry(respHex: String): Pair<String, String>? {
