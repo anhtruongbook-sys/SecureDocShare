@@ -1,11 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Quyền truy cập lưu trữ cục bộ, sinh trắc học, máy ảnh quét QR 2FA & truy xuất phụ đề YouTube / GitHub / Web -->
+    <!-- Quyền truy cập lưu trữ cục bộ, sinh trắc học, máy ảnh quét QR 2FA & đọc thẻ chip NFC -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.NFC" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <application
         android:label="Krypto"
@@ -42,6 +44,20 @@
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
+
+        <!-- Dịch vụ Tự động điền Mật khẩu & Thẻ toàn hệ thống Android (Autofill Framework) -->
+        <service
+            android:name=".KryptoAutofillService"
+            android:label="Krypto Password &amp; Card Autofill"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/krypto_autofill_service" />
+        </service>
         
         <meta-data
             android:name="flutterEmbedding"

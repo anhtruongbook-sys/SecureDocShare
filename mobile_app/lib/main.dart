@@ -403,6 +403,15 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
             });
           }
         }
+      } else if (call.method == 'onNfcCardScanned') {
+        final String? nfcJson = call.arguments?.toString();
+        if (nfcJson != null && nfcJson.isNotEmpty && _pageLoaded) {
+          final escNfc = jsonEncode(nfcJson);
+          await _controller.runJavaScript(
+            "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNativeNfcCardScanned) { "
+            "window.KryptoPasswordVault.onNativeNfcCardScanned($escNfc); }",
+          );
+        }
       }
       return null;
     });
@@ -1479,6 +1488,88 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                     'blockScreenshot': block,
                   });
                 } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'start_nfc_card_scan') {
+              if (Platform.isAndroid) {
+                try {
+                  final bool ok = await _nativeChannel.invokeMethod<bool>('startNfcCardScan') ?? false;
+                  await _controller.runJavaScript(
+                    "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNfcScanStatus) { "
+                    "window.KryptoPasswordVault.onNfcScanStatus(${ok ? 'true' : 'false'}); }",
+                  );
+                } catch (_) {
+                  await _controller.runJavaScript(
+                    "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNfcScanStatus) { "
+                    "window.KryptoPasswordVault.onNfcScanStatus(false); }",
+                  );
+                }
+              }
+              return;
+            }
+
+            if (action == 'stop_nfc_card_scan') {
+              if (Platform.isAndroid) {
+                try {
+                  await _nativeChannel.invokeMethod<bool>('stopNfcCardScan');
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'sync_autofill_credentials') {
+              if (Platform.isAndroid) {
+                try {
+                  final credsJson = data['credentialsJson'] as String? ?? '[]';
+                  await _nativeChannel.invokeMethod<bool>('syncAutofillCredentials', {
+                    'credentialsJson': credsJson,
+                  });
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'open_system_autofill_settings') {
+              if (Platform.isAndroid) {
+                try {
+                  await _nativeChannel.invokeMethod<bool>('openSystemAutofillSettings');
+                } catch (_) {}
+              }
+              return;
+            }
+
+            if (action == 'export_card_two_sided_pdf_a4') {
+              if (Platform.isAndroid) {
+                try {
+                  final title = data['title'] as String? ?? 'Thẻ / Giấy tờ Krypto';
+                  final subtitle = data['subtitle'] as String? ?? '';
+                  final frontB64 = data['frontB64'] as String? ?? '';
+                  final backB64 = data['backB64'] as String? ?? '';
+                  final watermarkText = data['watermarkText'] as String? ?? 'BẢN SAO CHỈ DÙNG ĐỂ ĐỐI CHIẾU';
+                  final String? outPath = await _nativeChannel.invokeMethod<String>('exportCardTwoSidedPdfA4', {
+                    'title': title,
+                    'subtitle': subtitle,
+                    'frontB64': frontB64,
+                    'backB64': backB64,
+                    'watermarkText': watermarkText,
+                  });
+                  if (outPath != null && outPath.isNotEmpty) {
+                    final fName = outPath.split(RegExp(r'[/\\]')).last;
+                    final savedDl = await _saveToDownloadsFolder(outPath, fName) ?? outPath;
+                    final escSaved = jsonEncode(savedDl);
+                    await _controller.runJavaScript(
+                      "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onCardPdfExported) { "
+                      "window.KryptoPasswordVault.onCardPdfExported($escSaved); }",
+                    );
+                  }
+                } catch (pdfErr) {
+                  final escErr = jsonEncode(pdfErr.toString());
+                  await _controller.runJavaScript(
+                    "if (window.showKryptoToast) window.showKryptoToast('⚠️ Lỗi xuất PDF 2 mặt: ' + $escErr);",
+                  );
+                }
               }
               return;
             }

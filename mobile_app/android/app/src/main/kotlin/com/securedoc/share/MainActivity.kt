@@ -75,6 +75,8 @@ class MainActivity: FlutterFragmentActivity() {
     private val GDRIVE_URI_KEY = "saved_gdrive_vault_uri"
     private var pendingSharedText: String? = null
     private var methodChannel: MethodChannel? = null
+    private var nfcAdapter: android.nfc.NfcAdapter? = null
+    @Volatile private var isNfcScanActive: Boolean = false
 
     @Suppress("DEPRECATION")
     private var nativeCamera: android.hardware.Camera? = null
@@ -256,6 +258,180 @@ class MainActivity: FlutterFragmentActivity() {
                 pending?.success(false)
             }
         }
+    }
+
+    private fun bytesToHexUpper(bytes: ByteArray): String {
+        val sb = StringBuilder(bytes.size * 2)
+        for (b in bytes) {
+            sb.append(String.format("%02X", b.toInt() and 0xFF))
+        }
+        return sb.toString()
+    }
+
+    private fun hexToBytes(hex: String): ByteArray {
+        val clean = hex.replace(Regex("[^0-9A-Fa-f]"), "")
+        val len = clean.length
+        val out = ByteArray(len / 2)
+        var i = 0
+        while (i < len - 1) {
+            out[i / 2] = ((Character.digit(clean[i], 16) shl 4) + Character.digit(clean[i + 1], 16)).toByte()
+            i += 2
+        }
+        return out
+    }
+
+    private fun parseEmvPanAndExpiry(respHex: String): Pair<String, String>? {
+        val up = respHex.uppercase()
+        // EMV Tag 57 (Track 2 Equivalent Data): 57 + len + PAN + 'D' + YYMM
+        val idx57 = up.indexOf("57")
+        if (idx57 >= 0 && idx57 + 4 < up.length) {
+            val dIdx = up.indexOf('D', idx57 + 4)
+            if (dIdx > idx57 + 14 && dIdx + 5 <= up.length) {
+                val pan = up.substring(idx57 + 4, dIdx).filter { it.isDigit() }
+                val yy = up.substring(dIdx + 1, dIdx + 3)
+                val mm = up.substring(dIdx + 3, dIdx + 5)
+                if (pan.length in 13..19 && mm.all { it.isDigit() } && yy.all { it.isDigit() }) {
+                    return Pair(pan, "$mm/$yy")
+                }
+            }
+        }
+        // EMV Tag 5A (Application Primary Account Number)
+        val idx5A = up.indexOf("5A08")
+        if (idx5A >= 0 && idx5A + 20 <= up.length) {
+            val pan = up.substring(idx5A + 4, idx5A + 20).filter { it.isDigit() }
+            if (pan.length in 13..19) {
+                return Pair(pan, "")
+            }
+        }
+        return null
+    }
+
+    private fun handleDiscoveredNfcTag(tag: android.nfc.Tag) {
+        try {
+            val uidHex = bytesToHexUpper(tag.id ?: ByteArray(0))
+            val techList = tag.techList?.map { it.substringAfterLast('.') } ?: emptyList()
+            var cardKind = "NFC_TAG"
+            var panNumber = ""
+            var expiryStr = ""
+            var aidDetected = ""
+            var atrHex = ""
+
+            val isoDep = android.nfc.tech.IsoDep.get(tag)
+            if (isoDep != null) {
+                try {
+                    isoDep.connect()
+                    isoDep.timeout = 2500
+                    val hiLayer = isoDep.hiLayerResponse ?: isoDep.historicalBytes
+                    if (hiLayer != null && hiLayer.isNotEmpty()) {
+                        atrHex = bytesToHexUpper(hiLayer)
+                    }
+
+                    // 1. Thử chọn ứng dụng ICAO 9303 eMRTD (CCCD gắn chip / Hộ chiếu điện tử): A0000002471001
+                    val selectIcao = hexToBytes("00A4040C07A0000002471001")
+                    val respIcao = isoDep.transceive(selectIcao)
+                    val icaoHex = bytesToHexUpper(respIcao)
+                    if (icaoHex.endsWith("9000") || icaoHex.endsWith("6982") || icaoHex.endsWith("6985")) {
+                        cardKind = "ICAO_EMRTD_CHIP"
+                        aidDetected = "A0000002471001 (ICAO 9303 eID / CCCD / ePassport)"
+                    } else {
+                        // 2. Thử chọn PPSE EMV Contactless (2PAY.SYS.DDF01) cho Thẻ Ngân hàng (Visa / Mastercard / Napas / JCB)
+                        val selectPpse = hexToBytes("00A404000E325041592E5359532E444446303100")
+                        val respPpse = isoDep.transceive(selectPpse)
+                        val ppseHex = bytesToHexUpper(respPpse)
+                        val emvAids = listOf(
+                            Pair("A0000000031010", "VISA"),
+                            Pair("A0000000041010", "MASTERCARD"),
+                            Pair("A0000007271001", "NAPAS"),
+                            Pair("A0000000651010", "JCB")
+                        )
+                        if (ppseHex.endsWith("9000")) {
+                            cardKind = "EMV_PAYMENT_CARD"
+                        }
+                        for ((aid, brand) in emvAids) {
+                            val selAid = hexToBytes("00A4040007" + aid + "00")
+                            val rAid = isoDep.transceive(selAid)
+                            val rHex = bytesToHexUpper(rAid)
+                            if (rHex.endsWith("9000")) {
+                                cardKind = "EMV_PAYMENT_CARD"
+                                aidDetected = "$brand ($aid)"
+                                // Gửi GPO rỗng + Đọc SFI 1..2 Record 1..3 để lấy PAN công khai nếu thẻ cho phép
+                                try {
+                                    isoDep.transceive(hexToBytes("80A8000002830000"))
+                                } catch (_: Throwable) {}
+                                for (sfi in 1..3) {
+                                    for (rec in 1..4) {
+                                        try {
+                                            val p2 = (sfi shl 3) or 4
+                                            val readCmd = byteArrayOf(0x00, 0xB2.toByte(), rec.toByte(), p2.toByte(), 0x00)
+                                            val recResp = isoDep.transceive(readCmd)
+                                            val recHex = bytesToHexUpper(recResp)
+                                            if (recHex.endsWith("9000")) {
+                                                val parsed = parseEmvPanAndExpiry(recHex)
+                                                if (parsed != null) {
+                                                    panNumber = parsed.first
+                                                    expiryStr = parsed.second
+                                                    break
+                                                }
+                                            }
+                                        } catch (_: Throwable) {}
+                                    }
+                                    if (panNumber.isNotEmpty()) break
+                                }
+                                break
+                            }
+                        }
+                    }
+                } catch (_: Throwable) {
+                } finally {
+                    try { isoDep.close() } catch (_: Throwable) {}
+                }
+            }
+
+            val out = JSONObject()
+            out.put("uid", uidHex)
+            out.put("techs", techList.joinToString(", "))
+            out.put("cardKind", cardKind)
+            out.put("aid", aidDetected)
+            out.put("atr", atrHex)
+            out.put("pan", panNumber)
+            out.put("expiry", expiryStr)
+
+            runOnUiThread {
+                try {
+                    stopNfcReaderInternal()
+                    methodChannel?.invokeMethod("onNfcCardScanned", out.toString())
+                } catch (_: Throwable) {}
+            }
+        } catch (_: Throwable) {}
+    }
+
+    private fun startNfcReaderInternal(): Boolean {
+        return try {
+            val adapter = android.nfc.NfcAdapter.getDefaultAdapter(this) ?: return false
+            if (!adapter.isEnabled) return false
+            nfcAdapter = adapter
+            isNfcScanActive = true
+            val flags = android.nfc.NfcAdapter.FLAG_READER_NFC_A or
+                    android.nfc.NfcAdapter.FLAG_READER_NFC_B or
+                    android.nfc.NfcAdapter.FLAG_READER_NFC_F or
+                    android.nfc.NfcAdapter.FLAG_READER_NFC_V
+            adapter.enableReaderMode(
+                this,
+                { tag -> if (tag != null) handleDiscoveredNfcTag(tag) },
+                flags,
+                null
+            )
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun stopNfcReaderInternal() {
+        isNfcScanActive = false
+        try {
+            nfcAdapter?.disableReaderMode(this)
+        } catch (_: Throwable) {}
     }
 
     @Suppress("DEPRECATION")
@@ -2051,6 +2227,171 @@ class MainActivity: FlutterFragmentActivity() {
                                 outJson.put("rotatedImageB64", rotatedDataUrl)
                             }
                             runOnUiThread { result.success(outJson.toString()) }
+                        } catch (e: Throwable) {
+                            runOnUiThread { result.success(null) }
+                        }
+                    }
+                }
+                "startNfcCardScan" -> {
+                    runOnUiThread {
+                        val ok = startNfcReaderInternal()
+                        result.success(ok)
+                    }
+                }
+                "stopNfcCardScan" -> {
+                    runOnUiThread {
+                        stopNfcReaderInternal()
+                        result.success(true)
+                    }
+                }
+                "syncAutofillCredentials" -> {
+                    val jsonStr = call.argument<String>("credentialsJson") ?: "[]"
+                    executor.execute {
+                        try {
+                            val f = File(filesDir, "krypto_autofill_cache.json")
+                            f.writeText(jsonStr, Charsets.UTF_8)
+                            runOnUiThread { result.success(true) }
+                        } catch (_: Throwable) {
+                            runOnUiThread { result.success(false) }
+                        }
+                    }
+                }
+                "openSystemAutofillSettings" -> {
+                    runOnUiThread {
+                        try {
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                val intent = Intent(android.provider.Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE).apply {
+                                    data = android.net.Uri.parse("package:$packageName")
+                                }
+                                startActivity(intent)
+                                result.success(true)
+                            } else {
+                                result.success(false)
+                            }
+                        } catch (_: Throwable) {
+                            try {
+                                startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+                            } catch (_: Throwable) {}
+                            result.success(false)
+                        }
+                    }
+                }
+                "exportCardTwoSidedPdfA4" -> {
+                    val title = call.argument<String>("title") ?: "Giay_To_Ca_Nhan"
+                    val subtitle = call.argument<String>("subtitle") ?: ""
+                    val frontB64 = call.argument<String>("frontB64") ?: ""
+                    val backB64 = call.argument<String>("backB64") ?: ""
+                    val watermarkText = call.argument<String>("watermarkText") ?: ""
+                    executor.execute {
+                        try {
+                            val doc = com.itextpdf.text.Document(com.itextpdf.text.PageSize.A4, 36f, 36f, 36f, 36f)
+                            val safeName = title.replace(Regex("[^a-zA-Z0-9_\-]"), "_").take(32)
+                            val fileName = "Krypto_BanIn2Mat_${safeName}_${System.currentTimeMillis() / 1000}.pdf"
+                            val tmpFile = File(cacheDir, fileName)
+                            val writer = PdfWriter.getInstance(doc, FileOutputStream(tmpFile))
+                            doc.open()
+
+                            val cb = writer.directContent
+                            // Kích thước thật chuẩn ISO/IEC 7810 ID-1: 85.60 mm x 53.98 mm -> 242.65 pt x 153.01 pt
+                            val cardW = 242.65f
+                            val cardH = 153.01f
+                            val pageW = com.itextpdf.text.PageSize.A4.width
+                            val pageH = com.itextpdf.text.PageSize.A4.height
+                            val centerX = (pageW - cardW) / 2f
+
+                            val bf = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
+                            val bfReg = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
+
+                            cb.beginText()
+                            cb.setFontAndSize(bf, 13f)
+                            cb.showTextAligned(Element.ALIGN_CENTER, "BAN SAO GIAY TO / THE DINH DANH (TY LE 1:1 CHUAN ISO ID-1 85.6 x 54 mm)", pageW / 2f, pageH - 52f, 0f)
+                            cb.setFontAndSize(bfReg, 10f)
+                            cb.showTextAligned(Element.ALIGN_CENTER, "$title  |  $subtitle", pageW / 2f, pageH - 70f, 0f)
+                            cb.endText()
+
+                            fun drawCardSlot(b64: String, topY: Float, label: String) {
+                                cb.beginText()
+                                cb.setFontAndSize(bf, 10f)
+                                cb.showTextAligned(Element.ALIGN_CENTER, label, pageW / 2f, topY + cardH + 10f, 0f)
+                                cb.endText()
+
+                                // Vẽ khung nét đứt cắt giấy chuẩn 85.6 x 54 mm
+                                cb.saveState()
+                                cb.setLineDash(3f, 3f)
+                                cb.setLineWidth(0.6f)
+                                cb.rectangle(centerX - 2f, topY - 2f, cardW + 4f, cardH + 4f)
+                                cb.stroke()
+                                cb.restoreState()
+
+                                if (b64.isNotBlank()) {
+                                    val clean = if (b64.contains(",")) b64.substringAfter(",") else b64
+                                    val imgBytes = Base64.decode(clean, Base64.DEFAULT)
+                                    val pdfImg = com.itextpdf.text.Image.getInstance(imgBytes)
+                                    pdfImg.scaleAbsolute(cardW, cardH)
+                                    pdfImg.setAbsolutePosition(centerX, topY)
+                                    doc.add(pdfImg)
+                                }
+
+                                if (watermarkText.isNotBlank()) {
+                                    val gs = PdfGState()
+                                    gs.fillOpacity = 0.24f
+                                    cb.saveState()
+                                    cb.setGState(gs)
+                                    cb.beginText()
+                                    cb.setColorFill(BaseColor(180, 20, 20))
+                                    cb.setFontAndSize(bf, 11f)
+                                    cb.showTextAligned(
+                                        Element.ALIGN_CENTER,
+                                        watermarkText,
+                                        centerX + cardW / 2f,
+                                        topY + cardH / 2f,
+                                        18f
+                                    )
+                                    cb.endText()
+                                    cb.restoreState()
+                                }
+                            }
+
+                            drawCardSlot(frontB64, pageH - 275f, "1. MAT TRUOC (FRONT SIDE - 85.6 x 54.0 mm)")
+                            if (backB64.isNotBlank()) {
+                                drawCardSlot(backB64, pageH - 485f, "2. MAT SAU (BACK SIDE - 85.6 x 54.0 mm)")
+                            }
+
+                            cb.beginText()
+                            cb.setFontAndSize(bfReg, 8.5f)
+                            cb.showTextAligned(
+                                Element.ALIGN_CENTER,
+                                "Xuat tu Krypto Vault (Offline Zero-Knowledge) - In tren kho giay A4 (Scale 100% / Actual Size) de co kich thuoc the that 1:1.",
+                                pageW / 2f,
+                                42f,
+                                0f
+                            )
+                            cb.endText()
+
+                            doc.close()
+
+                            // Lưu ra thư mục Download công khai
+                            var savedPath = tmpFile.absolutePath
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                val resolver = applicationContext.contentResolver
+                                val cv = android.content.ContentValues().apply {
+                                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                                    put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+                                }
+                                val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv)
+                                if (uri != null) {
+                                    resolver.openOutputStream(uri)?.use { os ->
+                                        FileInputStream(tmpFile).use { it.copyTo(os) }
+                                    }
+                                    cv.clear()
+                                    cv.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                                    resolver.update(uri, cv, null, null)
+                                    savedPath = "/storage/emulated/0/Download/$fileName"
+                                }
+                            }
+                            runOnUiThread { result.success(savedPath) }
                         } catch (e: Throwable) {
                             runOnUiThread { result.success(null) }
                         }

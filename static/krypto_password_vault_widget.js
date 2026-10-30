@@ -474,12 +474,41 @@
     cropSourceImg: null,
     cropSourceDataUrl: "",
     cropRect: { x: 0.08, y: 0.14, w: 0.84, h: 0.72 },
-    cropAspectMode: "auto", // 'auto' | 'id1' (85.6:54) | 'wide' (16:10) | 'free'
+    cropCorners: [
+      { x: 0.08, y: 0.14 },
+      { x: 0.92, y: 0.14 },
+      { x: 0.92, y: 0.86 },
+      { x: 0.08, y: 0.86 },
+    ], // [TL, TR, BR, BL] cho chế độ Nắn Phẳng 4 Góc 3D (Homography)
+    cropAspectMode: "auto", // 'auto' | 'quad' | 'id1' (85.6:54) | 'wide' (16:10) | 'free'
     cropEnhanceClarity: true,
     autoCropEnabled: true,
     cropDragMode: null,
-    cropDragStart: { x: 0, y: 0, rect: null },
+    cropDragStart: { x: 0, y: 0, rect: null, corners: null },
+    nfcScanning: false,
   };
+
+  function syncAutofillCacheToNative() {
+    if (!window.FlutterBridge || typeof window.FlutterBridge.postMessage !== "function") return;
+    try {
+      const creds = Object.values(state.decryptedRecords || {})
+        .filter((r) => !r.deleted && (r.username || r.password))
+        .map((r) => ({
+          id: r.record_id,
+          title: r.title || "Tài khoản Krypto",
+          username: r.username || "",
+          password: r.password || "",
+          url: r.url || "",
+          item_type: r.item_type || "LOGIN",
+        }));
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: "sync_autofill_credentials",
+          credentialsJson: JSON.stringify(creds),
+        })
+      );
+    } catch (_) {}
+  }
 
   function persistVaultLocally() {
     if (!state.vaultData) return;
@@ -497,6 +526,7 @@
         );
       } catch (_) {}
     }
+    syncAutofillCacheToNative();
   }
 
   async function initOrUnlockVault(masterPassword) {
@@ -612,6 +642,7 @@
     state.vaultData = vaultObj;
     state.decryptedRecords = decryptedMap;
     state.hlc.now(vaultObj.last_modified_hlc);
+    syncAutofillCacheToNative();
   }
 
   async function upsertRecord({
@@ -1661,6 +1692,172 @@
       .filter(Boolean);
     const upperText = rawText.toUpperCase();
 
+    // CASE 2B: Nhận diện HỘ CHIẾU PHỔ THÔNG / NGOẠI GIAO (PASSPORT — ICAO 9303 TD3 P<VNM)
+    const isPassport =
+      upperText.includes("P<VNM") ||
+      upperText.includes("PASSPORT") ||
+      upperText.includes("HỘ CHIẾU") ||
+      upperText.includes("HO CHIEU") ||
+      /\b[BCKPE]\d{7,8}\b/.test(upperText);
+
+    if (isPassport && !upperText.includes("GIẤY PHÉP LÁI XE") && !upperText.includes("CĂN CƯỚC")) {
+      if (typeSel) typeSel.value = "IDENTITY";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Hộ chiếu (Passport)";
+      }
+      let passportNo = "";
+      let fullName = "";
+      let dob = "";
+      let expiry = "";
+      const detectedFields = [];
+
+      // Tìm số hộ chiếu Việt Nam (Cxxxxxxx, Bxxxxxxx, Pxxxxxxx, Kxxxxxxx — 1 chữ cái + 7 hoặc 8 chữ số)
+      const ppMatch = upperText.match(/\b([BCKPE]\d{7,8})\b/);
+      if (ppMatch) passportNo = ppMatch[1];
+
+      // Giải mã dòng MRZ TD3: P<VNMHO<<TEN<<<...
+      const td3Line1 = lines.find((l) => l.toUpperCase().replace(/\s+/g, "").includes("P<VNM"));
+      if (td3Line1) {
+        const cl1 = td3Line1.toUpperCase().replace(/\s+/g, "");
+        const idx = cl1.indexOf("P<VNM");
+        const nameRaw = cl1.slice(idx + 5).replace(/<+/g, " ").trim();
+        if (nameRaw.length >= 5) fullName = nameRaw;
+      }
+
+      // Giải mã dòng 2 MRZ TD3: [Số HC 9 ký tự][Check][VNM][YYMMDD][Check][M/F][YYMMDD]...
+      const td3Line2 = lines.find((l) => {
+        const cl = l.toUpperCase().replace(/\s+/g, "");
+        return /^[A-Z0-9<]{9}\dVNM\d{6}\d[MF<]\d{6}/.test(cl);
+      });
+      if (td3Line2) {
+        const cl2 = td3Line2.toUpperCase().replace(/\s+/g, "");
+        const m2 = cl2.match(/^([A-Z0-9<]{9})\dVNM(\d{2})(\d{2})(\d{2})\d[MF<](\d{2})(\d{2})(\d{2})/);
+        if (m2) {
+          if (!passportNo) passportNo = m2[1].replace(/</g, "");
+          const yyB = parseInt(m2[2], 10);
+          dob = `${m2[4]}/${m2[3]}/${yyB > 30 ? 1900 + yyB : 2000 + yyB}`;
+          const yyE = parseInt(m2[5], 10);
+          expiry = `${m2[7]}/${m2[6]}/${2000 + yyE}`;
+        }
+      }
+
+      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      if (!dob && dates.length >= 1) dob = dates[0];
+      if (!expiry && dates.length >= 2) expiry = dates[dates.length - 1];
+
+      if (titleInp) {
+        titleInp.value = `Hộ chiếu: ${fullName || passportNo || "Việt Nam"}`;
+      }
+      if (userInp && passportNo) {
+        userInp.value = passportNo;
+        detectedFields.push(`Số HC: ${passportNo}`);
+      }
+      if (fullName) detectedFields.push(`Họ tên: ${fullName}`);
+      if (passInp) {
+        const meta = [];
+        if (dob) meta.push(`NS: ${dob}`);
+        if (expiry) meta.push(`HSD: ${expiry}`);
+        if (meta.length > 0) passInp.value = meta.join(" | ");
+      }
+      if (detectedFields.length > 0 && typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã nhận dạng Hộ chiếu (Passport): ${detectedFields.join(" • ")}!`);
+      }
+      return;
+    }
+
+    // CASE 2C: Nhận diện THẺ BẢO HIỂM Y TẾ / BHXH (HEALTH INSURANCE CARD — 15 ký tự DN401... hoặc 10 số BHXH)
+    const isBhyt =
+      upperText.includes("BẢO HIỂM Y TẾ") ||
+      upperText.includes("BAO HIEM Y TE") ||
+      upperText.includes("BẢO HIỂM XÃ HỘI") ||
+      upperText.includes("BAO HIEM XA HOI") ||
+      upperText.includes("HEALTH INSURANCE") ||
+      /\b(?:DN|HX|CH|NN|TK|HC|XK|CA|HT|TB|MS|XB|XN|TN|CC|CK|CB|KC|HD|TE|BT|HN|DT|DK|XD|TS|TC|TQ|TA|TY|HG|LS|CN|HS|SV|GB|GD|PV)[1-5]\d{12}\b/.test(
+        upperText.replace(/\s+/g, "")
+      );
+
+    if (isBhyt) {
+      if (typeSel) typeSel.value = "IDENTITY";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Thẻ Bảo hiểm Y tế (BHYT)";
+      }
+      const cleanUpperNoSpace = upperText.replace(/[\s\-]+/g, "");
+      const code15 = cleanUpperNoSpace.match(
+        /\b((?:DN|HX|CH|NN|TK|HC|XK|CA|HT|TB|MS|XB|XN|TN|CC|CK|CB|KC|HD|TE|BT|HN|DT|DK|XD|TS|TC|TQ|TA|TY|HG|LS|CN|HS|SV|GB|GD|PV)[1-5]\d{12})\b/
+      );
+      const code10 = rawText.match(/\b(\d{10})\b/);
+      const bhytCode = code15 ? code15[1] : code10 ? code10[1] : "";
+      let fullName = "";
+      for (const l of lines) {
+        const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
+        if (
+          cleanL === l.trim() &&
+          cleanL.split(/\s+/).length >= 2 &&
+          cleanL.length >= 7 &&
+          !/BẢO HIỂM|BAO HIEM|VIỆT NAM|VIET NAM|THẺ|THE/i.test(cleanL)
+        ) {
+          fullName = cleanL;
+          break;
+        }
+      }
+      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      const dob = dates.length >= 1 ? dates[0] : "";
+      const expiry = dates.length >= 2 ? dates[dates.length - 1] : "";
+
+      if (titleInp) titleInp.value = `Thẻ BHYT: ${fullName || bhytCode}`;
+      if (userInp && bhytCode) userInp.value = bhytCode;
+      if (passInp) {
+        const meta = [];
+        if (dob) meta.push(`NS: ${dob}`);
+        if (expiry) meta.push(`HSD: ${expiry}`);
+        if (meta.length > 0) passInp.value = meta.join(" | ");
+      }
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã nhận dạng Thẻ BHYT: ${bhytCode || fullName}!`);
+      }
+      return;
+    }
+
+    // CASE 2D: Nhận diện GIẤY ĐĂNG KÝ XE / CAVET Ô TÔ - XE MÁY (VEHICLE REGISTRATION)
+    const isVehicleReg =
+      upperText.includes("ĐĂNG KÝ XE") ||
+      upperText.includes("DANG KY XE") ||
+      upperText.includes("VEHICLE REGISTRATION") ||
+      upperText.includes("SỐ KHUNG") ||
+      upperText.includes("SO KHUNG") ||
+      upperText.includes("CHASSIS") ||
+      upperText.includes("SỐ MÁY") ||
+      upperText.includes("ENGINE N");
+
+    if (isVehicleReg) {
+      if (typeSel) typeSel.value = "IDENTITY";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Giấy đăng ký xe (Cavet)";
+      }
+      const plateMatch = upperText.match(/\b(\d{2}[A-Z]\d?[-\s.]?\d{3,5}(?:\.\d{2})?)\b/);
+      const plateNo = plateMatch ? plateMatch[1].replace(/\s+/g, "-") : "";
+      let brandModel = "";
+      const brandMatch = rawText.match(/(?:Nhãn hiệu|Brand)[:.\s/]*([A-Za-z0-9\s\-]+)/i);
+      if (brandMatch) brandModel = brandMatch[1].trim();
+      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      const expiry = dates.length >= 2 ? dates[dates.length - 1] : "";
+
+      if (titleInp) {
+        titleInp.value = `Đăng ký xe: ${plateNo || brandModel || "Phương tiện"}`;
+      }
+      if (userInp && plateNo) userInp.value = `Biển số: ${plateNo}`;
+      if (passInp) {
+        const meta = [];
+        if (brandModel) meta.push(`Hiệu: ${brandModel}`);
+        if (expiry) meta.push(`HSD: ${expiry}`);
+        if (meta.length > 0) passInp.value = meta.join(" | ");
+      }
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã nhận dạng Giấy đăng ký xe (Cavet): ${plateNo || brandModel}!`);
+      }
+      return;
+    }
+
     // CASE 3: Nhận diện GIẤY PHÉP LÁI XE / BẰNG LÁI XE (DRIVER'S LICENSE - BỘ GTVT)
     const isDriverLicense =
       upperText.includes("GIẤY PHÉP LÁI XE") ||
@@ -2088,6 +2285,32 @@
           passInp.value = passInp.value ? `${passInp.value} | ${parts.join(" | ")}` : parts.join(" | ");
         }
       }
+      return;
+    }
+
+    // CASE 6: Nhận diện DANH THIẾP ĐỐI TÁC (BUSINESS CARD — Email + SĐT + Họ tên / Công ty)
+    const emailMatch = rawText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+    const phoneMatch = rawText.match(/(?:\+84|0)(?:[\s.\-]?\d){8,10}\b/);
+    if (emailMatch || phoneMatch) {
+      if (typeSel && typeSel.value === "LOGIN") typeSel.value = "SECURE_NOTE";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Danh thiếp Đối tác (Business Card)";
+      }
+      const contactName = lines[0] || "Đối tác";
+      const phoneStr = phoneMatch ? phoneMatch[0].replace(/[\s.\-]+/g, "") : "";
+      const emailStr = emailMatch ? emailMatch[0] : "";
+      if (titleInp && !titleInp.value) {
+        titleInp.value = `Danh thiếp: ${contactName.slice(0, 42)}`;
+      }
+      if (userInp && !userInp.value) {
+        userInp.value = [phoneStr, emailStr].filter(Boolean).join(" | ");
+      }
+      if (passInp && !passInp.value) {
+        passInp.value = lines.slice(1, 4).join(" • ").slice(0, 120);
+      }
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã nhận dạng Danh thiếp: ${contactName} (${phoneStr || emailStr})!`);
+      }
     }
   }
 
@@ -2228,9 +2451,18 @@
     img.src = dataUrl;
   }
 
+  function syncCornersFromRect(r) {
+    state.cropCorners = [
+      { x: r.x, y: r.y },
+      { x: r.x + r.w, y: r.y },
+      { x: r.x + r.w, y: r.y + r.h },
+      { x: r.x, y: r.y + r.h },
+    ];
+  }
+
   function setCropAspect(mode, redraw = true) {
     state.cropAspectMode = mode;
-    ["auto", "id1", "wide", "free"].forEach((m) => {
+    ["auto", "quad", "id1", "wide", "free"].forEach((m) => {
       const btn = document.getElementById(`kpw-aspect-btn-${m}`);
       if (btn) {
         if (m === mode) btn.classList.add("active");
@@ -2240,7 +2472,7 @@
 
     const img = state.cropSourceImg;
     if (img && img.width > 0 && img.height > 0) {
-      if (mode === "auto") {
+      if (mode === "auto" || mode === "quad") {
         const autoRect = autoDetectCardBounds(img);
         state.cropRect = {
           x: autoRect.x,
@@ -2248,8 +2480,10 @@
           w: autoRect.w,
           h: autoRect.h,
         };
+        syncCornersFromRect(state.cropRect);
       } else if (mode === "free") {
         state.cropRect = { x: 0.08, y: 0.08, w: 0.84, h: 0.84 };
+        syncCornersFromRect(state.cropRect);
       } else {
         const targetRatio = mode === "id1" ? 85.6 / 54.0 : 16.0 / 10.0;
         const imgRatio = img.width / img.height;
@@ -2265,6 +2499,7 @@
           w: rw,
           h: rh,
         };
+        syncCornersFromRect(state.cropRect);
       }
     }
     if (redraw) renderCropperCanvas();
@@ -2299,6 +2534,103 @@
     renderCropperCanvas();
   }
 
+  // Giải hệ phương trình tuyến tính 8x8 bằng khử Gauss để tìm ma trận Homography 3x3 (Đầu ra -> Đầu vào)
+  function solveHomography8x8(A, B) {
+    const n = 8;
+    const M = A.map((row, idx) => [...row, B[idx]]);
+    for (let i = 0; i < n; i++) {
+      let maxRow = i;
+      for (let k = i + 1; k < n; k++) {
+        if (Math.abs(M[k][i]) > Math.abs(M[maxRow][i])) maxRow = k;
+      }
+      const tmp = M[i];
+      M[i] = M[maxRow];
+      M[maxRow] = tmp;
+      const pivot = M[i][i];
+      if (Math.abs(pivot) < 1e-12) continue;
+      for (let j = i; j <= n; j++) M[i][j] /= pivot;
+      for (let k = 0; k < n; k++) {
+        if (k === i) continue;
+        const factor = M[k][i];
+        for (let j = i; j <= n; j++) M[k][j] -= factor * M[i][j];
+      }
+    }
+    return M.map((r) => r[n]);
+  }
+
+  function warpPerspectiveQuadCanvas(img, cornersNorm, enhanceClarity = true) {
+    const pts = cornersNorm.map((c) => ({ x: c.x * img.width, y: c.y * img.height }));
+    const topW = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+    const botW = Math.hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y);
+    const leftH = Math.hypot(pts[3].x - pts[0].x, pts[3].y - pts[0].y);
+    const rightH = Math.hypot(pts[2].x - pts[1].x, pts[2].y - pts[1].y);
+
+    let outW = Math.round(Math.max(topW, botW, 320));
+    let outH = Math.round(Math.max(leftH, rightH, 200));
+    // Chuẩn hóa tỷ lệ thẻ ID-1 (85.6 : 54) nếu thẻ nằm ngang
+    if (outW >= outH * 1.15) {
+      outW = Math.min(1100, Math.max(640, outW));
+      outH = Math.round(outW / (85.6 / 54.0));
+    }
+
+    const dstPts = [
+      { x: 0, y: 0 },
+      { x: outW - 1, y: 0 },
+      { x: outW - 1, y: outH - 1 },
+      { x: 0, y: outH - 1 },
+    ];
+    // Ánh xạ ngược (Inverse Homography) từ tọa độ đích (u, v) sang tọa độ ảnh gốc (x, y)
+    const A = [];
+    const B = [];
+    for (let i = 0; i < 4; i++) {
+      const u = dstPts[i].x;
+      const v = dstPts[i].y;
+      const x = pts[i].x;
+      const y = pts[i].y;
+      A.push([u, v, 1, 0, 0, 0, -u * x, -v * x]);
+      B.push(x);
+      A.push([0, 0, 0, u, v, 1, -u * y, -v * y]);
+      B.push(y);
+    }
+    const h = solveHomography8x8(A, B);
+
+    const srcCanvas = document.createElement("canvas");
+    srcCanvas.width = img.width;
+    srcCanvas.height = img.height;
+    const srcCtx = srcCanvas.getContext("2d");
+    srcCtx.filter = enhanceClarity ? "contrast(1.18) brightness(1.03) saturate(1.08)" : "none";
+    srcCtx.drawImage(img, 0, 0);
+    srcCtx.filter = "none";
+    const srcData = srcCtx.getImageData(0, 0, img.width, img.height).data;
+
+    const outCanvas = document.createElement("canvas");
+    outCanvas.width = outW;
+    outCanvas.height = outH;
+    const outCtx = outCanvas.getContext("2d");
+    const outImgData = outCtx.createImageData(outW, outH);
+    const dstData = outImgData.data;
+    const sw = img.width;
+    const sh = img.height;
+
+    for (let v = 0; v < outH; v++) {
+      for (let u = 0; u < outW; u++) {
+        const denom = h[6] * u + h[7] * v + 1.0;
+        const sx = (h[0] * u + h[1] * v + h[2]) / denom;
+        const sy = (h[3] * u + h[4] * v + h[5]) / denom;
+        const x0 = Math.max(0, Math.min(sw - 1, Math.round(sx)));
+        const y0 = Math.max(0, Math.min(sh - 1, Math.round(sy)));
+        const sIdx = (y0 * sw + x0) * 4;
+        const dIdx = (v * outW + u) * 4;
+        dstData[dIdx] = srcData[sIdx];
+        dstData[dIdx + 1] = srcData[sIdx + 1];
+        dstData[dIdx + 2] = srcData[sIdx + 2];
+        dstData[dIdx + 3] = 255;
+      }
+    }
+    outCtx.putImageData(outImgData, 0, 0);
+    return outCanvas;
+  }
+
   function renderCropperCanvas() {
     const canvas = document.getElementById("kpw-crop-canvas");
     const img = state.cropSourceImg;
@@ -2315,6 +2647,34 @@
     ctx.filter = state.cropEnhanceClarity ? "contrast(1.22) brightness(1.04) saturate(1.1)" : "none";
     ctx.drawImage(img, 0, 0, cw, ch);
     ctx.filter = "none";
+
+    if (state.cropAspectMode === "quad" && state.cropCorners && state.cropCorners.length === 4) {
+      const pts = state.cropCorners.map((c) => [c.x * cw, c.y * ch]);
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      ctx.lineTo(pts[1][0], pts[1][1]);
+      ctx.lineTo(pts[2][0], pts[2][1]);
+      ctx.lineTo(pts[3][0], pts[3][1]);
+      ctx.closePath();
+      ctx.stroke();
+
+      const hs = 15;
+      pts.forEach(([hx, hy], idx) => {
+        ctx.fillStyle = "#10b981";
+        ctx.beginPath();
+        ctx.arc(hx, hy, hs / 1.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillText(String(idx + 1), hx - 3, hy + 3.5);
+      });
+      return;
+    }
 
     const r = state.cropRect;
     const rx = r.x * cw;
@@ -2384,8 +2744,24 @@
     function onStart(ev) {
       if (!state.cropSourceImg) return;
       const p = getNormPos(ev);
+      const tol = 0.09;
+
+      if (state.cropAspectMode === "quad" && state.cropCorners && state.cropCorners.length === 4) {
+        for (let i = 0; i < 4; i++) {
+          if (Math.hypot(p.x - state.cropCorners[i].x, p.y - state.cropCorners[i].y) < tol) {
+            if (ev.cancelable) ev.preventDefault();
+            state.cropDragMode = `c${i}`;
+            state.cropDragStart = {
+              x: p.x,
+              y: p.y,
+              corners: state.cropCorners.map((c) => ({ ...c })),
+            };
+            return;
+          }
+        }
+      }
+
       const r = state.cropRect;
-      const tol = 0.08;
       let mode = null;
       if (Math.hypot(p.x - r.x, p.y - r.y) < tol) mode = "tl";
       else if (Math.hypot(p.x - (r.x + r.w), p.y - r.y) < tol) mode = "tr";
@@ -2401,9 +2777,21 @@
     }
 
     function onMove(ev) {
-      if (!state.cropDragMode || !state.cropDragStart.rect) return;
+      if (!state.cropDragMode) return;
       if (ev.cancelable) ev.preventDefault();
       const p = getNormPos(ev);
+
+      if (state.cropDragMode.startsWith("c") && state.cropDragStart.corners) {
+        const idx = parseInt(state.cropDragMode.slice(1), 10);
+        state.cropCorners[idx] = {
+          x: Math.max(0.01, Math.min(0.99, p.x)),
+          y: Math.max(0.01, Math.min(0.99, p.y)),
+        };
+        renderCropperCanvas();
+        return;
+      }
+
+      if (!state.cropDragStart.rect) return;
       const dx = p.x - state.cropDragStart.x;
       const dy = p.y - state.cropDragStart.y;
       const s = state.cropDragStart.rect;
@@ -2435,6 +2823,7 @@
         state.cropRect.w = Math.max(minSize, Math.min(1 - s.x, s.w + dx));
         state.cropRect.h = Math.max(minSize, Math.min(1 - s.y, s.h + dy));
       }
+      syncCornersFromRect(state.cropRect);
       renderCropperCanvas();
     }
 
@@ -2453,21 +2842,27 @@
   async function applyCardCropAndAttach() {
     const img = state.cropSourceImg;
     if (!img) return;
-    const r = state.cropRect;
-    const sx = Math.max(0, Math.round(r.x * img.width));
-    const sy = Math.max(0, Math.round(r.y * img.height));
-    const sw = Math.max(40, Math.min(img.width - sx, Math.round(r.w * img.width)));
-    const sh = Math.max(40, Math.min(img.height - sy, Math.round(r.h * img.height)));
 
-    const outCanvas = document.createElement("canvas");
-    const maxDim = 1280;
-    const scale = Math.max(sw, sh) > maxDim ? maxDim / Math.max(sw, sh) : 1;
-    outCanvas.width = Math.round(sw * scale);
-    outCanvas.height = Math.round(sh * scale);
-    const outCtx = outCanvas.getContext("2d");
-    outCtx.filter = state.cropEnhanceClarity ? "contrast(1.22) brightness(1.04) saturate(1.1)" : "none";
-    outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
-    outCtx.filter = "none";
+    let outCanvas;
+    if (state.cropAspectMode === "quad" && state.cropCorners && state.cropCorners.length === 4) {
+      outCanvas = warpPerspectiveQuadCanvas(img, state.cropCorners, state.cropEnhanceClarity);
+    } else {
+      const r = state.cropRect;
+      const sx = Math.max(0, Math.round(r.x * img.width));
+      const sy = Math.max(0, Math.round(r.y * img.height));
+      const sw = Math.max(40, Math.min(img.width - sx, Math.round(r.w * img.width)));
+      const sh = Math.max(40, Math.min(img.height - sy, Math.round(r.h * img.height)));
+
+      outCanvas = document.createElement("canvas");
+      const maxDim = 1280;
+      const scale = Math.max(sw, sh) > maxDim ? maxDim / Math.max(sw, sh) : 1;
+      outCanvas.width = Math.round(sw * scale);
+      outCanvas.height = Math.round(sh * scale);
+      const outCtx = outCanvas.getContext("2d");
+      outCtx.filter = state.cropEnhanceClarity ? "contrast(1.22) brightness(1.04) saturate(1.1)" : "none";
+      outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
+      outCtx.filter = "none";
+    }
 
     const croppedDataUrl = outCanvas.toDataURL("image/png");
     const slot = state.activePhotoSlot || "front";
@@ -2955,6 +3350,38 @@
           ? `<div style="color:#0284c7;font-weight:700;font-size:10.5px;margin-top:2px;">🖼️ Đính kèm mã hóa: ${attCount} ảnh</div>`
           : "";
 
+      // UPGRADE #4: Radar Cảnh Báo Hạn Sử Dụng Giấy Tờ & Thẻ (Expiry Radar Badge)
+      let expiryBadgeHtml = "";
+      const combinedInfo = `${r.password || ""} ${r.notes || ""} ${r.username || ""}`;
+      const fullDateMatch = combinedInfo.match(/HSD:\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+      const shortDateMatch = !fullDateMatch ? combinedInfo.match(/HSD:\s*(0[1-9]|1[0-2])\/(\d{2})\b/i) : null;
+      if (fullDateMatch || shortDateMatch) {
+        let expDate = null;
+        let expLabel = "";
+        if (fullDateMatch) {
+          const dd = parseInt(fullDateMatch[1], 10);
+          const mm = parseInt(fullDateMatch[2], 10) - 1;
+          const yyyy = parseInt(fullDateMatch[3], 10);
+          expDate = new Date(yyyy, mm, dd, 23, 59, 59);
+          expLabel = `${fullDateMatch[1]}/${fullDateMatch[2]}/${fullDateMatch[3]}`;
+        } else if (shortDateMatch) {
+          const mm = parseInt(shortDateMatch[1], 10);
+          const yyyy = 2000 + parseInt(shortDateMatch[2], 10);
+          expDate = new Date(yyyy, mm, 0, 23, 59, 59);
+          expLabel = `${shortDateMatch[1]}/${shortDateMatch[2]}`;
+        }
+        if (expDate && !isNaN(expDate.getTime())) {
+          const diffDays = Math.ceil((expDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          if (diffDays < 0) {
+            expiryBadgeHtml = `<div style="color:#dc2626;font-weight:800;font-size:10.5px;margin-top:2px;">🔴 Đã quá hạn (${expLabel})</div>`;
+          } else if (diffDays <= 180) {
+            expiryBadgeHtml = `<div style="color:#d97706;font-weight:800;font-size:10.5px;margin-top:2px;">🟡 Sắp hết hạn: còn ${diffDays} ngày (${expLabel})</div>`;
+          } else {
+            expiryBadgeHtml = `<div style="color:#059669;font-weight:700;font-size:10.5px;margin-top:2px;">🟢 Còn hạn (${expLabel})</div>`;
+          }
+        }
+      }
+
       rows.push(`
         <tr>
           <td data-label="Phân loại & Tên">
@@ -2962,6 +3389,7 @@
               <strong style="color:var(--primary);">[${escapeHtml(r.item_type || "LOGIN")}]</strong>
               <strong>${escapeHtml(r.title)}</strong>
               <div style="font-size:10.5px;color:var(--text-muted);">${escapeHtml(r.folder || "Mặc định")} • Rev #${r.revision || 1}</div>
+              ${expiryBadgeHtml}
             </span>
           </td>
           <td data-label="Tài khoản / Số thẻ">
@@ -2981,6 +3409,7 @@
               <button type="button" class="btn-chip-micro kpw-btn-copy" data-id="${escapeHtml(r.record_id)}">📋 Chép</button>
               <button type="button" class="btn-chip-micro kpw-btn-snap" data-id="${escapeHtml(r.record_id)}">📸 Chụp Thẻ</button>
               ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}">🖼️ Xem Ảnh</button>` : ""}
+              ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-pdf" data-id="${escapeHtml(r.record_id)}">🖨️ In PDF A4</button>` : ""}
               <button type="button" class="btn-chip-micro kpw-btn-del" data-id="${escapeHtml(r.record_id)}" style="color:#ef4444;">🗑️</button>
             </span>
           </td>
@@ -3027,6 +3456,13 @@
       b.addEventListener("click", () => {
         const id = b.getAttribute("data-id");
         showRecordAttachmentsPreview(id);
+      });
+    });
+
+    tbody.querySelectorAll(".kpw-btn-pdf").forEach((b) => {
+      b.addEventListener("click", () => {
+        const id = b.getAttribute("data-id");
+        exportRecordTwoSidedPdfA4(id);
       });
     });
 
@@ -3113,6 +3549,35 @@
     }
   }
 
+  function exportRecordTwoSidedPdfA4(recordId) {
+    const rec = state.decryptedRecords[recordId];
+    if (!rec) return;
+    const atts = rec.encrypted_attachments || [];
+    if (!atts.length) {
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("⚠️ Bản ghi này chưa có ảnh thẻ đính kèm để in PDF A4!");
+      }
+      return;
+    }
+    const frontAtt = atts.find((a) => a.label === "front_image") || atts[0];
+    const backAtt = atts.find((a) => a.label === "back_image") || (atts.length > 1 ? atts[1] : null);
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("🖨️ Đang kết xuất Bản In PDF A4 2 Mặt (Chuẩn kích thước thật 85.6 × 54 mm)...");
+      }
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: "export_card_two_sided_pdf_a4",
+          title: rec.title || "Thẻ / Giấy tờ Krypto",
+          subtitle: `${rec.folder || "Giấy tờ"} | Số: ${rec.username || ""} | ${rec.password || ""}`,
+          frontB64: frontAtt ? frontAtt.data_url || "" : "",
+          backB64: backAtt ? backAtt.data_url || "" : "",
+          watermarkText: "BẢN SAO CHỈ DÙNG ĐỂ ĐỐI CHIẾU",
+        })
+      );
+    }
+  }
+
   function showRecordAttachmentsPreview(recordId) {
     const rec = state.decryptedRecords[recordId];
     const box = document.getElementById("kpw-image-preview-box");
@@ -3124,9 +3589,12 @@
     }
     box.style.display = "block";
     box.innerHTML = [
-      `<div style="display:flex;justify-content:space-between;align-items:center;">` +
-        `<strong style="font-size:12px;color:var(--primary);">🖼️ Ảnh Thẻ / Ảnh Chụp Màn Hình Đã Giải Mã (${escapeHtml(rec.title)})</strong>` +
-        `<button type="button" class="btn-chip-micro" onclick="document.getElementById('kpw-image-preview-box').style.display='none'">Đóng ✕</button>` +
+      `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">` +
+        `<strong style="font-size:12px;color:var(--primary);">🖼️ Ảnh Thẻ / Giấy Tờ Đã Giải Mã (${escapeHtml(rec.title)})</strong>` +
+        `<div style="display:flex;gap:5px;">` +
+          `<button type="button" class="btn-chip-micro" style="color:#0284c7;font-weight:700;" onclick="window.KryptoPasswordVault.exportRecordTwoSidedPdfA4('${escapeHtml(rec.record_id)}')">🖨️ Xuất PDF A4 2 Mặt (Chuẩn 85.6×54mm)</button>` +
+          `<button type="button" class="btn-chip-micro" onclick="document.getElementById('kpw-image-preview-box').style.display='none'">Đóng ✕</button>` +
+        `</div>` +
       `</div>`,
       ...atts.map(
         (a) =>
@@ -3197,8 +3665,11 @@
 
       <!-- SUB-PANEL 2: THÊM MỚI MẬT KHẨU / THẺ / CCCD & ĐÍNH KÈM ẢNH THẺ -->
       <div id="kpw-panel-add" class="card settings-card" style="display: none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
           <span style="font-size:12.5px;font-weight:800;color:var(--primary);">➕ THÊM MẬT KHẨU, THẺ TÍN DỤNG HOẶC GIẤY TỜ MỚI</span>
+          <button type="button" id="kpw-btn-nfc-scan" class="btn-chip-micro" style="font-weight:700;color:var(--primary);border-color:var(--primary);" onclick="window.KryptoPasswordVault.toggleNfcScan()">
+            📡 Chạm Đọc Chip NFC (CCCD / Visa)
+          </button>
         </div>
 
         <div class="dual-inputs-row">
@@ -3350,6 +3821,7 @@
 
             <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
               <button type="button" id="kpw-aspect-btn-auto" class="btn-chip-micro active" onclick="window.KryptoPasswordVault.setCropAspect('auto')">🤖 Tự Bắt Viền Thẻ</button>
+              <button type="button" id="kpw-aspect-btn-quad" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('quad')">🎯 Nắn Phẳng 4 Góc 3D</button>
               <button type="button" id="kpw-aspect-btn-id1" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('id1')">💳 Chuẩn ID-1</button>
               <button type="button" id="kpw-aspect-btn-wide" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('wide')">🪪 Khung 16:10</button>
               <button type="button" id="kpw-aspect-btn-free" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('free')">📐 Tự Do</button>
@@ -3439,6 +3911,16 @@
               📥 Nhập &amp; Gộp .kryptopass
             </button>
             <input type="file" id="kpw-import-file-input" accept=".kryptopass,.json" style="display:none;">
+          </div>
+
+          <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
+            <label class="micro-label">DỊCH VỤ TỰ ĐỘNG ĐIỀN MẬT KHẨU TOÀN HỆ THỐNG ANDROID (AUTOFILL):</label>
+            <p style="font-size:10.5px;color:var(--text-muted);margin:3px 0 8px;">
+              Cho phép <strong>Krypto Autofill Service</strong> tự động gợi ý và điền tài khoản / mật khẩu trực tiếp trên trình duyệt Chrome và mọi ứng dụng Android.
+            </p>
+            <button type="button" class="btn-mobi-outline" style="width:100%;font-size:11px;padding:9px 8px;" onclick="window.KryptoPasswordVault.openAndroidAutofillSettings()">
+              ⌨️ Bật Krypto Làm Dịch Vụ Tự Động Điền Mật Khẩu Android (Autofill)
+            </button>
           </div>
 
           <div style="margin-top:10px;">
@@ -3933,6 +4415,117 @@
       if (ok && typeof window.showKryptoToast === "function") {
         window.showKryptoToast("☁️ Đã đồng bộ 2 chiều (Đọc & Ghi CRDT) lên Google Drive thành công!");
       }
+    },
+
+    exportRecordTwoSidedPdfA4(recordId) {
+      exportRecordTwoSidedPdfA4(recordId);
+    },
+
+    onCardPdfExported(savedPath) {
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🖨️ Đã xuất Bản In PDF A4 2 Mặt (Chuẩn 85.6×54mm) tại: ${savedPath}`);
+      }
+    },
+
+    openAndroidAutofillSettings() {
+      syncAutofillCacheToNative();
+      if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+        window.FlutterBridge.postMessage(
+          JSON.stringify({
+            action: "open_system_autofill_settings",
+          })
+        );
+      }
+    },
+
+    toggleNfcScan() {
+      const btn = document.getElementById("kpw-btn-nfc-scan");
+      if (state.nfcScanning) {
+        state.nfcScanning = false;
+        if (btn) btn.textContent = "📡 Chạm Đọc Chip NFC (CCCD / Visa)";
+        if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+          window.FlutterBridge.postMessage(JSON.stringify({ action: "stop_nfc_card_scan" }));
+        }
+        return;
+      }
+      if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+        window.FlutterBridge.postMessage(JSON.stringify({ action: "start_nfc_card_scan" }));
+      }
+    },
+
+    onNfcScanStatus(active) {
+      state.nfcScanning = !!active;
+      const btn = document.getElementById("kpw-btn-nfc-scan");
+      if (active) {
+        if (btn) btn.textContent = "📡 Đang chờ chạm thẻ NFC vào mặt lưng máy... (Nhấn để dừng)";
+        if (typeof window.showKryptoToast === "function") {
+          window.showKryptoToast("📡 Hãy áp thẻ Visa/Mastercard/Napas hoặc CCCD gắn chip vào mặt lưng điện thoại!");
+        }
+      } else {
+        if (btn) btn.textContent = "📡 Chạm Đọc Chip NFC (CCCD / Visa)";
+        if (typeof window.showKryptoToast === "function") {
+          window.showKryptoToast("⚠️ Thiết bị chưa bật NFC hoặc không hỗ trợ NFC!");
+        }
+      }
+    },
+
+    onNativeNfcCardScanned(nfcJsonStr) {
+      state.nfcScanning = false;
+      const btn = document.getElementById("kpw-btn-nfc-scan");
+      if (btn) btn.textContent = "📡 Chạm Đọc Chip NFC (CCCD / Visa)";
+      if (!nfcJsonStr) return;
+      try {
+        const data = typeof nfcJsonStr === "string" ? JSON.parse(nfcJsonStr) : nfcJsonStr;
+        if (state.activeSubTab !== "add") {
+          switchSubView("add");
+        }
+        const typeSel = document.getElementById("kpw-item-type");
+        const folderInp = document.getElementById("kpw-folder");
+        const titleInp = document.getElementById("kpw-title");
+        const userInp = document.getElementById("kpw-username");
+        const passInp = document.getElementById("kpw-password");
+
+        if (data.cardType === "PAYMENT_CARD") {
+          if (typeSel) typeSel.value = "PAYMENT_CARD";
+          if (folderInp) folderInp.value = "Thẻ Ngân hàng (NFC Chip)";
+          const pan = data.pan || "";
+          const formattedPan = pan.replace(/(\d{4})(?=\d)/g, "$1 ");
+          if (titleInp && !titleInp.value) {
+            titleInp.value = `${data.brand || "Thẻ EMV"} (*${pan.slice(-4) || data.uid})`;
+          }
+          if (userInp) userInp.value = formattedPan || `UID: ${data.uid}`;
+          if (passInp) {
+            const parts = [];
+            if (data.expiry) parts.push(`HSD: ${data.expiry}`);
+            if (data.aid) parts.push(`AID: ${data.aid}`);
+            parts.push(`Chip UID: ${data.uid}`);
+            passInp.value = parts.join(" | ");
+          }
+          if (typeof window.showKryptoToast === "function") {
+            window.showKryptoToast(`📡 Đã đọc Chip NFC ${data.brand || "EMV"}: ${formattedPan || data.uid}!`);
+          }
+        } else {
+          if (typeSel) typeSel.value = "IDENTITY";
+          if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+            folderInp.value = "Giấy tờ Gắn Chip NFC (ICAO 9303)";
+          }
+          if (titleInp && !titleInp.value) {
+            titleInp.value = `${data.brand || "CCCD / Hộ chiếu NFC"} (${data.uid})`;
+          }
+          if (userInp && !userInp.value) {
+            userInp.value = `Chip UID: ${data.uid}`;
+          }
+          if (passInp) {
+            const meta = [`Chip UID: ${data.uid}`];
+            if (data.atr) meta.push(`ATR/Hist: ${data.atr}`);
+            if (data.techs) meta.push(`Chuẩn: ${data.techs}`);
+            passInp.value = passInp.value ? `${passInp.value} | ${meta.join(" | ")}` : meta.join(" | ");
+          }
+          if (typeof window.showKryptoToast === "function") {
+            window.showKryptoToast(`📡 Đã đọc Chip NFC (${data.brand || "ISO-DEP"}): UID ${data.uid}!`);
+          }
+        }
+      } catch (_) {}
     },
   };
 
