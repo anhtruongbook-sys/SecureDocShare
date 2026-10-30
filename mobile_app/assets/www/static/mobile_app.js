@@ -346,6 +346,10 @@ function switchTab(tabName) {
         ensureKryptoChatVaultMounted();
     }
 
+    if (tabName === 'passwords' && window.KryptoPasswordVault && typeof window.KryptoPasswordVault.refreshUI === 'function') {
+        window.KryptoPasswordVault.refreshUI();
+    }
+
     if (typeof updateDrawerVaultStatus === 'function') {
         updateDrawerVaultStatus();
     }

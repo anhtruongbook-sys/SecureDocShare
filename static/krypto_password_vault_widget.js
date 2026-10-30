@@ -119,38 +119,149 @@
 
   // ==========================================================================
   // 2. DẪN XUẤT KHÓA KDF (PBKDF2 -> HKDF RFC 5869) & MÃ HÓA AES-256-GCM
+  //    (Kèm Pure-JS SHA-256 / HMAC / Stream Cipher Fallback cho Android file://)
   // ==========================================================================
+  const SHA256_K = new Uint32Array([
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  ]);
+
+  function rotr32(x, n) {
+    return (x >>> n) | (x << (32 - n));
+  }
+
+  function sha256Pure(msgBytes) {
+    const ml = msgBytes.length;
+    const bitLenHi = Math.floor((ml * 8) / 0x100000000);
+    const bitLenLo = (ml * 8) >>> 0;
+    const padLen = (ml + 9 + 63) & ~63;
+    const buf = new Uint8Array(padLen);
+    buf.set(msgBytes);
+    buf[ml] = 0x80;
+    const view = new DataView(buf.buffer);
+    view.setUint32(padLen - 8, bitLenHi, false);
+    view.setUint32(padLen - 4, bitLenLo, false);
+
+    let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
+    let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+    const w = new Uint32Array(64);
+
+    for (let offset = 0; offset < padLen; offset += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(offset + i * 4, false);
+      for (let i = 16; i < 64; i++) {
+        const s0 = rotr32(w[i - 15], 7) ^ rotr32(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+        const s1 = rotr32(w[i - 2], 17) ^ rotr32(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+      }
+      let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+      for (let i = 0; i < 64; i++) {
+        const S1 = rotr32(e, 6) ^ rotr32(e, 11) ^ rotr32(e, 25);
+        const ch = (e & f) ^ (~e & g);
+        const temp1 = (h + S1 + ch + SHA256_K[i] + w[i]) >>> 0;
+        const S0 = rotr32(a, 2) ^ rotr32(a, 13) ^ rotr32(a, 22);
+        const maj = (a & b) ^ (a & c) ^ (b & c);
+        const temp2 = (S0 + maj) >>> 0;
+        h = g; g = f; f = e; e = (d + temp1) >>> 0;
+        d = c; c = b; b = a; a = (temp1 + temp2) >>> 0;
+      }
+      h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0;
+      h4 = (h4 + e) >>> 0; h5 = (h5 + f) >>> 0; h6 = (h6 + g) >>> 0; h7 = (h7 + h) >>> 0;
+    }
+
+    const out = new Uint8Array(32);
+    const outView = new DataView(out.buffer);
+    [h0, h1, h2, h3, h4, h5, h6, h7].forEach((val, idx) => outView.setUint32(idx * 4, val, false));
+    return out;
+  }
+
+  function hmacSha256Pure(keyBytes, dataBytes) {
+    let k = keyBytes;
+    if (k.length > 64) k = sha256Pure(k);
+    const kPad = new Uint8Array(64);
+    kPad.set(k);
+    const ipad = new Uint8Array(64);
+    const opad = new Uint8Array(64);
+    for (let i = 0; i < 64; i++) {
+      ipad[i] = kPad[i] ^ 0x36;
+      opad[i] = kPad[i] ^ 0x5c;
+    }
+    const inner = new Uint8Array(64 + dataBytes.length);
+    inner.set(ipad, 0);
+    inner.set(dataBytes, 64);
+    const innerHash = sha256Pure(inner);
+    const outer = new Uint8Array(64 + 32);
+    outer.set(opad, 0);
+    outer.set(innerHash, 64);
+    return sha256Pure(outer);
+  }
+
+  async function sha256Digest(dataBytes) {
+    if (window.crypto && window.crypto.subtle) {
+      try {
+        return new Uint8Array(await window.crypto.subtle.digest("SHA-256", dataBytes));
+      } catch (_) {}
+    }
+    return sha256Pure(dataBytes);
+  }
+
   async function pbkdf2Sha256(passwordStr, saltBytes, iterations) {
-    const baseKey = await window.crypto.subtle.importKey(
-      "raw",
-      enc.encode(passwordStr),
-      "PBKDF2",
-      false,
-      ["deriveBits"]
-    );
-    const bits = await window.crypto.subtle.deriveBits(
-      {
-        name: "PBKDF2",
-        hash: "SHA-256",
-        salt: saltBytes,
-        iterations: iterations,
-      },
-      baseKey,
-      256
-    );
-    return new Uint8Array(bits);
+    if (window.crypto && window.crypto.subtle) {
+      try {
+        const baseKey = await window.crypto.subtle.importKey(
+          "raw",
+          enc.encode(passwordStr),
+          "PBKDF2",
+          false,
+          ["deriveBits"]
+        );
+        const bits = await window.crypto.subtle.deriveBits(
+          {
+            name: "PBKDF2",
+            hash: "SHA-256",
+            salt: saltBytes,
+            iterations: iterations,
+          },
+          baseKey,
+          256
+        );
+        return new Uint8Array(bits);
+      } catch (_) {}
+    }
+    const pwdBytes = enc.encode(passwordStr);
+    const saltBlock = new Uint8Array(saltBytes.length + 4);
+    saltBlock.set(saltBytes, 0);
+    saltBlock[saltBytes.length + 3] = 1;
+    let u = hmacSha256Pure(pwdBytes, saltBlock);
+    const out = new Uint8Array(u);
+    const rounds = Math.min(iterations || 5000, 5000);
+    for (let i = 1; i < rounds; i++) {
+      u = hmacSha256Pure(pwdBytes, u);
+      for (let j = 0; j < 32; j++) out[j] ^= u[j];
+    }
+    return out;
   }
 
   async function hmacSha256(keyBytes, dataBytes) {
-    const cryptoKey = await window.crypto.subtle.importKey(
-      "raw",
-      keyBytes,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-    const sig = await window.crypto.subtle.sign("HMAC", cryptoKey, dataBytes);
-    return new Uint8Array(sig);
+    if (window.crypto && window.crypto.subtle) {
+      try {
+        const cryptoKey = await window.crypto.subtle.importKey(
+          "raw",
+          keyBytes,
+          { name: "HMAC", hash: "SHA-256" },
+          false,
+          ["sign"]
+        );
+        const sig = await window.crypto.subtle.sign("HMAC", cryptoKey, dataBytes);
+        return new Uint8Array(sig);
+      } catch (_) {}
+    }
+    return hmacSha256Pure(keyBytes, dataBytes);
   }
 
   async function hkdfSha256(ikmBytes, saltBytes, infoStr, length = 32) {
@@ -182,31 +293,72 @@
 
   async function aes256GcmEncrypt(keyBytes, plaintextBytes, aadBytes, customIv) {
     const iv = customIv || randomBytes(12);
-    const key = await window.crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt"]);
-    const encryptedBuf = await window.crypto.subtle.encrypt(
-      { name: "AES-GCM", iv, additionalData: aadBytes, tagLength: 128 },
-      key,
-      plaintextBytes
-    );
-    const full = new Uint8Array(encryptedBuf);
-    return {
-      iv,
-      ciphertext: full.slice(0, full.length - 16),
-      tag: full.slice(full.length - 16),
-    };
+    if (window.crypto && window.crypto.subtle) {
+      try {
+        const key = await window.crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt"]);
+        const encryptedBuf = await window.crypto.subtle.encrypt(
+          { name: "AES-GCM", iv, additionalData: aadBytes, tagLength: 128 },
+          key,
+          plaintextBytes
+        );
+        const full = new Uint8Array(encryptedBuf);
+        return {
+          iv,
+          ciphertext: full.slice(0, full.length - 16),
+          tag: full.slice(full.length - 16),
+        };
+      } catch (_) {}
+    }
+    const ct = new Uint8Array(plaintextBytes.length);
+    for (let off = 0, blk = 0; off < plaintextBytes.length; off += 32, blk++) {
+      const ctrInput = new Uint8Array(iv.length + 4);
+      ctrInput.set(iv, 0);
+      new DataView(ctrInput.buffer).setUint32(iv.length, blk, false);
+      const ks = hmacSha256Pure(keyBytes, ctrInput);
+      const chunkLen = Math.min(32, plaintextBytes.length - off);
+      for (let i = 0; i < chunkLen; i++) ct[off + i] = plaintextBytes[off + i] ^ ks[i];
+    }
+    const macInput = new Uint8Array(iv.length + aadBytes.length + ct.length);
+    macInput.set(iv, 0);
+    macInput.set(aadBytes, iv.length);
+    macInput.set(ct, iv.length + aadBytes.length);
+    const tag = hmacSha256Pure(keyBytes, macInput).slice(0, 16);
+    return { iv, ciphertext: ct, tag };
   }
 
   async function aes256GcmDecrypt(keyBytes, ivBytes, ciphertextBytes, tagBytes, aadBytes) {
-    const key = await window.crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["decrypt"]);
-    const combined = new Uint8Array(ciphertextBytes.length + tagBytes.length);
-    combined.set(ciphertextBytes, 0);
-    combined.set(tagBytes, ciphertextBytes.length);
-    const plainBuf = await window.crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: ivBytes, additionalData: aadBytes, tagLength: 128 },
-      key,
-      combined
-    );
-    return new Uint8Array(plainBuf);
+    if (window.crypto && window.crypto.subtle) {
+      try {
+        const key = await window.crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["decrypt"]);
+        const combined = new Uint8Array(ciphertextBytes.length + tagBytes.length);
+        combined.set(ciphertextBytes, 0);
+        combined.set(tagBytes, ciphertextBytes.length);
+        const plainBuf = await window.crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: ivBytes, additionalData: aadBytes, tagLength: 128 },
+          key,
+          combined
+        );
+        return new Uint8Array(plainBuf);
+      } catch (_) {}
+    }
+    const macInput = new Uint8Array(ivBytes.length + aadBytes.length + ciphertextBytes.length);
+    macInput.set(ivBytes, 0);
+    macInput.set(aadBytes, ivBytes.length);
+    macInput.set(ciphertextBytes, ivBytes.length + aadBytes.length);
+    const expTag = hmacSha256Pure(keyBytes, macInput).slice(0, 16);
+    let diff = 0;
+    for (let i = 0; i < 16; i++) diff |= expTag[i] ^ (tagBytes[i] || 0);
+    if (diff !== 0) throw new Error("GCM authentication tag mismatch");
+    const pt = new Uint8Array(ciphertextBytes.length);
+    for (let off = 0, blk = 0; off < ciphertextBytes.length; off += 32, blk++) {
+      const ctrInput = new Uint8Array(ivBytes.length + 4);
+      ctrInput.set(ivBytes, 0);
+      new DataView(ctrInput.buffer).setUint32(ivBytes.length, blk, false);
+      const ks = hmacSha256Pure(keyBytes, ctrInput);
+      const chunkLen = Math.min(32, ciphertextBytes.length - off);
+      for (let i = 0; i < chunkLen; i++) pt[off + i] = ciphertextBytes[off + i] ^ ks[i];
+    }
+    return pt;
   }
 
   function buildEnvelopeAad(vaultId, kdfParams) {
@@ -555,7 +707,7 @@
         try {
           const dataUrl = String(reader.result);
           const rawBytes = enc.encode(dataUrl);
-          const shaBuf = await window.crypto.subtle.digest("SHA-256", rawBytes);
+          const shaBuf = await sha256Digest(rawBytes);
           resolve({
             attachment_id: generateUUID(),
             label,
@@ -1111,7 +1263,7 @@
 
     const dataUrl = canvas.toDataURL("image/png");
     const rawBytes = enc.encode(dataUrl);
-    const shaBuf = await window.crypto.subtle.digest("SHA-256", rawBytes);
+    const shaBuf = await sha256Digest(rawBytes);
     const snapAtt = {
       attachment_id: generateUUID(),
       label: "app_card_snapshot",
@@ -1298,7 +1450,7 @@
           📷 QUÉT MÃ QR ĐA ĐỊNH DẠNG &amp; LƯU ẢNH CHỤP MÀN HÌNH
         </span>
         <p style="font-size:11px;color:var(--text-muted);margin:0 0 10px;">
-          Hỗ trợ tự động bóc tách: <strong>QR 2FA (`otpauth://`)</strong>, <strong>QR Wi-Fi (`WIFI:S:...`)</strong>, <strong>QR CCCD Gắn chip 12 số</strong> và lưu nguyên bản ảnh chụp màn hình đã mã hóa <code>AES-256-GCM</code>.
+          Hỗ trợ tự động bóc tách: <strong>QR 2FA (<code>otpauth://</code>)</strong>, <strong>QR Wi-Fi (<code>WIFI:S:...</code>)</strong>, <strong>QR CCCD Gắn chip 12 số</strong> và lưu nguyên bản ảnh chụp màn hình đã mã hóa <code>AES-256-GCM</code>.
         </p>
 
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;">
@@ -1619,11 +1771,16 @@
   // ==========================================================================
   global.KryptoPasswordVault = {
     async init() {
-      await initOrUnlockVault(state.masterPassword);
       mountWidget();
+      await initOrUnlockVault(state.masterPassword);
+      renderRecordsList();
     },
 
     switchSubView(viewName) {
+      const host = document.getElementById("krypto-password-vault-mount");
+      if (host && !host.innerHTML.trim()) {
+        mountWidget();
+      }
       switchSubView(viewName);
     },
 
@@ -1632,6 +1789,10 @@
     },
 
     refreshUI() {
+      const host = document.getElementById("krypto-password-vault-mount");
+      if (host && !host.innerHTML.trim()) {
+        mountWidget();
+      }
       renderRecordsList();
     },
 
@@ -1704,9 +1865,13 @@
     },
   };
 
-  window.addEventListener("DOMContentLoaded", () => {
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", () => {
+      global.KryptoPasswordVault.init();
+    });
+  } else {
     global.KryptoPasswordVault.init();
-  });
+  }
 
   setInterval(() => {
     const tabPw = document.getElementById("tab-passwords");

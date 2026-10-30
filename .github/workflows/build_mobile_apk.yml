@@ -66,10 +66,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.7
-          name: "Krypto v2.9.7 - Tách Riêng Phân Hệ 🔑 Mật Khẩu (4 Sub-Tab Ngang: Danh Bạ • Thêm/Thẻ • Quét QR • Drive) Khỏi Két Sắt"
+          tag_name: v2.9.8
+          name: "Krypto v2.9.8 - Tách Riêng Phân Hệ 🔑 Mật Khẩu (4 Sub-Tab Ngang: Danh Bạ • Thêm/Thẻ • Quét QR • Drive) Khỏi Két Sắt"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.7 (7-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • Mật khẩu • 2FA OTP • Két sắt)
+            ## Ứng dụng Di Động Krypto v2.9.8 (7-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • Mật khẩu • 2FA OTP • Két sắt)
             - **Tách riêng Phân hệ `🔑 Mật khẩu` (`#tab-passwords`) độc lập khỏi `🛡️ Két sắt` (`#tab-vault`)**:
               + Tách hoàn toàn Kho Mật Khẩu & Thẻ ra khỏi màn hình Cấu hình Két sắt & Chữ ký số HSM để tránh chồng chéo chức năng.
               + Tổ chức giao diện `🔑 Mật khẩu` thành **4 Sub-Tab ngang độc lập** (chỉ hiển thị duy nhất 1 chức năng tại một thời điểm):
