@@ -66,18 +66,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v2.9.9
-          name: "Krypto v2.9.9 - Chụp Ảnh Thẻ Trực Tiếp Có Khung Ngắm Chuẩn ID-1 & Bộ Cắt (Crop) / Xoay 90° / Làm Rõ Số Thẻ Cảm Ứng"
+          tag_name: v3.0.0
+          name: "Krypto v3.0.0 - Tự Động Nhận Diện Viền Thẻ & Tự Crop (Auto-Crop 1-Chạm) + Chụp Khung Thẻ ID-1"
           body: |
-            ## Ứng dụng Di Động Krypto v2.9.9 (7-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • Mật khẩu • 2FA OTP • Két sắt)
-            - **Bổ sung Chụp Ảnh Thẻ Trực Tiếp (`📷 Chụp Khung Thẻ` & `📸 Camera Máy`) và Bộ Cắt (Crop) Ảnh Thẻ Cảm Ứng (`#kpw-card-cropper-box`)**:
-              + Tích hợp máy ảnh trực tiếp (`Camera2` / `WebRTC`) ngay tại mục `➕ Thêm / Thẻ` cho cả **1. Mặt Trước Thẻ / CCCD** và **2. Mặt Sau Thẻ (CVV) / QR** với khung ngắm viền xanh chuẩn thẻ tín dụng / CCCD (`ISO/IEC 7810 ID-1`, tỷ lệ `85.6 × 54 mm`).
-              + Tích hợp nút `📸 Camera Máy` gọi trực tiếp ứng dụng Camera gốc độ phân giải cao của điện thoại Android (`MediaStore.ACTION_IMAGE_CAPTURE`) và tự động chuyển ảnh vừa chụp vào bộ cắt (Crop).
-              + **Bộ Công Cụ Cắt (Crop), Xoay 90° & Làm Rõ Ảnh Thẻ Cảm Ứng**:
-                1. Chạm và kéo **4 nút tròn ở 4 góc** hoặc kéo vùng giữa trên màn hình cảm ứng để cắt sát viền thẻ.
-                2. Hỗ trợ 3 chế độ khung cắt: `💳 Chuẩn Thẻ ID-1 (85.6:54)`, `🪪 Khung 16:10`, và `📐 Tự Do`.
-                3. Hỗ trợ `↺ Xoay Trái 90°`, `↻ Xoay Phải 90°`, và bộ lọc `✨ Làm Rõ Số Thẻ` tăng độ tương phản chữ/số dập nổi trên thẻ trước khi mã hóa `AES-256-GCM` lưu vào Danh bạ.
-                4. Hiển thị ảnh xem trước Mặt Trước & Mặt Sau đã cắt kèm nút `✂️ Cắt (Crop) / Xoay Lại` hoặc `🗑️ Xóa`.
+            ## Ứng dụng Di Động Krypto v3.0.0 (7-Tab Full Suite: Trang chủ • Mở khóa • Pháp y • Tri thức • Mật khẩu • 2FA OTP • Két sắt)
+            - **Bổ sung Tự Động Nhận Diện 4 Viền Thẻ, Tự Xoay Ngang 90° & Tự Động Cắt (`🤖 Auto-Crop 1-Chạm`)**:
+              + Tích hợp thuật toán thị giác máy tính **Sobel Edge Gradient + Độ lệch tương phản màu nền (`autoDetectCardBounds`)** tự động tìm 4 viền thẻ Ngân hàng / CCCD trên mặt bàn, lòng bàn tay hoặc ảnh chụp màn hình.
+              + **Tự động xoay ngang 90°** nếu người dùng cầm dọc điện thoại chụp thẻ, tự động cắt sát 4 viền thẻ và tăng độ nét số thẻ dập nổi (`contrast(1.18)`) ngay lập tức chỉ với 1 chạm khi chụp hoặc chọn ảnh.
+              + Tích hợp máy ảnh trực tiếp (`📷 Chụp & Tự Crop`) với khung ngắm viền xanh chuẩn thẻ tín dụng / CCCD (`ISO/IEC 7810 ID-1`, tỷ lệ `85.6 × 54 mm`), nút `📸 Camera (Tự Crop)` mở Camera hệ thống Android HD và nút `✂️ Tinh Chỉnh 4 Góc / Xoay` nếu muốn điều chỉnh thủ công.
             - **Tách riêng Phân hệ `🔑 Mật khẩu` (`#tab-passwords`) độc lập khỏi `🛡️ Két sắt` (`#tab-vault`)**:
               + Tách hoàn toàn Kho Mật Khẩu & Thẻ ra khỏi màn hình Cấu hình Két sắt & Chữ ký số HSM để tránh chồng chéo chức năng.
               + Tổ chức giao diện `🔑 Mật khẩu` thành **4 Sub-Tab ngang độc lập** (chỉ hiển thị duy nhất 1 chức năng tại một thời điểm):

@@ -474,8 +474,9 @@
     cropSourceImg: null,
     cropSourceDataUrl: "",
     cropRect: { x: 0.08, y: 0.14, w: 0.84, h: 0.72 },
-    cropAspectMode: "id1", // 'id1' (85.6:54) | 'wide' (16:10) | 'free'
-    cropEnhanceClarity: false,
+    cropAspectMode: "auto", // 'auto' | 'id1' (85.6:54) | 'wide' (16:10) | 'free'
+    cropEnhanceClarity: true,
+    autoCropEnabled: true,
     cropDragMode: null,
     cropDragStart: { x: 0, y: 0, rect: null },
   };
@@ -905,6 +906,264 @@
     img.src = dataUrl;
   }
 
+  // --------------------------------------------------------------------------
+  // THUẬT TOÁN TỰ ĐỘNG NHẬN DIỆN VIỀN THẺ (SOBEL EDGE + BACKGROUND CONTRAST AUTO-CROP)
+  // --------------------------------------------------------------------------
+  function computeLiveGuideNormalizedRect(imgW, imgH) {
+    const ratio = 85.6 / 54.0;
+    let guideW = imgW * 0.84;
+    let guideH = guideW / ratio;
+    if (guideH > imgH * 0.76) {
+      guideH = imgH * 0.76;
+      guideW = guideH * ratio;
+    }
+    const gx = (imgW - guideW) / 2;
+    const gy = (imgH - guideH) / 2;
+    return {
+      x: Math.max(0, gx / imgW),
+      y: Math.max(0, gy / imgH),
+      w: Math.min(1, guideW / imgW),
+      h: Math.min(1, guideH / imgH),
+      detected: true,
+    };
+  }
+
+  function autoDetectCardBounds(img) {
+    try {
+      const W = 240;
+      const H = 180;
+      const c = document.createElement("canvas");
+      c.width = W;
+      c.height = H;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0, W, H);
+      const data = ctx.getImageData(0, 0, W, H).data;
+
+      // 1. Lấy mẫu màu nền xung quanh viền ngoài cùng (4% mép ảnh: mặt bàn, nền tường...)
+      let sumR = 0,
+        sumG = 0,
+        sumB = 0,
+        cnt = 0;
+      const borderX = Math.max(3, Math.round(W * 0.045));
+      const borderY = Math.max(3, Math.round(H * 0.045));
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          if (x < borderX || x >= W - borderX || y < borderY || y >= H - borderY) {
+            const idx = (y * W + x) * 4;
+            sumR += data[idx];
+            sumG += data[idx + 1];
+            sumB += data[idx + 2];
+            cnt++;
+          }
+        }
+      }
+      const bgR = cnt ? sumR / cnt : 128;
+      const bgG = cnt ? sumG / cnt : 128;
+      const bgB = cnt ? sumB / cnt : 128;
+
+      // 2. Tính bản đồ độ xám (Luminance) và độ lệch màu so với nền (Color Distance)
+      const lum = new Float32Array(W * H);
+      const dist = new Float32Array(W * H);
+      for (let i = 0; i < W * H; i++) {
+        const r = data[i * 4];
+        const g = data[i * 4 + 1];
+        const b = data[i * 4 + 2];
+        lum[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+        dist[i] = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+      }
+
+      // 3. Tính đạo hàm biên Sobel (|Gx| + |Gy|) kết hợp độ lệch màu nền
+      const scoreMap = new Float32Array(W * H);
+      let totalScore = 0;
+      let validCnt = 0;
+      for (let y = 2; y < H - 2; y++) {
+        for (let x = 2; x < W - 2; x++) {
+          const idx = y * W + x;
+          const gx =
+            -lum[(y - 1) * W + (x - 1)] +
+            lum[(y - 1) * W + (x + 1)] -
+            2 * lum[y * W + (x - 1)] +
+            2 * lum[y * W + (x + 1)] -
+            lum[(y + 1) * W + (x - 1)] +
+            lum[(y + 1) * W + (x + 1)];
+          const gy =
+            -lum[(y - 1) * W + (x - 1)] -
+            2 * lum[(y - 1) * W + x] -
+            lum[(y - 1) * W + (x + 1)] +
+            lum[(y + 1) * W + (x - 1)] +
+            2 * lum[(y + 1) * W + x] +
+            lum[(y + 1) * W + (x + 1)];
+          const grad = (Math.abs(gx) + Math.abs(gy)) * 0.25;
+          const s = dist[idx] * 0.65 + grad * 0.55;
+          scoreMap[idx] = s;
+          totalScore += s;
+          validCnt++;
+        }
+      }
+
+      const meanScore = validCnt ? totalScore / validCnt : 40;
+      const threshold = Math.max(36, meanScore * 1.12);
+
+      // 4. Chiếu mật độ điểm kích hoạt theo Hàng ngang (Row Projection) và Cột dọc (Col Projection)
+      const rowDensity = new Float32Array(H);
+      const colDensity = new Float32Array(W);
+      const xStart = Math.round(W * 0.03);
+      const xEnd = Math.round(W * 0.97);
+      const yStart = Math.round(H * 0.03);
+      const yEnd = Math.round(H * 0.97);
+
+      for (let y = yStart; y < yEnd; y++) {
+        let active = 0;
+        for (let x = xStart; x < xEnd; x++) {
+          if (scoreMap[y * W + x] >= threshold) active++;
+        }
+        rowDensity[y] = active / Math.max(1, xEnd - xStart);
+      }
+
+      for (let x = xStart; x < xEnd; x++) {
+        let active = 0;
+        for (let y = yStart; y < yEnd; y++) {
+          if (scoreMap[y * W + x] >= threshold) active++;
+        }
+        colDensity[x] = active / Math.max(1, yEnd - yStart);
+      }
+
+      let topY = yStart;
+      while (topY < H * 0.45 && rowDensity[topY] < 0.15) topY++;
+      let botY = yEnd - 1;
+      while (botY > H * 0.55 && rowDensity[botY] < 0.15) botY--;
+
+      let leftX = xStart;
+      while (leftX < W * 0.45 && colDensity[leftX] < 0.15) leftX++;
+      let rightX = xEnd - 1;
+      while (rightX > W * 0.55 && colDensity[rightX] < 0.15) rightX--;
+
+      let nx = leftX / W;
+      let ny = topY / H;
+      let nw = (rightX - leftX) / W;
+      let nh = (botY - topY) / H;
+
+      // Nếu phát hiện được vùng thẻ hợp lệ (không quá nhỏ và không tràn 100% mép)
+      if (nw >= 0.32 && nh >= 0.24 && (nw < 0.94 || nh < 0.94)) {
+        const pad = 0.012;
+        nx = Math.max(0, nx - pad);
+        ny = Math.max(0, ny - pad);
+        nw = Math.min(1 - nx, nw + pad * 2);
+        nh = Math.min(1 - ny, nh + pad * 2);
+        return { x: nx, y: ny, w: nw, h: nh, detected: true };
+      }
+    } catch (_) {}
+
+    // Fallback chuẩn khung thẻ ID-1 (85.6 : 54) chính giữa ảnh
+    return computeLiveGuideNormalizedRect(img.width || 640, img.height || 480);
+  }
+
+  function renderCroppedImageDataUrl(img, rect, enhanceClarity) {
+    const sx = Math.max(0, Math.round(rect.x * img.width));
+    const sy = Math.max(0, Math.round(rect.y * img.height));
+    const sw = Math.max(40, Math.min(img.width - sx, Math.round(rect.w * img.width)));
+    const sh = Math.max(40, Math.min(img.height - sy, Math.round(rect.h * img.height)));
+
+    const outCanvas = document.createElement("canvas");
+    const maxDim = 1280;
+    const scale = Math.max(sw, sh) > maxDim ? maxDim / Math.max(sw, sh) : 1;
+    outCanvas.width = Math.round(sw * scale);
+    outCanvas.height = Math.round(sh * scale);
+    const outCtx = outCanvas.getContext("2d");
+    outCtx.filter = enhanceClarity ? "contrast(1.18) brightness(1.03) saturate(1.08)" : "none";
+    outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
+    outCtx.filter = "none";
+    return outCanvas.toDataURL("image/png");
+  }
+
+  function processIncomingCardPhoto(dataUrl, slot = "front", fromLiveGuide = false) {
+    if (!dataUrl) return;
+    if (state.activeSubTab !== "add") {
+      switchSubView("add");
+    }
+    state.activePhotoSlot = slot;
+
+    const rawImg = new Image();
+    rawImg.onload = async () => {
+      let workingDataUrl = dataUrl;
+      let workingImg = rawImg;
+
+      // Tự động xoay ngang 90° nếu người dùng cầm dọc điện thoại chụp thẻ ngân hàng / CCCD
+      if (slot !== "qr" && rawImg.height > rawImg.width * 1.12) {
+        const rotCanvas = document.createElement("canvas");
+        rotCanvas.width = rawImg.height;
+        rotCanvas.height = rawImg.width;
+        const rCtx = rotCanvas.getContext("2d");
+        rCtx.translate(rotCanvas.width / 2, rotCanvas.height / 2);
+        rCtx.rotate((-90 * Math.PI) / 180);
+        rCtx.drawImage(rawImg, -rawImg.width / 2, -rawImg.height / 2);
+        workingDataUrl = rotCanvas.toDataURL("image/png");
+        workingImg = await new Promise((res) => {
+          const im2 = new Image();
+          im2.onload = () => res(im2);
+          im2.src = workingDataUrl;
+        });
+      }
+
+      state.cropSourceDataUrl = workingDataUrl;
+      state.cropSourceImg = workingImg;
+      if (slot === "front") state.pendingFrontRawDataUrl = workingDataUrl;
+      if (slot === "back") state.pendingBackRawDataUrl = workingDataUrl;
+
+      // Tính khung cắt tự động (Auto-Crop)
+      const autoRect = fromLiveGuide
+        ? computeLiveGuideNormalizedRect(workingImg.width, workingImg.height)
+        : autoDetectCardBounds(workingImg);
+      state.cropRect = {
+        x: autoRect.x,
+        y: autoRect.y,
+        w: autoRect.w,
+        h: autoRect.h,
+      };
+      state.cropAspectMode = "auto";
+
+      // Nếu đang bật Tự Động Cắt (Auto-Crop) -> Cắt ngay lập tức và hiển thị ảnh thẻ đã cắt!
+      if (state.autoCropEnabled) {
+        const croppedDataUrl = renderCroppedImageDataUrl(
+          workingImg,
+          state.cropRect,
+          state.cropEnhanceClarity
+        );
+        const cropBox = document.getElementById("kpw-card-cropper-box");
+        if (cropBox) cropBox.style.display = "none";
+
+        if (slot === "front") {
+          state.pendingFrontDataUrl = croppedDataUrl;
+          updateCroppedSlotPreviews();
+          if (typeof window.showKryptoToast === "function") {
+            window.showKryptoToast(
+              "🤖 Đã tự động nhận diện viền thẻ & Tự Crop ảnh Mặt Trước!"
+            );
+          }
+        } else if (slot === "back") {
+          state.pendingBackDataUrl = croppedDataUrl;
+          updateCroppedSlotPreviews();
+          if (typeof window.showKryptoToast === "function") {
+            window.showKryptoToast(
+              "🤖 Đã tự động nhận diện viền thẻ & Tự Crop ảnh Mặt Sau!"
+            );
+          }
+        } else if (slot === "qr") {
+          const att = await dataUrlToEncryptedAttachmentMeta(croppedDataUrl, "screenshot_image");
+          const qrStr = await decodeQrFromImageDataUrl(croppedDataUrl);
+          if (qrStr) {
+            const inp = document.getElementById("kpw-qr-raw-input");
+            if (inp) inp.value = qrStr;
+          }
+          await importQrOrScreenshotToVault(qrStr, att);
+        }
+      } else {
+        openCardCropperWithDataUrl(workingDataUrl, slot, true);
+      }
+    };
+    rawImg.src = dataUrl;
+  }
+
   function captureLiveCameraFrameToCropper() {
     if (!state.latestLiveFrameDataUrl) {
       triggerSystemCameraForSlot(state.activePhotoSlot);
@@ -913,11 +1172,15 @@
     const capturedDataUrl = state.latestLiveFrameDataUrl;
     const slot = state.activePhotoSlot || "front";
     closeLiveCardCamera();
-    openCardCropperWithDataUrl(capturedDataUrl, slot);
+    processIncomingCardPhoto(capturedDataUrl, slot, true);
   }
 
-  function openCardCropperWithDataUrl(dataUrl, slot = "front") {
+  function openCardCropperWithDataUrl(dataUrl, slot = "front", forceOpenEditor = true) {
     if (!dataUrl) return;
+    if (!forceOpenEditor && state.autoCropEnabled) {
+      processIncomingCardPhoto(dataUrl, slot, false);
+      return;
+    }
     if (state.activeSubTab !== "add") {
       switchSubView("add");
     }
@@ -929,8 +1192,8 @@
     const img = new Image();
     img.onload = () => {
       state.cropSourceImg = img;
-      // Mặc định đặt khung cắt theo chuẩn thẻ ID-1 (85.6 : 54) nằm giữa ảnh
-      setCropAspect(slot === "qr" ? "free" : "id1", false);
+      // Mặc định chạy Auto-Crop nhận diện viền thẻ trước khi mở khung chỉnh tay
+      setCropAspect(slot === "qr" ? "free" : "auto", false);
       const cropBox = document.getElementById("kpw-card-cropper-box");
       const titleEl = document.getElementById("kpw-cropper-slot-title");
       if (titleEl) {
@@ -953,7 +1216,7 @@
 
   function setCropAspect(mode, redraw = true) {
     state.cropAspectMode = mode;
-    ["id1", "wide", "free"].forEach((m) => {
+    ["auto", "id1", "wide", "free"].forEach((m) => {
       const btn = document.getElementById(`kpw-aspect-btn-${m}`);
       if (btn) {
         if (m === mode) btn.classList.add("active");
@@ -963,7 +1226,15 @@
 
     const img = state.cropSourceImg;
     if (img && img.width > 0 && img.height > 0) {
-      if (mode === "free") {
+      if (mode === "auto") {
+        const autoRect = autoDetectCardBounds(img);
+        state.cropRect = {
+          x: autoRect.x,
+          y: autoRect.y,
+          w: autoRect.w,
+          h: autoRect.h,
+        };
+      } else if (mode === "free") {
         state.cropRect = { x: 0.08, y: 0.08, w: 0.84, h: 0.84 };
       } else {
         const targetRatio = mode === "id1" ? 85.6 / 54.0 : 16.0 / 10.0;
@@ -1958,11 +2229,17 @@
         </div>
 
         <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
-          <label class="micro-label" style="font-weight:800;color:var(--primary);">
-            📷 CHỤP ẢNH THẺ TRỰC TIẾP &amp; CẮT (CROP) KHUNG CHUẨN ID-1 (85.6 × 54 MM):
-          </label>
-          <p style="font-size:10.5px;color:var(--text-muted);margin:2px 0 8px;">
-            Chụp trực tiếp bằng Camera có khung ngắm chuẩn thẻ Ngân hàng/CCCD hoặc chọn ảnh có sẵn, sau đó kéo 4 góc để cắt (Crop), xoay 90° và làm rõ chữ số.
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+            <label class="micro-label" style="font-weight:800;color:var(--primary);margin:0;">
+              🤖 CHỤP ẢNH THẺ &amp; TỰ ĐỘNG CẮT VIỀN (AUTO-CROP CHUẨN ID-1):
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--primary);cursor:pointer;">
+              <input type="checkbox" id="kpw-auto-crop-toggle" checked style="width:15px;height:15px;cursor:pointer;">
+              <span>🤖 Tự động Crop 1-Chạm</span>
+            </label>
+          </div>
+          <p style="font-size:10.5px;color:var(--text-muted);margin:3px 0 8px;">
+            Hệ thống <strong>tự động nhận diện 4 viền thẻ (Sobel Edge + Tương phản nền), tự xoay ngang 90° và tự cắt (Auto-Crop)</strong> ngay khi chụp hoặc chọn ảnh. Bạn cũng có thể nhấn <em>✂️ Tinh chỉnh 4 góc</em> nếu muốn chỉnh tay.
           </p>
 
           <!-- 1. MẶT TRƯỚC THẺ / CCCD -->
@@ -1972,23 +2249,24 @@
               <span id="kpw-front-label" style="font-size:10.5px;font-weight:700;color:var(--primary);">Chưa có ảnh</span>
             </div>
             <div style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:6px;">
-              <button type="button" class="btn-mobi-solid" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.openLiveCardCamera('front')">
-                📷 Chụp Khung Thẻ
+              <button type="button" class="btn-mobi-solid" style="font-size:10.5px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.openLiveCardCamera('front')">
+                📷 Chụp &amp; Tự Crop
               </button>
-              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.triggerSystemCameraForSlot('front')">
-                📸 Camera Máy
+              <button type="button" class="btn-mobi-outline" style="font-size:10.5px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.triggerSystemCameraForSlot('front')">
+                📸 Camera (Tự Crop)
               </button>
-              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="document.getElementById('kpw-front-img-input').click()">
-                🖼️ Chọn &amp; Crop
+              <button type="button" class="btn-mobi-outline" style="font-size:10.5px;padding:8px 4px;margin:0;" onclick="document.getElementById('kpw-front-img-input').click()">
+                🖼️ Chọn &amp; Tự Crop
               </button>
             </div>
             <input type="file" id="kpw-front-img-input" accept="image/*" style="display:none;">
 
             <div id="kpw-front-preview-wrap" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
               <img id="kpw-front-cropped-img" alt="Mặt trước đã cắt" style="max-width:100%;max-height:175px;border-radius:8px;display:block;margin:0 auto 6px;" />
-              <div style="display:flex;justify-content:center;gap:6px;">
-                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('front')">✂️ Cắt (Crop) / Xoay Lại</button>
-                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('front')">🗑️ Xóa Ảnh Mặt Trước</button>
+              <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;">
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.autoReCropSlot('front')">🤖 Tự Crop Lại</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('front')">✂️ Tinh Chỉnh 4 Góc / Xoay</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('front')">🗑️ Xóa</button>
               </div>
             </div>
           </div>
@@ -2000,23 +2278,24 @@
               <span id="kpw-back-label" style="font-size:10.5px;font-weight:700;color:var(--primary);">Chưa có ảnh</span>
             </div>
             <div style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:6px;">
-              <button type="button" class="btn-mobi-solid" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.openLiveCardCamera('back')">
-                📷 Chụp Khung Thẻ
+              <button type="button" class="btn-mobi-solid" style="font-size:10.5px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.openLiveCardCamera('back')">
+                📷 Chụp &amp; Tự Crop
               </button>
-              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.triggerSystemCameraForSlot('back')">
-                📸 Camera Máy
+              <button type="button" class="btn-mobi-outline" style="font-size:10.5px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.triggerSystemCameraForSlot('back')">
+                📸 Camera (Tự Crop)
               </button>
-              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="document.getElementById('kpw-back-img-input').click()">
-                🖼️ Chọn &amp; Crop
+              <button type="button" class="btn-mobi-outline" style="font-size:10.5px;padding:8px 4px;margin:0;" onclick="document.getElementById('kpw-back-img-input').click()">
+                🖼️ Chọn &amp; Tự Crop
               </button>
             </div>
             <input type="file" id="kpw-back-img-input" accept="image/*" style="display:none;">
 
             <div id="kpw-back-preview-wrap" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
               <img id="kpw-back-cropped-img" alt="Mặt sau đã cắt" style="max-width:100%;max-height:175px;border-radius:8px;display:block;margin:0 auto 6px;" />
-              <div style="display:flex;justify-content:center;gap:6px;">
-                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('back')">✂️ Cắt (Crop) / Xoay Lại</button>
-                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('back')">🗑️ Xóa Ảnh Mặt Sau</button>
+              <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;">
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.autoReCropSlot('back')">🤖 Tự Crop Lại</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('back')">✂️ Tinh Chỉnh 4 Góc / Xoay</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('back')">🗑️ Xóa</button>
               </div>
             </div>
           </div>
@@ -2024,16 +2303,16 @@
           <!-- KHUNG MÁY ẢNH CHỤP TRỰC TIẾP CÓ KHUNG NGẮM THẺ ID-1 -->
           <div id="kpw-live-camera-box" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <strong id="kpw-live-camera-title" style="font-size:11.5px;color:var(--primary);">📷 MÁY ẢNH CHỤP THẺ TRỰC TIẾP</strong>
+              <strong id="kpw-live-camera-title" style="font-size:11.5px;color:var(--primary);">📷 MÁY ẢNH CHỤP &amp; TỰ ĐỘNG CẮT THẺ</strong>
               <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.closeLiveCardCamera()">Đóng ✕</button>
             </div>
             <p style="font-size:10.5px;color:var(--text-muted);margin:0 0 6px;">
-              Đặt thẻ Ngân hàng / CCCD nằm gọn trong khung viền xanh chuẩn ID-1 rồi nhấn <strong>📸 Chụp &amp; Mở Cắt (Crop)</strong>.
+              Đặt thẻ nằm trong khung viền xanh chuẩn ID-1 rồi nhấn nút bên dưới để <strong>chụp &amp; tự động cắt (Auto-Crop) ngay lập tức</strong>.
             </p>
             <canvas id="kpw-live-cam-canvas" width="640" height="420" style="width:100%;max-height:280px;background:#0f172a;border-radius:10px;display:block;margin:0 auto 8px;"></canvas>
             <div style="display:grid;grid-template-columns:2fr 1fr;gap:6px;">
               <button type="button" class="btn-cyber-dialog-primary" style="margin:0;padding:10px 6px;font-size:11.5px;" onclick="window.KryptoPasswordVault.captureLiveCameraFrameToCropper()">
-                <span>📸 Chụp &amp; Mở Cắt (Crop) Ảnh Thẻ</span>
+                <span>🤖 Chụp &amp; Tự Động Crop Thẻ Ngay</span>
               </button>
               <button type="button" class="btn-mobi-outline" style="margin:0;padding:10px 6px;font-size:11px;" onclick="window.KryptoPasswordVault.triggerSystemCameraForCurrentSlot()">
                 📸 Camera HD
@@ -2044,15 +2323,16 @@
           <!-- BỘ CÔNG CỤ CẮT (CROP), XOAY 90° & LÀM RÕ ẢNH THẺ CẢM ỨNG -->
           <div id="kpw-card-cropper-box" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <strong id="kpw-cropper-slot-title" style="font-size:11.5px;color:var(--primary);">✂️ CẮT (CROP) &amp; XOAY ẢNH THẺ / CCCD</strong>
+              <strong id="kpw-cropper-slot-title" style="font-size:11.5px;color:var(--primary);">✂️ TINH CHỈNH KHUNG CẮT (CROP) &amp; XOAY ẢNH THẺ</strong>
               <button type="button" class="btn-chip-micro" onclick="document.getElementById('kpw-card-cropper-box').style.display='none'">Đóng ✕</button>
             </div>
             <p style="font-size:10.5px;color:var(--text-muted);margin:0 0 6px;">
-              Chạm và kéo <strong>4 nút tròn màu xanh ở 4 góc</strong> để cắt sát viền thẻ, hoặc kéo bên trong khung để di chuyển.
+              Nhấn <strong>🤖 Tự Bắt Viền Thẻ</strong> để máy tự nhận diện viền, hoặc kéo <strong>4 nút tròn màu xanh</strong> để chỉnh tay.
             </p>
 
             <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
-              <button type="button" id="kpw-aspect-btn-id1" class="btn-chip-micro active" onclick="window.KryptoPasswordVault.setCropAspect('id1')">💳 Chuẩn Thẻ ID-1</button>
+              <button type="button" id="kpw-aspect-btn-auto" class="btn-chip-micro active" onclick="window.KryptoPasswordVault.setCropAspect('auto')">🤖 Tự Bắt Viền Thẻ</button>
+              <button type="button" id="kpw-aspect-btn-id1" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('id1')">💳 Chuẩn ID-1</button>
               <button type="button" id="kpw-aspect-btn-wide" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('wide')">🪪 Khung 16:10</button>
               <button type="button" id="kpw-aspect-btn-free" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('free')">📐 Tự Do</button>
               <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.rotateCropSource(-90)">↺ Xoay Trái 90°</button>
@@ -2169,6 +2449,14 @@
       });
     }
 
+    const autoCropToggle = document.getElementById("kpw-auto-crop-toggle");
+    if (autoCropToggle) {
+      autoCropToggle.checked = state.autoCropEnabled;
+      autoCropToggle.addEventListener("change", () => {
+        state.autoCropEnabled = autoCropToggle.checked;
+      });
+    }
+
     const frontInput = document.getElementById("kpw-front-img-input");
     if (frontInput) {
       frontInput.addEventListener("change", (ev) => {
@@ -2177,7 +2465,7 @@
         state.pendingFrontFile = f;
         const reader = new FileReader();
         reader.onload = () => {
-          openCardCropperWithDataUrl(String(reader.result), "front");
+          processIncomingCardPhoto(String(reader.result), "front", false);
         };
         reader.readAsDataURL(f);
         frontInput.value = "";
@@ -2192,7 +2480,7 @@
         state.pendingBackFile = f;
         const reader = new FileReader();
         reader.onload = () => {
-          openCardCropperWithDataUrl(String(reader.result), "back");
+          processIncomingCardPhoto(String(reader.result), "back", false);
         };
         reader.readAsDataURL(f);
         backInput.value = "";
@@ -2498,13 +2786,26 @@
       applyCardCropAndAttach();
     },
 
+    autoReCropSlot(slot = "front") {
+      const rawUrl =
+        slot === "front"
+          ? state.pendingFrontRawDataUrl || state.pendingFrontDataUrl
+          : state.pendingBackRawDataUrl || state.pendingBackDataUrl;
+      if (rawUrl) {
+        const prev = state.autoCropEnabled;
+        state.autoCropEnabled = true;
+        processIncomingCardPhoto(rawUrl, slot, false);
+        state.autoCropEnabled = prev;
+      }
+    },
+
     recropSlot(slot = "front") {
       const rawUrl =
         slot === "front"
           ? state.pendingFrontRawDataUrl || state.pendingFrontDataUrl
           : state.pendingBackRawDataUrl || state.pendingBackDataUrl;
       if (rawUrl) {
-        openCardCropperWithDataUrl(rawUrl, slot);
+        openCardCropperWithDataUrl(rawUrl, slot, true);
       }
     },
 
@@ -2525,7 +2826,7 @@
       const dataUrl = String(photoB64).startsWith("data:")
         ? String(photoB64)
         : `data:image/jpeg;base64,${photoB64}`;
-      openCardCropperWithDataUrl(dataUrl, state.activePhotoSlot || "front");
+      processIncomingCardPhoto(dataUrl, state.activePhotoSlot || "front", false);
     },
 
     async restoreNativePermanentVault(rawJson) {
