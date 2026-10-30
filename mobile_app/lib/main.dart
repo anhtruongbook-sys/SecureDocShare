@@ -361,7 +361,9 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
         if (frameB64 != null && frameB64.isNotEmpty) {
           await _controller.runJavaScript(
             "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCameraFrame) { "
-            "window.KryptoAuthenticator.onNativeCameraFrame('$frameB64'); }",
+            "window.KryptoAuthenticator.onNativeCameraFrame('$frameB64'); } "
+            "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNativeCameraFrame) { "
+            "window.KryptoPasswordVault.onNativeCameraFrame('$frameB64'); }",
           );
         }
       } catch (_) {
@@ -1351,7 +1353,9 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
                   if (photoB64 != null && photoB64.isNotEmpty) {
                     await _controller.runJavaScript(
                       "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCapturedPhotoB64) { "
-                      "window.KryptoAuthenticator.onNativeCapturedPhotoB64('$photoB64'); }",
+                      "window.KryptoAuthenticator.onNativeCapturedPhotoB64('$photoB64'); } "
+                      "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNativeSystemPhotoCaptured) { "
+                      "window.KryptoPasswordVault.onNativeSystemPhotoCaptured('$photoB64'); }",
                     );
                   }
                 } catch (_) {

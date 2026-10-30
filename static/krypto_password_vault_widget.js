@@ -464,6 +464,20 @@
     blockSystemScreenshot: false,
     pendingFrontFile: null,
     pendingBackFile: null,
+    pendingFrontDataUrl: "",
+    pendingBackDataUrl: "",
+    pendingFrontRawDataUrl: "",
+    pendingBackRawDataUrl: "",
+    activePhotoSlot: "front", // 'front' | 'back' | 'qr'
+    liveCameraActive: false,
+    latestLiveFrameDataUrl: "",
+    cropSourceImg: null,
+    cropSourceDataUrl: "",
+    cropRect: { x: 0.08, y: 0.14, w: 0.84, h: 0.72 },
+    cropAspectMode: "id1", // 'id1' (85.6:54) | 'wide' (16:10) | 'free'
+    cropEnhanceClarity: false,
+    cropDragMode: null,
+    cropDragStart: { x: 0, y: 0, rect: null },
   };
 
   function persistVaultLocally() {
@@ -698,25 +712,34 @@
   }
 
   // ==========================================================================
-  // 5. ĐÍNH KÈM ẢNH CHỤP THẺ / SCREENSHOT & QUÉT QR ĐA ĐỊNH DẠNG (jsQR)
+  // 5. ĐÍNH KÈM ẢNH CHỤP THẺ / SCREENSHOT, BỘ CẮT (CROP) ẢNH THẺ & QUÉT QR
   // ==========================================================================
+  async function dataUrlToEncryptedAttachmentMeta(dataUrl, label, customFilename = "") {
+    const rawBytes = enc.encode(String(dataUrl || ""));
+    const shaBuf = await sha256Digest(rawBytes);
+    return {
+      attachment_id: generateUUID(),
+      label,
+      filename: customFilename || `${label}_${Date.now()}.png`,
+      mime_type: "image/png",
+      size_bytes: rawBytes.length,
+      sha256_plain: bytesToHex(shaBuf),
+      data_url: dataUrl,
+    };
+  }
+
   async function fileToEncryptedAttachmentMeta(file, label) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           const dataUrl = String(reader.result);
-          const rawBytes = enc.encode(dataUrl);
-          const shaBuf = await sha256Digest(rawBytes);
-          resolve({
-            attachment_id: generateUUID(),
+          const meta = await dataUrlToEncryptedAttachmentMeta(
+            dataUrl,
             label,
-            filename: file.name || `${label}.png`,
-            mime_type: file.type || "image/png",
-            size_bytes: rawBytes.length,
-            sha256_plain: bytesToHex(shaBuf),
-            data_url: dataUrl,
-          });
+            file.name || `${label}.png`
+          );
+          resolve(meta);
         } catch (err) {
           reject(err);
         }
@@ -724,6 +747,515 @@
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  // --------------------------------------------------------------------------
+  // 5B. MÁY ẢNH CHỤP THẺ TRỰC TIẾP (CAMERA2 CÓ KHUNG NGẮM ID-1) & BỘ CROP ẢNH THẺ
+  // --------------------------------------------------------------------------
+  function openLiveCardCamera(slot = "front") {
+    if (state.activeSubTab !== "add") {
+      switchSubView("add");
+    }
+    state.activePhotoSlot = slot;
+    state.liveCameraActive = true;
+    state.latestLiveFrameDataUrl = "";
+    const camBox = document.getElementById("kpw-live-camera-box");
+    const statusLbl = document.getElementById("kpw-live-camera-title");
+    if (camBox) {
+      camBox.style.display = "block";
+      setTimeout(() => camBox.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+    }
+    if (statusLbl) {
+      const slotName =
+        slot === "front"
+          ? "MẶT TRƯỚC THẺ / CCCD"
+          : slot === "back"
+          ? "MẶT SAU THẺ / QR"
+          : "QUÉT MÃ QR / CHỤP MÀN HÌNH";
+      statusLbl.textContent = `📷 MÁY ẢNH CHỤP TRỰC TIẾP: ${slotName}`;
+    }
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: "start_native_camera",
+          facing: "back",
+        })
+      );
+    } else if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" }, audio: false })
+        .then((stream) => {
+          state._webStream = stream;
+          const vid = document.createElement("video");
+          vid.srcObject = stream;
+          vid.setAttribute("playsinline", "true");
+          vid.play();
+          state._webVideo = vid;
+          const tick = () => {
+            if (!state.liveCameraActive || !state._webVideo) return;
+            if (vid.readyState >= 2 && vid.videoWidth > 0) {
+              const c = document.createElement("canvas");
+              c.width = vid.videoWidth;
+              c.height = vid.videoHeight;
+              c.getContext("2d").drawImage(vid, 0, 0);
+              const dUrl = c.toDataURL("image/jpeg", 0.88);
+              renderLiveCameraFrameDataUrl(dUrl);
+            }
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        })
+        .catch(() => {
+          triggerSystemCameraForSlot(slot);
+        });
+    } else {
+      triggerSystemCameraForSlot(slot);
+    }
+  }
+
+  function closeLiveCardCamera() {
+    state.liveCameraActive = false;
+    if (state._webStream) {
+      state._webStream.getTracks().forEach((t) => t.stop());
+      state._webStream = null;
+      state._webVideo = null;
+    }
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: "stop_native_camera",
+        })
+      );
+    }
+    const camBox = document.getElementById("kpw-live-camera-box");
+    if (camBox) camBox.style.display = "none";
+  }
+
+  function triggerSystemCameraForSlot(slot = "front") {
+    state.activePhotoSlot = slot;
+    closeLiveCardCamera();
+    if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === "function") {
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: "capture_qr_photo_native",
+          slot,
+        })
+      );
+    } else {
+      const inpId =
+        slot === "front"
+          ? "kpw-front-img-input"
+          : slot === "back"
+          ? "kpw-back-img-input"
+          : "kpw-qr-screenshot-input";
+      document.getElementById(inpId)?.click();
+    }
+  }
+
+  function renderLiveCameraFrameDataUrl(dataUrl) {
+    if (!state.liveCameraActive) return;
+    state.latestLiveFrameDataUrl = dataUrl;
+    const canvas = document.getElementById("kpw-live-cam-canvas");
+    if (!canvas) return;
+    const img = new Image();
+    img.onload = () => {
+      if (!state.liveCameraActive) return;
+      const w = img.width || 640;
+      const h = img.height || 480;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // Vẽ khung ngắm chuẩn thẻ tín dụng / CCCD ISO/IEC 7810 ID-1 (tỷ lệ 85.6 : 54 ≈ 1.585)
+      const ratio = 85.6 / 54.0;
+      let guideW = w * 0.84;
+      let guideH = guideW / ratio;
+      if (guideH > h * 0.76) {
+        guideH = h * 0.76;
+        guideW = guideH * ratio;
+      }
+      const gx = (w - guideW) / 2;
+      const gy = (h - guideH) / 2;
+
+      ctx.fillStyle = "rgba(15, 23, 42, 0.48)";
+      ctx.fillRect(0, 0, w, gy);
+      ctx.fillRect(0, gy + guideH, w, h - (gy + guideH));
+      ctx.fillRect(0, gy, gx, guideH);
+      ctx.fillRect(gx + guideW, gy, w - (gx + guideW), guideH);
+
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = Math.max(3, Math.round(w * 0.005));
+      ctx.strokeRect(gx, gy, guideW, guideH);
+
+      // Nếu đang ở chế độ Quét QR, thử bóc tách QR tự động
+      if (state.activePhotoSlot === "qr" && typeof window.jsQR === "function") {
+        try {
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const code = window.jsQR(imgData.data, w, h, { inversionAttempts: "attemptBoth" });
+          if (code && code.data) {
+            closeLiveCardCamera();
+            dataUrlToEncryptedAttachmentMeta(dataUrl, "screenshot_image").then((att) => {
+              importQrOrScreenshotToVault(code.data.trim(), att);
+            });
+          }
+        } catch (_) {}
+      }
+    };
+    img.src = dataUrl;
+  }
+
+  function captureLiveCameraFrameToCropper() {
+    if (!state.latestLiveFrameDataUrl) {
+      triggerSystemCameraForSlot(state.activePhotoSlot);
+      return;
+    }
+    const capturedDataUrl = state.latestLiveFrameDataUrl;
+    const slot = state.activePhotoSlot || "front";
+    closeLiveCardCamera();
+    openCardCropperWithDataUrl(capturedDataUrl, slot);
+  }
+
+  function openCardCropperWithDataUrl(dataUrl, slot = "front") {
+    if (!dataUrl) return;
+    if (state.activeSubTab !== "add") {
+      switchSubView("add");
+    }
+    state.activePhotoSlot = slot;
+    state.cropSourceDataUrl = dataUrl;
+    if (slot === "front") state.pendingFrontRawDataUrl = dataUrl;
+    if (slot === "back") state.pendingBackRawDataUrl = dataUrl;
+
+    const img = new Image();
+    img.onload = () => {
+      state.cropSourceImg = img;
+      // Mặc định đặt khung cắt theo chuẩn thẻ ID-1 (85.6 : 54) nằm giữa ảnh
+      setCropAspect(slot === "qr" ? "free" : "id1", false);
+      const cropBox = document.getElementById("kpw-card-cropper-box");
+      const titleEl = document.getElementById("kpw-cropper-slot-title");
+      if (titleEl) {
+        titleEl.textContent =
+          slot === "front"
+            ? "✂️ CẮT (CROP) & XOAY ẢNH MẶT TRƯỚC THẺ / CCCD"
+            : slot === "back"
+            ? "✂️ CẮT (CROP) & XOAY ẢNH MẶT SAU THẺ / QR"
+            : "✂️ CẮT (CROP) ẢNH CHỤP MÀN HÌNH / MÃ QR";
+      }
+      if (cropBox) {
+        cropBox.style.display = "block";
+        setTimeout(() => cropBox.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+      }
+      bindCropperTouchEvents();
+      renderCropperCanvas();
+    };
+    img.src = dataUrl;
+  }
+
+  function setCropAspect(mode, redraw = true) {
+    state.cropAspectMode = mode;
+    ["id1", "wide", "free"].forEach((m) => {
+      const btn = document.getElementById(`kpw-aspect-btn-${m}`);
+      if (btn) {
+        if (m === mode) btn.classList.add("active");
+        else btn.classList.remove("active");
+      }
+    });
+
+    const img = state.cropSourceImg;
+    if (img && img.width > 0 && img.height > 0) {
+      if (mode === "free") {
+        state.cropRect = { x: 0.08, y: 0.08, w: 0.84, h: 0.84 };
+      } else {
+        const targetRatio = mode === "id1" ? 85.6 / 54.0 : 16.0 / 10.0;
+        const imgRatio = img.width / img.height;
+        let rw = 0.86;
+        let rh = (rw * imgRatio) / targetRatio;
+        if (rh > 0.82) {
+          rh = 0.82;
+          rw = (rh * targetRatio) / imgRatio;
+        }
+        state.cropRect = {
+          x: (1 - rw) / 2,
+          y: (1 - rh) / 2,
+          w: rw,
+          h: rh,
+        };
+      }
+    }
+    if (redraw) renderCropperCanvas();
+  }
+
+  function rotateCropSource(deg = 90) {
+    const img = state.cropSourceImg;
+    if (!img) return;
+    const c = document.createElement("canvas");
+    if (Math.abs(deg) === 90) {
+      c.width = img.height;
+      c.height = img.width;
+    } else {
+      c.width = img.width;
+      c.height = img.height;
+    }
+    const ctx = c.getContext("2d");
+    ctx.translate(c.width / 2, c.height / 2);
+    ctx.rotate((deg * Math.PI) / 180);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    const rotatedUrl = c.toDataURL("image/png");
+    openCardCropperWithDataUrl(rotatedUrl, state.activePhotoSlot);
+  }
+
+  function toggleCropClarity() {
+    state.cropEnhanceClarity = !state.cropEnhanceClarity;
+    const btn = document.getElementById("kpw-btn-crop-clarity");
+    if (btn) {
+      if (state.cropEnhanceClarity) btn.classList.add("active");
+      else btn.classList.remove("active");
+    }
+    renderCropperCanvas();
+  }
+
+  function renderCropperCanvas() {
+    const canvas = document.getElementById("kpw-crop-canvas");
+    const img = state.cropSourceImg;
+    if (!canvas || !img) return;
+
+    const maxW = 640;
+    const scale = img.width > maxW ? maxW / img.width : 1;
+    const cw = Math.max(240, Math.round(img.width * scale));
+    const ch = Math.max(180, Math.round(img.height * scale));
+    canvas.width = cw;
+    canvas.height = ch;
+
+    const ctx = canvas.getContext("2d");
+    ctx.filter = state.cropEnhanceClarity ? "contrast(1.22) brightness(1.04) saturate(1.1)" : "none";
+    ctx.drawImage(img, 0, 0, cw, ch);
+    ctx.filter = "none";
+
+    const r = state.cropRect;
+    const rx = r.x * cw;
+    const ry = r.y * ch;
+    const rw = r.w * cw;
+    const rh = r.h * ch;
+
+    // Phủ mờ vùng ngoài khung Crop
+    ctx.fillStyle = "rgba(15, 23, 42, 0.58)";
+    ctx.fillRect(0, 0, cw, ry);
+    ctx.fillRect(0, ry + rh, cw, ch - (ry + rh));
+    ctx.fillRect(0, ry, rx, rh);
+    ctx.fillRect(rx + rw, ry, cw - (rx + rw), rh);
+
+    // Khung viền vùng cắt thẻ
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(rx, ry, rw, rh);
+
+    // Lưới 1/3 (Rule of Thirds) bên trong khung cắt
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(rx + rw / 3, ry);
+    ctx.lineTo(rx + rw / 3, ry + rh);
+    ctx.moveTo(rx + (2 * rw) / 3, ry);
+    ctx.lineTo(rx + (2 * rw) / 3, ry + rh);
+    ctx.moveTo(rx, ry + rh / 3);
+    ctx.lineTo(rx + rw, ry + rh / 3);
+    ctx.moveTo(rx, ry + (2 * rh) / 3);
+    ctx.lineTo(rx + rw, ry + (2 * rh) / 3);
+    ctx.stroke();
+
+    // Vẽ 4 nút kéo góc (Corner Handles) cỡ lớn dễ chạm trên màn hình cảm ứng
+    const hs = 14;
+    ctx.fillStyle = "#38bdf8";
+    [
+      [rx, ry],
+      [rx + rw, ry],
+      [rx, ry + rh],
+      [rx + rw, ry + rh],
+    ].forEach(([hx, hy]) => {
+      ctx.beginPath();
+      ctx.arc(hx, hy, hs / 1.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  }
+
+  function bindCropperTouchEvents() {
+    const canvas = document.getElementById("kpw-crop-canvas");
+    if (!canvas || canvas._kpwBound) return;
+    canvas._kpwBound = true;
+
+    function getNormPos(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX;
+      const clientY = ev.touches && ev.touches[0] ? ev.touches[0].clientY : ev.clientY;
+      return {
+        x: Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width))),
+        y: Math.max(0, Math.min(1, (clientY - rect.top) / Math.max(1, rect.height))),
+      };
+    }
+
+    function onStart(ev) {
+      if (!state.cropSourceImg) return;
+      const p = getNormPos(ev);
+      const r = state.cropRect;
+      const tol = 0.08;
+      let mode = null;
+      if (Math.hypot(p.x - r.x, p.y - r.y) < tol) mode = "tl";
+      else if (Math.hypot(p.x - (r.x + r.w), p.y - r.y) < tol) mode = "tr";
+      else if (Math.hypot(p.x - r.x, p.y - (r.y + r.h)) < tol) mode = "bl";
+      else if (Math.hypot(p.x - (r.x + r.w), p.y - (r.y + r.h)) < tol) mode = "br";
+      else if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h) mode = "move";
+
+      if (mode) {
+        if (ev.cancelable) ev.preventDefault();
+        state.cropDragMode = mode;
+        state.cropDragStart = { x: p.x, y: p.y, rect: { ...r } };
+      }
+    }
+
+    function onMove(ev) {
+      if (!state.cropDragMode || !state.cropDragStart.rect) return;
+      if (ev.cancelable) ev.preventDefault();
+      const p = getNormPos(ev);
+      const dx = p.x - state.cropDragStart.x;
+      const dy = p.y - state.cropDragStart.y;
+      const s = state.cropDragStart.rect;
+      const minSize = 0.15;
+
+      if (state.cropDragMode === "move") {
+        state.cropRect.x = Math.max(0, Math.min(1 - s.w, s.x + dx));
+        state.cropRect.y = Math.max(0, Math.min(1 - s.h, s.y + dy));
+      } else if (state.cropDragMode === "tl") {
+        const nx = Math.max(0, Math.min(s.x + s.w - minSize, s.x + dx));
+        const ny = Math.max(0, Math.min(s.y + s.h - minSize, s.y + dy));
+        state.cropRect.w = s.x + s.w - nx;
+        state.cropRect.h = s.y + s.h - ny;
+        state.cropRect.x = nx;
+        state.cropRect.y = ny;
+      } else if (state.cropDragMode === "tr") {
+        const nw = Math.max(minSize, Math.min(1 - s.x, s.w + dx));
+        const ny = Math.max(0, Math.min(s.y + s.h - minSize, s.y + dy));
+        state.cropRect.w = nw;
+        state.cropRect.h = s.y + s.h - ny;
+        state.cropRect.y = ny;
+      } else if (state.cropDragMode === "bl") {
+        const nx = Math.max(0, Math.min(s.x + s.w - minSize, s.x + dx));
+        const nh = Math.max(minSize, Math.min(1 - s.y, s.h + dy));
+        state.cropRect.w = s.x + s.w - nx;
+        state.cropRect.x = nx;
+        state.cropRect.h = nh;
+      } else if (state.cropDragMode === "br") {
+        state.cropRect.w = Math.max(minSize, Math.min(1 - s.x, s.w + dx));
+        state.cropRect.h = Math.max(minSize, Math.min(1 - s.y, s.h + dy));
+      }
+      renderCropperCanvas();
+    }
+
+    function onEnd() {
+      state.cropDragMode = null;
+    }
+
+    canvas.addEventListener("mousedown", onStart);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onEnd);
+    canvas.addEventListener("touchstart", onStart, { passive: false });
+    canvas.addEventListener("touchmove", onMove, { passive: false });
+    canvas.addEventListener("touchend", onEnd);
+  }
+
+  async function applyCardCropAndAttach() {
+    const img = state.cropSourceImg;
+    if (!img) return;
+    const r = state.cropRect;
+    const sx = Math.max(0, Math.round(r.x * img.width));
+    const sy = Math.max(0, Math.round(r.y * img.height));
+    const sw = Math.max(40, Math.min(img.width - sx, Math.round(r.w * img.width)));
+    const sh = Math.max(40, Math.min(img.height - sy, Math.round(r.h * img.height)));
+
+    const outCanvas = document.createElement("canvas");
+    const maxDim = 1280;
+    const scale = Math.max(sw, sh) > maxDim ? maxDim / Math.max(sw, sh) : 1;
+    outCanvas.width = Math.round(sw * scale);
+    outCanvas.height = Math.round(sh * scale);
+    const outCtx = outCanvas.getContext("2d");
+    outCtx.filter = state.cropEnhanceClarity ? "contrast(1.22) brightness(1.04) saturate(1.1)" : "none";
+    outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
+    outCtx.filter = "none";
+
+    const croppedDataUrl = outCanvas.toDataURL("image/png");
+    const slot = state.activePhotoSlot || "front";
+
+    const cropBox = document.getElementById("kpw-card-cropper-box");
+    if (cropBox) cropBox.style.display = "none";
+
+    if (slot === "front") {
+      state.pendingFrontDataUrl = croppedDataUrl;
+      updateCroppedSlotPreviews();
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("✓ Đã cắt (Crop) ảnh Mặt Trước thẻ sắc nét!");
+      }
+    } else if (slot === "back") {
+      state.pendingBackDataUrl = croppedDataUrl;
+      updateCroppedSlotPreviews();
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("✓ Đã cắt (Crop) ảnh Mặt Sau thẻ sắc nét!");
+      }
+    } else if (slot === "qr") {
+      const att = await dataUrlToEncryptedAttachmentMeta(croppedDataUrl, "screenshot_image");
+      const qrStr = await decodeQrFromImageDataUrl(croppedDataUrl);
+      if (qrStr) {
+        const inp = document.getElementById("kpw-qr-raw-input");
+        if (inp) inp.value = qrStr;
+      }
+      await importQrOrScreenshotToVault(qrStr, att);
+    }
+  }
+
+  function clearCardAttachmentSlot(slot) {
+    if (slot === "front") {
+      state.pendingFrontFile = null;
+      state.pendingFrontDataUrl = "";
+      state.pendingFrontRawDataUrl = "";
+    } else if (slot === "back") {
+      state.pendingBackFile = null;
+      state.pendingBackDataUrl = "";
+      state.pendingBackRawDataUrl = "";
+    }
+    updateCroppedSlotPreviews();
+  }
+
+  function updateCroppedSlotPreviews() {
+    const frontLbl = document.getElementById("kpw-front-label");
+    const backLbl = document.getElementById("kpw-back-label");
+    const frontBox = document.getElementById("kpw-front-preview-wrap");
+    const backBox = document.getElementById("kpw-back-preview-wrap");
+    const frontImg = document.getElementById("kpw-front-cropped-img");
+    const backImg = document.getElementById("kpw-back-cropped-img");
+
+    if (frontLbl) {
+      frontLbl.textContent = state.pendingFrontDataUrl ? "Đã cắt & đính kèm ✓" : "Chưa có ảnh";
+    }
+    if (backLbl) {
+      backLbl.textContent = state.pendingBackDataUrl ? "Đã cắt & đính kèm ✓" : "Chưa có ảnh";
+    }
+    if (frontBox && frontImg) {
+      if (state.pendingFrontDataUrl) {
+        frontImg.src = state.pendingFrontDataUrl;
+        frontBox.style.display = "block";
+      } else {
+        frontBox.style.display = "none";
+      }
+    }
+    if (backBox && backImg) {
+      if (state.pendingBackDataUrl) {
+        backImg.src = state.pendingBackDataUrl;
+        backBox.style.display = "block";
+      } else {
+        backBox.style.display = "none";
+      }
+    }
   }
 
   async function decodeQrFromImageDataUrl(dataUrl) {
@@ -1426,21 +1958,123 @@
         </div>
 
         <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
-          <label class="micro-label">🖼️ ĐÍNH KÈM ẢNH CHỤP THẺ (MẶT TRƯỚC / MẶT SAU) HOẶC ẢNH CHỤP MÀN HÌNH:</label>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px;">
-            <button type="button" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;" onclick="document.getElementById('kpw-front-img-input').click()">
-              🖼️ Mặt Trước / Screenshot (<span id="kpw-front-label">Chưa chọn</span>)
-            </button>
-            <button type="button" class="btn-mobi-outline" style="font-size:11px;padding:8px 6px;" onclick="document.getElementById('kpw-back-img-input').click()">
-              🖼️ Mặt Sau / QR (<span id="kpw-back-label">Chưa chọn</span>)
-            </button>
+          <label class="micro-label" style="font-weight:800;color:var(--primary);">
+            📷 CHỤP ẢNH THẺ TRỰC TIẾP &amp; CẮT (CROP) KHUNG CHUẨN ID-1 (85.6 × 54 MM):
+          </label>
+          <p style="font-size:10.5px;color:var(--text-muted);margin:2px 0 8px;">
+            Chụp trực tiếp bằng Camera có khung ngắm chuẩn thẻ Ngân hàng/CCCD hoặc chọn ảnh có sẵn, sau đó kéo 4 góc để cắt (Crop), xoay 90° và làm rõ chữ số.
+          </p>
+
+          <!-- 1. MẶT TRƯỚC THẺ / CCCD -->
+          <div style="margin-top:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:11.5px;font-weight:700;color:var(--text-primary);">🪪 1. Mặt Trước Thẻ / CCCD / Screenshot:</span>
+              <span id="kpw-front-label" style="font-size:10.5px;font-weight:700;color:var(--primary);">Chưa có ảnh</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:6px;">
+              <button type="button" class="btn-mobi-solid" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.openLiveCardCamera('front')">
+                📷 Chụp Khung Thẻ
+              </button>
+              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.triggerSystemCameraForSlot('front')">
+                📸 Camera Máy
+              </button>
+              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="document.getElementById('kpw-front-img-input').click()">
+                🖼️ Chọn &amp; Crop
+              </button>
+            </div>
             <input type="file" id="kpw-front-img-input" accept="image/*" style="display:none;">
+
+            <div id="kpw-front-preview-wrap" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+              <img id="kpw-front-cropped-img" alt="Mặt trước đã cắt" style="max-width:100%;max-height:175px;border-radius:8px;display:block;margin:0 auto 6px;" />
+              <div style="display:flex;justify-content:center;gap:6px;">
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('front')">✂️ Cắt (Crop) / Xoay Lại</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('front')">🗑️ Xóa Ảnh Mặt Trước</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. MẶT SAU THẺ / MÃ QR -->
+          <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:11.5px;font-weight:700;color:var(--text-primary);">💳 2. Mặt Sau Thẻ (CVV) / Mặt Sau CCCD / QR:</span>
+              <span id="kpw-back-label" style="font-size:10.5px;font-weight:700;color:var(--primary);">Chưa có ảnh</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:6px;">
+              <button type="button" class="btn-mobi-solid" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.openLiveCardCamera('back')">
+                📷 Chụp Khung Thẻ
+              </button>
+              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="window.KryptoPasswordVault.triggerSystemCameraForSlot('back')">
+                📸 Camera Máy
+              </button>
+              <button type="button" class="btn-mobi-outline" style="font-size:10.8px;padding:8px 4px;margin:0;" onclick="document.getElementById('kpw-back-img-input').click()">
+                🖼️ Chọn &amp; Crop
+              </button>
+            </div>
             <input type="file" id="kpw-back-img-input" accept="image/*" style="display:none;">
+
+            <div id="kpw-back-preview-wrap" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+              <img id="kpw-back-cropped-img" alt="Mặt sau đã cắt" style="max-width:100%;max-height:175px;border-radius:8px;display:block;margin:0 auto 6px;" />
+              <div style="display:flex;justify-content:center;gap:6px;">
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.recropSlot('back')">✂️ Cắt (Crop) / Xoay Lại</button>
+                <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.clearCardAttachmentSlot('back')">🗑️ Xóa Ảnh Mặt Sau</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- KHUNG MÁY ẢNH CHỤP TRỰC TIẾP CÓ KHUNG NGẮM THẺ ID-1 -->
+          <div id="kpw-live-camera-box" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <strong id="kpw-live-camera-title" style="font-size:11.5px;color:var(--primary);">📷 MÁY ẢNH CHỤP THẺ TRỰC TIẾP</strong>
+              <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.closeLiveCardCamera()">Đóng ✕</button>
+            </div>
+            <p style="font-size:10.5px;color:var(--text-muted);margin:0 0 6px;">
+              Đặt thẻ Ngân hàng / CCCD nằm gọn trong khung viền xanh chuẩn ID-1 rồi nhấn <strong>📸 Chụp &amp; Mở Cắt (Crop)</strong>.
+            </p>
+            <canvas id="kpw-live-cam-canvas" width="640" height="420" style="width:100%;max-height:280px;background:#0f172a;border-radius:10px;display:block;margin:0 auto 8px;"></canvas>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:6px;">
+              <button type="button" class="btn-cyber-dialog-primary" style="margin:0;padding:10px 6px;font-size:11.5px;" onclick="window.KryptoPasswordVault.captureLiveCameraFrameToCropper()">
+                <span>📸 Chụp &amp; Mở Cắt (Crop) Ảnh Thẻ</span>
+              </button>
+              <button type="button" class="btn-mobi-outline" style="margin:0;padding:10px 6px;font-size:11px;" onclick="window.KryptoPasswordVault.triggerSystemCameraForCurrentSlot()">
+                📸 Camera HD
+              </button>
+            </div>
+          </div>
+
+          <!-- BỘ CÔNG CỤ CẮT (CROP), XOAY 90° & LÀM RÕ ẢNH THẺ CẢM ỨNG -->
+          <div id="kpw-card-cropper-box" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <strong id="kpw-cropper-slot-title" style="font-size:11.5px;color:var(--primary);">✂️ CẮT (CROP) &amp; XOAY ẢNH THẺ / CCCD</strong>
+              <button type="button" class="btn-chip-micro" onclick="document.getElementById('kpw-card-cropper-box').style.display='none'">Đóng ✕</button>
+            </div>
+            <p style="font-size:10.5px;color:var(--text-muted);margin:0 0 6px;">
+              Chạm và kéo <strong>4 nút tròn màu xanh ở 4 góc</strong> để cắt sát viền thẻ, hoặc kéo bên trong khung để di chuyển.
+            </p>
+
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+              <button type="button" id="kpw-aspect-btn-id1" class="btn-chip-micro active" onclick="window.KryptoPasswordVault.setCropAspect('id1')">💳 Chuẩn Thẻ ID-1</button>
+              <button type="button" id="kpw-aspect-btn-wide" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('wide')">🪪 Khung 16:10</button>
+              <button type="button" id="kpw-aspect-btn-free" class="btn-chip-micro" onclick="window.KryptoPasswordVault.setCropAspect('free')">📐 Tự Do</button>
+              <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.rotateCropSource(-90)">↺ Xoay Trái 90°</button>
+              <button type="button" class="btn-chip-micro" onclick="window.KryptoPasswordVault.rotateCropSource(90)">↻ Xoay Phải 90°</button>
+              <button type="button" id="kpw-btn-crop-clarity" class="btn-chip-micro active" onclick="window.KryptoPasswordVault.toggleCropClarity()">✨ Làm Rõ Số Thẻ</button>
+            </div>
+
+            <canvas id="kpw-crop-canvas" width="560" height="360" style="width:100%;max-height:310px;background:#0f172a;border-radius:10px;display:block;margin:0 auto 8px;touch-action:none;cursor:crosshair;"></canvas>
+
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:6px;">
+              <button type="button" class="btn-cyber-dialog-primary" style="margin:0;padding:10px 6px;font-size:11.5px;" onclick="window.KryptoPasswordVault.applyCardCropAndAttach()">
+                <span>✅ Áp Dụng Cắt (Crop) &amp; Đính Kèm</span>
+              </button>
+              <button type="button" class="btn-mobi-outline" style="margin:0;padding:10px 6px;font-size:11px;" onclick="document.getElementById('kpw-card-cropper-box').style.display='none'">
+                ✕ Hủy
+              </button>
+            </div>
           </div>
         </div>
 
         <button type="button" id="kpw-btn-save-record" class="btn-cyber-dialog-primary" style="margin-top:12px;width:100%;">
-          <span>🔒 Mã Hóa AES-256-GCM &amp; Lưu Vào Danh Bạ</span>
+          <span>🔒 Mã Hóa AES-256-GCM (Kèm Ảnh Thẻ Đã Crop) &amp; Lưu Vào Danh Bạ</span>
         </button>
       </div>
 
@@ -1453,12 +2087,15 @@
           Hỗ trợ tự động bóc tách: <strong>QR 2FA (<code>otpauth://</code>)</strong>, <strong>QR Wi-Fi (<code>WIFI:S:...</code>)</strong>, <strong>QR CCCD Gắn chip 12 số</strong> và lưu nguyên bản ảnh chụp màn hình đã mã hóa <code>AES-256-GCM</code>.
         </p>
 
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;">
-          <button type="button" id="kpw-btn-scan-qr-img" class="btn-cyber-dialog-primary" style="font-size:11.5px;padding:10px 6px;margin:0;">
-            <span>🖼️ Chọn Ảnh Chụp Màn Hình / QR</span>
+        <div style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:6px;">
+          <button type="button" class="btn-mobi-solid" style="font-size:10.8px;padding:10px 4px;margin:0;" onclick="window.KryptoPasswordVault.openLiveCardCamera('qr')">
+            📷 Camera Quét QR
           </button>
-          <button type="button" id="kpw-btn-paste-screenshot" class="btn-mobi-outline" style="font-size:11.5px;padding:10px 6px;margin:0;">
-            📋 Dán Ảnh Chụp Màn Hình
+          <button type="button" id="kpw-btn-scan-qr-img" class="btn-mobi-outline" style="font-size:10.8px;padding:10px 4px;margin:0;">
+            🖼️ Chọn Ảnh &amp; Crop
+          </button>
+          <button type="button" id="kpw-btn-paste-screenshot" class="btn-mobi-outline" style="font-size:10.8px;padding:10px 4px;margin:0;">
+            📋 Dán Screenshot
           </button>
           <input type="file" id="kpw-qr-screenshot-input" accept="image/*" style="display:none;">
         </div>
@@ -1536,9 +2173,14 @@
     if (frontInput) {
       frontInput.addEventListener("change", (ev) => {
         const f = ev.target.files && ev.target.files[0];
-        state.pendingFrontFile = f || null;
-        const lbl = document.getElementById("kpw-front-label");
-        if (lbl) lbl.textContent = f ? f.name.slice(0, 12) : "Chưa chọn";
+        if (!f) return;
+        state.pendingFrontFile = f;
+        const reader = new FileReader();
+        reader.onload = () => {
+          openCardCropperWithDataUrl(String(reader.result), "front");
+        };
+        reader.readAsDataURL(f);
+        frontInput.value = "";
       });
     }
 
@@ -1546,11 +2188,18 @@
     if (backInput) {
       backInput.addEventListener("change", (ev) => {
         const f = ev.target.files && ev.target.files[0];
-        state.pendingBackFile = f || null;
-        const lbl = document.getElementById("kpw-back-label");
-        if (lbl) lbl.textContent = f ? f.name.slice(0, 12) : "Chưa chọn";
+        if (!f) return;
+        state.pendingBackFile = f;
+        const reader = new FileReader();
+        reader.onload = () => {
+          openCardCropperWithDataUrl(String(reader.result), "back");
+        };
+        reader.readAsDataURL(f);
+        backInput.value = "";
       });
     }
+
+    bindCropperTouchEvents();
 
     const saveBtn = document.getElementById("kpw-btn-save-record");
     if (saveBtn) {
@@ -1569,10 +2218,27 @@
         }
 
         const atts = [];
-        if (state.pendingFrontFile) {
+        if (state.pendingFrontDataUrl) {
+          atts.push(
+            await dataUrlToEncryptedAttachmentMeta(
+              state.pendingFrontDataUrl,
+              "front_image",
+              "mat_truoc_the_cropped.png"
+            )
+          );
+        } else if (state.pendingFrontFile) {
           atts.push(await fileToEncryptedAttachmentMeta(state.pendingFrontFile, "front_image"));
         }
-        if (state.pendingBackFile) {
+
+        if (state.pendingBackDataUrl) {
+          atts.push(
+            await dataUrlToEncryptedAttachmentMeta(
+              state.pendingBackDataUrl,
+              "back_image",
+              "mat_sau_the_cropped.png"
+            )
+          );
+        } else if (state.pendingBackFile) {
           atts.push(await fileToEncryptedAttachmentMeta(state.pendingBackFile, "back_image"));
         }
 
@@ -1590,14 +2256,12 @@
         document.getElementById("kpw-username").value = "";
         document.getElementById("kpw-password").value = "";
         document.getElementById("kpw-totp").value = "";
-        state.pendingFrontFile = null;
-        state.pendingBackFile = null;
-        document.getElementById("kpw-front-label").textContent = "Chưa chọn";
-        document.getElementById("kpw-back-label").textContent = "Chưa chọn";
+        clearCardAttachmentSlot("front");
+        clearCardAttachmentSlot("back");
 
         switchSubView("list");
         if (typeof window.showKryptoToast === "function") {
-          window.showKryptoToast("✓ Đã mã hóa AES-256-GCM và lưu vào Danh bạ!");
+          window.showKryptoToast("✓ Đã mã hóa AES-256-GCM (kèm ảnh thẻ đã cắt) và lưu vào Danh bạ!");
         }
       });
     }
@@ -1614,8 +2278,10 @@
         if (qrStr) {
           const inp = document.getElementById("kpw-qr-raw-input");
           if (inp) inp.value = qrStr;
+          await importQrOrScreenshotToVault(qrStr, att);
+        } else {
+          openCardCropperWithDataUrl(att.data_url, "qr");
         }
-        await importQrOrScreenshotToVault(qrStr, att);
         qrFileInput.value = "";
       });
     }
@@ -1794,6 +2460,72 @@
         mountWidget();
       }
       renderRecordsList();
+    },
+
+    openLiveCardCamera(slot = "front") {
+      openLiveCardCamera(slot);
+    },
+
+    closeLiveCardCamera() {
+      closeLiveCardCamera();
+    },
+
+    captureLiveCameraFrameToCropper() {
+      captureLiveCameraFrameToCropper();
+    },
+
+    triggerSystemCameraForSlot(slot = "front") {
+      triggerSystemCameraForSlot(slot);
+    },
+
+    triggerSystemCameraForCurrentSlot() {
+      triggerSystemCameraForSlot(state.activePhotoSlot || "front");
+    },
+
+    setCropAspect(mode) {
+      setCropAspect(mode, true);
+    },
+
+    rotateCropSource(deg) {
+      rotateCropSource(deg);
+    },
+
+    toggleCropClarity() {
+      toggleCropClarity();
+    },
+
+    applyCardCropAndAttach() {
+      applyCardCropAndAttach();
+    },
+
+    recropSlot(slot = "front") {
+      const rawUrl =
+        slot === "front"
+          ? state.pendingFrontRawDataUrl || state.pendingFrontDataUrl
+          : state.pendingBackRawDataUrl || state.pendingBackDataUrl;
+      if (rawUrl) {
+        openCardCropperWithDataUrl(rawUrl, slot);
+      }
+    },
+
+    clearCardAttachmentSlot(slot = "front") {
+      clearCardAttachmentSlot(slot);
+    },
+
+    onNativeCameraFrame(frameB64) {
+      if (!state.liveCameraActive || !frameB64) return;
+      const dataUrl = String(frameB64).startsWith("data:")
+        ? String(frameB64)
+        : `data:image/jpeg;base64,${frameB64}`;
+      renderLiveCameraFrameDataUrl(dataUrl);
+    },
+
+    onNativeSystemPhotoCaptured(photoB64) {
+      if (!photoB64) return;
+      const dataUrl = String(photoB64).startsWith("data:")
+        ? String(photoB64)
+        : `data:image/jpeg;base64,${photoB64}`;
+      openCardCropperWithDataUrl(dataUrl, state.activePhotoSlot || "front");
     },
 
     async restoreNativePermanentVault(rawJson) {
