@@ -1346,17 +1346,23 @@ class _SecureDocWebViewScreenState extends State<SecureDocWebViewScreen> with Wi
             if (action == 'capture_qr_photo_native') {
               if (Platform.isAndroid) {
                 try {
+                  final String? slot = data['slot']?.toString();
                   _stopNativeCameraFramePolling();
                   _isCameraInProgress = true;
                   final String? photoB64 = await _nativeChannel.invokeMethod<String>('captureQrPhotoNative');
                   _isCameraInProgress = false;
                   if (photoB64 != null && photoB64.isNotEmpty) {
-                    await _controller.runJavaScript(
-                      "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCapturedPhotoB64) { "
-                      "window.KryptoAuthenticator.onNativeCapturedPhotoB64('$photoB64'); } "
-                      "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNativeSystemPhotoCaptured) { "
-                      "window.KryptoPasswordVault.onNativeSystemPhotoCaptured('$photoB64'); }",
-                    );
+                    if (slot != null && slot.isNotEmpty) {
+                      await _controller.runJavaScript(
+                        "if (window.KryptoPasswordVault && window.KryptoPasswordVault.onNativeSystemPhotoCaptured) { "
+                        "window.KryptoPasswordVault.onNativeSystemPhotoCaptured('$photoB64'); }",
+                      );
+                    } else {
+                      await _controller.runJavaScript(
+                        "if (window.KryptoAuthenticator && window.KryptoAuthenticator.onNativeCapturedPhotoB64) { "
+                        "window.KryptoAuthenticator.onNativeCapturedPhotoB64('$photoB64'); }",
+                      );
+                    }
                   }
                 } catch (_) {
                   _isCameraInProgress = false;

@@ -938,8 +938,8 @@
 
   function autoDetectCardBounds(img) {
     try {
-      const W = 200;
-      const H = 200;
+      const W = 160;
+      const H = 160;
       const c = document.createElement("canvas");
       c.width = W;
       c.height = H;
@@ -947,17 +947,15 @@
       ctx.drawImage(img, 0, 0, W, H);
       const data = ctx.getImageData(0, 0, W, H).data;
 
-      const r_n = new Float32Array(W * H);
-      const g_n = new Float32Array(W * H);
-      const b_n = new Float32Array(W * H);
+      const R_arr = new Float32Array(W * H);
+      const G_arr = new Float32Array(W * H);
+      const B_arr = new Float32Array(W * H);
       const sat = new Float32Array(W * H);
       const luma = new Float32Array(W * H);
 
-      const borderRN = [];
-      const borderGN = [];
-      const borderBN = [];
-      const borderSat = [];
-      const borderLuma = [];
+      // 1. Lấy tập mẫu đa nền dọc theo viền ngoài 8px (xử lý hoàn hảo cả nền 2 màu: bìa da nâu + ga trắng / mặt bàn gỗ)
+      const borderSamples = [];
+      let borderStep = 0;
 
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
@@ -965,46 +963,41 @@
           const R = data[i * 4];
           const G = data[i * 4 + 1];
           const B = data[i * 4 + 2];
-          const S = R + G + B + 1.0;
-          const rn = R / S;
-          const gn = G / S;
-          const bn = B / S;
-          const st = Math.max(R, G, B) - Math.min(R, G, B);
-          const lm = 0.299 * R + 0.587 * G + 0.114 * B;
+          R_arr[i] = R;
+          G_arr[i] = G;
+          B_arr[i] = B;
+          sat[i] = Math.max(R, G, B) - Math.min(R, G, B);
+          luma[i] = 0.299 * R + 0.587 * G + 0.114 * B;
 
-          r_n[i] = rn;
-          g_n[i] = gn;
-          b_n[i] = bn;
-          sat[i] = st;
-          luma[i] = lm;
-
-          if (x < 14 || x >= W - 14 || y < 14 || y >= H - 14) {
-            borderRN.push(rn);
-            borderGN.push(gn);
-            borderBN.push(bn);
-            borderSat.push(st);
-            borderLuma.push(lm);
+          if (x < 8 || x >= W - 8 || y < 8 || y >= H - 8) {
+            borderStep++;
+            if (borderStep % 4 === 0) {
+              borderSamples.push([R, G, B]);
+            }
           }
         }
       }
 
-      const bg_r = percentileFloat(borderRN, 50);
-      const bg_g = percentileFloat(borderGN, 50);
-      const bg_b = percentileFloat(borderBN, 50);
-      const bg_sat = percentileFloat(borderSat, 50);
-      const bg_luma = percentileFloat(borderLuma, 50);
-
-      // Tính xác suất điểm ảnh thuộc Thẻ (khử hoàn toàn vân gỗ 1 chiều bằng min(|Gx|, |Gy|))
-      const cardProb = new Float32Array(W * H);
-      const borderProbs = [];
+      const numB = borderSamples.length;
+      const kthIdx = Math.max(1, Math.floor(numB * 0.08));
+      const rawScore = new Float32Array(W * H);
+      const distBuf = new Float32Array(numB);
 
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
           const i = y * W + x;
-          const chromaDist =
-            (Math.abs(r_n[i] - bg_r) + Math.abs(g_n[i] - bg_g) + Math.abs(b_n[i] - bg_b)) * 500.0;
-          const brightDiff = Math.max(0, luma[i] - bg_luma - 14.0) * 1.4;
-          const satDiff = Math.max(0, sat[i] - bg_sat - 8.0) * 1.8;
+          const R = R_arr[i];
+          const G = G_arr[i];
+          const B = B_arr[i];
+
+          // Tính khoảng cách màu tới tập mẫu đa nền xung quanh mép ảnh (bách phân vị 8%)
+          for (let k = 0; k < numB; k++) {
+            const bp = borderSamples[k];
+            distBuf[k] = Math.abs(R - bp[0]) + Math.abs(G - bp[1]) + Math.abs(B - bp[2]);
+          }
+          // Tìm giá trị nhỏ thứ kthIdx (Selection nhanh cho 8th percentile)
+          distBuf.sort();
+          const minBgDist = distBuf[kthIdx];
 
           const xNext = Math.min(W - 1, x + 1);
           const xPrev = Math.max(0, x - 1);
@@ -1013,113 +1006,73 @@
 
           const gx = Math.abs(luma[y * W + xNext] - luma[y * W + xPrev]);
           const gy = Math.abs(luma[yNext * W + x] - luma[yPrev * W + x]);
-          const isoGrad = Math.min(gx, gy) * 2.0;
+          const isoGrad = Math.min(gx, gy);
 
-          const p = chromaDist + brightDiff + satDiff + isoGrad;
-          cardProb[i] = p;
-          if (x < 14 || x >= W - 14 || y < 14 || y >= H - 14) {
-            borderProbs.push(p);
+          rawScore[i] = Math.max(0, minBgDist - 22.0) * 1.2 + sat[i] * 1.5 + isoGrad * 2.8;
+        }
+      }
+
+      // 2. Làm mượt 9x9 (Box Filter) để tạo khối đặc (Solid Blob) phủ kín bề mặt thẻ
+      const blob = new Float32Array(W * H);
+      const borderBlobVals = [];
+      const rad = 4;
+      for (let y = 0; y < H; y++) {
+        const y0 = Math.max(0, y - rad);
+        const y1 = Math.min(H - 1, y + rad);
+        for (let x = 0; x < W; x++) {
+          const x0 = Math.max(0, x - rad);
+          const x1 = Math.min(W - 1, x + rad);
+          let sum = 0;
+          let cnt = 0;
+          for (let yy = y0; yy <= y1; yy++) {
+            const rowOff = yy * W;
+            for (let xx = x0; xx <= x1; xx++) {
+              sum += rawScore[rowOff + xx];
+              cnt++;
+            }
+          }
+          const val = sum / cnt;
+          blob[y * W + x] = val;
+          if (x < 8 || x >= W - 8 || y < 8 || y >= H - 8) {
+            borderBlobVals.push(val);
           }
         }
       }
 
-      const bg_p75 = percentileFloat(borderProbs, 75);
-      const fg_p90 = percentileFloat(cardProb, 90);
-      const thr = Math.max(28.0, bg_p75 + (fg_p90 - bg_p75) * 0.32);
+      const bgP82 = percentileFloat(borderBlobVals, 82);
+      const fgP92 = percentileFloat(blob, 92);
+      const thr = bgP82 + (fgP92 - bgP82) * 0.35;
 
-      // Vòng 1: Chiếu mật độ theo cột X
-      const colFrac = new Float32Array(W);
-      for (let x = 0; x < W; x++) {
-        let cnt = 0;
-        for (let y = 10; y < H - 10; y++) {
-          if (cardProb[y * W + x] >= thr) cnt++;
-        }
-        colFrac[x] = cnt / (H - 20);
-      }
-
-      let lx = -1;
-      let rx = -1;
-      for (let x = 2; x < W - 2; x++) {
-        if (colFrac[x] >= 0.22 && colFrac[x + 1] >= 0.18) {
-          lx = x;
-          break;
-        }
-      }
-      for (let x = W - 3; x >= 2; x--) {
-        if (colFrac[x] >= 0.22 && colFrac[x - 1] >= 0.18) {
-          rx = x;
-          break;
-        }
-      }
-      if (lx < 0 || rx <= lx + 16) {
-        lx = 12;
-        rx = W - 12;
-      }
-
-      // Vòng 2: Chiếu mật độ theo hàng Y nằm trong [lx, rx]
-      const rowFrac = new Float32Array(H);
-      const spanW = Math.max(1, rx - lx + 1);
-      for (let y = 0; y < H; y++) {
-        let cnt = 0;
-        for (let x = lx; x <= rx; x++) {
-          if (cardProb[y * W + x] >= thr) cnt++;
-        }
-        rowFrac[y] = cnt / spanW;
-      }
-
-      let ty = -1;
-      let by_ = -1;
-      for (let y = 2; y < H - 2; y++) {
-        if (rowFrac[y] >= 0.22 && rowFrac[y + 1] >= 0.18) {
-          ty = y;
-          break;
-        }
-      }
-      for (let y = H - 3; y >= 2; y--) {
-        if (rowFrac[y] >= 0.22 && rowFrac[y - 1] >= 0.18) {
-          by_ = y;
-          break;
-        }
-      }
-      if (ty < 0 || by_ <= ty + 16) {
-        ty = 12;
-        by_ = H - 12;
-      }
-
-      // Vòng 3: Tinh chỉnh lại [lx, rx] nằm trong [ty, by_]
-      const spanH = Math.max(1, by_ - ty + 1);
-      for (let x = 0; x < W; x++) {
-        let cnt = 0;
-        for (let y = ty; y <= by_; y++) {
-          if (cardProb[y * W + x] >= thr) cnt++;
-        }
-        colFrac[x] = cnt / spanH;
-      }
-      for (let x = 2; x < W - 2; x++) {
-        if (colFrac[x] >= 0.22 && colFrac[x + 1] >= 0.18) {
-          lx = x;
-          break;
-        }
-      }
-      for (let x = W - 3; x >= 2; x--) {
-        if (colFrac[x] >= 0.22 && colFrac[x - 1] >= 0.18) {
-          rx = x;
-          break;
+      const xs = [];
+      const ys = [];
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          if (blob[y * W + x] >= thr) {
+            xs.push(x);
+            ys.push(y);
+          }
         }
       }
 
-      let nx = lx / W;
-      let ny = ty / H;
-      let nw = (rx - lx + 1) / W;
-      let nh = (by_ - ty + 1) / H;
+      if (xs.length >= 60) {
+        const lx = percentileFloat(xs, 2);
+        const rx = percentileFloat(xs, 98);
+        const ty = percentileFloat(ys, 2);
+        const by_ = percentileFloat(ys, 98);
 
-      if (nw >= 0.22 && nh >= 0.22) {
-        const pad = 0.008;
-        nx = Math.max(0, nx - pad);
-        ny = Math.max(0, ny - pad);
-        nw = Math.min(1 - nx, nw + pad * 2);
-        nh = Math.min(1 - ny, nh + pad * 2);
-        return { x: nx, y: ny, w: nw, h: nh, detected: true };
+        let nx = lx / W;
+        let ny = ty / H;
+        let nw = (rx - lx) / W;
+        let nh = (by_ - ty) / H;
+
+        if (nw >= 0.18 && nh >= 0.18) {
+          const pad = 0.008;
+          nx = Math.max(0, nx - pad);
+          ny = Math.max(0, ny - pad);
+          nw = Math.min(1 - nx, nw + pad * 2);
+          nh = Math.min(1 - ny, nh + pad * 2);
+          return { x: nx, y: ny, w: nw, h: nh, detected: true };
+        }
       }
     } catch (_) {}
 
