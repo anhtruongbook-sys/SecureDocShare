@@ -2115,24 +2115,33 @@ class MainActivity: FlutterFragmentActivity() {
                                 val mergedRows = mutableListOf<String>()
                                 var curRowY = -9999
                                 var curRowH = 24
+                                var prevRight = -9999
                                 var curRowBuilder = StringBuilder()
+                                val colSplitX = (bmp0.width * 0.33).toInt()
                                 for (ln in allLines) {
                                     val ly = ln.boundingBox?.centerY() ?: 0
                                     val lh = ln.boundingBox?.height() ?: 24
+                                    val lx = ln.boundingBox?.left ?: 0
+                                    val lr = ln.boundingBox?.right ?: 0
                                     val txt = ln.text.trim()
                                     if (txt.isEmpty()) continue
-                                    if (curRowY == -9999 || kotlin.math.abs(ly - curRowY) <= kotlin.math.max(curRowH, lh) * 0.55) {
+                                    // Không ghép cột trái dưới ảnh chân dung (Có giá trị đến / Date of expiry) với cột phải (Quê quán / Nơi thường trú)
+                                    val crossesPhotoCol = (prevRight in 1..colSplitX && lx >= (bmp0.width * 0.28).toInt())
+                                    val sameY = (curRowY == -9999 || kotlin.math.abs(ly - curRowY) <= kotlin.math.max(curRowH, lh) * 0.55)
+                                    if (sameY && !crossesPhotoCol) {
                                         if (curRowBuilder.isNotEmpty()) curRowBuilder.append(" ")
                                         curRowBuilder.append(txt)
                                         if (curRowY == -9999) {
                                             curRowY = ly
                                             curRowH = lh
                                         }
+                                        prevRight = lr
                                     } else {
-                                        mergedRows.add(curRowBuilder.toString())
+                                        if (curRowBuilder.isNotEmpty()) mergedRows.add(curRowBuilder.toString())
                                         curRowBuilder = StringBuilder(txt)
                                         curRowY = ly
                                         curRowH = lh
+                                        prevRight = lr
                                     }
                                 }
                                 if (curRowBuilder.isNotEmpty()) {

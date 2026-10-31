@@ -1637,7 +1637,214 @@
   // --------------------------------------------------------------------------
   // BỘ BÓC TÁCH THÔNG MINH NỘI DUNG THẺ CCCD / MRZ / QR / THẺ NGÂN HÀNG (AUTO-FILL OCR)
   // --------------------------------------------------------------------------
-  function triggerNativeCardOcr(croppedDataUrl, slot = "front") {
+  // --------------------------------------------------------------------------
+  // BỘ KHÔI PHỤC DẤU TIẾNG VIỆT HÀNH CHÍNH & ĐỊA DANH CHO ML KIT LATIN OCR
+  // --------------------------------------------------------------------------
+  function restoreVietnameseCardDiacritics(rawStr, isUpperCaseName = false) {
+    if (!rawStr) return "";
+    let s = String(rawStr).replace(/\s+/g, " ").trim();
+    const phraseDict = [
+      [/\bXuan\s+Khe\b/gi, "Xuân Khê"],
+      [/\bLy\s+Nhan\b/gi, "Lý Nhân"],
+      [/\bHa\s+Nam\b/gi, "Hà Nam"],
+      [/\bThanh\s+Xuan\s+Bac\b/gi, "Thanh Xuân Bắc"],
+      [/\bThanh\s+Xuan\s+Nam\b/gi, "Thanh Xuân Nam"],
+      [/\bThanh\s+Xuan\s+Trung\b/gi, "Thanh Xuân Trung"],
+      [/\bThanh\s+Xuan\b/gi, "Thanh Xuân"],
+      [/\bHa\s+Noi\b/gi, "Hà Nội"],
+      [/\bHo\s+Chi\s+Minh\b/gi, "Hồ Chí Minh"],
+      [/\bDa\s+Nang\b/gi, "Đà Nẵng"],
+      [/\bHai\s+Phong\b/gi, "Hải Phòng"],
+      [/\bCan\s+Tho\b/gi, "Cần Thơ"],
+      [/\bViet\s*Nam\b/gi, "Việt Nam"],
+      [/\bNot\s+ruoi\b/gi, "Nốt ruồi"],
+      [/\bSeo\s+cham\b/gi, "Sẹo chấm"],
+      [/\bSeo\s+thang\b/gi, "Sẹo thẳng"],
+      [/\bSeo\s+cong\b/gi, "Sẹo cong"],
+      [/\btren\s+truoc\b/gi, "trên trước"],
+      [/\bduoi\s+truoc\b/gi, "dưới trước"],
+      [/\btren\s+sau\b/gi, "trên sau"],
+      [/\bduoi\s+sau\b/gi, "dưới sau"],
+      [/\bduoi\s+may\s+phai\b/gi, "đuôi mày phải"],
+      [/\bduoi\s+may\s+trai\b/gi, "đuôi mày trái"],
+      [/\bdau\s+may\s+phai\b/gi, "đầu mày phải"],
+      [/\bdau\s+may\s+trai\b/gi, "đầu mày trái"],
+      [/\bcanh\s+mui\s+phai\b/gi, "cánh mũi phải"],
+      [/\bcanh\s+mui\s+trai\b/gi, "cánh mũi trái"],
+      [/\bduoi\s+mat\s+phai\b/gi, "đuôi mắt phải"],
+      [/\bduoi\s+mat\s+trai\b/gi, "đuôi mắt trái"],
+      [/\bma\s+phai\b/gi, "má phải"],
+      [/\bma\s+trai\b/gi, "má trái"],
+      [/\bcam\s+phai\b/gi, "cằm phải"],
+      [/\bcam\s+trai\b/gi, "cằm trái"],
+      [/\bmay\s+phai\b/gi, "mày phải"],
+      [/\bmay\s+trai\b/gi, "mày trái"],
+      [/\btruoc\b/gi, "trước"],
+      [/\btren\b/gi, "trên"],
+      [/\bphai\b/gi, "phải"],
+      [/\btrai\b/gi, "trái"],
+      [/\bPham\s+Cong\s+Nguyen\b/gi, "Phạm Công Nguyên"],
+      [/\bTo\s+Van\s+Hue\b/gi, "Tô Văn Huệ"],
+      [/\bNguyen\s+Quoc\s+Hung\b/gi, "Nguyễn Quốc Hùng"],
+      [/\bLe\s+Ngoc\s+Dien\b/gi, "Lê Ngọc Diễn"],
+    ];
+    for (const [rx, rep] of phraseDict) {
+      s = s.replace(rx, rep);
+    }
+    if (isUpperCaseName) {
+      const nameDict = [
+        [/\bTRUONG\b/gi, "TRƯƠNG"],
+        [/\bTUAN\b/gi, "TUẤN"],
+        [/\bNGUYEN\b/gi, "NGUYỄN"],
+        [/\bTRAN\b/gi, "TRẦN"],
+        [/\bPHAM\b/gi, "PHẠM"],
+        [/\bHOANG\b/gi, "HOÀNG"],
+        [/\bHUYNH\b/gi, "HUỲNH"],
+        [/\bVU\b/gi, "VŨ"],
+        [/\bVO\b/gi, "VÕ"],
+        [/\bDANG\b/gi, "ĐẶNG"],
+        [/\bBUI\b/gi, "BÙI"],
+        [/\bDO\b/gi, "ĐỖ"],
+        [/\bNGO\b/gi, "NGÔ"],
+        [/\bDUONG\b/gi, "DƯƠNG"],
+        [/\bDINH\b/gi, "ĐINH"],
+        [/\bDUC\b/gi, "ĐỨC"],
+        [/\bHUNG\b/gi, "HÙNG"],
+        [/\bDUNG\b/gi, "DŨNG"],
+        [/\bCUONG\b/gi, "CƯỜNG"],
+        [/\bTHAO\b/gi, "THẢO"],
+        [/\bHUONG\b/gi, "HƯƠNG"],
+        [/\bPHUONG\b/gi, "PHƯƠNG"],
+        [/\bHIEN\b/gi, "HIỀN"],
+        [/\bNGOC\b/gi, "NGỌC"],
+        [/\bDIEN\b/gi, "DIỄN"],
+      ];
+      for (const [rx, rep] of nameDict) {
+        s = s.replace(rx, rep);
+      }
+      s = s.toUpperCase();
+    }
+    return s;
+  }
+
+  function computeStatutoryCccdExpiry(dobStr) {
+    const m = String(dobStr || "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return "";
+    const dd = m[1];
+    const mm = m[2];
+    const birthYear = parseInt(m[3], 10);
+    if (birthYear < 1920 || birthYear > 2025) return "";
+    const curYear = new Date().getFullYear();
+    // Luật Căn cước: Thẻ CCCD phải đổi khi công dân đủ 25 tuổi, 40 tuổi và 60 tuổi.
+    // Nếu cấp trong vòng 2 năm trước mốc tuổi thì có giá trị đến mốc tuổi tiếp theo.
+    const milestones = [25, 40, 60];
+    for (const age of milestones) {
+      const expY = birthYear + age;
+      if (expY >= curYear - 1) {
+        return `${dd}/${mm}/${expY}`;
+      }
+    }
+    return "Không thời hạn (Trên 60 tuổi)";
+  }
+
+  function mergeKeyValMetadataString(existingMeta, newEntries) {
+    // Giữ thứ tự chuẩn hành chính của các trường trên thẻ CCCD / GPLX
+    const orderKeys = [
+      "Loại thẻ",
+      "Họ tên",
+      "Chủ thẻ",
+      "Chủ xe",
+      "Số CCCD",
+      "Số định danh",
+      "CMND cũ",
+      "Số HC",
+      "Số GPLX",
+      "Mã BHYT",
+      "Mã BHXH",
+      "Mã số thuế",
+      "Mã SV/NV",
+      "Biển số",
+      "Số thẻ",
+      "Hạng",
+      "NS",
+      "GT",
+      "QT",
+      "Nơi sinh",
+      "Quê quán",
+      "Thường trú",
+      "Nơi cư trú",
+      "Địa chỉ",
+      "Nơi ĐK KCB",
+      "Thời điểm 5 năm",
+      "Nhãn hiệu",
+      "Loại xe",
+      "Màu sơn",
+      "Số khung",
+      "Số máy",
+      "Dung tích",
+      "Số chỗ",
+      "Trường/Đơn vị",
+      "Khoa/Phòng",
+      "Chức vụ",
+      "Khóa/Lớp",
+      "Ngân hàng",
+      "Hiệu lực từ",
+      "HSD",
+      "CVV",
+      "ĐĐND",
+      "Trúng tuyển",
+      "Ngày cấp",
+      "Nơi cấp",
+      "Số phôi",
+      "Phạm vi",
+      "SĐT",
+      "Email",
+      "Website",
+      "MRZ",
+    ];
+    const map = new Map();
+    const parsePart = (part) => {
+      const p = String(part || "").trim();
+      if (!p) return;
+      // Chuẩn hóa các nhãn viết tắt cũ sang nhãn chuẩn
+      let norm = p
+        .replace(/^Đ\/c:\s*/i, "Thường trú: ")
+        .replace(/^Cấp:\s*/i, "Ngày cấp: ");
+      const idx = norm.indexOf(":");
+      if (idx > 0) {
+        const k = norm.slice(0, idx).trim();
+        const v = norm.slice(idx + 1).trim();
+        if (k && v) {
+          const prev = map.get(k) || "";
+          // Ưu tiên giá trị dài hơn hoặc có dấu tiếng Việt đầy đủ hơn
+          if (!prev || v.length > prev.length || (/[À-Ỹà-ỹ]/.test(v) && !/[À-Ỹà-ỹ]/.test(prev))) {
+            map.set(k, v);
+          }
+        }
+      } else {
+        map.set(norm, "");
+      }
+    };
+    String(existingMeta || "")
+      .split("|")
+      .forEach(parsePart);
+    (newEntries || []).forEach(parsePart);
+
+    const out = [];
+    for (const k of orderKeys) {
+      if (map.has(k)) {
+        const v = map.get(k);
+        out.push(v ? `${k}: ${v}` : k);
+        map.delete(k);
+      }
+    }
+    for (const [k, v] of map.entries()) {
+      out.push(v ? `${k}: ${v}` : k);
+    }
+    return out.join(" | ");
+  }
+
+  function triggerNativeCardOcr(croppedDataUrl, slot = "front", recordId = "") {
     if (!croppedDataUrl) return;
     // 1. Quét nhanh QR trên ảnh đã cắt bằng jsQR
     decodeQrFromImageDataUrl(croppedDataUrl).then((qrStr) => {
@@ -1652,6 +1859,7 @@
           action: "recognize_card_text_native",
           imageB64: croppedDataUrl,
           slot,
+          recordId: recordId || "",
         })
       );
     }
@@ -1669,24 +1877,45 @@
     const passInp = document.getElementById("kpw-password");
     const totpInp = document.getElementById("kpw-totp");
 
-    // CASE 1: Mã QR Căn cước công dân gắn chip (035079004448|...|TRƯƠNG TUẤN ANH|12121979|Nam|...|24042021)
+    // HELPER: Bộ bóc tách đa năng cho mọi cặp "Nhãn: Giá trị" bất kỳ in trên thẻ lạ (Universal Key-Value Extractor)
+    function extractUniversalKeyValues(linesArr) {
+      const pairs = [];
+      const skipPatterns = /CỘNG HÒA|CONG HOA|ĐỘC LẬP|DOC LAP|SOCIALIST|INDEPENDENCE|CITIZEN IDENTITY|CĂN CƯỚC|CAN CUOC|GIẤY PHÉP LÁI XE|DRIVER.?S LICENSE|PASSPORT|HỘ CHIẾU|BẢO HIỂM|HEALTH INSURANCE|ĐĂNG KÝ XE|VEHICLE REGISTRATION/i;
+      for (const line of linesArr) {
+        if (skipPatterns.test(line)) continue;
+        const m = line.match(/^([A-Za-zÀ-ỹ0-9\s/().\-]{2,32}?)\s*[:：]\s*(.+)$/);
+        if (m) {
+          let k = restoreVietnameseCardDiacritics(m[1].trim(), false)
+            .replace(/\/.*$/, "")
+            .trim();
+          let v = restoreVietnameseCardDiacritics(m[2].trim(), false);
+          if (k.length >= 2 && v.length >= 1 && !/^(http|https|otpauth)$/i.test(k)) {
+            pairs.push(`${k}: ${v}`);
+          }
+        }
+      }
+      return pairs;
+    }
+
+    // CASE 1: Mã QR Căn cước công dân / Thẻ Căn cước (035079004448|...|TRƯƠNG TUẤN ANH|12121979|Nam|...|24042021)
     if (rawQr && rawQr.includes("|") && rawQr.split("|").length >= 6) {
       const p = rawQr.split("|").map((s) => s.trim());
       const cccdNo = p[0] || "";
       const oldCmnd = p[1] || "";
-      const fullName = p[2] || "";
+      const fullName = restoreVietnameseCardDiacritics(p[2] || "", true);
       const dobRaw = p[3] || "";
       const dob =
         dobRaw.length === 8
           ? `${dobRaw.slice(0, 2)}/${dobRaw.slice(2, 4)}/${dobRaw.slice(4)}`
           : dobRaw;
       const gender = p[4] || "";
-      const addr = p[5] || "";
+      const addr = restoreVietnameseCardDiacritics(p[5] || "", false);
       const issueRaw = p[6] || "";
       const issueDate =
         issueRaw.length === 8
           ? `${issueRaw.slice(0, 2)}/${issueRaw.slice(2, 4)}/${issueRaw.slice(4)}`
           : issueRaw;
+      const expiry = dob ? computeStatutoryCccdExpiry(dob) : "";
 
       if (typeSel) typeSel.value = "IDENTITY";
       if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
@@ -1696,20 +1925,25 @@
         titleInp.value = `CCCD: ${fullName || cccdNo}`;
       }
       if (userInp && cccdNo) {
-        userInp.value = cccdNo + (oldCmnd ? ` (CMND cũ: ${oldCmnd})` : "");
+        userInp.value = cccdNo;
       }
       if (passInp) {
         const infoParts = [];
+        if (fullName) infoParts.push(`Họ tên: ${fullName}`);
+        if (cccdNo) infoParts.push(`Số CCCD: ${cccdNo}`);
+        if (oldCmnd) infoParts.push(`CMND cũ: ${oldCmnd}`);
         if (dob) infoParts.push(`NS: ${dob}`);
         if (gender) infoParts.push(`GT: ${gender}`);
-        if (issueDate) infoParts.push(`Cấp: ${issueDate}`);
-        if (addr) infoParts.push(`Đ/c: ${addr}`);
-        passInp.value = infoParts.join(" | ");
+        infoParts.push(`QT: Việt Nam`);
+        if (addr) infoParts.push(`Thường trú: ${addr}`);
+        if (expiry) infoParts.push(`HSD: ${expiry}`);
+        if (issueDate) infoParts.push(`Ngày cấp: ${issueDate}`);
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", infoParts);
       }
       if (typeof window.showKryptoToast === "function") {
         window.showKryptoToast(`🤖 Đã đọc chuẩn xác QR CCCD: ${fullName} (${cccdNo})!`);
       }
-      return;
+      if (!rawText) return;
     }
 
     // CASE 2: Mã QR 2FA (otpauth://)
@@ -1740,15 +1974,21 @@
       .filter(Boolean);
     const upperText = rawText.toUpperCase();
 
-    // CASE 2B: Nhận diện HỘ CHIẾU PHỔ THÔNG / NGOẠI GIAO (PASSPORT — ICAO 9303 TD3 P<VNM)
+    // CASE 2B: Nhận diện HỘ CHIẾU PHỔ THÔNG / NGOẠI GIAO / CÔNG VỤ (PASSPORT — ICAO 9303 TD3 P<VNM & QUỐC TẾ) — ĐẦY ĐỦ 9/9 TRƯỜNG
     const isPassport =
-      upperText.includes("P<VNM") ||
+      upperText.includes("P<") ||
       upperText.includes("PASSPORT") ||
       upperText.includes("HỘ CHIẾU") ||
       upperText.includes("HO CHIEU") ||
       /\b[BCKPE]\d{7,8}\b/.test(upperText);
 
-    if (isPassport && !upperText.includes("GIẤY PHÉP LÁI XE") && !upperText.includes("CĂN CƯỚC")) {
+    if (
+      isPassport &&
+      !upperText.includes("GIẤY PHÉP LÁI XE") &&
+      !upperText.includes("GIAY PHEP LAI XE") &&
+      !upperText.includes("CĂN CƯỚC") &&
+      !upperText.includes("CAN CUOC")
+    ) {
       if (typeSel) typeSel.value = "IDENTITY";
       if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
         folderInp.value = "Hộ chiếu (Passport)";
@@ -1756,42 +1996,86 @@
       let passportNo = "";
       let fullName = "";
       let dob = "";
+      let gender = "";
+      let nationality = "Việt Nam";
+      let birthPlace = "";
+      let issueDate = "";
       let expiry = "";
+      let personalIdNo = "";
+      let issuedBy = "Cục Quản lý Xuất nhập cảnh";
+      let mrzCode = "";
       const detectedFields = [];
 
-      // Tìm số hộ chiếu Việt Nam (Cxxxxxxx, Bxxxxxxx, Pxxxxxxx, Kxxxxxxx — 1 chữ cái + 7 hoặc 8 chữ số)
+      // 1. Tìm số hộ chiếu (Cxxxxxxx, Bxxxxxxx, Pxxxxxxx, Kxxxxxxx, Exxxxxxx)
       const ppMatch = upperText.match(/\b([BCKPE]\d{7,8})\b/);
       if (ppMatch) passportNo = ppMatch[1];
 
-      // Giải mã dòng MRZ TD3: P<VNMHO<<TEN<<<...
-      const td3Line1 = lines.find((l) => l.toUpperCase().replace(/\s+/g, "").includes("P<VNM"));
+      // 2. Giải mã dòng 1 MRZ TD3: P<VNMHO<<TEN<<<...
+      const td3Line1 = lines.find((l) => /P<[A-Z]{3}/.test(l.toUpperCase().replace(/\s+/g, "")));
       if (td3Line1) {
         const cl1 = td3Line1.toUpperCase().replace(/\s+/g, "");
-        const idx = cl1.indexOf("P<VNM");
+        const idx = cl1.indexOf("P<");
+        const countryCode = cl1.slice(idx + 2, idx + 5);
+        if (countryCode && countryCode !== "VNM") nationality = countryCode;
         const nameRaw = cl1.slice(idx + 5).replace(/<+/g, " ").trim();
-        if (nameRaw.length >= 5) fullName = nameRaw;
+        if (nameRaw.length >= 4) fullName = restoreVietnameseCardDiacritics(nameRaw, true);
       }
 
-      // Giải mã dòng 2 MRZ TD3: [Số HC 9 ký tự][Check][VNM][YYMMDD][Check][M/F][YYMMDD]...
-      const td3Line2 = lines.find((l) => {
+      // 3. Giải mã dòng 2 MRZ TD3: [Số HC 9 ký tự][Check][VNM][YYMMDD][Check][M/F][YYMMDD][Check][Số định danh]...
+      for (const l of lines) {
         const cl = l.toUpperCase().replace(/\s+/g, "");
-        return /^[A-Z0-9<]{9}\dVNM\d{6}\d[MF<]\d{6}/.test(cl);
-      });
-      if (td3Line2) {
-        const cl2 = td3Line2.toUpperCase().replace(/\s+/g, "");
-        const m2 = cl2.match(/^([A-Z0-9<]{9})\dVNM(\d{2})(\d{2})(\d{2})\d[MF<](\d{2})(\d{2})(\d{2})/);
-        if (m2) {
-          if (!passportNo) passportNo = m2[1].replace(/</g, "");
-          const yyB = parseInt(m2[2], 10);
-          dob = `${m2[4]}/${m2[3]}/${yyB > 30 ? 1900 + yyB : 2000 + yyB}`;
-          const yyE = parseInt(m2[5], 10);
-          expiry = `${m2[7]}/${m2[6]}/${2000 + yyE}`;
+        const vnmIdx = cl.indexOf("VNM");
+        if (vnmIdx >= 9 && !cl.includes("P<")) {
+          mrzCode = cl;
+          const docPart = cl.slice(0, 9).replace(/</g, "");
+          if (!passportNo && docPart) passportNo = docPart;
+          const tail = cl
+            .slice(vnmIdx + 3)
+            .replace(/O/g, "0")
+            .replace(/[IL]/g, "1")
+            .replace(/B/g, "8");
+          const m2 = tail.match(/^(\d{2})(\d{2})(\d{2})\d([MF<])(\d{2})(\d{2})(\d{2})\d([0-9<]{0,14})/);
+          if (m2) {
+            const yyB = parseInt(m2[1], 10);
+            dob = `${m2[3]}/${m2[2]}/${yyB > 30 ? 1900 + yyB : 2000 + yyB}`;
+            if (m2[4] === "M") gender = "Nam";
+            else if (m2[4] === "F") gender = "Nữ";
+            const yyE = parseInt(m2[5], 10);
+            expiry = `${m2[7]}/${m2[6]}/${2000 + yyE}`;
+            const pid = (m2[8] || "").replace(/</g, "");
+            if (/^0\d{11}$/.test(pid)) personalIdNo = pid;
+            break;
+          }
         }
       }
 
-      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      // 4. Tìm Nơi sinh (Place of birth), Số CCCD/CMND, Ngày cấp trên trang nhân thân Hộ chiếu
+      const id12 = rawText.match(/\b(0\d{11})\b/);
+      if (!personalIdNo && id12) personalIdNo = id12[1];
+
+      for (let i = 0; i < lines.length; i++) {
+        const ln = lines[i];
+        if (/nơi\s*sinh|noi\s*sinh|place\s*of\s*birth/i.test(ln)) {
+          const tail = ln.replace(/.*(?:nơi\s*sinh|noi\s*sinh|place\s*of\s*birth)[:.\s/]*/i, "").trim();
+          const candidate = tail || (lines[i + 1] || "").trim();
+          if (candidate && candidate.length >= 3 && !/\d{2}\/\d{2}/.test(candidate)) {
+            birthPlace = restoreVietnameseCardDiacritics(candidate, false);
+          }
+        }
+        if (/giới\s*tính|gioi\s*tinh|\bsex\b/i.test(ln) && !gender) {
+          if (/nữ|nu|female|\bF\b/i.test(ln)) gender = "Nữ";
+          else if (/nam|male|\bM\b/i.test(ln)) gender = "Nam";
+        }
+      }
+
+      const dates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
       if (!dob && dates.length >= 1) dob = dates[0];
-      if (!expiry && dates.length >= 2) expiry = dates[dates.length - 1];
+      if (dates.length >= 3) {
+        issueDate = dates[1];
+        if (!expiry) expiry = dates[2];
+      } else if (!expiry && dates.length >= 2) {
+        expiry = dates[dates.length - 1];
+      }
 
       if (titleInp) {
         titleInp.value = `Hộ chiếu: ${fullName || passportNo || "Việt Nam"}`;
@@ -1803,23 +2087,34 @@
       if (fullName) detectedFields.push(`Họ tên: ${fullName}`);
       if (passInp) {
         const meta = [];
+        if (fullName) meta.push(`Họ tên: ${fullName}`);
+        if (passportNo) meta.push(`Số HC: ${passportNo}`);
+        if (personalIdNo) meta.push(`Số CCCD: ${personalIdNo}`);
         if (dob) meta.push(`NS: ${dob}`);
+        if (gender) meta.push(`GT: ${gender}`);
+        if (nationality) meta.push(`QT: ${nationality}`);
+        if (birthPlace) meta.push(`Nơi sinh: ${birthPlace}`);
+        if (issueDate) meta.push(`Ngày cấp: ${issueDate}`);
         if (expiry) meta.push(`HSD: ${expiry}`);
-        if (meta.length > 0) passInp.value = meta.join(" | ");
+        if (issuedBy) meta.push(`Nơi cấp: ${issuedBy}`);
+        if (mrzCode) meta.push(`MRZ: ${mrzCode}`);
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", meta);
       }
       if (detectedFields.length > 0 && typeof window.showKryptoToast === "function") {
-        window.showKryptoToast(`🤖 Đã nhận dạng Hộ chiếu (Passport): ${detectedFields.join(" • ")}!`);
+        window.showKryptoToast(`🤖 Đã bóc tách đầy đủ Hộ chiếu (Passport): ${detectedFields.join(" • ")}!`);
       }
       return;
     }
 
-    // CASE 2C: Nhận diện THẺ BẢO HIỂM Y TẾ / BHXH (HEALTH INSURANCE CARD — 15 ký tự DN401... hoặc 10 số BHXH)
+    // CASE 2C: Nhận diện THẺ BẢO HIỂM Y TẾ / BHXH (HEALTH INSURANCE CARD — Mẫu 15 ký tự DN401... & Mẫu mới 10 số BHXH) — ĐẦY ĐỦ 8/8 TRƯỜNG
     const isBhyt =
       upperText.includes("BẢO HIỂM Y TẾ") ||
       upperText.includes("BAO HIEM Y TE") ||
       upperText.includes("BẢO HIỂM XÃ HỘI") ||
       upperText.includes("BAO HIEM XA HOI") ||
       upperText.includes("HEALTH INSURANCE") ||
+      upperText.includes("ĐK KCB BAN ĐẦU") ||
+      upperText.includes("DK KCB BAN DAU") ||
       /\b(?:DN|HX|CH|NN|TK|HC|XK|CA|HT|TB|MS|XB|XN|TN|CC|CK|CB|KC|HD|TE|BT|HN|DT|DK|XD|TS|TC|TQ|TA|TY|HG|LS|CN|HS|SV|GB|GD|PV)[1-5]\d{12}\b/.test(
         upperText.replace(/\s+/g, "")
       );
@@ -1835,38 +2130,69 @@
       );
       const code10 = rawText.match(/\b(\d{10})\b/);
       const bhytCode = code15 ? code15[1] : code10 ? code10[1] : "";
+      const bhxhCode = code15 ? code15[1].slice(-10) : code10 ? code10[1] : "";
       let fullName = "";
-      for (const l of lines) {
+      let gender = "";
+      let address = "";
+      let hospitalName = "";
+      let fiveYearDate = "";
+
+      for (let i = 0; i < lines.length; i++) {
+        const l = lines[i];
         const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
         if (
+          !fullName &&
           cleanL === l.trim() &&
           cleanL.split(/\s+/).length >= 2 &&
           cleanL.length >= 7 &&
-          !/BẢO HIỂM|BAO HIEM|VIỆT NAM|VIET NAM|THẺ|THE/i.test(cleanL)
+          !/BẢO HIỂM|BAO HIEM|VIỆT NAM|VIET NAM|THẺ|THE|QUYỀN LỢI|QUYEN LOI/i.test(cleanL)
         ) {
-          fullName = cleanL;
-          break;
+          fullName = restoreVietnameseCardDiacritics(cleanL, true);
+        }
+        if (/giới\s*tính|gioi\s*tinh/i.test(l)) {
+          if (/nữ|nu/i.test(l)) gender = "Nữ";
+          else if (/nam/i.test(l)) gender = "Nam";
+        }
+        if (/địa\s*chỉ|dia\s*chi/i.test(l)) {
+          address = restoreVietnameseCardDiacritics(l.replace(/.*(?:địa\s*chỉ|dia\s*chi)[:.\s/]*/i, "").trim(), false);
+        }
+        if (/kcb\s*ban\s*đầu|kcb\s*ban\s*dau|nơi\s*đk\s*kcb|noi\s*dk\s*kcb/i.test(l)) {
+          const tail = l.replace(/.*(?:ban\s*đầu|ban\s*dau|đk\s*kcb|dk\s*kcb)[:.\s/]*/i, "").trim();
+          hospitalName = restoreVietnameseCardDiacritics(tail || (lines[i + 1] || "").trim(), false);
+        }
+        if (/5\s*năm\s*liên\s*tục|5\s*nam\s*lien\s*tuc/i.test(l)) {
+          const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
+          if (dm) fiveYearDate = dm[1];
         }
       }
-      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      const dates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
       const dob = dates.length >= 1 ? dates[0] : "";
-      const expiry = dates.length >= 2 ? dates[dates.length - 1] : "";
+      const validFrom = dates.length >= 2 ? dates[1] : "";
+      const expiry = dates.length >= 3 ? dates[2] : dates.length === 2 ? dates[1] : "";
 
       if (titleInp) titleInp.value = `Thẻ BHYT: ${fullName || bhytCode}`;
       if (userInp && bhytCode) userInp.value = bhytCode;
       if (passInp) {
         const meta = [];
+        if (fullName) meta.push(`Họ tên: ${fullName}`);
+        if (bhytCode) meta.push(`Mã BHYT: ${bhytCode}`);
+        if (bhxhCode && bhxhCode !== bhytCode) meta.push(`Mã BHXH: ${bhxhCode}`);
         if (dob) meta.push(`NS: ${dob}`);
+        if (gender) meta.push(`GT: ${gender}`);
+        if (address) meta.push(`Địa chỉ: ${address}`);
+        if (hospitalName) meta.push(`Nơi ĐK KCB: ${hospitalName}`);
+        if (validFrom && validFrom !== expiry) meta.push(`Hiệu lực từ: ${validFrom}`);
         if (expiry) meta.push(`HSD: ${expiry}`);
-        if (meta.length > 0) passInp.value = meta.join(" | ");
+        if (fiveYearDate) meta.push(`Thời điểm 5 năm: ${fiveYearDate}`);
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", meta);
       }
       if (typeof window.showKryptoToast === "function") {
-        window.showKryptoToast(`🤖 Đã nhận dạng Thẻ BHYT: ${bhytCode || fullName}!`);
+        window.showKryptoToast(`🤖 Đã bóc tách đầy đủ Thẻ BHYT: ${bhytCode || fullName}!`);
       }
       return;
     }
 
-    // CASE 2D: Nhận diện GIẤY ĐĂNG KÝ XE / CAVET Ô TÔ - XE MÁY (VEHICLE REGISTRATION)
+    // CASE 2D: Nhận diện GIẤY ĐĂNG KÝ XE / CAVET Ô TÔ - XE MÁY (VEHICLE REGISTRATION) — ĐẦY ĐỦ 10/10 TRƯỜNG
     const isVehicleReg =
       upperText.includes("ĐĂNG KÝ XE") ||
       upperText.includes("DANG KY XE") ||
@@ -1884,35 +2210,187 @@
       }
       const plateMatch = upperText.match(/\b(\d{2}[A-Z]\d?[-\s.]?\d{3,5}(?:\.\d{2})?)\b/);
       const plateNo = plateMatch ? plateMatch[1].replace(/\s+/g, "-") : "";
+      let ownerName = "";
+      let address = "";
       let brandModel = "";
-      const brandMatch = rawText.match(/(?:Nhãn hiệu|Brand)[:.\s/]*([A-Za-z0-9\s\-]+)/i);
-      if (brandMatch) brandModel = brandMatch[1].trim();
-      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      let vehicleType = "";
+      let color = "";
+      let chassisNo = "";
+      let engineNo = "";
+      let capacity = "";
+      let seats = "";
+
+      for (let i = 0; i < lines.length; i++) {
+        const l = lines[i];
+        if (/tên\s*chủ\s*xe|ten\s*chu\s*xe|owner.?s?\s*full\s*name/i.test(l)) {
+          const tail = l.replace(/.*(?:tên\s*chủ\s*xe|ten\s*chu\s*xe|full\s*name)[:.\s/]*/i, "").trim();
+          ownerName = restoreVietnameseCardDiacritics(tail || (lines[i + 1] || "").trim(), true);
+        }
+        if (/địa\s*chỉ|dia\s*chi|address/i.test(l)) {
+          const tail = l.replace(/.*(?:địa\s*chỉ|dia\s*chi|address)[:.\s/]*/i, "").trim();
+          address = restoreVietnameseCardDiacritics(tail || (lines[i + 1] || "").trim(), false);
+        }
+        if (/nhãn\s*hiệu|nhan\s*hieu|brand/i.test(l)) {
+          const m = l.match(/(?:nhãn\s*hiệu|nhan\s*hieu|brand)[:.\s/]*([A-Za-z0-9\s\-]+)/i);
+          if (m) brandModel = m[1].trim();
+        }
+        if (/loại\s*xe|loai\s*xe|type/i.test(l)) {
+          const m = l.match(/(?:loại\s*xe|loai\s*xe|type)[:.\s/]*([A-Za-zÀ-ỹ0-9\s\-]+)/i);
+          if (m) vehicleType = restoreVietnameseCardDiacritics(m[1].trim(), false);
+        }
+        if (/màu\s*sơn|mau\s*son|color/i.test(l)) {
+          const m = l.match(/(?:màu\s*sơn|mau\s*son|color)[:.\s/]*([A-Za-zÀ-ỹ\s\-]+)/i);
+          if (m) color = restoreVietnameseCardDiacritics(m[1].trim(), false);
+        }
+        if (/số\s*khung|so\s*khung|chassis/i.test(l)) {
+          const m = l.match(/(?:số\s*khung|so\s*khung|chassis[^:]*?)[:.\s/]*([A-Z0-9\-]{6,20})/i);
+          if (m) chassisNo = m[1].trim().toUpperCase();
+        }
+        if (/số\s*máy|so\s*may|engine/i.test(l)) {
+          const m = l.match(/(?:số\s*máy|so\s*may|engine[^:]*?)[:.\s/]*([A-Z0-9\-]{5,20})/i);
+          if (m) engineNo = m[1].trim().toUpperCase();
+        }
+        if (/dung\s*tích|dung\s*tich|capacity/i.test(l)) {
+          const m = l.match(/(\d{2,4}\s*cm3|\d{2,4})/i);
+          if (m) capacity = m[1].trim();
+        }
+        if (/chỗ\s*ngồi|cho\s*ngoi|sit/i.test(l)) {
+          const m = l.match(/(\d{1,2})\b/);
+          if (m) seats = m[1];
+        }
+      }
+      const dates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
+      const issueDate = dates.length >= 1 ? dates[0] : "";
       const expiry = dates.length >= 2 ? dates[dates.length - 1] : "";
 
       if (titleInp) {
-        titleInp.value = `Đăng ký xe: ${plateNo || brandModel || "Phương tiện"}`;
+        titleInp.value = `Đăng ký xe: ${plateNo || brandModel || ownerName || "Phương tiện"}`;
       }
-      if (userInp && plateNo) userInp.value = `Biển số: ${plateNo}`;
+      if (userInp && plateNo) userInp.value = plateNo;
       if (passInp) {
         const meta = [];
-        if (brandModel) meta.push(`Hiệu: ${brandModel}`);
+        if (ownerName) meta.push(`Chủ xe: ${ownerName}`);
+        if (plateNo) meta.push(`Biển số: ${plateNo}`);
+        if (brandModel) meta.push(`Nhãn hiệu: ${brandModel}`);
+        if (vehicleType) meta.push(`Loại xe: ${vehicleType}`);
+        if (color) meta.push(`Màu sơn: ${color}`);
+        if (chassisNo) meta.push(`Số khung: ${chassisNo}`);
+        if (engineNo) meta.push(`Số máy: ${engineNo}`);
+        if (capacity) meta.push(`Dung tích: ${capacity}`);
+        if (seats) meta.push(`Số chỗ: ${seats}`);
+        if (address) meta.push(`Địa chỉ: ${address}`);
+        if (issueDate) meta.push(`Ngày cấp: ${issueDate}`);
         if (expiry) meta.push(`HSD: ${expiry}`);
-        if (meta.length > 0) passInp.value = meta.join(" | ");
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", meta);
       }
       if (typeof window.showKryptoToast === "function") {
-        window.showKryptoToast(`🤖 Đã nhận dạng Giấy đăng ký xe (Cavet): ${plateNo || brandModel}!`);
+        window.showKryptoToast(`🤖 Đã bóc tách đầy đủ Giấy đăng ký xe (Cavet): ${plateNo || brandModel}!`);
       }
       return;
     }
 
-    // CASE 3: Nhận diện GIẤY PHÉP LÁI XE / BẰNG LÁI XE (DRIVER'S LICENSE - BỘ GTVT)
+    // CASE 2E: Nhận diện THẺ SINH VIÊN / THẺ NHÂN VIÊN / THẺ CÔNG CHỨC / CHỨNG CHỈ HÀNH NGHỀ / THẺ MÃ SỐ THUẾ
+    const isStudentOrStaffCard =
+      upperText.includes("THẺ SINH VIÊN") ||
+      upperText.includes("THE SINH VIEN") ||
+      upperText.includes("STUDENT ID") ||
+      upperText.includes("STUDENT CARD") ||
+      upperText.includes("MSSV") ||
+      upperText.includes("THẺ NHÂN VIÊN") ||
+      upperText.includes("THE NHAN VIEN") ||
+      upperText.includes("THẺ CÁN BỘ") ||
+      upperText.includes("THE CAN BO") ||
+      upperText.includes("EMPLOYEE ID") ||
+      upperText.includes("STAFF CARD") ||
+      upperText.includes("CHỨNG CHỈ HÀNH NGHỀ") ||
+      upperText.includes("CHUNG CHI HANH NGHE") ||
+      upperText.includes("MÃ SỐ THUẾ") ||
+      upperText.includes("MA SO THUE");
+
+    if (
+      isStudentOrStaffCard &&
+      !upperText.includes("CĂN CƯỚC") &&
+      !upperText.includes("GIẤY PHÉP LÁI XE")
+    ) {
+      if (typeSel) typeSel.value = "IDENTITY";
+      const isStudent = /SINH VIÊN|SINH VIEN|STUDENT|MSSV/i.test(upperText);
+      const isTax = /MÃ SỐ THUẾ|MA SO THUE/i.test(upperText);
+      const cardLabel = isStudent ? "Thẻ Sinh viên" : isTax ? "Thẻ Mã số thuế" : "Thẻ Nhân viên / Cán bộ";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = cardLabel;
+      }
+
+      let idCode = "";
+      let fullName = "";
+      let orgName = "";
+      let deptName = "";
+      let roleTitle = "";
+      let courseYear = "";
+
+      const codeMatch =
+        rawText.match(/(?:MSSV|MSNV|Mã\s*SV|Mã\s*NV|Mã\s*số\s*thuế|ID\s*No|Số\s*thẻ)[:.\s/]*([A-Z0-9\-]{5,15})/i) ||
+        rawText.match(/\b(\d{8,13})\b/);
+      if (codeMatch) idCode = codeMatch[1].trim();
+
+      for (const l of lines) {
+        if (/TRƯỜNG|TRUONG|ĐẠI HỌC|DAI HOC|HỌC VIỆN|HOC VIEN|UNIVERSITY|COLLEGE|CÔNG TY|CONG TY|VIỆN|VIEN|BỆNH VIỆN|BENH VIEN/i.test(l) && !orgName) {
+          orgName = restoreVietnameseCardDiacritics(l.trim(), false);
+        }
+        if (/KHOA|PHÒNG|PHONG|BAN|FACULTY|DEPARTMENT/i.test(l) && !deptName) {
+          deptName = restoreVietnameseCardDiacritics(l.trim(), false);
+        }
+        if (/CHỨC VỤ|CHUC VU|POSITION|TITLE/i.test(l) && !roleTitle) {
+          roleTitle = restoreVietnameseCardDiacritics(l.replace(/.*(?:chức\s*vụ|chuc\s*vu|position|title)[:.\s/]*/i, "").trim(), false);
+        }
+        if (/KHÓA|KHOA\s*HỌC|NIÊN\s*KHÓA|NIEN\s*KHOA|LỚP|LOP|COURSE|CLASS/i.test(l) && !courseYear) {
+          courseYear = restoreVietnameseCardDiacritics(l.trim(), false);
+        }
+        const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
+        if (
+          !fullName &&
+          cleanL === l.trim() &&
+          cleanL.split(/\s+/).length >= 2 &&
+          cleanL.split(/\s+/).length <= 5 &&
+          cleanL.length >= 7 &&
+          !/TRƯỜNG|TRUONG|ĐẠI HỌC|DAI HOC|SINH VIÊN|SINH VIEN|NHÂN VIÊN|NHAN VIEN|CÁN BỘ|CAN BO|CÔNG TY|CONG TY|VIỆT NAM|VIET NAM/i.test(cleanL)
+        ) {
+          fullName = restoreVietnameseCardDiacritics(cleanL, true);
+        }
+      }
+
+      const dates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
+      const dob = dates.length >= 1 ? dates[0] : "";
+      const expiry = dates.length >= 2 ? dates[dates.length - 1] : "";
+
+      if (titleInp) titleInp.value = `${cardLabel}: ${fullName || idCode || orgName}`;
+      if (userInp && idCode) userInp.value = idCode;
+      if (passInp) {
+        const meta = [];
+        if (fullName) meta.push(`Họ tên: ${fullName}`);
+        if (idCode) meta.push(`${isTax ? "Mã số thuế" : "Mã SV/NV"}: ${idCode}`);
+        if (orgName) meta.push(`Trường/Đơn vị: ${orgName}`);
+        if (deptName) meta.push(`Khoa/Phòng: ${deptName}`);
+        if (roleTitle) meta.push(`Chức vụ: ${roleTitle}`);
+        if (courseYear) meta.push(`Khóa/Lớp: ${courseYear}`);
+        if (dob) meta.push(`NS: ${dob}`);
+        if (expiry) meta.push(`HSD: ${expiry}`);
+        const extraKv = extractUniversalKeyValues(lines);
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", [...meta, ...extraKv]);
+      }
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã bóc tách ${cardLabel}: ${fullName || idCode}!`);
+      }
+      return;
+    }
+
+    // CASE 3: Nhận diện GIẤY PHÉP LÁI XE / BẰNG LÁI XE (DRIVER'S LICENSE - BỘ GTVT / BỘ CÔNG AN — Mẫu PET cũ B1/B2 & Mẫu mới 2025/2026 C1/B/A1) — ĐẦY ĐỦ 8/8 TRƯỜNG
     const isDriverLicense =
       upperText.includes("GIẤY PHÉP LÁI XE") ||
       upperText.includes("GIAY PHEP LAI XE") ||
       upperText.includes("DRIVER'S LICENSE") ||
       upperText.includes("DRIVERS LICENSE") ||
       upperText.includes("DRIVER LICENSE") ||
+      upperText.includes("DRIVING LICENCE") ||
       upperText.includes("BỘ GTVT") ||
       upperText.includes("BO GTVT") ||
       upperText.includes("CLASSIFICATION OF MOTOR") ||
@@ -1938,21 +2416,25 @@
       let gplxNo = "";
       let fullName = "";
       let dob = "";
+      let nationality = "Việt Nam";
+      let address = "";
       let expiry = "";
+      let issueDate = "";
       let beginDate = "";
       let licenseClass = "";
+      let vehicleScope = "";
       let serialNo = "";
+      let issuedBy = "";
 
-      // 3A. Tìm Số GPLX (12 chữ số, ví dụ: 010070000011)
-      const m12 = rawText.match(/(?:^|[^0-9])(0\d{11})(?:[^0-9]|$)/);
-      if (m12) {
-        gplxNo = m12[1];
-      }
+      // 3A. Tìm Số GPLX (12 chữ số, ví dụ: 010070000011 hoặc 790123456789)
+      const m12 = rawText.match(/(?:^|[^0-9])(\d{12})(?:[^0-9]|$)/);
+      if (m12) gplxNo = m12[1];
 
-      // 3B. Tìm Hạng bằng lái xe (A1, A2, A3, A4, B1, B2, C, D, E, FB2, FC, FD, FE)
+      // 3B. Tìm Hạng bằng lái xe (Hỗ trợ cả mẫu cũ A1..FE và mẫu mới Luật TTATGTĐB: A1, A, B1, B, C1, C, D1, D2, D, BE, C1E, CE, D1E, D2E, DE)
       const classMatch =
-        rawText.match(/(?:Hạng|Hang|Class)[:.\s/]*\b(A[1-4]|B[12]|FB2|F[CDE]|[CDE])\b/i) ||
-        rawText.match(/\bClass[:.\s/]*([A-F][1-4]?)\b/i);
+        rawText.match(/(?:Hạng|Hang|Class)[:.\s/]*\b(A[1-4]?|B[12E]?|C1E?|CE?|D[12]?E?|FB2|F[CDE])\b/i) ||
+        rawText.match(/\bClass[:.\s/]*([A-F][1-4E]?)\b/i) ||
+        rawText.match(/\b(B1|B2|A1|A2|C1|B|C|D|E|FC)\b/);
       if (classMatch) {
         licenseClass = classMatch[1].toUpperCase();
       }
@@ -1963,7 +2445,7 @@
         serialNo = serialMatch[1];
       }
 
-      // 3D. Tìm Họ tên trên GPLX (dòng chứa Họ tên/Full name hoặc dòng IN HOA ngay dưới Số/No)
+      // 3D. Tìm Họ tên trên GPLX
       for (let i = 0; i < lines.length; i++) {
         if (/full\s*name|họ\s*tên|ho\s*ten|họ\s*và\s*tên/i.test(lines[i])) {
           const afterColon = lines[i]
@@ -1975,7 +2457,7 @@
           }
           for (let k = i + 1; k <= Math.min(lines.length - 1, i + 2); k++) {
             const nxt = lines[k].trim();
-            if (/ngày\s*sinh|date\s*of\s*birth|quốc\s*tịch|nationality|\d/i.test(nxt)) {
+            if (/ngày\s*sinh|ngay\s*sinh|date\s*of\s*birth|quốc\s*tịch|quoc\s*tich|nationality|\d/i.test(nxt)) {
               break;
             }
             const cleanNxt = nxt.replace(/[^A-ZÀ-Ỹ\s]/gi, "").trim();
@@ -1984,7 +2466,7 @@
             }
           }
           if (nameParts.length > 0) {
-            fullName = nameParts.join(" ").replace(/\s+/g, " ").trim();
+            fullName = restoreVietnameseCardDiacritics(nameParts.join(" "), true);
             break;
           }
         }
@@ -1999,33 +2481,71 @@
             words.length >= 2 &&
             words.length <= 5 &&
             cleanL.length >= 7 &&
-            !/CONG HOA|CỘNG HÒA|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|GIAY PHEP|GIẤY PHÉP|LAI XE|LÁI XE|DRIVER|LICENSE|BO GTVT|BỘ GTVT|MOTOR|VEHICLE|CLASSIFICATION|GIÁM ĐỐC|GIAM DOC|CỤC ĐƯỜNG BỘ/i.test(
+            !/CONG HOA|CỘNG HÒA|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|GIAY PHEP|GIẤY PHÉP|LAI XE|LÁI XE|DRIVER|LICENSE|BO GTVT|BỘ GTVT|MOTOR|VEHICLE|CLASSIFICATION|GIÁM ĐỐC|GIAM DOC|CỤC ĐƯỜNG BỘ|LE NGOC DIEN|LÊ NGỌC DIỄN/i.test(
               cleanL
             )
           ) {
-            fullName = cleanL;
+            fullName = restoreVietnameseCardDiacritics(cleanL, true);
             break;
           }
         }
       }
 
-      // 3E. Tìm Ngày sinh, Ngày trúng tuyển (Beginning date), Có giá trị đến (Expires)
-      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      // 3E. Tìm Nơi cư trú / Address trên GPLX
+      for (let i = 0; i < lines.length; i++) {
+        if (/cư\s*trú|cu\s*tru|address/i.test(lines[i])) {
+          const sameTail = lines[i].replace(/.*(?:cư\s*trú|cu\s*tru|address)[:.\s/]*/i, "").trim();
+          const addrParts = [];
+          if (sameTail && sameTail.length >= 2) addrParts.push(sameTail);
+          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 2); k++) {
+            const nxt = lines[k]
+              .replace(/Có giá trị.*|Co gia tri.*|Date of.*|Expires.*|Hạng\/Class.*|Hang\/Class.*/gi, "")
+              .trim();
+            if (/hạng|class|có giá trị|expires|ngày|date|giám đốc|giam doc/i.test(lines[k]) && !nxt) break;
+            if (nxt && nxt.length >= 3) addrParts.push(nxt);
+          }
+          if (addrParts.length > 0) {
+            address = restoreVietnameseCardDiacritics(addrParts.join(", "), false);
+            break;
+          }
+        }
+      }
+
+      // 3F. Tìm Ngày sinh, Ngày trúng tuyển (Beginning date), Có giá trị đến (Expires / Không thời hạn)
+      if (/không\s*thời\s*hạn|khong\s*thoi\s*han|unlimited/i.test(rawText)) {
+        expiry = "Không thời hạn";
+      }
+      const allDates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
       for (const l of lines) {
         const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
         if (!dm) continue;
         if (/sinh|birth/i.test(l)) dob = dm[1];
-        else if (/giá trị|expires|expiry/i.test(l)) expiry = dm[1];
-        else if (/trúng tuyển|beginning/i.test(l)) beginDate = dm[1];
+        else if (/giá\s*trị|gia\s*tri|expires|expiry/i.test(l)) expiry = dm[1];
+        else if (/trúng\s*tuyển|trung\s*tuyen|beginning/i.test(l)) beginDate = dm[1];
       }
       if (slot === "front") {
-        if (!dob && dates.length >= 1) dob = dates[0];
-        if (!expiry && dates.length >= 2) expiry = dates[dates.length - 1];
+        if (!dob && allDates.length >= 1) dob = allDates[0];
+        if (!expiry && allDates.length >= 2) expiry = allDates[allDates.length - 1];
       } else if (slot === "back") {
-        if (!beginDate && dates.length >= 1) beginDate = dates[0];
+        if (!beginDate && allDates.length >= 1) beginDate = allDates[0];
+      }
+      const vnIssueMatch =
+        rawText.match(/ngày\s*(\d{1,2})\s*tháng\s*(\d{1,2})\s*năm\s*(\d{4})/i) ||
+        rawText.match(/ngay\s*(\d{1,2})\s*thang\s*(\d{1,2})\s*nam\s*(\d{4})/i);
+      if (vnIssueMatch) {
+        issueDate = `${vnIssueMatch[1].padStart(2, "0")}/${vnIssueMatch[2].padStart(2, "0")}/${vnIssueMatch[3]}`;
+      }
+      if (/9\s*chỗ|9\s*cho|3500\s*kg|9\s*seats/i.test(rawText)) {
+        vehicleScope = "Ô tô chở người đến 9 chỗ ngồi, tải trọng < 3.500 kg";
+      } else if (/mô\s*tô\s*hai\s*bánh|mo\s*to\s*hai\s*banh|175\s*cm3/i.test(rawText)) {
+        vehicleScope = "Xe mô tô hai bánh có dung tích xi-lanh từ 50 đến dưới 175 cm3";
+      }
+      if (/LÊ\s*NGỌC\s*DIỄN|LE\s*NGOC\s*DIEN/i.test(rawText)) {
+        issuedBy = "Sở GTVT Hà Nội (KT. Giám đốc: Lê Ngọc Diễn)";
+      } else if (/CẢNH\s*SÁT\s*GIAO\s*THÔNG|CANH\s*SAT\s*GIAO\s*THONG|TRAFFIC\s*POLICE/i.test(rawText)) {
+        issuedBy = "Cục Cảnh sát Giao thông - Bộ Công an";
       }
 
-      // Cập nhật Tên dịch vụ / Tên thẻ: "GPLX Hạng B1: TRƯƠNG TUẤN ANH"
       const classPrefix = licenseClass ? `GPLX Hạng ${licenseClass}` : "GPLX";
       if (titleInp) {
         const curTitle = (titleInp.value || "")
@@ -2050,42 +2570,53 @@
       if (licenseClass) detectedFields.push(`Hạng: ${licenseClass}`);
 
       if (passInp) {
-        // Xóa bỏ các trường CVV/HSD giả nếu trước đó bị nhận nhầm
         let curPass = (passInp.value || "")
-          .replace(/\s*\|?\s*HSD:\s*\d{2}\/\d{4}/g, "")
-          .replace(/\s*\|?\s*CVV:\s*\d{3}/g, "")
+          .replace(/\s*\|?\s*HSD:\s*\d{2}\/\d{2}\b/g, "")
+          .replace(/\s*\|?\s*CVV:\s*\d{3}\b/g, "")
           .trim();
-        const metaParts = [];
-        if (licenseClass && !curPass.includes(`Hạng: ${licenseClass}`))
-          metaParts.push(`Hạng: ${licenseClass}`);
-        if (dob && !curPass.includes(dob)) metaParts.push(`NS: ${dob}`);
-        if (expiry && !curPass.includes(expiry)) metaParts.push(`HSD: ${expiry}`);
-        if (beginDate && !curPass.includes(beginDate))
-          metaParts.push(`Trúng tuyển: ${beginDate}`);
-        if (serialNo && !curPass.includes(serialNo))
-          metaParts.push(`Số phôi: ${serialNo}`);
-        if (metaParts.length > 0) {
-          passInp.value = curPass
-            ? `${curPass} | ${metaParts.join(" | ")}`
-            : metaParts.join(" | ");
-        }
+        const newEntries = [];
+        if (fullName) newEntries.push(`Họ tên: ${fullName}`);
+        if (gplxNo) newEntries.push(`Số GPLX: ${gplxNo}`);
+        if (licenseClass) newEntries.push(`Hạng: ${licenseClass}`);
+        if (dob) newEntries.push(`NS: ${dob}`);
+        if (nationality) newEntries.push(`QT: ${nationality}`);
+        if (address) newEntries.push(`Nơi cư trú: ${address}`);
+        if (expiry) newEntries.push(`HSD: ${expiry}`);
+        if (beginDate) newEntries.push(`Trúng tuyển: ${beginDate}`);
+        if (issueDate) newEntries.push(`Ngày cấp: ${issueDate}`);
+        if (serialNo) newEntries.push(`Số phôi: ${serialNo}`);
+        if (vehicleScope) newEntries.push(`Phạm vi: ${vehicleScope}`);
+        if (issuedBy) newEntries.push(`Nơi cấp: ${issuedBy}`);
+        passInp.value = mergeKeyValMetadataString(curPass, newEntries);
       }
 
       if (detectedFields.length > 0 && typeof window.showKryptoToast === "function") {
         window.showKryptoToast(
-          `🤖 Đã nhận dạng chuẩn xác Bằng lái xe (GPLX): ${detectedFields.join(" • ")}!`
+          `🤖 Đã nhận dạng đầy đủ Bằng lái xe (GPLX): ${detectedFields.join(" • ")}!`
         );
       }
       return;
     }
 
-    // CASE 4: Nhận diện Căn cước công dân Việt Nam (Mặt trước hoặc Mặt sau có MRZ ICAO 9303 IDVNM)
+    // CASE 4: Nhận diện CĂN CƯỚC CÔNG DÂN / THẺ CĂN CƯỚC MẪU MỚI 2024-2026 / CMND 9-12 SỐ — ĐẦY ĐỦ 10/10 TRƯỜNG
+    // Hỗ trợ cả 3 mẫu:
+    //   - Mẫu 1: CCCD gắn chip (2021-2024: Số/No., Họ và tên, Ngày sinh, Giới tính, Quốc tịch, Quê quán, Nơi thường trú, ĐĐND)
+    //   - Mẫu 2: Thẻ Căn cước mới Luật 26/2023/QH15 (từ 01/07/2024: "CĂN CƯỚC / IDENTITY CARD", Số định danh cá nhân / Personal identification number, Nơi đăng ký khai sinh / Place of birth, Nơi cư trú / Place of residence, Bộ Công an / Ministry of Public Security ở mặt sau)
+    //   - Mẫu 3: CMND 9 số / CCCD mã vạch
     const isCccd =
       upperText.includes("IDVNM") ||
       upperText.includes("CĂN CƯỚC") ||
       upperText.includes("CAN CUOC") ||
+      upperText.includes("CHỨNG MINH NHÂN DÂN") ||
+      upperText.includes("CHUNG MINH NHAN DAN") ||
       upperText.includes("CITIZEN IDENTITY") ||
+      upperText.includes("IDENTITY CARD") ||
+      upperText.includes("ĐỊNH DANH CÁ NHÂN") ||
+      upperText.includes("DINH DANH CA NHAN") ||
+      upperText.includes("PERSONAL IDENTIFICATION") ||
       upperText.includes("SOCIALIST REPUBLIC") ||
+      upperText.includes("ĐẶC ĐIỂM NHẬN DẠNG") ||
+      upperText.includes("DAC DIEM NHAN DANG") ||
       /\b0\d{11}\b/.test(rawText);
 
     if (isCccd) {
@@ -2098,24 +2629,37 @@
       let cccdNo = "";
       let fullName = "";
       let dob = "";
+      let gender = "";
+      let nationality = "Việt Nam";
+      let originPlace = "";
+      let residencePlace = "";
       let expiry = "";
+      let personalIdFeature = "";
       let issueDate = "";
+      let issuedBy = "";
+      let mrzCode = "";
 
-      // 4A. ƯU TIÊN 1: Tìm Số CCCD 12 chữ số đứng độc lập trên Mặt trước (VD: Số / No.: 035079004448)
+      // 4A. Tìm Số CCCD / Số định danh cá nhân 12 chữ số (hoặc CMND 9 chữ số nếu thẻ cũ)
       const standalone12 = rawText.match(/(?:^|[^0-9])(0\d{11})(?:[^0-9]|$)/);
       if (standalone12) {
         cccdNo = standalone12[1];
+      } else {
+        const cmnd9 = rawText.match(/(?:Số|So|No\.?)[:.\s/]*(\d{9})\b/i);
+        if (cmnd9) cccdNo = cmnd9[1];
       }
 
-      // 4B. ƯU TIÊN 2: Giải mã chuẩn ICAO 9303 TD1 MRZ trên Mặt sau CCCD:
+      // 4B. Giải mã chuẩn ICAO 9303 TD1 MRZ trên Mặt sau CCCD / Thẻ Căn cước (3 dòng x 30 ký tự):
+      // Dòng 1: IDVNM0790044482035079004448<<6
       const mrzLine1 = lines.find((l) => l.toUpperCase().replace(/\s+/g, "").includes("IDVNM"));
-      if (mrzLine1 && !cccdNo) {
+      if (mrzLine1) {
         const cleanMrz1 = mrzLine1
           .toUpperCase()
           .replace(/\s+/g, "")
-          .replace(/O/g, "0");
+          .replace(/O/g, "0")
+          .replace(/[IL]/g, "1");
+        mrzCode = cleanMrz1;
         const idvnmIdx = cleanMrz1.indexOf("IDVNM");
-        if (idvnmIdx >= 0) {
+        if (idvnmIdx >= 0 && !cccdNo) {
           const afterIdvnm = cleanMrz1.slice(idvnmIdx + 5);
           const candidate12 = afterIdvnm.slice(10, 22);
           if (/^0\d{11}$/.test(candidate12)) {
@@ -2127,34 +2671,47 @@
         }
       }
 
-      const mrzLine2 = lines.find((l) => {
+      // Dòng 2 MRZ: 7912126M3912128VNM<<<<<<<<<<<4
+      for (const l of lines) {
         const cl = l.toUpperCase().replace(/\s+/g, "");
-        return /^\d{6,7}[MF<]\d{6,7}VNM/.test(cl);
-      });
-      if (mrzLine2) {
-        const cl2 = mrzLine2.toUpperCase().replace(/\s+/g, "");
-        const m2 = cl2.match(/^(\d{2})(\d{2})(\d{2})\d[MF<](\d{2})(\d{2})(\d{2})/);
-        if (m2) {
-          const yyB = parseInt(m2[1], 10);
-          const yearB = yyB > 30 ? 1900 + yyB : 2000 + yyB;
-          dob = `${m2[3]}/${m2[2]}/${yearB}`;
-          const yyE = parseInt(m2[4], 10);
-          const yearE = 2000 + yyE;
-          expiry = `${m2[6]}/${m2[5]}/${yearE}`;
+        const vnmIdx = cl.indexOf("VNM");
+        if (vnmIdx >= 14 && !cl.includes("IDVNM")) {
+          const prefix15 = cl
+            .slice(vnmIdx - 15, vnmIdx)
+            .replace(/O/g, "0")
+            .replace(/[IL]/g, "1")
+            .replace(/B/g, "8")
+            .replace(/S/g, "5")
+            .replace(/Z/g, "2");
+          const m2 = prefix15.match(/^(\d{2})(\d{2})(\d{2})\d([MF<])(\d{2})(\d{2})(\d{2})\d$/);
+          if (m2) {
+            const yyB = parseInt(m2[1], 10);
+            const yearB = yyB > 30 ? 1900 + yyB : 2000 + yyB;
+            dob = `${m2[3]}/${m2[2]}/${yearB}`;
+            if (m2[4] === "M") gender = "Nam";
+            else if (m2[4] === "F") gender = "Nữ";
+            const yyE = parseInt(m2[5], 10);
+            const yearE = 2000 + yyE;
+            expiry = `${m2[7]}/${m2[6]}/${yearE}`;
+            nationality = "Việt Nam";
+            break;
+          }
         }
       }
 
-      // 4C. Tìm Họ và tên đầy đủ trên Mặt trước
+      // 4C. Tìm Họ và tên đầy đủ trên Mặt trước (Hỗ trợ cả "Họ và tên" lẫn "Họ, chữ đệm và tên khai sinh" trên Thẻ Căn cước 2024)
       for (let i = 0; i < lines.length; i++) {
-        if (/full\s*name|họ\s*và\s*tên|ho\s*va\s*ten/i.test(lines[i])) {
-          const sameLinePart = lines[i].split(/[:.]/).slice(1).join(" ").trim();
+        if (/full\s*name|họ\s*và\s*tên|ho\s*va\s*ten|tên\s*khai\s*sinh|ten\s*khai\s*sinh/i.test(lines[i])) {
+          const sameLinePart = lines[i]
+            .replace(/.*(?:full\s*name|họ\s*và\s*tên|ho\s*va\s*ten|tên\s*khai\s*sinh|ten\s*khai\s*sinh)[:.\s/]*/i, "")
+            .trim();
           const nameParts = [];
           if (sameLinePart && /^[A-ZÀ-Ỹ\s]{4,}$/.test(sameLinePart)) {
             nameParts.push(sameLinePart);
           }
           for (let k = i + 1; k <= Math.min(lines.length - 1, i + 2); k++) {
             const nxt = lines[k].trim();
-            if (/ngày\s*sinh|date\s*of\s*birth|giới\s*tính|sex|quốc\s*tịch|\d/i.test(nxt)) {
+            if (/ngày\s*sinh|ngay\s*sinh|date\s*of\s*birth|giới\s*tính|gioi\s*tinh|sex|quốc\s*tịch|\d/i.test(nxt)) {
               break;
             }
             const cleanNxt = nxt.replace(/[^A-ZÀ-Ỹ\s]/gi, "").trim();
@@ -2163,7 +2720,7 @@
             }
           }
           if (nameParts.length > 0) {
-            fullName = nameParts.join(" ").replace(/\s+/g, " ").trim();
+            fullName = restoreVietnameseCardDiacritics(nameParts.join(" "), true);
             break;
           }
         }
@@ -2178,11 +2735,11 @@
             words.length >= 2 &&
             words.length <= 5 &&
             cleanL.length >= 7 &&
-            !/CONG HOA|CỘNG HÒA|CAN CUOC|CĂN CƯỚC|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|HANH PHUC|HẠNH PHÚC|CẢNH SÁT|QUẢN LÝ|TRẬT TỰ|XÃ HỘI|CITIZEN|REPUBLIC/i.test(
+            !/CONG HOA|CỘNG HÒA|CAN CUOC|CĂN CƯỚC|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|HANH PHUC|HẠNH PHÚC|CẢNH SÁT|CANH SAT|QUẢN LÝ|QUAN LY|TRẬT TỰ|TRAT TU|XÃ HỘI|XA HOI|CITIZEN|REPUBLIC|DIRECTOR|DEPARTMENT|ADMINISTRATIVE|MANAGEMENT|BỘ CÔNG AN|BO CONG AN|MINISTRY/i.test(
               cleanL
             )
           ) {
-            fullName = cleanL;
+            fullName = restoreVietnameseCardDiacritics(cleanL, true);
             break;
           }
         }
@@ -2202,35 +2759,132 @@
             .replace(/\s+/g, " ")
             .trim();
           if (mrzName.split(" ").length >= 2) {
-            fullName = mrzName;
+            fullName = restoreVietnameseCardDiacritics(mrzName, true);
           }
         }
       }
 
-      const dates = rawText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/g) || [];
+      // 4D. Tìm Giới tính (Nam / Nữ) và Quốc tịch (Việt Nam)
+      for (const l of lines) {
+        if (/giới\s*tính|gioi\s*tinh|\bsex\b/i.test(l)) {
+          if (/\b(nữ|nu|female)\b/i.test(l)) gender = "Nữ";
+          else if (/\b(nam|male)\b/i.test(l)) gender = "Nam";
+        }
+        if (/quốc\s*tịch|quoc\s*tich|nationality/i.test(l)) {
+          const natM = l.match(/(?:nationality|quốc\s*tịch|quoc\s*tich)[:.\s/]*([A-Za-zÀ-ỹ\s]+)$/i);
+          if (natM) {
+            nationality = restoreVietnameseCardDiacritics(natM[1].trim(), false);
+          }
+        }
+      }
+      if (!gender) {
+        if (/\bSex[:.\s/]*(Nam|Male)\b/i.test(rawText)) gender = "Nam";
+        else if (/\bSex[:.\s/]*(Nữ|Nu|Female)\b/i.test(rawText)) gender = "Nữ";
+      }
+
+      // 4E. Tìm Ngày sinh (NS), Có giá trị đến (HSD), Ngày cấp
+      const allDates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
       for (const l of lines) {
         const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
         if (!dm) continue;
-        if (/sinh|birth/i.test(l)) dob = dm[1];
-        else if (/giá trị|expiry/i.test(l)) expiry = dm[1];
-        else if (/tháng,\s*năm|month,\s*year|cấp/i.test(l)) issueDate = dm[1];
+        if (/sinh|birth/i.test(l) && !/khai\s*sinh/i.test(l)) dob = dm[1];
+        else if (/giá\s*trị|gia\s*tri|expiry|expires/i.test(l)) expiry = dm[1];
+        else if (/tháng,\s*năm|thang,\s*nam|month,\s*year|ngày\s*cấp|ngay\s*cap|date\s*of\s*issue/i.test(l)) issueDate = dm[1];
       }
-      if (!dob && dates.length >= 1 && slot === "front") dob = dates[0];
-      if (!expiry && dates.length >= 2 && slot === "front") expiry = dates[dates.length - 1];
-      if (!issueDate && dates.length >= 1 && slot === "back") issueDate = dates[0];
+      if (!dob && allDates.length >= 1 && slot === "front") dob = allDates[0];
+      if (!expiry && allDates.length >= 2 && slot === "front") expiry = allDates[allDates.length - 1];
+      if (!issueDate && allDates.length >= 1 && slot === "back") issueDate = allDates[0];
 
-      let placeInfo = "";
+      if (!expiry && dob) {
+        expiry = computeStatutoryCccdExpiry(dob);
+      }
+
+      // 4F. Tìm Quê quán (Place of origin) hoặc Nơi đăng ký khai sinh (Place of birth - Thẻ Căn cước mới 2024)
       for (let i = 0; i < lines.length; i++) {
-        if (/thường trú|residence/i.test(lines[i])) {
-          const tailSame = lines[i]
-            .replace(/.*(?:thường trú|residence)[:.\s/]*/i, "")
+        if (/quê\s*quán|que\s*quan|place\s*of\s*origin|\borigin\b|đăng\s*ký\s*khai\s*sinh|dang\s*ky\s*khai\s*sinh|place\s*of\s*birth/i.test(lines[i])) {
+          const sameTail = lines[i]
+            .replace(/.*(?:quê\s*quán|que\s*quan|place\s*of\s*origin|\borigin\b|khai\s*sinh|place\s*of\s*birth)[:.\s/]*/i, "")
             .trim();
-          const nextLines = lines
-            .slice(i + 1, i + 3)
-            .filter((x) => !/có giá trị|date of expiry/i.test(x));
-          placeInfo = [tailSame, ...nextLines].filter(Boolean).join(", ");
-          break;
+          const origParts = [];
+          if (sameTail && sameTail.length >= 3 && !/\d{2}\/\d{2}\/\d{4}/.test(sameTail)) origParts.push(sameTail);
+          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 2); k++) {
+            if (/thường\s*trú|thuong\s*tru|cư\s*trú|cu\s*tru|residence|giá\s*trị|gia\s*tri|expiry|ngày\s*cấp|date\s*of\s*issue/i.test(lines[k])) {
+              break;
+            }
+            const cleanLine = lines[k]
+              .replace(/Có giá trị.*|Co gia tri.*|Date of expiry.*/gi, "")
+              .trim();
+            if (cleanLine && cleanLine.length >= 3) {
+              origParts.push(cleanLine);
+              break;
+            }
+          }
+          if (origParts.length > 0) {
+            originPlace = restoreVietnameseCardDiacritics(origParts.join(", "), false);
+            break;
+          }
         }
+      }
+
+      // 4G. Tìm Nơi thường trú / Nơi cư trú (Place of residence)
+      for (let i = 0; i < lines.length; i++) {
+        if (/thường\s*trú|thuong\s*tru|nơi\s*cư\s*trú|noi\s*cu\s*tru|place\s*of\s*res|res[il1]dence/i.test(lines[i])) {
+          const tailSame = lines[i]
+            .replace(/.*(?:thường\s*trú|thuong\s*tru|cư\s*trú|cu\s*tru|place\s*of\s*res[a-z]*|res[il1]dence)[:.\s/]*/i, "")
+            .replace(/Có giá trị.*|Co gia tri.*|Date of expiry.*/gi, "")
+            .trim();
+          const resParts = [];
+          if (tailSame && tailSame.length >= 2) resParts.push(tailSame);
+          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3); k++) {
+            if (/ngày\s*cấp|ngay\s*cap|date\s*of\s*issue|bộ\s*công\s*an|ministry/i.test(lines[k])) break;
+            const cleaned = lines[k]
+              .replace(/Có giá trị\s*đến[:.\s/]*(\d{2}\/\d{2}\/\d{4})?/gi, "")
+              .replace(/Co gia tri\s*den[:.\s/]*(\d{2}\/\d{2}\/\d{4})?/gi, "")
+              .replace(/Date\s*of\s*expiry[:.\s/]*(\d{2}\/\d{2}\/\d{4})?/gi, "")
+              .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, "")
+              .trim();
+            if (cleaned && cleaned.length >= 4 && !/IDVNM|<<<|CỤC TRƯỞNG|CUC TRUONG/i.test(cleaned)) {
+              resParts.push(cleaned);
+            }
+          }
+          if (resParts.length > 0) {
+            residencePlace = restoreVietnameseCardDiacritics(resParts.join(", "), false);
+            break;
+          }
+        }
+      }
+
+      // 4H. Tìm Đặc điểm nhận dạng (Personal identification) và Nơi cấp / Người ký trên Mặt sau
+      for (let i = 0; i < lines.length; i++) {
+        if ((/đặc\s*điểm|dac\s*diem|personal\s*identification/i.test(lines[i])) && !/number/i.test(lines[i])) {
+          const sameTail = lines[i]
+            .replace(/.*(?:nhận\s*dạng|nhan\s*dang|identification)[:.\s/]*/i, "")
+            .trim();
+          const featParts = [];
+          if (sameTail && sameTail.length >= 3) featParts.push(sameTail);
+          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3); k++) {
+            if (/ngày.*tháng|ngay.*thang|date.*month|cục\s*trưởng|cuc\s*truong|director/i.test(lines[k])) {
+              break;
+            }
+            const t = lines[k].trim();
+            if (t && t.length >= 2) featParts.push(t);
+          }
+          if (featParts.length > 0) {
+            personalIdFeature = restoreVietnameseCardDiacritics(featParts.join(" "), false);
+            break;
+          }
+        }
+      }
+
+      if (/CỤC\s*TRƯỞNG|CUC\s*TRUONG|DIRECTOR\s*GENERAL|POLICE\s*DEPARTMENT|QUẢN\s*LÝ\s*HÀNH\s*CHÍNH|QUAN\s*LY\s*HANH\s*CHINH/i.test(rawText)) {
+        let signer = "";
+        if (/Phạm\s*Công\s*Nguyên|Pham\s*Cong\s*Nguyen/i.test(rawText)) signer = "Phạm Công Nguyên";
+        else if (/Tô\s*Văn\s*Huệ|To\s*Van\s*Hue/i.test(rawText)) signer = "Tô Văn Huệ";
+        else if (/Nguyễn\s*Quốc\s*Hùng|Nguyen\s*Quoc\s*Hung/i.test(rawText)) signer = "Nguyễn Quốc Hùng";
+        else if (/Vũ\s*Văn\s*Tấn|Vu\s*Van\s*Tan/i.test(rawText)) signer = "Vũ Văn Tấn";
+        issuedBy = "Cục trưởng Cục Cảnh sát QLHC về TTXH" + (signer ? ` (${signer})` : "");
+      } else if (/BỘ\s*CÔNG\s*AN|BO\s*CONG\s*AN|MINISTRY\s*OF\s*PUBLIC\s*SECURITY/i.test(rawText)) {
+        issuedBy = "Bộ Công an (Ministry of Public Security)";
       }
 
       if (titleInp && fullName) {
@@ -2251,7 +2905,7 @@
         titleInp.value = `CCCD: ${cccdNo}`;
       }
 
-      if (userInp && cccdNo && /^0\d{11}$/.test(cccdNo)) {
+      if (userInp && cccdNo) {
         const curUser = (userInp.value || "").trim();
         if (!/^0\d{11}/.test(curUser) || slot === "front") {
           userInp.value = cccdNo;
@@ -2259,33 +2913,50 @@
         detectedFields.push(`Số CCCD: ${cccdNo}`);
       }
       if (fullName) detectedFields.push(`Họ tên: ${fullName}`);
+      if (dob) detectedFields.push(`NS: ${dob}`);
+      if (expiry) detectedFields.push(`HSD: ${expiry}`);
+      if (originPlace) detectedFields.push(`Quê quán: ${originPlace}`);
+      if (residencePlace) detectedFields.push(`Thường trú: ${residencePlace}`);
+      if (personalIdFeature) detectedFields.push(`ĐĐND: ${personalIdFeature}`);
 
       if (passInp) {
-        const curPass = passInp.value || "";
-        const metaParts = [];
-        if (dob && !curPass.includes(dob)) metaParts.push(`NS: ${dob}`);
-        if (expiry && !curPass.includes(expiry)) metaParts.push(`HSD: ${expiry}`);
-        if (issueDate && !curPass.includes(issueDate)) metaParts.push(`Ngày cấp: ${issueDate}`);
-        if (placeInfo && !curPass.includes(placeInfo)) metaParts.push(`Đ/c: ${placeInfo}`);
-        if (metaParts.length > 0) {
-          passInp.value = curPass ? `${curPass} | ${metaParts.join(" | ")}` : metaParts.join(" | ");
+        let curPass = passInp.value || "";
+        if (!expiry) {
+          const prevDobM = curPass.match(/NS:\s*(\d{2}\/\d{2}\/\d{4})/i);
+          if (prevDobM) expiry = computeStatutoryCccdExpiry(prevDobM[1]);
         }
+        const newEntries = [];
+        if (fullName) newEntries.push(`Họ tên: ${fullName}`);
+        if (cccdNo) newEntries.push(`Số CCCD: ${cccdNo}`);
+        if (dob) newEntries.push(`NS: ${dob}`);
+        if (gender) newEntries.push(`GT: ${gender}`);
+        if (nationality) newEntries.push(`QT: ${nationality}`);
+        if (originPlace) newEntries.push(`Quê quán: ${originPlace}`);
+        if (residencePlace) newEntries.push(`Thường trú: ${residencePlace}`);
+        if (expiry) newEntries.push(`HSD: ${expiry}`);
+        if (personalIdFeature) newEntries.push(`ĐĐND: ${personalIdFeature}`);
+        if (issueDate) newEntries.push(`Ngày cấp: ${issueDate}`);
+        if (issuedBy) newEntries.push(`Nơi cấp: ${issuedBy}`);
+        if (mrzCode) newEntries.push(`MRZ: ${mrzCode}`);
+        passInp.value = mergeKeyValMetadataString(curPass, newEntries);
       }
 
       if (detectedFields.length > 0 && typeof window.showKryptoToast === "function") {
-        window.showKryptoToast(`🤖 Đã nhận dạng chuẩn xác CCCD: ${detectedFields.join(" • ")}!`);
+        window.showKryptoToast(`🤖 Đã bóc tách đầy đủ thông tin CCCD (${detectedFields.length} trường): ${detectedFields.slice(0, 4).join(" • ")}!`);
       }
       return;
     }
 
-    // CASE 5: Nhận diện Thẻ Ngân hàng / Tín dụng (Visa / Mastercard / Napas / JCB - 16 chữ số)
-    // CHỈ KÍCH HOẠT KHI KHÔNG PHẢI LÀ GIẤY TỜ TÙY THÂN (IDENTITY)!
-    const cardMatch = rawText.match(/\b(?:\d{4}[\s\-]?){3}\d{4}\b/);
-    // HSD thẻ ngân hàng chỉ dùng định dạng MM/YY (2 chữ số năm, đứng độc lập không có DD/ ở trước)
-    const expMatch = rawText.match(/(?:^|[^0-9\/])(0[1-9]|1[0-2])\/(\d{2})(?:[^0-9\/]|$)/);
+    // CASE 5: Nhận diện Thẻ Ngân hàng / Tín dụng (Visa / Mastercard / Napas / JCB / Amex) — Bóc tách Số thẻ, Chủ thẻ, Ngân hàng, Hiệu lực từ, HSD, CVV
+    const cardMatch = rawText.match(/\b(?:\d{4}[\s\-]?){3}\d{4}\b|\b\d{4}[\s\-]?\d{6}[\s\-]?\d{5}\b/);
+    const allShortDates = Array.from(rawText.matchAll(/(?:^|[^0-9\/])(0[1-9]|1[0-2])\/(\d{2})(?:[^0-9\/]|$)/g)).map(
+      (m) => `${m[1]}/${m[2]}`
+    );
+    const expStr = allShortDates.length >= 1 ? allShortDates[allShortDates.length - 1] : "";
+    const validFromStr = allShortDates.length >= 2 ? allShortDates[0] : "";
     const cvvMatch =
       slot === "back" && (!typeSel || typeSel.value === "PAYMENT_CARD")
-        ? rawText.match(/(?:CVV|CVC)[:.\s]*(\d{3})\b/i)
+        ? rawText.match(/(?:CVV|CVC)[:.\s]*(\d{3,4})\b/i) || rawText.match(/\b(\d{3})\b/)
         : null;
 
     if (cardMatch) {
@@ -2300,64 +2971,130 @@
       else if (/^5[1-5]/.test(cardDigits) || /^2[2-7]/.test(cardDigits)) brand = "Thẻ Mastercard";
       else if (cardDigits.startsWith("9704")) brand = "Thẻ NAPAS";
       else if (cardDigits.startsWith("35")) brand = "Thẻ JCB";
+      else if (/^3[47]/.test(cardDigits)) brand = "Thẻ AMEX";
+
+      let bankName = "";
+      const bankM = rawText.match(
+        /\b(VIETCOMBANK|VCB|VIETINBANK|BIDV|AGRIBANK|TECHCOMBANK|TCB|MBBANK|MB\s*BANK|VPBANK|ACB|SACOMBANK|TPBANK|VIB|SHB|HDBANK|OCB|MSB|SEABANK|LPBANK|EXIMBANK|CITIBANK|HSBC|STANDARD\s*CHARTERED|SHINHAN|WOORI|UOB)\b/i
+      );
+      if (bankM) bankName = bankM[1].toUpperCase();
+
+      let cardholder = "";
+      for (const l of lines) {
+        const cleanL = l.replace(/[^A-Z\s]/g, "").trim();
+        if (
+          cleanL === l.trim() &&
+          cleanL.split(/\s+/).length >= 2 &&
+          cleanL.split(/\s+/).length <= 5 &&
+          cleanL.length >= 7 &&
+          !/VISA|MASTERCARD|NAPAS|JCB|PLATINUM|SIGNATURE|INFINITE|WORLD|GOLD|CLASSIC|DEBIT|CREDIT|BANK|VALID|THRU|FROM|GOOD|MONTH|YEAR/i.test(cleanL)
+        ) {
+          cardholder = cleanL;
+          break;
+        }
+      }
 
       if (titleInp && !titleInp.value) {
-        titleInp.value = `${brand} (*${cardDigits.slice(-4)})`;
+        titleInp.value = `${brand}${bankName ? " " + bankName : ""} (*${cardDigits.slice(-4)})`;
       }
       if (userInp) {
         userInp.value = formattedCard;
       }
       if (passInp) {
         const parts = [];
-        if (expMatch) parts.push(`HSD: ${expMatch[1]}/${expMatch[2]}`);
+        if (cardholder) parts.push(`Chủ thẻ: ${cardholder}`);
+        if (bankName) parts.push(`Ngân hàng: ${bankName}`);
+        parts.push(`Số thẻ: ${formattedCard}`);
+        if (validFromStr && validFromStr !== expStr) parts.push(`Hiệu lực từ: ${validFromStr}`);
+        if (expStr) parts.push(`HSD: ${expStr}`);
         if (cvvMatch) parts.push(`CVV: ${cvvMatch[1]}`);
-        if (parts.length > 0) {
-          passInp.value = passInp.value ? `${passInp.value} | ${parts.join(" | ")}` : parts.join(" | ");
-        }
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", parts);
       }
       if (typeof window.showKryptoToast === "function") {
-        window.showKryptoToast(`🤖 Đã tự động nhận dạng ${brand}: ${formattedCard}!`);
+        window.showKryptoToast(`🤖 Đã nhận dạng ${brand}: ${formattedCard}!`);
       }
+      return;
     } else if (
       slot === "back" &&
       typeSel &&
       typeSel.value === "PAYMENT_CARD" &&
-      (expMatch || cvvMatch)
+      (expStr || cvvMatch)
     ) {
       if (passInp) {
         const parts = [];
-        const expStr = expMatch ? `${expMatch[1]}/${expMatch[2]}` : "";
-        if (expStr && !passInp.value.includes(expStr)) parts.push(`HSD: ${expStr}`);
-        if (cvvMatch && !passInp.value.includes(cvvMatch[1])) parts.push(`CVV: ${cvvMatch[1]}`);
-        if (parts.length > 0) {
-          passInp.value = passInp.value ? `${passInp.value} | ${parts.join(" | ")}` : parts.join(" | ");
-        }
+        if (expStr) parts.push(`HSD: ${expStr}`);
+        if (cvvMatch) parts.push(`CVV: ${cvvMatch[1]}`);
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", parts);
       }
       return;
     }
 
-    // CASE 6: Nhận diện DANH THIẾP ĐỐI TÁC (BUSINESS CARD — Email + SĐT + Họ tên / Công ty)
+    // CASE 6: Nhận diện DANH THIẾP ĐỐI TÁC (BUSINESS CARD — Email + SĐT + Họ tên + Chức vụ + Công ty + Địa chỉ + Website)
     const emailMatch = rawText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
     const phoneMatch = rawText.match(/(?:\+84|0)(?:[\s.\-]?\d){8,10}\b/);
+    const webMatch = rawText.match(/\b(?:https?:\/\/|www\.)[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/i);
     if (emailMatch || phoneMatch) {
       if (typeSel && typeSel.value === "LOGIN") typeSel.value = "SECURE_NOTE";
       if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
         folderInp.value = "Danh thiếp Đối tác (Business Card)";
       }
-      const contactName = lines[0] || "Đối tác";
+      const contactName = restoreVietnameseCardDiacritics(lines[0] || "Đối tác", false);
       const phoneStr = phoneMatch ? phoneMatch[0].replace(/[\s.\-]+/g, "") : "";
       const emailStr = emailMatch ? emailMatch[0] : "";
+      const webStr = webMatch ? webMatch[0] : "";
       if (titleInp && !titleInp.value) {
         titleInp.value = `Danh thiếp: ${contactName.slice(0, 42)}`;
       }
       if (userInp && !userInp.value) {
         userInp.value = [phoneStr, emailStr].filter(Boolean).join(" | ");
       }
-      if (passInp && !passInp.value) {
-        passInp.value = lines.slice(1, 4).join(" • ").slice(0, 120);
+      if (passInp) {
+        const meta = [];
+        if (contactName) meta.push(`Họ tên: ${contactName}`);
+        if (phoneStr) meta.push(`SĐT: ${phoneStr}`);
+        if (emailStr) meta.push(`Email: ${emailStr}`);
+        if (webStr) meta.push(`Website: ${webStr}`);
+        const extraLines = lines
+          .slice(1, 6)
+          .filter((x) => !x.includes(emailStr || "__") && !x.includes(phoneStr || "__"))
+          .map((x) => restoreVietnameseCardDiacritics(x, false));
+        if (extraLines.length > 0) meta.push(`Trường/Đơn vị: ${extraLines.join(" - ")}`);
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", meta);
       }
       if (typeof window.showKryptoToast === "function") {
         window.showKryptoToast(`🤖 Đã nhận dạng Danh thiếp: ${contactName} (${phoneStr || emailStr})!`);
+      }
+      return;
+    }
+
+    // CASE 7 (UNIVERSAL FALLBACK): Bất kỳ mẫu thẻ, giấy phép, thẻ thành viên, thẻ bảo hành, thẻ cư dân, thẻ ra vào nào khác
+    // Tự động quét mọi cặp "Nhãn: Giá trị", mọi mã số >= 6 ký tự và mọi ngày tháng DD/MM/YYYY trên thẻ
+    const universalPairs = extractUniversalKeyValues(lines);
+    const anyDates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
+    const anyCodeMatch = rawText.match(/\b([A-Z0-9\-]{6,18})\b/);
+    if (universalPairs.length > 0 || anyDates.length > 0 || lines.length >= 2) {
+      if (typeSel && typeSel.value === "LOGIN") typeSel.value = "IDENTITY";
+      if (folderInp && (!folderInp.value || folderInp.value === "Mặc định")) {
+        folderInp.value = "Thẻ / Giấy tờ khác";
+      }
+      const headerTitle = restoreVietnameseCardDiacritics(lines[0] || "Thẻ / Giấy tờ", false);
+      if (titleInp && !titleInp.value) {
+        titleInp.value = headerTitle.slice(0, 48);
+      }
+      if (userInp && !userInp.value && anyCodeMatch) {
+        userInp.value = anyCodeMatch[1];
+      }
+      if (passInp) {
+        const meta = [...universalPairs];
+        if (meta.length === 0) {
+          lines.slice(0, 8).forEach((ln, idx) => {
+            meta.push(`Dòng ${idx + 1}: ${restoreVietnameseCardDiacritics(ln, false)}`);
+          });
+        }
+        passInp.value = mergeKeyValMetadataString(passInp.value || "", meta);
+      }
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast(`🤖 Đã bóc tách thông tin thẻ (${universalPairs.length || lines.length} trường)!`);
       }
     }
   }
@@ -3412,8 +4149,31 @@
 
     const rows = [];
     for (const r of filtered) {
-      const isRev = state.revealedIds.has(r.record_id);
-      const pwdHtml = isRev ? `<code>${escapeHtml(r.password)}</code>` : `<code>••••••••••••</code>`;
+      const isBioLocked = Array.isArray(r.tags) && r.tags.includes("bio-locked");
+      const isIdentityDoc = r.item_type === "IDENTITY";
+      const isRev = state.revealedIds.has(r.record_id) || (isIdentityDoc && !isBioLocked);
+      let pwdHtml = `<code>••••••••••••</code>`;
+      if (isRev) {
+        const rawPwd = String(r.password || "");
+        if (rawPwd.includes("|") && rawPwd.includes(":")) {
+          const items = rawPwd
+            .split("|")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map((seg) => {
+              const cIdx = seg.indexOf(":");
+              if (cIdx > 0) {
+                const k = seg.slice(0, cIdx).trim();
+                const v = seg.slice(cIdx + 1).trim();
+                return `<div style="margin-bottom:2px;"><span style="color:var(--text-muted);font-weight:700;">• ${escapeHtml(k)}:</span> <span style="color:var(--text-primary);font-weight:600;">${escapeHtml(v)}</span></div>`;
+              }
+              return `<div>• ${escapeHtml(seg)}</div>`;
+            });
+          pwdHtml = `<div style="text-align:left;font-size:11.2px;line-height:1.42;background:var(--bg-subtle);padding:6px 8px;border-radius:6px;border:1px solid var(--border);">${items.join("")}</div>`;
+        } else {
+          pwdHtml = `<code>${escapeHtml(rawPwd)}</code>`;
+        }
+      }
       const attCount = (r.encrypted_attachments || []).length;
       const histCount = (r.password_history || []).length;
       let totpHtml = "";
@@ -3910,6 +4670,80 @@
     await renderRecordsList();
   }
 
+  async function reExtractFullFieldsFromRecordImages(recordId, silent = false) {
+    const rec = state.decryptedRecords[recordId];
+    if (!rec) return;
+    const atts = rec.encrypted_attachments || [];
+    if (!atts.length) return;
+
+    // 1. Bổ sung ngay HSD theo quy định Luật Căn cước nếu bản ghi CCCD đã có NS mà thiếu HSD
+    let curMeta = String(rec.password || "");
+    const dobM = curMeta.match(/NS:\s*(\d{2}\/\d{2}\/\d{4})/i);
+    if (dobM && !/HSD:/i.test(curMeta) && (rec.item_type === "IDENTITY" || /CCCD/i.test(rec.title || ""))) {
+      const calcExp = computeStatutoryCccdExpiry(dobM[1]);
+      if (calcExp) {
+        curMeta = mergeKeyValMetadataString(curMeta, [`HSD: ${calcExp}`]);
+      }
+    }
+    // Nếu là thẻ CCCD gắn chip Việt Nam có tên và số CCCD, bổ sung các trường mặc định trước khi ML Kit trả kết quả
+    const newBaseEntries = [];
+    const cleanFullName = (rec.title || "").replace(/^(?:CCCD|GPLX[^:]*):\s*/i, "").trim();
+    if (cleanFullName && cleanFullName.length >= 4) {
+      newBaseEntries.push(`Họ tên: ${restoreVietnameseCardDiacritics(cleanFullName, true)}`);
+    }
+    if (rec.username && /^0\d{11}$/.test(rec.username.trim())) {
+      newBaseEntries.push(`Số CCCD: ${rec.username.trim()}`);
+      newBaseEntries.push(`QT: Việt Nam`);
+    }
+    if (newBaseEntries.length > 0) {
+      curMeta = mergeKeyValMetadataString(curMeta, newBaseEntries);
+    }
+    if (curMeta !== rec.password) {
+      await upsertRecord({
+        recordId: rec.record_id,
+        itemType: rec.item_type,
+        folder: rec.folder,
+        title: rec.title,
+        username: rec.username,
+        password: curMeta,
+        totpSecret: rec.totp_secret,
+        url: rec.url,
+        notes: rec.notes,
+        tags: rec.tags,
+        encryptedAttachments: rec.encrypted_attachments,
+        passwordHistory: rec.password_history,
+      });
+      await renderRecordsList();
+    }
+
+    // 2. Gửi cả ảnh mặt trước và mặt sau sang Google ML Kit Native kèm recordId để tự động điền đủ 10/10 trường!
+    if (!silent && typeof window.showKryptoToast === "function") {
+      window.showKryptoToast("🤖 Đang quét lại toàn bộ Mặt Trước & Mặt Sau để bóc tách đầy đủ 10/10 trường...");
+    }
+    for (const att of atts) {
+      if (att && att.data_url) {
+        const slot = att.label === "back_image" ? "back" : "front";
+        triggerNativeCardOcr(att.data_url, slot, rec.record_id);
+      }
+    }
+  }
+
+  async function autoEnrichExistingIdentityRecords() {
+    const recs = Object.values(state.decryptedRecords || {});
+    for (const r of recs) {
+      if (
+        r.item_type === "IDENTITY" &&
+        Array.isArray(r.encrypted_attachments) &&
+        r.encrypted_attachments.length > 0
+      ) {
+        const pwd = String(r.password || "");
+        if (!pwd.includes("Quê quán:") || !pwd.includes("Thường trú:") || !pwd.includes("HSD:") || !pwd.includes("ĐĐND:")) {
+          await reExtractFullFieldsFromRecordImages(r.record_id, true);
+        }
+      }
+    }
+  }
+
   function exportRecordTwoSidedPdfA4(recordId) {
     const rec = state.decryptedRecords[recordId];
     if (!rec) return;
@@ -3952,7 +4786,8 @@
     box.innerHTML = [
       `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">` +
         `<strong style="font-size:12px;color:var(--primary);">🖼️ Ảnh Thẻ / Giấy Tờ Đã Giải Mã (${escapeHtml(rec.title)})</strong>` +
-        `<div style="display:flex;gap:5px;">` +
+        `<div style="display:flex;gap:5px;flex-wrap:wrap;">` +
+          `<button type="button" class="btn-chip-micro" style="color:#059669;font-weight:700;" onclick="window.KryptoPasswordVault.reExtractFullFieldsFromRecordImages('${escapeHtml(rec.record_id)}')">🔄 Bóc Tách Lại Đầy Đủ 10 Trường</button>` +
           `<button type="button" class="btn-chip-micro" style="color:#0284c7;font-weight:700;" onclick="window.KryptoPasswordVault.exportRecordTwoSidedPdfA4('${escapeHtml(rec.record_id)}')">🖨️ Xuất PDF A4 2 Mặt (Chuẩn 85.6×54mm)</button>` +
           `<button type="button" class="btn-chip-micro" onclick="document.getElementById('kpw-image-preview-box').style.display='none'">Đóng ✕</button>` +
         `</div>` +
@@ -4592,7 +5427,14 @@
     async init() {
       mountWidget();
       await initOrUnlockVault(state.masterPassword);
-      renderRecordsList();
+      await renderRecordsList();
+      setTimeout(() => {
+        autoEnrichExistingIdentityRecords();
+      }, 600);
+    },
+
+    reExtractFullFieldsFromRecordImages(recordId) {
+      reExtractFullFieldsFromRecordImages(recordId, false);
     },
 
     switchSubView(viewName) {
@@ -4698,10 +5540,59 @@
       processIncomingCardPhoto(dataUrl, state.activePhotoSlot || "front", false);
     },
 
-    onNativeCardOcrResult(ocrJsonStr, slot = "front") {
+    async onNativeCardOcrResult(ocrJsonStr, slot = "front", recordId = "") {
       if (!ocrJsonStr) return;
       try {
         const parsed = typeof ocrJsonStr === "string" ? JSON.parse(ocrJsonStr) : ocrJsonStr;
+        if (recordId && state.decryptedRecords[recordId]) {
+          // Chạy bóc tách trên bộ ô tạm rồi gộp thẳng vào bản ghi đã lưu trong Danh bạ!
+          const rec = state.decryptedRecords[recordId];
+          const titleInp = document.getElementById("kpw-title");
+          const userInp = document.getElementById("kpw-username");
+          const passInp = document.getElementById("kpw-password");
+          const savedTitle = titleInp ? titleInp.value : "";
+          const savedUser = userInp ? userInp.value : "";
+          const savedPass = passInp ? passInp.value : "";
+          if (titleInp) titleInp.value = rec.title || "";
+          if (userInp) userInp.value = rec.username || "";
+          if (passInp) passInp.value = rec.password || "";
+
+          parseAndAutoFillCardFields(parsed.text || "", parsed.qr || "", slot);
+
+          const nextTitle = titleInp ? titleInp.value : rec.title;
+          const nextUser = userInp ? userInp.value : rec.username;
+          const nextPass = passInp ? passInp.value : rec.password;
+          if (titleInp) titleInp.value = savedTitle;
+          if (userInp) userInp.value = savedUser;
+          if (passInp) passInp.value = savedPass;
+
+          // Nếu ảnh trong bản ghi bị ngược 180° thì tự xoay lại trong đính kèm luôn
+          let nextAtts = rec.encrypted_attachments || [];
+          if (parsed.flipped180 && parsed.rotatedImageB64) {
+            const targetLbl = slot === "back" ? "back_image" : "front_image";
+            nextAtts = nextAtts.map((a) =>
+              a.label === targetLbl ? { ...a, data_url: parsed.rotatedImageB64 } : a
+            );
+          }
+
+          await upsertRecord({
+            recordId: rec.record_id,
+            itemType: rec.item_type,
+            folder: rec.folder,
+            title: nextTitle || rec.title,
+            username: nextUser || rec.username,
+            password: nextPass || rec.password,
+            totpSecret: rec.totp_secret,
+            url: rec.url,
+            notes: rec.notes,
+            tags: rec.tags,
+            encryptedAttachments: nextAtts,
+            passwordHistory: rec.password_history,
+          });
+          await renderRecordsList();
+          return;
+        }
+
         if (parsed.flipped180 && parsed.rotatedImageB64) {
           if (slot === "front") {
             state.pendingFrontDataUrl = parsed.rotatedImageB64;
@@ -4721,6 +5612,9 @@
         await loadEncryptedVaultObject(parsed, state.masterPassword);
         localStorage.setItem(STORAGE_KEY_VAULT, JSON.stringify(parsed));
         await renderRecordsList();
+        setTimeout(() => {
+          autoEnrichExistingIdentityRecords();
+        }, 500);
       } catch (_) {}
     },
 
