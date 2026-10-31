@@ -4187,21 +4187,28 @@
         color: var(--text-muted);
         font-weight: 600;
         font-size: 11.2px;
-        flex: 0 0 32%;
+        flex: 0 0 28%;
         text-align: left;
       }
       .kpw-doc-kv-val {
         color: var(--text-primary);
         font-weight: 700;
         font-size: 12px;
-        flex: 1 1 68%;
+        flex: 1 1 72%;
         text-align: right;
         word-break: break-word;
+      }
+      .kpw-doc-kv-row.mrz-row .kpw-doc-kv-key {
+        flex: 0 0 auto;
+        margin-right: 6px;
+      }
+      .kpw-doc-kv-row.mrz-row .kpw-doc-kv-val {
+        flex: 1 1 auto;
       }
       .kpw-doc-kv-val.mono {
         font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
         font-size: 10.2px;
-        letter-spacing: -0.01em;
+        letter-spacing: -0.015em;
         white-space: nowrap;
         overflow-x: auto;
       }
@@ -4213,10 +4220,12 @@
         justify-content: flex-end;
       }
       .kpw-action-grid .btn-chip-micro {
-        padding: 6px 10px !important;
-        font-size: 11px !important;
+        padding: 6px 8px !important;
+        font-size: 10.8px !important;
         font-weight: 700 !important;
         border-radius: 8px !important;
+        text-align: center;
+        justify-content: center;
       }
       @media (max-width: 680px) {
         /* Đảm bảo Single-Level Card trên Mobile: panel bao ngoài trong suốt, mỗi tr là 1 Card duy nhất */
@@ -4254,12 +4263,37 @@
         body.theme-light .kpw-table td {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
           gap: 10px;
           padding: 8px 0 !important;
           border: none !important;
           border-bottom: 1px dashed var(--border) !important;
           text-align: right;
+        }
+        /* Ô Tiêu đề thẻ mở đầu chiếm trọn 100% chiều rộng, hiển thị cân đối Trái - Phải */
+        .kpw-table td.kpw-td-card-header,
+        body.light-mode .kpw-table td.kpw-td-card-header,
+        body.theme-light .kpw-table td.kpw-td-card-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 3px;
+          text-align: left;
+          padding-top: 2px !important;
+          padding-bottom: 10px !important;
+        }
+        .kpw-table td.kpw-td-card-header::before {
+          display: none !important;
+        }
+        .kpw-table td.kpw-td-card-header .table-cell-val {
+          flex: none;
+          width: 100%;
+          text-align: left;
+        }
+        /* Ẩn dòng Số định danh lặp lại trên Mobile khi bảng KV bên dưới đã hiển thị Số CCCD / Số GPLX / Số thẻ */
+        .kpw-table td.kpw-td-id-dup-mobile,
+        body.light-mode .kpw-table td.kpw-td-id-dup-mobile,
+        body.theme-light .kpw-table td.kpw-td-id-dup-mobile {
+          display: none !important;
         }
         /* Ô Chi tiết hồ sơ & Ô Thao tác chiếm trọn 100% chiều rộng trên điện thoại */
         .kpw-table td.kpw-td-fullwidth,
@@ -4282,7 +4316,7 @@
           font-size: 11px;
           color: var(--text-muted);
           text-align: left;
-          flex: 0 0 34%;
+          flex: 0 0 auto;
           text-transform: uppercase;
           letter-spacing: 0.02em;
         }
@@ -4294,7 +4328,7 @@
           font-weight: 800;
         }
         .kpw-table td .table-cell-val {
-          flex: 1 1 66%;
+          flex: 1 1 auto;
           text-align: right;
           word-break: break-word;
         }
@@ -4304,7 +4338,18 @@
           text-align: left;
         }
         .kpw-action-grid {
-          justify-content: flex-start;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 6px;
+          width: 100%;
+        }
+        .kpw-action-grid .btn-chip-micro {
+          width: 100%;
+          padding: 7px 4px !important;
+          font-size: 10.5px !important;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
     `;
@@ -4410,7 +4455,8 @@
                 const k = seg.slice(0, cIdx).trim();
                 const v = seg.slice(cIdx + 1).trim();
                 const isMono = /^(Số|Mã|MRZ|CVV)/i.test(k);
-                return `<div class="kpw-doc-kv-row"><span class="kpw-doc-kv-key">${escapeHtml(k)}</span><span class="kpw-doc-kv-val${isMono ? " mono" : ""}">${escapeHtml(v)}</span></div>`;
+                const isMrzRow = k.toUpperCase() === "MRZ";
+                return `<div class="kpw-doc-kv-row${isMrzRow ? " mrz-row" : ""}"><span class="kpw-doc-kv-key">${escapeHtml(k)}</span><span class="kpw-doc-kv-val${isMono ? " mono" : ""}">${escapeHtml(v)}</span></div>`;
               }
               return `<div class="kpw-doc-kv-row"><span class="kpw-doc-kv-val">${escapeHtml(seg)}</span></div>`;
             });
@@ -4431,7 +4477,7 @@
         }
       }
 
-      // Hình thu nhỏ Mặt trước & Mặt sau ngay trên thẻ để chạm xem nhanh
+      // Hình thu nhỏ Mặt trước & Mặt sau đúng chuẩn tỷ lệ thẻ ID-1 (85.6 × 54mm ≈ 1.586:1, không cắt mép) kèm nút Xoay 180° 1 chạm
       let inlineThumbsHtml = "";
       if (attCount > 0 && isRev) {
         const thumbImgs = atts
@@ -4439,15 +4485,21 @@
           .slice(0, 2)
           .map((a, idx) => {
             const sideLbl = a.label === "back_image" ? "Mặt sau" : idx === 0 ? "Mặt trước" : "Ảnh #" + (idx + 1);
+            const attKey = escapeHtml(a.attachment_id || a.label || String(idx));
             return `
-              <div class="kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}" style="cursor:pointer;text-align:center;">
-                <img src="${a.data_url}" alt="${escapeHtml(sideLbl)}" style="width:100%;height:78px;object-fit:cover;border-radius:7px;display:block;" />
-                <span style="font-size:10px;color:var(--text-muted);font-weight:700;display:block;margin-top:2px;">🔍 ${sideLbl}</span>
+              <div style="text-align:center;">
+                <div class="kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}" style="cursor:pointer;">
+                  <img src="${a.data_url}" alt="${escapeHtml(sideLbl)}" style="width:100%;aspect-ratio:1.586/1;height:auto;object-fit:contain;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;display:block;" />
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding:0 2px;">
+                  <span class="kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}" style="font-size:10.2px;color:var(--text-muted);font-weight:700;cursor:pointer;">🔍 ${sideLbl}</span>
+                  <button type="button" class="kpw-btn-rot-att" data-id="${escapeHtml(r.record_id)}" data-att="${attKey}" style="background:none;border:none;padding:0;font-size:10px;font-weight:700;color:var(--primary);cursor:pointer;" title="Xoay ảnh 180°">↻ Xoay 180°</button>
+                </div>
               </div>
             `;
           });
         if (thumbImgs.length > 0) {
-          inlineThumbsHtml = `<div style="display:grid;grid-template-columns:repeat(${thumbImgs.length}, minmax(0, 1fr));gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">${thumbImgs.join("")}</div>`;
+          inlineThumbsHtml = `<div style="display:grid;grid-template-columns:repeat(${thumbImgs.length}, minmax(0, 1fr));gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">${thumbImgs.join("")}</div>`;
         }
       } else if (attCount > 0) {
         inlineThumbsHtml = `<div style="color:#0284c7;font-weight:700;font-size:11px;margin-top:4px;">🖼️ Đính kèm mã hóa: ${attCount} ảnh thẻ</div>`;
@@ -4476,17 +4528,18 @@
         if (expDate && !isNaN(expDate.getTime())) {
           const diffDays = Math.ceil((expDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
           if (diffDays < 0) {
-            expiryBadgeHtml = `<div style="color:#dc2626;font-weight:800;font-size:11px;margin-top:3px;">🔴 Đã quá hạn (${expLabel})</div>`;
+            expiryBadgeHtml = `<span style="color:#dc2626;font-weight:800;font-size:10.5px;">🔴 Quá hạn (${expLabel})</span>`;
           } else if (diffDays <= 180) {
-            expiryBadgeHtml = `<div style="color:#d97706;font-weight:800;font-size:11px;margin-top:3px;">🟡 Sắp hết hạn: còn ${diffDays} ngày (${expLabel})</div>`;
+            expiryBadgeHtml = `<span style="color:#d97706;font-weight:800;font-size:10.5px;">🟡 Còn ${diffDays} ngày (${expLabel})</span>`;
           } else {
-            expiryBadgeHtml = `<div style="color:#059669;font-weight:700;font-size:11px;margin-top:3px;">🟢 Còn hạn (${expLabel})</div>`;
+            expiryBadgeHtml = `<span style="color:#059669;font-weight:700;font-size:10.5px;">🟢 Còn hạn (${expLabel})</span>`;
           }
         }
       }
 
       const badgeText = typeLabelMap[r.item_type] || `🔐 ${r.item_type || "MỤC LƯU TRỮ"}`;
-      const idColLabel = isIdentityDoc ? "Số giấy tờ / Định danh" : isPaymentCard ? "Số thẻ ngân hàng" : "Tài khoản / ID";
+      const idColLabel = isIdentityDoc ? "Số định danh" : isPaymentCard ? "Số thẻ" : "Tài khoản";
+      const hideDupIdOnMobile = isRev && hasStructuredKv && /(?:Số CCCD|Số định danh|Số GPLX|Số HC|Mã BHYT|Số thẻ|Biển số):/i.test(rawPwd);
       const detailColLabel = isIdentityDoc
         ? "Thông tin trích xuất trên giấy tờ"
         : isPaymentCard
@@ -4495,15 +4548,17 @@
 
       rows.push(`
         <tr>
-          <td data-label="Hồ sơ / Loại thẻ">
+          <td class="kpw-td-card-header" data-label="Hồ sơ">
             <span class="table-cell-val">
-              <div style="font-size:10px;font-weight:800;color:var(--primary);letter-spacing:0.03em;margin-bottom:2px;">${escapeHtml(badgeText)}</div>
-              <div style="font-size:13.5px;font-weight:800;color:var(--text-title);line-height:1.3;">${escapeHtml(r.title)}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+                <span style="font-size:10.5px;font-weight:800;color:var(--primary);letter-spacing:0.03em;">${escapeHtml(badgeText)}</span>
+                ${expiryBadgeHtml}
+              </div>
+              <div style="font-size:14px;font-weight:800;color:var(--text-title);line-height:1.3;">${escapeHtml(r.title)}</div>
               <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">${escapeHtml(r.folder || "Mặc định")} • Phiên bản #${r.revision || 1}</div>
-              ${expiryBadgeHtml}
             </span>
           </td>
-          <td data-label="${idColLabel}">
+          <td class="${hideDupIdOnMobile ? "kpw-td-id-dup-mobile" : ""}" data-label="${idColLabel}">
             <span class="table-cell-val" style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:800;font-size:13px;color:var(--primary);letter-spacing:0.03em;">${escapeHtml(r.username || "—")}</span>
           </td>
           <td class="kpw-td-fullwidth" data-label="${detailColLabel}">
@@ -4580,6 +4635,17 @@
         const id = b.getAttribute("data-id");
         requireRecordBiometricIfLocked(id, () => {
           showRecordAttachmentsPreview(id);
+        });
+      });
+    });
+
+    tbody.querySelectorAll(".kpw-btn-rot-att").forEach((b) => {
+      b.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const id = b.getAttribute("data-id");
+        const attKey = b.getAttribute("data-att");
+        requireRecordBiometricIfLocked(id, () => {
+          rotateRecordAttachment180(id, attKey);
         });
       });
     });
@@ -4952,6 +5018,49 @@
     }
     switchSubView("list");
     await renderRecordsList();
+  }
+
+  async function rotateRecordAttachment180(recordId, attKey) {
+    const rec = state.decryptedRecords[recordId];
+    if (!rec || !Array.isArray(rec.encrypted_attachments)) return;
+    const atts = [...rec.encrypted_attachments];
+    const idx = atts.findIndex(
+      (a, i) => (a.attachment_id || a.label || String(i)) === attKey
+    );
+    if (idx < 0 || !atts[idx] || !atts[idx].data_url) return;
+    const srcUrl = atts[idx].data_url;
+    const img = new Image();
+    img.onload = async () => {
+      const c = document.createElement("canvas");
+      c.width = img.width;
+      c.height = img.height;
+      const ctx = c.getContext("2d");
+      ctx.translate(c.width / 2, c.height / 2);
+      ctx.rotate(Math.PI);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      const rotUrl = c.toDataURL("image/png");
+      atts[idx] = { ...atts[idx], data_url: rotUrl };
+      await upsertRecord({
+        recordId: rec.record_id,
+        itemType: rec.item_type,
+        folder: rec.folder,
+        title: rec.title,
+        username: rec.username,
+        password: rec.password,
+        totpSecret: rec.totp_secret,
+        url: rec.url,
+        notes: rec.notes,
+        tags: rec.tags,
+        encryptedAttachments: atts,
+        passwordHistory: rec.password_history,
+      });
+      await renderRecordsList();
+      if (typeof window.showKryptoToast === "function") {
+        window.showKryptoToast("↻ Đã xoay ảnh 180° và đang quét lại thông tin trên thẻ...");
+      }
+      reExtractFullFieldsFromRecordImages(recordId, true);
+    };
+    img.src = srcUrl;
   }
 
   async function reExtractFullFieldsFromRecordImages(recordId, silent = false) {
