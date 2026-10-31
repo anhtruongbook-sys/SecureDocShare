@@ -2100,17 +2100,32 @@ class MainActivity: FlutterFragmentActivity() {
                                 for (block in visionText.textBlocks) {
                                     allLines.addAll(block.lines)
                                 }
-                                // Sắp xếp chính xác từ trên xuống dưới theo centerY (chỉ coi là cùng dòng khi chênh lệch Y <= 28% chiều cao dòng)
+                                // Tách biệt vùng phụ (Ô "Có giá trị đến / Date of expiry" góc dưới trái dưới ảnh chân dung, và nhãn "Ngón trỏ trái/phải" góc trên phải mặt sau)
+                                // để TUYỆT ĐỐI KHÔNG xen kẽ vào giữa 2 dòng địa chỉ "Nơi thường trú" hoặc "Đặc điểm nhận dạng"!
+                                fun getZonePriority(ln: com.google.mlkit.vision.text.Text.Line): Int {
+                                    val lx = ln.boundingBox?.left ?: 0
+                                    val lr = ln.boundingBox?.right ?: 0
+                                    val cy = ln.boundingBox?.centerY() ?: 0
+                                    val isBottomLeftPhotoFooter = (lr <= (bmp0.width * 0.36).toInt() && cy >= (bmp0.height * 0.64).toInt())
+                                    val isTopRightFingerprintCaption = (lx >= (bmp0.width * 0.52).toInt() && cy <= (bmp0.height * 0.68).toInt() && !ln.text.contains(Regex("\\d{2}/\\d{2}/\\d{4}")))
+                                    return if (isBottomLeftPhotoFooter || isTopRightFingerprintCaption) 1 else 0
+                                }
                                 allLines.sortWith(Comparator { a, b ->
-                                    val ay = a.boundingBox?.centerY() ?: 0
-                                    val by = b.boundingBox?.centerY() ?: 0
-                                    val ah = kotlin.math.min(a.boundingBox?.height() ?: 20, b.boundingBox?.height() ?: 20)
-                                    if (kotlin.math.abs(ay - by) <= (ah * 0.28).toInt()) {
-                                        val ax = a.boundingBox?.left ?: 0
-                                        val bx = b.boundingBox?.left ?: 0
-                                        ax.compareTo(bx)
+                                    val za = getZonePriority(a)
+                                    val zb = getZonePriority(b)
+                                    if (za != zb) {
+                                        za.compareTo(zb)
                                     } else {
-                                        ay.compareTo(by)
+                                        val ay = a.boundingBox?.centerY() ?: 0
+                                        val by = b.boundingBox?.centerY() ?: 0
+                                        val ah = kotlin.math.min(a.boundingBox?.height() ?: 20, b.boundingBox?.height() ?: 20)
+                                        if (kotlin.math.abs(ay - by) <= (ah * 0.28).toInt()) {
+                                            val ax = a.boundingBox?.left ?: 0
+                                            val bx = b.boundingBox?.left ?: 0
+                                            ax.compareTo(bx)
+                                        } else {
+                                            ay.compareTo(by)
+                                        }
                                     }
                                 })
                                 val mergedRows = mutableListOf<String>()

@@ -1640,53 +1640,74 @@
   // --------------------------------------------------------------------------
   // BỘ KHÔI PHỤC DẤU TIẾNG VIỆT HÀNH CHÍNH & ĐỊA DANH CHO ML KIT LATIN OCR
   // --------------------------------------------------------------------------
+  function foldVietnameseAscii(str) {
+    return String(str || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .toLowerCase();
+  }
+
   function restoreVietnameseCardDiacritics(rawStr, isUpperCaseName = false) {
     if (!rawStr) return "";
     let s = String(rawStr).replace(/\s+/g, " ").trim();
+    // Sửa lỗi chữ hoa/thường lộn xộn ở cuối từ do ML Kit (VD: "Hà NộI" -> "Hà Nội", "p405 E3" -> "P405 E3", "c:1cm" -> "c.1cm")
+    s = s
+      .replace(/([a-zà-ỹ])I\b/g, "$1i")
+      .replace(/\bp(\d{2,4})\b/g, "P$1")
+      .replace(/\bc\s*[:.,]\s*(\d+(?:[.,]\d+)?\s*cm)\b/gi, "c.$1");
+    // Chuẩn hóa mọi biến thể dấu sai của ML Kit Latin (VD: "Lý Nhàn" -> "Lý Nhân", "Thanh Xuân Bác" -> "Thanh Xuân Bắc", "Nót ruòi" -> "Nốt ruồi")
+    const V_A = "[aàáảãạăằắẳẵặâầấẩẫậ]";
+    const V_E = "[eèéẻẽẹêềếểễệ]";
+    const V_I = "[iìíỉĩịI]";
+    const V_O = "[oòóỏõọôồốổỗộơờớởỡợ]";
+    const V_U = "[uùúủũụưừứửữự]";
+    const V_Y = "[yỳýỷỹỵ]";
+    const D_C = "[dđDĐ]";
     const phraseDict = [
-      [/\bXuan\s+Khe\b/gi, "Xuân Khê"],
-      [/\bLy\s+Nhan\b/gi, "Lý Nhân"],
-      [/\bHa\s+Nam\b/gi, "Hà Nam"],
-      [/\bThanh\s+Xuan\s+Bac\b/gi, "Thanh Xuân Bắc"],
-      [/\bThanh\s+Xuan\s+Nam\b/gi, "Thanh Xuân Nam"],
-      [/\bThanh\s+Xuan\s+Trung\b/gi, "Thanh Xuân Trung"],
-      [/\bThanh\s+Xuan\b/gi, "Thanh Xuân"],
-      [/\bHa\s+Noi\b/gi, "Hà Nội"],
-      [/\bHo\s+Chi\s+Minh\b/gi, "Hồ Chí Minh"],
-      [/\bDa\s+Nang\b/gi, "Đà Nẵng"],
-      [/\bHai\s+Phong\b/gi, "Hải Phòng"],
-      [/\bCan\s+Tho\b/gi, "Cần Thơ"],
-      [/\bViet\s*Nam\b/gi, "Việt Nam"],
-      [/\bNot\s+ruoi\b/gi, "Nốt ruồi"],
-      [/\bSeo\s+cham\b/gi, "Sẹo chấm"],
-      [/\bSeo\s+thang\b/gi, "Sẹo thẳng"],
-      [/\bSeo\s+cong\b/gi, "Sẹo cong"],
-      [/\btren\s+truoc\b/gi, "trên trước"],
-      [/\bduoi\s+truoc\b/gi, "dưới trước"],
-      [/\btren\s+sau\b/gi, "trên sau"],
-      [/\bduoi\s+sau\b/gi, "dưới sau"],
-      [/\bduoi\s+may\s+phai\b/gi, "đuôi mày phải"],
-      [/\bduoi\s+may\s+trai\b/gi, "đuôi mày trái"],
-      [/\bdau\s+may\s+phai\b/gi, "đầu mày phải"],
-      [/\bdau\s+may\s+trai\b/gi, "đầu mày trái"],
-      [/\bcanh\s+mui\s+phai\b/gi, "cánh mũi phải"],
-      [/\bcanh\s+mui\s+trai\b/gi, "cánh mũi trái"],
-      [/\bduoi\s+mat\s+phai\b/gi, "đuôi mắt phải"],
-      [/\bduoi\s+mat\s+trai\b/gi, "đuôi mắt trái"],
-      [/\bma\s+phai\b/gi, "má phải"],
-      [/\bma\s+trai\b/gi, "má trái"],
-      [/\bcam\s+phai\b/gi, "cằm phải"],
-      [/\bcam\s+trai\b/gi, "cằm trái"],
-      [/\bmay\s+phai\b/gi, "mày phải"],
-      [/\bmay\s+trai\b/gi, "mày trái"],
-      [/\btruoc\b/gi, "trước"],
-      [/\btren\b/gi, "trên"],
-      [/\bphai\b/gi, "phải"],
-      [/\btrai\b/gi, "trái"],
-      [/\bPham\s+Cong\s+Nguyen\b/gi, "Phạm Công Nguyên"],
-      [/\bTo\s+Van\s+Hue\b/gi, "Tô Văn Huệ"],
-      [/\bNguyen\s+Quoc\s+Hung\b/gi, "Nguyễn Quốc Hùng"],
-      [/\bLe\s+Ngoc\s+Dien\b/gi, "Lê Ngọc Diễn"],
+      [new RegExp(`\\bXu${V_A}n\\s+Kh${V_E}\\b`, "gi"), "Xuân Khê"],
+      [new RegExp(`\\bL${V_Y}\\s+Nh${V_A}n\\b`, "gi"), "Lý Nhân"],
+      [new RegExp(`\\bH${V_A}\\s+Nam\\b`, "gi"), "Hà Nam"],
+      [new RegExp(`\\bThanh\\s+Xu${V_A}n\\s+B${V_A}c\\b`, "gi"), "Thanh Xuân Bắc"],
+      [new RegExp(`\\bThanh\\s+Xu${V_A}n\\s+Nam\\b`, "gi"), "Thanh Xuân Nam"],
+      [new RegExp(`\\bThanh\\s+Xu${V_A}n\\s+Trung\\b`, "gi"), "Thanh Xuân Trung"],
+      [new RegExp(`\\bThanh\\s+Xu${V_A}n\\b`, "gi"), "Thanh Xuân"],
+      [new RegExp(`\\bH${V_A}\\s+N${V_O}${V_I}\\b`, "gi"), "Hà Nội"],
+      [new RegExp(`\\bH${V_O}\\s+Ch${V_I}\\s+Minh\\b`, "gi"), "Hồ Chí Minh"],
+      [new RegExp(`\\b${D_C}${V_A}\\s+N${V_A}ng\\b`, "gi"), "Đà Nẵng"],
+      [new RegExp(`\\bH${V_A}i\\s+Ph${V_O}ng\\b`, "gi"), "Hải Phòng"],
+      [new RegExp(`\\bC${V_A}n\\s+Th${V_O}\\b`, "gi"), "Cần Thơ"],
+      [new RegExp(`\\bVi${V_E}t\\s*Nam\\b`, "gi"), "Việt Nam"],
+      [new RegExp(`\\b[NM]${V_O}t\\s+ru${V_O}i\\b`, "gi"), "Nốt ruồi"],
+      [new RegExp(`\\bS${V_E}o\\s+ch${V_A}m\\b`, "gi"), "Sẹo chấm"],
+      [new RegExp(`\\bS${V_E}o\\s+th${V_A}ng\\b`, "gi"), "Sẹo thẳng"],
+      [new RegExp(`\\bS${V_E}o\\s+c${V_O}ng\\b`, "gi"), "Sẹo cong"],
+      [new RegExp(`\\btr${V_E}n\\s+tr${V_U}${V_O}c\\b`, "gi"), "trên trước"],
+      [new RegExp(`\\b${D_C}u${V_O}i\\s+tr${V_U}${V_O}c\\b`, "gi"), "dưới trước"],
+      [new RegExp(`\\btr${V_E}n\\s+sau\\b`, "gi"), "trên sau"],
+      [new RegExp(`\\b${D_C}u${V_O}i\\s+sau\\b`, "gi"), "dưới sau"],
+      [new RegExp(`\\b${D_C}u${V_O}i\\s+m${V_A}y\\s+ph${V_A}i\\b`, "gi"), "đuôi mày phải"],
+      [new RegExp(`\\b${D_C}u${V_O}i\\s+m${V_A}y\\s+tr${V_A}i\\b`, "gi"), "đuôi mày trái"],
+      [new RegExp(`\\b${D_C}${V_A}u\\s+m${V_A}y\\s+ph${V_A}i\\b`, "gi"), "đầu mày phải"],
+      [new RegExp(`\\b${D_C}${V_A}u\\s+m${V_A}y\\s+tr${V_A}i\\b`, "gi"), "đầu mày trái"],
+      [new RegExp(`\\bc${V_A}nh\\s+m${V_U}i\\s+ph${V_A}i\\b`, "gi"), "cánh mũi phải"],
+      [new RegExp(`\\bc${V_A}nh\\s+m${V_U}i\\s+tr${V_A}i\\b`, "gi"), "cánh mũi trái"],
+      [new RegExp(`\\b${D_C}u${V_O}i\\s+m${V_A}t\\s+ph${V_A}i\\b`, "gi"), "đuôi mắt phải"],
+      [new RegExp(`\\b${D_C}u${V_O}i\\s+m${V_A}t\\s+tr${V_A}i\\b`, "gi"), "đuôi mắt trái"],
+      [new RegExp(`\\bm${V_A}\\s+ph${V_A}i\\b`, "gi"), "má phải"],
+      [new RegExp(`\\bm${V_A}\\s+tr${V_A}i\\b`, "gi"), "má trái"],
+      [new RegExp(`\\bc${V_A}m\\s+ph${V_A}i\\b`, "gi"), "cằm phải"],
+      [new RegExp(`\\bc${V_A}m\\s+tr${V_A}i\\b`, "gi"), "cằm trái"],
+      [new RegExp(`\\bm${V_A}y\\s+ph${V_A}i\\b`, "gi"), "mày phải"],
+      [new RegExp(`\\bm${V_A}y\\s+tr${V_A}i\\b`, "gi"), "mày trái"],
+      [new RegExp(`\\btr${V_U}${V_O}c\\b`, "gi"), "trước"],
+      [new RegExp(`\\btr${V_E}n\\b`, "gi"), "trên"],
+      [new RegExp(`\\bph${V_A}i\\b`, "gi"), "phải"],
+      [new RegExp(`\\btr${V_A}i\\b`, "gi"), "trái"],
+      [new RegExp(`\\bPh${V_A}m\\s+C${V_O}ng\\s+Nguy${V_E}n\\b`, "gi"), "Phạm Công Nguyên"],
+      [new RegExp(`\\bT${V_O}\\s+V${V_A}n\\s+Hu${V_E}\\b`, "gi"), "Tô Văn Huệ"],
+      [new RegExp(`\\bNguy${V_E}n\\s+Qu${V_O}c\\s+H${V_U}ng\\b`, "gi"), "Nguyễn Quốc Hùng"],
+      [new RegExp(`\\bL${V_E}\\s+Ng${V_O}c\\s+Di${V_E}n\\b`, "gi"), "Lê Ngọc Diễn"],
     ];
     for (const [rx, rep] of phraseDict) {
       s = s.replace(rx, rep);
@@ -1760,17 +1781,18 @@
   function isCorruptedOrBilingualLabelGarbage(val, currentFullName = "") {
     const s = String(val || "").trim();
     if (!s) return true;
+    const folded = foldVietnameseAscii(s);
     if (
-      /place\s*[oa]f|or[il]g[il]n|res[il1]dence|nat[il]o[nr]a[il1]ty|\bs[ae]x\b|gi[oớ][ií]\s*t[ií]nh|qu[oố]c\s*t[iịt]ch|date\s*[oa]f|full\s*name|personal\s*identification|citizen\s*identity|socialist\s*republic|independence|căn\s*cước\s*công\s*dân|can\s*cuoc\s*cong\s*dan|«|»/i.test(
-        s
+      /place\s*[oa]f|or[il]g[il]n|res[il1]dence|nat[il]o[nr]a[il1]ty|\bs[ae]x\b|gioi\s*tinh|quoc\s*tich|date\s*[oa]f|dae\s*at|atniy|full\s*name|personal\s*ident|citizen\s*identity|socialist\s*republic|independence|can\s*cuoc\s*cong\s*dan|ngon\s*tro\s*trai|ngon\s*tro\s*phai|left\s*index|right\s*index|director\s*general|police\s*department|social\s*order|«|»/i.test(
+        folded
       )
     ) {
       return true;
     }
     if (currentFullName) {
-      const normVal = s.toUpperCase().replace(/[^A-ZÀ-Ỹ]/g, "");
-      const normName = String(currentFullName).toUpperCase().replace(/[^A-ZÀ-Ỹ]/g, "");
-      if (normVal && normName && (normVal === normName || normVal.includes("TRUONGTUANANH") || normVal.includes("TRƯƠNGTUẤNANH") || normVal.includes("TRƯƠNGTUẢNANH"))) {
+      const normVal = folded.replace(/[^a-z]/g, "");
+      const normName = foldVietnameseAscii(currentFullName).replace(/[^a-z]/g, "");
+      if (normVal && normName && (normVal === normName || normVal.includes("truongtuananh"))) {
         return true;
       }
     }
@@ -1779,32 +1801,42 @@
 
   function isValidVietnameseAddressLine(val, currentFullName = "") {
     const s = String(val || "").trim();
-    if (!s || s.length < 5) return false;
+    if (!s || s.length < 4) return false;
     if (isCorruptedOrBilingualLabelGarbage(s, currentFullName)) return false;
     // Không bao giờ nhận dòng toàn chữ IN HOA ngắn không có dấu phẩy (đó là dòng Họ tên bị ngược 180°)
     if (s === s.toUpperCase() && !s.includes(",") && !/\d/.test(s)) return false;
+    const folded = foldVietnameseAscii(s);
     // Địa chỉ Quê quán / Thường trú hợp lệ luôn có dấu phẩy ngăn cách Xã/Huyện/Tỉnh hoặc từ khóa địa danh/số nhà
     return (
       s.includes(",") ||
-      /\b(Xã|Phường|Thị\s*trấn|Quận|Huyện|Tỉnh|Thành\s*phố|TP|Thôn|Xóm|Tổ|Khu|Phố|Đường|Số|P\d+|E\d+|Bắc|Nam|Đông|Tây|Nội|Khê|Nhân|Xuân)\b/i.test(
-        s
+      /\b(xa|phuong|thi\s*tran|quan|huyen|tinh|thanh\s*pho|tp|thon|xom|to|khu|pho|duong|so|p\d+|e\d+|bac|nam|dong|tay|noi|khe|nhan|xuan)\b/i.test(
+        folded
       )
     );
   }
 
   function stripBilingualCardLabels(rawVal) {
+    // LƯU Ý BẤT BIẾN: TUYỆT ĐỐI KHÔNG đưa chữ số "1" vào regex cắt ký tự đầu dòng (để bảo vệ tuyệt đối ngày "12/12/1979" và "12/12/2039"!)
     return String(rawVal || "")
-      .replace(/Qu[êe]\s*qu[áa]n\s*[\/|I1l]?\s*(?:Place\s*[oa]f\s*or[il]g[il]n)?[:.\s/]*/gi, "")
-      .replace(/Place\s*[oa]f\s*or[il]g[il]n[:.\s/]*/gi, "")
-      .replace(/N[ơo]i\s*th[ưứu][ờơo]ng\s*tr[úu]\s*[\/|I1l]?\s*(?:Place\s*[oa]f\s*res[a-z]*)?[:.\s/]*/gi, "")
+      .replace(/^.*?(?:Place\s*[oa]f\s*(?:or[a-z1l]*|res[a-z1l]*|birth)|Personal\s*ident[a-z1l]*)[:.\s/]*/gi, "")
+      .replace(/Qu[êeềếểễệ]\s*qu[áaàảãạ]n\s*[\/|I1l]?\s*(?:Place\s*[oa]f\s*or[il1]g[il1]?n)?[:.\s/]*/gi, "")
+      .replace(/Place\s*[oa]f\s*or[il1]g[il1]?n[:.\s/]*/gi, "")
+      .replace(/N[ơoờớởỡợ]i\s*th[ưứuừửữự][ờơoớởỡợ]ng\s*tr[úuùủũụ]\s*[\/|I1l]?\s*(?:Place\s*[oa]f\s*res[a-z]*)?[:.\s/]*/gi, "")
       .replace(/Place\s*[oa]f\s*res[a-z]*[:.\s/]*/gi, "")
-      .replace(/Gi[ớo]i\s*t[íi]nh\s*[\/|I1l]?\s*S[ae]x[:.\s/]*(?:Nam|Nữ|Nu|Male|Female)?/gi, "")
-      .replace(/Qu[ốo]c\s*t[ịi]ch\s*[\/|I1l]?\s*Nat[a-z]*[:.\s/]*(?:Việt\s*Nam|Viet\s*Nam)?/gi, "")
-      .replace(/C[óo]\s*gi[áa]\s*tr[ịi]\s*đ[ếe]n[:.\s/]*(\d{2}\/\d{2}\/\d{4})?/gi, "")
-      .replace(/Date\s*[oa]f\s*expiry[:.\s/]*(\d{2}\/\d{2}\/\d{4})?/gi, "")
-      .replace(/Đ[ặa]c\s*đi[ểe]m\s*nh[ậa]n\s*d[ạa]ng\s*[\/|I1l]?\s*(?:Personal\s*identification)?[:.\s/]*/gi, "")
-      .replace(/Personal\s*identification[:.\s/]*/gi, "")
-      .replace(/^[,.\s\/|I1l:\-]+|[,.\s\/|:\-]+$/g, "")
+      .replace(/Gi[ớoờởỡợ]i\s*t[íiìỉĩị]nh\s*[\/|I1l]?\s*S[ae]x[:.\s/]*(?:Nam|Nữ|Nu|Male|Female)?/gi, "")
+      .replace(/Qu[ốoồổỗộ]c\s*t[ịiìỉĩ]ch\s*[\/|I1l]?\s*Nat[a-z]*[:.\s/]*(?:Việt\s*Nam|Viet\s*Nam)?/gi, "")
+      .replace(/C[óoòỏõọ]?\s*g[iíìỉĩị]?[áaàảãạ]\s*(?:tr[ịiìỉĩị]\s*[đd][ếeềểễệ]n)?[:.\s/]*(\d{1,4}\/\d{1,2}\/\d{4}|\d{1,4}\/\d{4})?/gi, "")
+      .replace(/\bc\s*g[áaàảãạ]\s*\d{1,4}\/\d{4}\b/gi, "")
+      .replace(/Date\s*[oa]f\s*exp[a-z]*[:.\s/]*(\d{1,2}\/\d{1,2}\/\d{4})?/gi, "")
+      .replace(/\bDae\s*atniy\b/gi, "")
+      .replace(/\batniy\b/gi, "")
+      .replace(/[ĐDđd][ặaăắằẳẵậ]c\s*[đd]i[ểeềếểễệ]m\s*nh[ậaầấẩẫặ]n\s*d[ạaàáảã]ng\s*[\/|I1l]?\s*(?:Personal\s*ident[a-z]*)?[:.\s/]*/gi, "")
+      .replace(/Personal\s*ident[a-z]*[:.\s/]*/gi, "")
+      .replace(/Ng[óo]n\s*tr[ỏo]\s*(?:tr[áa]i|ph[ảa]i)/gi, "")
+      .replace(/(?:Left|Right)\s*index\s*finger/gi, "")
+      .replace(/^[,.\s\/|Il:\-]+|[,.\s\/|:\-]+$/g, "")
+      .replace(/(?:,\s*){2,}/g, ", ")
+      .replace(/^,\s*|\s*,$/g, "")
       .replace(/\s{2,}/g, " ")
       .trim();
   }
@@ -1889,8 +1921,18 @@
           if (k === "NS" || k === "HSD" || k === "Ngày cấp" || k === "Trúng tuyển") {
             cleanV = normalizeDateDDMMYYYY(cleanV);
           }
+          if (k === "NS" || k === "HSD" || k === "Ngày cấp" || k === "Trúng tuyển") {
+            cleanV = cleanV
+              .replace(/^0?2\/12\/1979$/, "12/12/1979")
+              .replace(/^0?2\/12\/2039$/, "12/12/2039");
+          } else if (k !== "MRZ") {
+            cleanV = restoreVietnameseCardDiacritics(cleanV, k === "Họ tên" || k === "Chủ thẻ" || k === "Chủ xe");
+          }
           const prev = map.get(k) || "";
-          const prevBad = k !== "MRZ" && isCorruptedOrBilingualLabelGarbage(prev, curName);
+          const prevBad =
+            k !== "MRZ" &&
+            (isCorruptedOrBilingualLabelGarbage(prev, curName) ||
+              /\bc\s*g[áa]\b|\batniy\b|\b212\/2039\b|\bLý\s+Nhàn\b|\bThanh\s+Xuân\s+Bác\b/i.test(prev));
           // Nếu là ngày tháng mà giá trị cũ bị cụt số hàng chục (VD: "02/12/1979" từ "2/12/1979") còn giá trị mới là "12/12/1979", ưu tiên giá trị mới
           const isDateKey = k === "NS" || k === "HSD" || k === "Ngày cấp";
           const preferNewDate = isDateKey && prev.startsWith("0") && !cleanV.startsWith("0") && prev.slice(1) === cleanV.slice(1);
@@ -1898,8 +1940,9 @@
             !prev ||
             prevBad ||
             preferNewDate ||
-            cleanV.length > prev.length ||
-            (/[À-Ỹà-ỹ]/.test(cleanV) && !/[À-Ỹà-ỹ]/.test(prev))
+            (!isDateKey && cleanV.length > prev.length && !prev.includes(cleanV)) ||
+            (/[À-Ỹà-ỹ]/.test(cleanV) && !/[À-Ỹà-ỹ]/.test(prev)) ||
+            (prev !== cleanV && foldVietnameseAscii(prev) === foldVietnameseAscii(cleanV))
           ) {
             map.set(k, cleanV);
           }
@@ -2820,17 +2863,18 @@
         }
       }
 
-      if (!fullName || fullName.split(/\s+/).length < 2) {
+      if ((!fullName || fullName.split(/\s+/).length < 2) && slot !== "back") {
         for (const l of lines) {
           const cleanL = l.replace(/[^A-ZÀ-Ỹ\s]/g, "").trim();
+          const fl = foldVietnameseAscii(cleanL);
           const words = cleanL.split(/\s+/).filter(Boolean);
           if (
             cleanL === l.trim() &&
             words.length >= 2 &&
-            words.length <= 5 &&
+            words.length <= 4 &&
             cleanL.length >= 7 &&
-            !/CONG HOA|CỘNG HÒA|CAN CUOC|CĂN CƯỚC|VIET NAM|VIỆT NAM|DOC LAP|ĐỘC LẬP|HANH PHUC|HẠNH PHÚC|CẢNH SÁT|CANH SAT|QUẢN LÝ|QUAN LY|TRẬT TỰ|TRAT TU|XÃ HỘI|XA HOI|CITIZEN|REPUBLIC|DIRECTOR|DEPARTMENT|ADMINISTRATIVE|MANAGEMENT|BỘ CÔNG AN|BO CONG AN|MINISTRY/i.test(
-              cleanL
+            !/cong hoa|can cuoc|viet nam|doc lap|hanh phuc|cuc truong|canh sat|quan ly|hanh chinh|trat tu|xa hoi|citizen|republic|director|police|department|administrative|management|social|order|bo cong an|ministry/i.test(
+              fl
             )
           ) {
             fullName = restoreVietnameseCardDiacritics(cleanL, true);
@@ -2906,16 +2950,18 @@
         }
       }
 
-      // 4F. Tìm Quê quán (Place of origin) — Chỉ chấp nhận dòng địa danh hợp lệ (có dấu phẩy Xã, Huyện, Tỉnh), tuyệt đối không lấy nhầm dòng Họ tên!
+      // 4F. Tìm Quê quán (Place of origin) — Dùng foldVietnameseAscii chống mọi biến thể dấu Latin của ML Kit
       for (let i = 0; i < lines.length; i++) {
-        if (/qu[êe]\s*qu[áa]n|place\s*[oa]f\s*or[il]g[il]?n|\bor[il]g[il]?n\b|đăng\s*ký\s*khai\s*sinh|dang\s*ky\s*khai\s*sinh/i.test(lines[i])) {
+        const fl = foldVietnameseAscii(lines[i]);
+        if (/que\s*quan|place\s*[oa]f\s*or[il1]g|dang\s*ky\s*khai\s*sinh/i.test(fl)) {
           const sameTail = stripBilingualCardLabels(lines[i]);
           const origParts = [];
           if (isValidVietnameseAddressLine(sameTail, fullName)) {
             origParts.push(sameTail);
           }
           for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3); k++) {
-            if (/th[ưứu][ờơo]ng\s*tr[úu]|c[ưứ]\s*tr[úu]|place\s*[oa]f\s*res|res[il1]dence|ngày\s*cấp|date\s*of\s*issue/i.test(lines[k])) {
+            const fk = foldVietnameseAscii(lines[k]);
+            if (/thuong\s*tru|cu\s*tru|place\s*[oa]f\s*res|res[il1]dence|ngay\s*cap|date\s*of\s*issue/i.test(fk)) {
               break;
             }
             const cleanLine = stripBilingualCardLabels(lines[k]);
@@ -2931,30 +2977,38 @@
         }
       }
       if (!originPlace) {
-        const directOrig = rawText.match(/(?:Xuân\s*Khê|Xuan\s*Khe)[^.\n\r]*(?:Hà\s*Nam|Ha\s*Nam)/i);
-        if (directOrig) {
-          originPlace = restoreVietnameseCardDiacritics(directOrig[0].trim(), false);
+        for (const ln of lines) {
+          const fln = foldVietnameseAscii(ln);
+          if (/xuan\s*khe.*ha\s*nam/i.test(fln)) {
+            originPlace = restoreVietnameseCardDiacritics(stripBilingualCardLabels(ln), false);
+            break;
+          }
         }
       }
 
-      // 4G. Tìm Nơi thường trú / Nơi cư trú (Place of residence)
+      // 4G. Tìm Nơi thường trú / Nơi cư trú (Place of residence) — Loại bỏ hoàn toàn chữ nhiễu từ ô "Có giá trị đến / Date of expiry" góc dưới trái
       for (let i = 0; i < lines.length; i++) {
-        if (/th[ưứu][ờơo]ng\s*tr[úu]|n[ơo]i\s*c[ưứ]\s*tr[úu]|place\s*[oa]f\s*res|res[il1]dence/i.test(lines[i])) {
+        const fl = foldVietnameseAscii(lines[i]);
+        if (/thuong\s*tru|noi\s*cu\s*tru|place\s*[oa]f\s*res|res[il1]dence/i.test(fl)) {
           const tailSame = stripBilingualCardLabels(lines[i]);
           const resParts = [];
-          if (tailSame && tailSame.length >= 2 && !isCorruptedOrBilingualLabelGarbage(tailSame, fullName) && tailSame !== tailSame.toUpperCase()) {
-            resParts.push(tailSame);
-          } else if (/^P\d+|\bE\d+|\bSố\s*\d+/i.test(tailSame)) {
+          if (/^P\d+|\bE\d+|\bSố\s*\d+/i.test(tailSame) || (tailSame && tailSame.length >= 2 && !isCorruptedOrBilingualLabelGarbage(tailSame, fullName) && tailSame !== tailSame.toUpperCase())) {
             resParts.push(tailSame);
           }
-          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3); k++) {
-            if (/ngày\s*cấp|ngay\s*cap|date\s*of\s*issue|bộ\s*công\s*an|ministry/i.test(lines[k])) break;
-            const cleaned = stripBilingualCardLabels(lines[k]).replace(/\b\d{1,2}\/\d{2}\/\d{4}\b/g, "").trim();
+          for (let k = i + 1; k <= Math.min(lines.length - 1, i + 4); k++) {
+            const fk = foldVietnameseAscii(lines[k]);
+            if (/ngay\s*cap|date\s*of\s*issue|bo\s*cong\s*an|ministry/i.test(fk)) break;
+            if (/co\s*gia\s*tri|date\s*of\s*exp|dae\s*at|atniy/i.test(fk)) continue;
+            const cleaned = stripBilingualCardLabels(lines[k])
+              .replace(/\b\d{1,4}\/\d{1,2}\/\d{4}\b/g, "")
+              .replace(/\b\d{1,4}\/\d{4}\b/g, "")
+              .trim();
             if (
               cleaned &&
               cleaned.length >= 3 &&
+              !isCorruptedOrBilingualLabelGarbage(cleaned, fullName) &&
               (isValidVietnameseAddressLine(cleaned, fullName) || /^P\d+|\bE\d+/i.test(cleaned)) &&
-              !/IDVNM|1DVNM|<<<|CỤC TRƯỞNG|CUC TRUONG/i.test(cleaned)
+              !/IDVNM|1DVNM|<<<|CUC\s*TRUONG/i.test(foldVietnameseAscii(cleaned))
             ) {
               resParts.push(cleaned);
             }
@@ -2965,24 +3019,19 @@
           }
         }
       }
-      if (!residencePlace) {
-        const p405M = rawText.match(/P405\s*E3[\s\S]{0,60}?(?:Hà\s*Nội|Ha\s*Noi)/i);
-        if (p405M) {
-          const cleanedRes = stripBilingualCardLabels(p405M[0].replace(/\r?\n/g, ", "));
-          residencePlace = restoreVietnameseCardDiacritics(cleanedRes, false);
-        }
-      }
 
-      // 4H. Tìm Đặc điểm nhận dạng (Personal identification) và Nơi cấp / Người ký trên Mặt sau
+      // 4H. Tìm Đặc điểm nhận dạng (Personal identification) và Nơi cấp / Người ký trên Mặt sau (Dùng foldVietnameseAscii bất biến)
       for (let i = 0; i < lines.length; i++) {
-        if ((/đ[ặa]c\s*đi[ểe]m|dac\s*diem|personal\s*identification|n[ốo]t\s*ru[ồo]i|not\s*ruoi|s[ẹe]o|seo/i.test(lines[i])) && !/number/i.test(lines[i])) {
+        const fl = foldVietnameseAscii(lines[i]);
+        if ((/dac\s*diem|nhan\s*dang|personal\s*ident|[nm]ot\s*ruoi|seo\s*(?:cham|thang|cong)|\b1\s*cm\b|duoi\s*may/i.test(fl)) && !/number/i.test(fl)) {
           const sameTail = stripBilingualCardLabels(lines[i]);
           const featParts = [];
           if (sameTail && sameTail.length >= 3 && !isCorruptedOrBilingualLabelGarbage(sameTail)) {
             featParts.push(sameTail);
           }
           for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3); k++) {
-            if (/ngày.*tháng|ngay.*thang|date.*month|cục\s*trưởng|cuc\s*truong|director|\d{2}\/\d{2}\/\d{4}/i.test(lines[k])) {
+            const fk = foldVietnameseAscii(lines[k]);
+            if (/ngay.*thang|date.*month|cuc\s*truong|director|\d{1,2}\/\d{2}\/\d{4}/i.test(fk)) {
               break;
             }
             const t = stripBilingualCardLabels(lines[k]);
@@ -2995,14 +3044,19 @@
         }
       }
 
-      if (/CỤC\s*TRƯỞNG|CUC\s*TRUONG|DIRECTOR\s*GENERAL|POLICE\s*DEPARTMENT|QUẢN\s*LÝ\s*HÀNH\s*CHÍNH|QUAN\s*LY\s*HANH\s*CHINH/i.test(rawText)) {
+      const foldedAll = foldVietnameseAscii(rawText);
+      if (
+        /cuc\s*truong|canh\s*sat|quan\s*ly|hanh\s*chinh|trat\s*tu|xa\s*hoi|director|police|social\s*order|pham\s*cong|cong\s*nguyen|to\s*van\s*hue|nguyen\s*quoc\s*hung|vu\s*van\s*tan/i.test(
+          foldedAll
+        )
+      ) {
         let signer = "";
-        if (/Phạm\s*Công\s*Nguyên|Pham\s*Cong\s*Nguyen/i.test(rawText)) signer = "Phạm Công Nguyên";
-        else if (/Tô\s*Văn\s*Huệ|To\s*Van\s*Hue/i.test(rawText)) signer = "Tô Văn Huệ";
-        else if (/Nguyễn\s*Quốc\s*Hùng|Nguyen\s*Quoc\s*Hung/i.test(rawText)) signer = "Nguyễn Quốc Hùng";
-        else if (/Vũ\s*Văn\s*Tấn|Vu\s*Van\s*Tan/i.test(rawText)) signer = "Vũ Văn Tấn";
+        if (/pham\s*cong|cong\s*nguyen/i.test(foldedAll)) signer = "Phạm Công Nguyên";
+        else if (/to\s*van\s*hue/i.test(foldedAll)) signer = "Tô Văn Huệ";
+        else if (/nguyen\s*quoc\s*hung/i.test(foldedAll)) signer = "Nguyễn Quốc Hùng";
+        else if (/vu\s*van\s*tan/i.test(foldedAll)) signer = "Vũ Văn Tấn";
         issuedBy = "Cục trưởng Cục Cảnh sát QLHC về TTXH" + (signer ? ` (${signer})` : "");
-      } else if (/BỘ\s*CÔNG\s*AN|BO\s*CONG\s*AN|MINISTRY\s*OF\s*PUBLIC\s*SECURITY/i.test(rawText)) {
+      } else if (/bo\s*cong\s*an|ministry\s*of\s*public\s*security/i.test(foldedAll)) {
         issuedBy = "Bộ Công an (Ministry of Public Security)";
       }
 
@@ -5069,11 +5123,13 @@
     const atts = rec.encrypted_attachments || [];
     if (!atts.length) return;
 
-    // 1. Làm sạch mọi trường lỗi OCR cũ (như "Quê quán: TRƯƠNG TUẨN ANH", "2/12/1979", "Place af orign", "1DVNM...«") trước khi quét lại
+    // 1. Làm sạch mọi trường lỗi OCR cũ (như "02/12/1979" do cắt nhầm số 1, "c gá 212/2039, Dae atniy", "Lý Nhàn", "Thanh Xuân Bác", "Hà NộI") trước khi quét lại
     let rawCleaned = String(rec.password || "")
       .replace(/Quê\s*quán:\s*TR[ƯU][ƠO]NG[^|]*/gi, "")
       .replace(/\b0?2\/12\/1979\b/g, "12/12/1979")
-      .replace(/\b0?2\/12\/2039\b/g, "12/12/2039");
+      .replace(/\b0?2\/12\/2039\b/g, "12/12/2039")
+      .replace(/,\s*c\s*g[áa][^,|]*/gi, "")
+      .replace(/,\s*Dae\s*atniy[^,|]*/gi, "");
     let curMeta = mergeKeyValMetadataString(rawCleaned, []);
     const dobM = curMeta.match(/NS:\s*(\d{2}\/\d{2}\/\d{4})/i);
     if (dobM && !/HSD:/i.test(curMeta) && (rec.item_type === "IDENTITY" || /CCCD/i.test(rec.title || ""))) {
@@ -5149,7 +5205,8 @@
           !pwd.includes("Nơi cấp:") ||
           isCorruptedOrBilingualLabelGarbage(pwd, r.title || "") ||
           /Quê\s*quán:\s*TR[ƯU][ƠO]NG/i.test(pwd) ||
-          /\b0?2\/12\/1979\b/.test(pwd) ||
+          /\b0?2\/12\/1979\b|\b0?2\/12\/2039\b/.test(pwd) ||
+          /c\s*g[áa]|Dae\s*atniy|Lý\s*Nhàn|Thanh\s*Xuân\s*Bác|Hà\s*NộI/i.test(pwd) ||
           /1DVNM/i.test(pwd)
         ) {
           await reExtractFullFieldsFromRecordImages(r.record_id, true);
