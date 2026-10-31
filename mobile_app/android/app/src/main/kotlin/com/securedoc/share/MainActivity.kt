@@ -2100,11 +2100,12 @@ class MainActivity: FlutterFragmentActivity() {
                                 for (block in visionText.textBlocks) {
                                     allLines.addAll(block.lines)
                                 }
+                                // Sắp xếp chính xác từ trên xuống dưới theo centerY (chỉ coi là cùng dòng khi chênh lệch Y <= 28% chiều cao dòng)
                                 allLines.sortWith(Comparator { a, b ->
                                     val ay = a.boundingBox?.centerY() ?: 0
                                     val by = b.boundingBox?.centerY() ?: 0
-                                    val ah = a.boundingBox?.height() ?: 20
-                                    if (kotlin.math.abs(ay - by) <= ah / 2) {
+                                    val ah = kotlin.math.min(a.boundingBox?.height() ?: 20, b.boundingBox?.height() ?: 20)
+                                    if (kotlin.math.abs(ay - by) <= (ah * 0.28).toInt()) {
                                         val ax = a.boundingBox?.left ?: 0
                                         val bx = b.boundingBox?.left ?: 0
                                         ax.compareTo(bx)
@@ -2117,7 +2118,7 @@ class MainActivity: FlutterFragmentActivity() {
                                 var curRowH = 24
                                 var prevRight = -9999
                                 var curRowBuilder = StringBuilder()
-                                val colSplitX = (bmp0.width * 0.33).toInt()
+                                val colSplitX = (bmp0.width * 0.34).toInt()
                                 for (ln in allLines) {
                                     val ly = ln.boundingBox?.centerY() ?: 0
                                     val lh = ln.boundingBox?.height() ?: 24
@@ -2125,16 +2126,16 @@ class MainActivity: FlutterFragmentActivity() {
                                     val lr = ln.boundingBox?.right ?: 0
                                     val txt = ln.text.trim()
                                     if (txt.isEmpty()) continue
-                                    // Không ghép cột trái dưới ảnh chân dung (Có giá trị đến / Date of expiry) với cột phải (Quê quán / Nơi thường trú)
-                                    val crossesPhotoCol = (prevRight in 1..colSplitX && lx >= (bmp0.width * 0.28).toInt())
-                                    val sameY = (curRowY == -9999 || kotlin.math.abs(ly - curRowY) <= kotlin.math.max(curRowH, lh) * 0.55)
-                                    if (sameY && !crossesPhotoCol) {
+                                    // Tuyệt đối không nối ngang nếu:
+                                    // 1. Vượt qua ranh giới cột ảnh chân dung bên trái (x <= 34% chiều rộng thẻ)
+                                    // 2. Khoảng cách ngang giữa 2 cụm chữ quá xa (> 18% chiều rộng thẻ)
+                                    // 3. Chênh lệch tâm dòng Y > 28% chiều cao chữ (tránh dính dòng "Giới tính" vào "Quê quán")
+                                    val crossesPhotoCol = (prevRight in 1..colSplitX && lx >= (bmp0.width * 0.27).toInt())
+                                    val wideGap = (prevRight > 0 && (lx - prevRight) > (bmp0.width * 0.18).toInt() && !curRowBuilder.toString().endsWith(":"))
+                                    val sameY = (curRowY != -9999 && kotlin.math.abs(ly - curRowY) <= (kotlin.math.min(curRowH, lh) * 0.28).toInt())
+                                    if (sameY && !crossesPhotoCol && !wideGap) {
                                         if (curRowBuilder.isNotEmpty()) curRowBuilder.append(" ")
                                         curRowBuilder.append(txt)
-                                        if (curRowY == -9999) {
-                                            curRowY = ly
-                                            curRowH = lh
-                                        }
                                         prevRight = lr
                                     } else {
                                         if (curRowBuilder.isNotEmpty()) mergedRows.add(curRowBuilder.toString())
