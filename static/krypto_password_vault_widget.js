@@ -4180,10 +4180,37 @@
         border-color: var(--primary) !important;
         box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22);
       }
+      .kpw-search-toolbar-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 6px;
+        margin-bottom: 8px;
+        align-items: center;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .kpw-search-toolbar-row input[type="search"],
+      #kpw-qr-raw-input {
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+      }
+      .kpw-cat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+        width: 100%;
+      }
       .kpw-cat-chip {
         border-radius: 999px !important;
-        padding: 5px 11px !important;
-        font-size: 11px !important;
+        padding: 6px 6px !important;
+        font-size: 10.8px !important;
+        width: 100% !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
       }
       .kpw-cat-chip.active {
         background: var(--primary-light) !important;
@@ -5303,12 +5330,12 @@
       <!-- SUB-PANEL 1: DANH BẠ MẬT KHẨU & THẺ (MẶC ĐỊNH MỞ RA GỌN SẠCH - CHUẨN SINGLE-LEVEL CARD) -->
       <div id="kpw-panel-list" class="card settings-card" style="display: block;">
         <div class="kpw-list-toolbar-box">
-          <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
-            <input type="search" id="kpw-search-input" placeholder="🔍 Tìm CCCD, GPLX, Hộ chiếu, Thẻ Visa, Mật khẩu..." style="flex: 1; font-size: 12px; padding: 8px 10px; margin: 0;">
-            <button type="button" class="btn-chip-micro" style="padding: 8px 9px; font-size: 11px; font-weight: 700; white-space: nowrap;" onclick="window.KryptoPasswordVault.runSecurityAudit()">🛡️ Kiểm toán</button>
-            <button type="button" class="btn-mobi-solid" style="padding: 8px 11px; font-size: 11.5px; white-space: nowrap; width: auto;" onclick="window.KryptoPasswordVault.switchSubView('add')">➕ Thêm</button>
+          <div class="kpw-search-toolbar-row">
+            <input type="search" id="kpw-search-input" placeholder="🔍 Tìm CCCD, GPLX, Hộ chiếu, Thẻ..." style="min-width: 0; width: 100%; font-size: 11.8px; padding: 8px 9px; margin: 0;">
+            <button type="button" class="btn-chip-micro" style="padding: 8px 8px; font-size: 10.8px; font-weight: 700; white-space: nowrap; flex-shrink: 0;" onclick="window.KryptoPasswordVault.runSecurityAudit()">🛡️ Kiểm toán</button>
+            <button type="button" class="btn-mobi-solid" style="padding: 8px 10px; font-size: 11px; white-space: nowrap; width: auto; flex-shrink: 0; margin: 0;" onclick="window.KryptoPasswordVault.switchSubView('add')">➕ Thêm</button>
           </div>
-          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+          <div class="kpw-cat-grid">
             <button type="button" class="btn-chip-micro kpw-cat-chip active" onclick="window.KryptoPasswordVault.filterCategory('ALL', this)">Tất cả</button>
             <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('IDENTITY', this)">🪪 Giấy tờ / CCCD</button>
             <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('PAYMENT_CARD', this)">💳 Thẻ NH</button>

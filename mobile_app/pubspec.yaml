@@ -1,7 +1,7 @@
 name: securedoc_mobile
 description: Krypto Mobile Client - Post-Quantum Cryptography (ML-KEM-768) & Offline Document Vault (Android APK)
 publish_to: 'none'
-version: 3.2.6+93
+version: 3.2.7+94
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
