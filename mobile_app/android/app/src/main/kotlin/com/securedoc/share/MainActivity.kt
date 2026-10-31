@@ -2151,7 +2151,7 @@ class MainActivity: FlutterFragmentActivity() {
                                 return if (mergedRows.isNotEmpty()) mergedRows.joinToString("\n") else (visionText.text ?: "")
                             }
 
-                            fun scoreOcrTextReadability(txt: String): Int {
+                            fun scoreOcrTextReadability(txt: String, vt: com.google.mlkit.vision.text.Text?, imgH: Int): Int {
                                 if (txt.isBlank()) return 0
                                 val up = txt.uppercase()
                                 var sc = txt.replace(Regex("\\s+"), "").length
@@ -2164,27 +2164,65 @@ class MainActivity: FlutterFragmentActivity() {
                                     "HỌ VÀ TÊN", "HO VA TEN", "HỌ TÊN", "HO TEN", "FULL NAME",
                                     "NGÀY SINH", "NGAY SINH", "DATE OF BIRTH", "QUỐC TỊCH", "QUOC TICH",
                                     "NƠI CƯ TRÚ", "NOI CU TRU", "THƯỜNG TRÚ", "THUONG TRU", "ADDRESS", "RESIDENCE",
+                                    "ĐẶC ĐIỂM", "DAC DIEM", "PERSONAL IDENTIFICATION", "CỤC TRƯỞNG", "CUC TRUONG",
                                     "VISA", "MASTERCARD", "NAPAS", "VALID", "THRU"
                                 )
                                 for (kw in keywords) {
                                     if (up.contains(kw)) sc += 60
                                 }
-                                val dates = Regex("\\b\\d{2}/\\d{2}/\\d{4}\\b").findAll(txt).count()
+                                val dates = Regex("\\b\\d{1,2}/\\d{2}/\\d{4}\\b").findAll(txt).count()
                                 sc += dates * 50
-                                if (Regex("\\b0\\d{11}\\b").containsMatchIn(txt)) sc += 90
+                                if (Regex("\\b0\\d{11}\\b").containsMatchIn(txt)) sc += 120
+
+                                // KIỂM ĐỊNH TỌA ĐỘ TRỤC Y (TOP-VS-BOTTOM ORIENTATION INVARIANT):
+                                // Trên thẻ đúng chiều xuôi (0°):
+                                //   - Quốc hiệu "CỘNG HÒA / SOCIALIST / CĂN CƯỚC / GIẤY PHÉP LÁI XE / ĐẶC ĐIỂM NHẬN DẠNG / BỘ GTVT" BẮT BUỘC nằm ở nửa trên (centerY < 0.48 * imgH).
+                                //   - Dòng "IDVNM / <<< / NƠI THƯỜNG TRÚ / CÓ GIÁ TRỊ ĐẾN / DATE OF EXPIRY" BẮT BUỘC nằm ở nửa dưới (centerY > 0.50 * imgH).
+                                // Nếu ảnh bị ngược 180°, các dòng này sẽ nằm ngược vị trí Y và bị trừ điểm nặng (-500), đảm bảo không bao giờ lật ngược nhầm!
+                                if (vt != null && imgH > 40) {
+                                    val topHeaderKws = listOf(
+                                        "CỘNG HÒA", "CONG HOA", "SOCIALIST", "INDEPENDENCE",
+                                        "CĂN CƯỚC", "CAN CUOC", "CITIZEN IDENTITY",
+                                        "GIẤY PHÉP LÁI XE", "GIAY PHEP LAI XE", "DRIVER", "BỘ GTVT", "BO GTVT",
+                                        "ĐẶC ĐIỂM NHẬN DẠNG", "DAC DIEM NHAN DANG", "PERSONAL IDENTIFICATION"
+                                    )
+                                    val bottomFooterKws = listOf(
+                                        "IDVNM", "<<<<", "THƯỜNG TRÚ", "THUONG TRU", "PLACE OF RESIDENCE",
+                                        "CÓ GIÁ TRỊ ĐẾN", "CO GIA TRI DEN", "DATE OF EXPIRY"
+                                    )
+                                    for (block in vt.textBlocks) {
+                                        for (ln in block.lines) {
+                                            val cy = ln.boundingBox?.centerY() ?: continue
+                                            val lup = ln.text.uppercase()
+                                            for (tkw in topHeaderKws) {
+                                                if (lup.contains(tkw)) {
+                                                    if (cy < imgH * 0.48) sc += 320 else if (cy > imgH * 0.54) sc -= 450
+                                                }
+                                            }
+                                            for (bkw in bottomFooterKws) {
+                                                if (lup.contains(bkw)) {
+                                                    if (cy > imgH * 0.48) sc += 320 else if (cy < imgH * 0.44) sc -= 450
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 return sc
                             }
 
                             var text0 = ""
                             var text180 = ""
+                            var vt0: com.google.mlkit.vision.text.Text? = null
+                            var vt180: com.google.mlkit.vision.text.Text? = null
                             var qrRawResult = ""
-                            val latch = java.util.concurrent.CountDownLatch(4)
+                            val latch = java.util.concurrent.CountDownLatch(5)
 
                             val img0 = com.google.mlkit.vision.common.InputImage.fromBitmap(bmp0, 0)
                             val img180 = com.google.mlkit.vision.common.InputImage.fromBitmap(bmp180, 0)
 
                             recognizer.process(img0)
                                 .addOnSuccessListener { vt ->
+                                    vt0 = vt
                                     text0 = mergeVisionLines(vt)
                                     latch.countDown()
                                 }
@@ -2192,6 +2230,7 @@ class MainActivity: FlutterFragmentActivity() {
 
                             recognizer.process(img180)
                                 .addOnSuccessListener { vt ->
+                                    vt180 = vt
                                     text180 = mergeVisionLines(vt)
                                     latch.countDown()
                                 }
@@ -2210,15 +2249,15 @@ class MainActivity: FlutterFragmentActivity() {
                                 }
                                 .addOnFailureListener { latch.countDown() }
 
-                            // Quét thêm vùng góc QR phóng đại 2x
+                            // Quét góc QR phóng đại 2.4x trên cả chiều 0° (góc trên phải) và chiều 180° (phòng trường hợp ảnh đầu vào đang bị ngược 180°)
                             try {
-                                val qx = (bmp0.width * 0.60).toInt().coerceIn(0, bmp0.width - 10)
+                                val qx = (bmp0.width * 0.58).toInt().coerceIn(0, bmp0.width - 10)
                                 val qw = (bmp0.width - qx).coerceAtLeast(10)
-                                val qh = (bmp0.height * 0.50).toInt().coerceIn(10, bmp0.height)
-                                val qrCrop = Bitmap.createBitmap(bmp0, qx, 0, qw, qh)
-                                val qrZoom = Bitmap.createScaledBitmap(qrCrop, qw * 2, qh * 2, true)
-                                val qrImg = com.google.mlkit.vision.common.InputImage.fromBitmap(qrZoom, 0)
-                                barcodeScanner.process(qrImg)
+                                val qh = (bmp0.height * 0.52).toInt().coerceIn(10, bmp0.height)
+                                val qrCrop0 = Bitmap.createBitmap(bmp0, qx, 0, qw, qh)
+                                val qrZoom0 = Bitmap.createScaledBitmap(qrCrop0, (qw * 2.4).toInt(), (qh * 2.4).toInt(), true)
+                                val qrImg0 = com.google.mlkit.vision.common.InputImage.fromBitmap(qrZoom0, 0)
+                                barcodeScanner.process(qrImg0)
                                     .addOnSuccessListener { bcs ->
                                         if (qrRawResult.isBlank()) {
                                             for (bc in bcs) {
@@ -2229,11 +2268,40 @@ class MainActivity: FlutterFragmentActivity() {
                                                 }
                                             }
                                         }
-                                        try { qrZoom.recycle(); qrCrop.recycle() } catch (_: Throwable) {}
+                                        try { qrZoom0.recycle(); qrCrop0.recycle() } catch (_: Throwable) {}
                                         latch.countDown()
                                     }
                                     .addOnFailureListener {
-                                        try { qrZoom.recycle(); qrCrop.recycle() } catch (_: Throwable) {}
+                                        try { qrZoom0.recycle(); qrCrop0.recycle() } catch (_: Throwable) {}
+                                        latch.countDown()
+                                    }
+                            } catch (_: Throwable) {
+                                latch.countDown()
+                            }
+
+                            try {
+                                val qx = (bmp180.width * 0.58).toInt().coerceIn(0, bmp180.width - 10)
+                                val qw = (bmp180.width - qx).coerceAtLeast(10)
+                                val qh = (bmp180.height * 0.52).toInt().coerceIn(10, bmp180.height)
+                                val qrCrop180 = Bitmap.createBitmap(bmp180, qx, 0, qw, qh)
+                                val qrZoom180 = Bitmap.createScaledBitmap(qrCrop180, (qw * 2.4).toInt(), (qh * 2.4).toInt(), true)
+                                val qrImg180 = com.google.mlkit.vision.common.InputImage.fromBitmap(qrZoom180, 0)
+                                barcodeScanner.process(qrImg180)
+                                    .addOnSuccessListener { bcs ->
+                                        if (qrRawResult.isBlank()) {
+                                            for (bc in bcs) {
+                                                val raw = bc.rawValue
+                                                if (!raw.isNullOrBlank()) {
+                                                    qrRawResult = raw
+                                                    break
+                                                }
+                                            }
+                                        }
+                                        try { qrZoom180.recycle(); qrCrop180.recycle() } catch (_: Throwable) {}
+                                        latch.countDown()
+                                    }
+                                    .addOnFailureListener {
+                                        try { qrZoom180.recycle(); qrCrop180.recycle() } catch (_: Throwable) {}
                                         latch.countDown()
                                     }
                             } catch (_: Throwable) {
@@ -2242,8 +2310,8 @@ class MainActivity: FlutterFragmentActivity() {
 
                             latch.await(7, java.util.concurrent.TimeUnit.SECONDS)
 
-                            val s0 = scoreOcrTextReadability(text0)
-                            val s180 = scoreOcrTextReadability(text180)
+                            val s0 = scoreOcrTextReadability(text0, vt0, bmp0.height)
+                            val s180 = scoreOcrTextReadability(text180, vt180, bmp180.height)
                             val isFlipped180 = s180 > s0 + 25
                             val bestText = if (isFlipped180) text180 else text0
                             var rotatedDataUrl = ""

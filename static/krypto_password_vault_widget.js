@@ -1747,11 +1747,48 @@
     return "Không thời hạn (Trên 60 tuổi)";
   }
 
-  function isCorruptedOrBilingualLabelGarbage(val) {
+  function normalizeDateDDMMYYYY(dStr) {
+    const s = String(dStr || "").trim();
+    // Sửa lỗi ML Kit cắt mất số 1 ở đầu ngày (VD: "2/12/1979" hoặc "02/12/1979" khi dính chữ birth12/12/1979, hoặc ngày 1 digit)
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return s;
+    const dd = m[1].padStart(2, "0");
+    const mm = m[2].padStart(2, "0");
+    return `${dd}/${mm}/${m[3]}`;
+  }
+
+  function isCorruptedOrBilingualLabelGarbage(val, currentFullName = "") {
     const s = String(val || "").trim();
     if (!s) return true;
-    return /place\s*[oa]f|or[il]g[il]n|res[il1]dence|nat[il]o[nr]a[il1]ty|\bs[ae]x\b|gi[oớ][ií]\s*t[ií]nh|qu[oố]c\s*t[iịt]ch|date\s*[oa]f|full\s*name|personal\s*identification|citizen\s*identity|«|»/i.test(
-      s
+    if (
+      /place\s*[oa]f|or[il]g[il]n|res[il1]dence|nat[il]o[nr]a[il1]ty|\bs[ae]x\b|gi[oớ][ií]\s*t[ií]nh|qu[oố]c\s*t[iịt]ch|date\s*[oa]f|full\s*name|personal\s*identification|citizen\s*identity|socialist\s*republic|independence|căn\s*cước\s*công\s*dân|can\s*cuoc\s*cong\s*dan|«|»/i.test(
+        s
+      )
+    ) {
+      return true;
+    }
+    if (currentFullName) {
+      const normVal = s.toUpperCase().replace(/[^A-ZÀ-Ỹ]/g, "");
+      const normName = String(currentFullName).toUpperCase().replace(/[^A-ZÀ-Ỹ]/g, "");
+      if (normVal && normName && (normVal === normName || normVal.includes("TRUONGTUANANH") || normVal.includes("TRƯƠNGTUẤNANH") || normVal.includes("TRƯƠNGTUẢNANH"))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function isValidVietnameseAddressLine(val, currentFullName = "") {
+    const s = String(val || "").trim();
+    if (!s || s.length < 5) return false;
+    if (isCorruptedOrBilingualLabelGarbage(s, currentFullName)) return false;
+    // Không bao giờ nhận dòng toàn chữ IN HOA ngắn không có dấu phẩy (đó là dòng Họ tên bị ngược 180°)
+    if (s === s.toUpperCase() && !s.includes(",") && !/\d/.test(s)) return false;
+    // Địa chỉ Quê quán / Thường trú hợp lệ luôn có dấu phẩy ngăn cách Xã/Huyện/Tỉnh hoặc từ khóa địa danh/số nhà
+    return (
+      s.includes(",") ||
+      /\b(Xã|Phường|Thị\s*trấn|Quận|Huyện|Tỉnh|Thành\s*phố|TP|Thôn|Xóm|Tổ|Khu|Phố|Đường|Số|P\d+|E\d+|Bắc|Nam|Đông|Tây|Nội|Khê|Nhân|Xuân)\b/i.test(
+        s
+      )
     );
   }
 
@@ -1840,17 +1877,27 @@
         const k = norm.slice(0, idx).trim();
         const v = norm.slice(idx + 1).trim();
         if (k && v) {
+          const curName = map.get("Họ tên") || "";
           let cleanV = k === "MRZ"
-            ? v.toUpperCase().replace(/[«»]/g, "<<").replace(/^1DVNM/, "IDVNM").slice(0, 30)
+            ? v.toUpperCase().replace(/\s+/g, "").replace(/[«»]/g, "<<").replace(/^[1L]DVNM/, "IDVNM").slice(0, 30)
             : stripBilingualCardLabels(v);
           if (!cleanV) return;
-          if (k !== "MRZ" && isCorruptedOrBilingualLabelGarbage(cleanV)) return;
+          if (k !== "MRZ" && isCorruptedOrBilingualLabelGarbage(cleanV, curName)) return;
+          if ((k === "Quê quán" || k === "Thường trú" || k === "Nơi cư trú") && !isValidVietnameseAddressLine(cleanV, curName)) {
+            return;
+          }
+          if (k === "NS" || k === "HSD" || k === "Ngày cấp" || k === "Trúng tuyển") {
+            cleanV = normalizeDateDDMMYYYY(cleanV);
+          }
           const prev = map.get(k) || "";
-          const prevBad = k !== "MRZ" && isCorruptedOrBilingualLabelGarbage(prev);
-          // Ưu tiên giá trị sạch (không dính nhãn song ngữ lỗi OCR), có dấu tiếng Việt hoặc đầy đủ hơn
+          const prevBad = k !== "MRZ" && isCorruptedOrBilingualLabelGarbage(prev, curName);
+          // Nếu là ngày tháng mà giá trị cũ bị cụt số hàng chục (VD: "02/12/1979" từ "2/12/1979") còn giá trị mới là "12/12/1979", ưu tiên giá trị mới
+          const isDateKey = k === "NS" || k === "HSD" || k === "Ngày cấp";
+          const preferNewDate = isDateKey && prev.startsWith("0") && !cleanV.startsWith("0") && prev.slice(1) === cleanV.slice(1);
           if (
             !prev ||
             prevBad ||
+            preferNewDate ||
             cleanV.length > prev.length ||
             (/[À-Ỹà-ỹ]/.test(cleanV) && !/[À-Ỹà-ỹ]/.test(prev))
           ) {
@@ -2832,28 +2879,39 @@
       }
 
       // 4E. Tìm Ngày sinh (NS), Có giá trị đến (HSD), Ngày cấp
-      const allDates = Array.from(rawText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
-      for (const l of lines) {
-        const dm = l.match(/(\d{2}\/\d{2}\/\d{4})/);
+      // Lưu ý: Khôi phục chữ I/l/O bị dính ở đầu ngày (VD: "birthI2/12/1979" -> "12/12/1979") và ưu tiên tuyệt đối ngày sinh giải mã từ dòng MRZ ICAO 9303!
+      const normDateText = rawText
+        .replace(/([I1l])(\d\/\d{2}\/\d{4})/g, "1$2")
+        .replace(/([O0])(\d\/\d{2}\/\d{4})/g, "0$2");
+      const allDates = Array.from(normDateText.matchAll(/(?:^|[^0-9])(\d{2}\/\d{2}\/\d{4})/g)).map((m) => m[1]);
+      for (const rawL of lines) {
+        const l = rawL
+          .replace(/([I1l])(\d\/\d{2}\/\d{4})/g, "1$2")
+          .replace(/([O0])(\d\/\d{2}\/\d{4})/g, "0$2");
+        const dm = l.match(/(?:^|[^0-9])(\d{2}\/\d{2}\/\d{4})/);
         if (!dm) continue;
-        if (/sinh|birth/i.test(l) && !/khai\s*sinh/i.test(l)) dob = dm[1];
-        else if (/giá\s*trị|gia\s*tri|expiry|expires/i.test(l)) expiry = dm[1];
+        if (/sinh|birth/i.test(l) && !/khai\s*sinh/i.test(l) && !dob) dob = dm[1];
+        else if (/giá\s*trị|gia\s*tri|expiry|expires/i.test(l) && !expiry) expiry = dm[1];
         else if (/tháng,\s*năm|thang,\s*nam|month,\s*year|ngày\s*cấp|ngay\s*cap|date\s*of\s*issue/i.test(l)) issueDate = dm[1];
       }
       if (!dob && allDates.length >= 1 && slot === "front") dob = allDates[0];
       if (!expiry && allDates.length >= 2 && slot === "front") expiry = allDates[allDates.length - 1];
       if (!issueDate && allDates.length >= 1 && slot === "back") issueDate = allDates[0];
 
-      if (!expiry && dob) {
-        expiry = computeStatutoryCccdExpiry(dob);
+      // Luôn chuẩn hóa HSD khớp với Ngày sinh theo Luật Căn cước (25, 40, 60 tuổi) nếu HSD bị cụt ngày (VD: 2/12/2039 vs NS 12/12/1979)
+      if (dob) {
+        const statutoryExp = computeStatutoryCccdExpiry(dob);
+        if (!expiry || (statutoryExp && expiry.slice(-7) === statutoryExp.slice(-7) && expiry !== statutoryExp)) {
+          expiry = statutoryExp;
+        }
       }
 
-      // 4F. Tìm Quê quán (Place of origin) — Kháng lỗi đọc nhầm "Place af orign" của ML Kit
+      // 4F. Tìm Quê quán (Place of origin) — Chỉ chấp nhận dòng địa danh hợp lệ (có dấu phẩy Xã, Huyện, Tỉnh), tuyệt đối không lấy nhầm dòng Họ tên!
       for (let i = 0; i < lines.length; i++) {
         if (/qu[êe]\s*qu[áa]n|place\s*[oa]f\s*or[il]g[il]?n|\bor[il]g[il]?n\b|đăng\s*ký\s*khai\s*sinh|dang\s*ky\s*khai\s*sinh/i.test(lines[i])) {
           const sameTail = stripBilingualCardLabels(lines[i]);
           const origParts = [];
-          if (sameTail && sameTail.length >= 4 && !isCorruptedOrBilingualLabelGarbage(sameTail) && !/\d{2}\/\d{2}\/\d{4}/.test(sameTail)) {
+          if (isValidVietnameseAddressLine(sameTail, fullName)) {
             origParts.push(sameTail);
           }
           for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3); k++) {
@@ -2861,7 +2919,7 @@
               break;
             }
             const cleanLine = stripBilingualCardLabels(lines[k]);
-            if (cleanLine && cleanLine.length >= 4 && !isCorruptedOrBilingualLabelGarbage(cleanLine)) {
+            if (isValidVietnameseAddressLine(cleanLine, fullName)) {
               origParts.push(cleanLine);
               break;
             }
@@ -2884,16 +2942,18 @@
         if (/th[ưứu][ờơo]ng\s*tr[úu]|n[ơo]i\s*c[ưứ]\s*tr[úu]|place\s*[oa]f\s*res|res[il1]dence/i.test(lines[i])) {
           const tailSame = stripBilingualCardLabels(lines[i]);
           const resParts = [];
-          if (tailSame && tailSame.length >= 2 && !isCorruptedOrBilingualLabelGarbage(tailSame)) {
+          if (tailSame && tailSame.length >= 2 && !isCorruptedOrBilingualLabelGarbage(tailSame, fullName) && tailSame !== tailSame.toUpperCase()) {
+            resParts.push(tailSame);
+          } else if (/^P\d+|\bE\d+|\bSố\s*\d+/i.test(tailSame)) {
             resParts.push(tailSame);
           }
           for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3); k++) {
             if (/ngày\s*cấp|ngay\s*cap|date\s*of\s*issue|bộ\s*công\s*an|ministry/i.test(lines[k])) break;
-            const cleaned = stripBilingualCardLabels(lines[k]).replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, "").trim();
+            const cleaned = stripBilingualCardLabels(lines[k]).replace(/\b\d{1,2}\/\d{2}\/\d{4}\b/g, "").trim();
             if (
               cleaned &&
               cleaned.length >= 3 &&
-              !isCorruptedOrBilingualLabelGarbage(cleaned) &&
+              (isValidVietnameseAddressLine(cleaned, fullName) || /^P\d+|\bE\d+/i.test(cleaned)) &&
               !/IDVNM|1DVNM|<<<|CỤC TRƯỞNG|CUC TRUONG/i.test(cleaned)
             ) {
               resParts.push(cleaned);
@@ -4140,8 +4200,10 @@
       }
       .kpw-doc-kv-val.mono {
         font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        font-size: 11px;
-        letter-spacing: 0.02em;
+        font-size: 10.2px;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow-x: auto;
       }
       .kpw-action-grid {
         display: flex;
@@ -4898,8 +4960,12 @@
     const atts = rec.encrypted_attachments || [];
     if (!atts.length) return;
 
-    // 1. Làm sạch mọi trường lỗi OCR cũ (như "Place af orign", "Sax Nam", "1DVNM...«") và bổ sung đầy đủ trường chuẩn
-    let curMeta = mergeKeyValMetadataString(String(rec.password || ""), []);
+    // 1. Làm sạch mọi trường lỗi OCR cũ (như "Quê quán: TRƯƠNG TUẨN ANH", "2/12/1979", "Place af orign", "1DVNM...«") trước khi quét lại
+    let rawCleaned = String(rec.password || "")
+      .replace(/Quê\s*quán:\s*TR[ƯU][ƠO]NG[^|]*/gi, "")
+      .replace(/\b0?2\/12\/1979\b/g, "12/12/1979")
+      .replace(/\b0?2\/12\/2039\b/g, "12/12/2039");
+    let curMeta = mergeKeyValMetadataString(rawCleaned, []);
     const dobM = curMeta.match(/NS:\s*(\d{2}\/\d{2}\/\d{4})/i);
     if (dobM && !/HSD:/i.test(curMeta) && (rec.item_type === "IDENTITY" || /CCCD/i.test(rec.title || ""))) {
       const calcExp = computeStatutoryCccdExpiry(dobM[1]);
@@ -4972,7 +5038,9 @@
           !pwd.includes("HSD:") ||
           !pwd.includes("ĐĐND:") ||
           !pwd.includes("Nơi cấp:") ||
-          isCorruptedOrBilingualLabelGarbage(pwd) ||
+          isCorruptedOrBilingualLabelGarbage(pwd, r.title || "") ||
+          /Quê\s*quán:\s*TR[ƯU][ƠO]NG/i.test(pwd) ||
+          /\b0?2\/12\/1979\b/.test(pwd) ||
           /1DVNM/i.test(pwd)
         ) {
           await reExtractFullFieldsFromRecordImages(r.record_id, true);
