@@ -4056,16 +4056,26 @@
     const style = document.createElement("style");
     style.id = "kpw-vault-styles";
     style.textContent = `
+      .kpw-sub-btn {
+        transition: all 0.16s ease;
+        border-radius: 9px !important;
+      }
       .kpw-sub-btn.active {
         background: var(--primary) !important;
         color: #ffffff !important;
         border-color: var(--primary) !important;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22);
+      }
+      .kpw-cat-chip {
+        border-radius: 999px !important;
+        padding: 5px 11px !important;
+        font-size: 11px !important;
       }
       .kpw-cat-chip.active {
         background: var(--primary-light) !important;
         color: var(--primary) !important;
         border-color: var(--primary) !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
       }
       .kpw-table {
         width: 100%;
@@ -4075,13 +4085,15 @@
       .kpw-table th {
         text-align: left;
         font-size: 11px;
-        padding: 8px;
+        padding: 9px 8px;
         border-bottom: 1px solid var(--border);
         color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
       .kpw-table td {
-        padding: 8px;
-        font-size: 12px;
+        padding: 10px 8px;
+        font-size: 12.5px;
         border-bottom: 1px solid var(--border);
         vertical-align: top;
       }
@@ -4089,7 +4101,76 @@
       body.theme-light .kpw-table td {
         border-color: var(--border) !important;
       }
+      /* Danh sách trường thông tin thẻ toàn chiều rộng (Không viền hộp lồng — Rule 14) */
+      .kpw-doc-kv-list {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        text-align: left;
+        margin-top: 2px;
+      }
+      .kpw-doc-kv-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        padding: 5px 0;
+        border-bottom: 1px dashed var(--border);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .kpw-doc-kv-row:last-child {
+        border-bottom: none;
+        padding-bottom: 2px;
+      }
+      .kpw-doc-kv-key {
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 11.2px;
+        flex: 0 0 32%;
+        text-align: left;
+      }
+      .kpw-doc-kv-val {
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 12px;
+        flex: 1 1 68%;
+        text-align: right;
+        word-break: break-word;
+      }
+      .kpw-doc-kv-val.mono {
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 11px;
+        letter-spacing: 0.02em;
+      }
+      .kpw-action-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+        justify-content: flex-end;
+      }
+      .kpw-action-grid .btn-chip-micro {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+      }
       @media (max-width: 680px) {
+        /* Đảm bảo Single-Level Card trên Mobile: panel bao ngoài trong suốt, mỗi tr là 1 Card duy nhất */
+        #kpw-panel-list {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        .kpw-list-toolbar-box {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 12px;
+          margin-bottom: 10px;
+        }
         .kpw-table thead {
           display: none;
         }
@@ -4099,11 +4180,12 @@
         }
         .kpw-table tr {
           display: block;
-          padding: 12px 14px;
-          margin-bottom: 10px;
+          padding: 14px 16px;
+          margin-bottom: 12px;
           border: 1px solid var(--border) !important;
-          border-radius: 10px;
-          background: transparent;
+          border-radius: 14px;
+          background: var(--bg-card);
+          box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
         }
         .kpw-table td,
         body.light-mode .kpw-table td,
@@ -4112,10 +4194,19 @@
           justify-content: space-between;
           align-items: flex-start;
           gap: 10px;
-          padding: 7px 0 !important;
+          padding: 8px 0 !important;
           border: none !important;
           border-bottom: 1px dashed var(--border) !important;
           text-align: right;
+        }
+        /* Ô Chi tiết hồ sơ & Ô Thao tác chiếm trọn 100% chiều rộng trên điện thoại */
+        .kpw-table td.kpw-td-fullwidth,
+        body.light-mode .kpw-table td.kpw-td-fullwidth,
+        body.theme-light .kpw-table td.kpw-td-fullwidth {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 6px;
+          text-align: left;
         }
         .kpw-table td:last-child,
         body.light-mode .kpw-table td:last-child,
@@ -4129,12 +4220,29 @@
           font-size: 11px;
           color: var(--text-muted);
           text-align: left;
-          flex: 0 0 38%;
+          flex: 0 0 34%;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+        .kpw-table td.kpw-td-fullwidth::before {
+          flex: none;
+          width: 100%;
+          margin-bottom: 2px;
+          color: var(--primary);
+          font-weight: 800;
         }
         .kpw-table td .table-cell-val {
-          flex: 1 1 62%;
+          flex: 1 1 66%;
           text-align: right;
           word-break: break-word;
+        }
+        .kpw-table td.kpw-td-fullwidth .table-cell-val {
+          flex: none;
+          width: 100%;
+          text-align: left;
+        }
+        .kpw-action-grid {
+          justify-content: flex-start;
         }
       }
     `;
@@ -4206,16 +4314,31 @@
       return;
     }
 
+    const typeLabelMap = {
+      IDENTITY: "🪪 GIẤY TỜ TÙY THÂN",
+      PAYMENT_CARD: "💳 THẺ NGÂN HÀNG",
+      LOGIN: "🌐 ĐĂNG NHẬP",
+      WIFI_NETWORK: "📶 MẠNG WI-FI",
+      SSH_API_KEY: "🔑 KHÓA BẢO MẬT",
+      SECURE_NOTE: "📝 GHI CHÚ / ẢNH",
+    };
+
     const rows = [];
     for (const r of filtered) {
       const isBioLocked = Array.isArray(r.tags) && r.tags.includes("bio-locked");
       const isIdentityDoc = r.item_type === "IDENTITY";
+      const isPaymentCard = r.item_type === "PAYMENT_CARD";
       const isRev = state.revealedIds.has(r.record_id) || (isIdentityDoc && !isBioLocked);
-      let pwdHtml = `<code>••••••••••••</code>`;
+
+      const rawPwd = isIdentityDoc || isPaymentCard
+        ? mergeKeyValMetadataString(String(r.password || ""), [])
+        : String(r.password || "");
+      const hasStructuredKv = rawPwd.includes("|") && rawPwd.includes(":");
+
+      let pwdHtml = `<code style="font-size:13px;letter-spacing:1px;">••••••••••••</code>`;
       if (isRev) {
-        const rawPwd = String(r.password || "");
-        if (rawPwd.includes("|") && rawPwd.includes(":")) {
-          const items = rawPwd
+        if (hasStructuredKv) {
+          const kvRows = rawPwd
             .split("|")
             .map((s) => s.trim())
             .filter(Boolean)
@@ -4224,32 +4347,53 @@
               if (cIdx > 0) {
                 const k = seg.slice(0, cIdx).trim();
                 const v = seg.slice(cIdx + 1).trim();
-                return `<div style="margin-bottom:2px;"><span style="color:var(--text-muted);font-weight:700;">• ${escapeHtml(k)}:</span> <span style="color:var(--text-primary);font-weight:600;">${escapeHtml(v)}</span></div>`;
+                const isMono = /^(Số|Mã|MRZ|CVV)/i.test(k);
+                return `<div class="kpw-doc-kv-row"><span class="kpw-doc-kv-key">${escapeHtml(k)}</span><span class="kpw-doc-kv-val${isMono ? " mono" : ""}">${escapeHtml(v)}</span></div>`;
               }
-              return `<div>• ${escapeHtml(seg)}</div>`;
+              return `<div class="kpw-doc-kv-row"><span class="kpw-doc-kv-val">${escapeHtml(seg)}</span></div>`;
             });
-          pwdHtml = `<div style="text-align:left;font-size:11.2px;line-height:1.42;background:var(--bg-subtle);padding:6px 8px;border-radius:6px;border:1px solid var(--border);">${items.join("")}</div>`;
+          pwdHtml = `<div class="kpw-doc-kv-list">${kvRows.join("")}</div>`;
         } else {
-          pwdHtml = `<code>${escapeHtml(rawPwd)}</code>`;
+          pwdHtml = `<code style="font-size:12.5px;font-weight:700;">${escapeHtml(rawPwd)}</code>`;
         }
       }
-      const attCount = (r.encrypted_attachments || []).length;
+
+      const atts = r.encrypted_attachments || [];
+      const attCount = atts.length;
       const histCount = (r.password_history || []).length;
       let totpHtml = "";
       if (r.totp_secret) {
         const t = await computeLiveTotp(r.totp_secret);
         if (t) {
-          totpHtml = `<div style="color:#059669;font-weight:700;font-size:11px;margin-top:3px;">2FA OTP: ${t.otp} (${t.rem}s)</div>`;
+          totpHtml = `<div style="color:#059669;font-weight:800;font-size:11.5px;margin-top:4px;">⏱️ 2FA OTP: ${t.otp} (${t.rem}s)</div>`;
         }
       }
-      const attHtml =
-        attCount > 0
-          ? `<div style="color:#0284c7;font-weight:700;font-size:10.5px;margin-top:2px;">🖼️ Đính kèm mã hóa: ${attCount} ảnh</div>`
-          : "";
+
+      // Hình thu nhỏ Mặt trước & Mặt sau ngay trên thẻ để chạm xem nhanh
+      let inlineThumbsHtml = "";
+      if (attCount > 0 && isRev) {
+        const thumbImgs = atts
+          .filter((a) => a && a.data_url)
+          .slice(0, 2)
+          .map((a, idx) => {
+            const sideLbl = a.label === "back_image" ? "Mặt sau" : idx === 0 ? "Mặt trước" : "Ảnh #" + (idx + 1);
+            return `
+              <div class="kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}" style="cursor:pointer;text-align:center;">
+                <img src="${a.data_url}" alt="${escapeHtml(sideLbl)}" style="width:100%;height:78px;object-fit:cover;border-radius:7px;display:block;" />
+                <span style="font-size:10px;color:var(--text-muted);font-weight:700;display:block;margin-top:2px;">🔍 ${sideLbl}</span>
+              </div>
+            `;
+          });
+        if (thumbImgs.length > 0) {
+          inlineThumbsHtml = `<div style="display:grid;grid-template-columns:repeat(${thumbImgs.length}, minmax(0, 1fr));gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">${thumbImgs.join("")}</div>`;
+        }
+      } else if (attCount > 0) {
+        inlineThumbsHtml = `<div style="color:#0284c7;font-weight:700;font-size:11px;margin-top:4px;">🖼️ Đính kèm mã hóa: ${attCount} ảnh thẻ</div>`;
+      }
 
       // UPGRADE #4: Radar Cảnh Báo Hạn Sử Dụng Giấy Tờ & Thẻ (Expiry Radar Badge)
       let expiryBadgeHtml = "";
-      const combinedInfo = `${r.password || ""} ${r.notes || ""} ${r.username || ""}`;
+      const combinedInfo = `${rawPwd} ${r.notes || ""} ${r.username || ""}`;
       const fullDateMatch = combinedInfo.match(/HSD:\s*(\d{2})\/(\d{2})\/(\d{4})/i);
       const shortDateMatch = !fullDateMatch ? combinedInfo.match(/HSD:\s*(0[1-9]|1[0-2])\/(\d{2})\b/i) : null;
       if (fullDateMatch || shortDateMatch) {
@@ -4270,46 +4414,56 @@
         if (expDate && !isNaN(expDate.getTime())) {
           const diffDays = Math.ceil((expDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
           if (diffDays < 0) {
-            expiryBadgeHtml = `<div style="color:#dc2626;font-weight:800;font-size:10.5px;margin-top:2px;">🔴 Đã quá hạn (${expLabel})</div>`;
+            expiryBadgeHtml = `<div style="color:#dc2626;font-weight:800;font-size:11px;margin-top:3px;">🔴 Đã quá hạn (${expLabel})</div>`;
           } else if (diffDays <= 180) {
-            expiryBadgeHtml = `<div style="color:#d97706;font-weight:800;font-size:10.5px;margin-top:2px;">🟡 Sắp hết hạn: còn ${diffDays} ngày (${expLabel})</div>`;
+            expiryBadgeHtml = `<div style="color:#d97706;font-weight:800;font-size:11px;margin-top:3px;">🟡 Sắp hết hạn: còn ${diffDays} ngày (${expLabel})</div>`;
           } else {
-            expiryBadgeHtml = `<div style="color:#059669;font-weight:700;font-size:10.5px;margin-top:2px;">🟢 Còn hạn (${expLabel})</div>`;
+            expiryBadgeHtml = `<div style="color:#059669;font-weight:700;font-size:11px;margin-top:3px;">🟢 Còn hạn (${expLabel})</div>`;
           }
         }
       }
 
+      const badgeText = typeLabelMap[r.item_type] || `🔐 ${r.item_type || "MỤC LƯU TRỮ"}`;
+      const idColLabel = isIdentityDoc ? "Số giấy tờ / Định danh" : isPaymentCard ? "Số thẻ ngân hàng" : "Tài khoản / ID";
+      const detailColLabel = isIdentityDoc
+        ? "Thông tin trích xuất trên giấy tờ"
+        : isPaymentCard
+        ? "Thông tin thẻ & Bảo mật"
+        : "Mật khẩu & Xác thực 2FA";
+
       rows.push(`
         <tr>
-          <td data-label="Phân loại & Tên">
+          <td data-label="Hồ sơ / Loại thẻ">
             <span class="table-cell-val">
-              <strong style="color:var(--primary);">[${escapeHtml(r.item_type || "LOGIN")}]</strong>
-              <strong>${escapeHtml(r.title)}</strong>
-              <div style="font-size:10.5px;color:var(--text-muted);">${escapeHtml(r.folder || "Mặc định")} • Rev #${r.revision || 1}</div>
+              <div style="font-size:10px;font-weight:800;color:var(--primary);letter-spacing:0.03em;margin-bottom:2px;">${escapeHtml(badgeText)}</div>
+              <div style="font-size:13.5px;font-weight:800;color:var(--text-title);line-height:1.3;">${escapeHtml(r.title)}</div>
+              <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">${escapeHtml(r.folder || "Mặc định")} • Phiên bản #${r.revision || 1}</div>
               ${expiryBadgeHtml}
             </span>
           </td>
-          <td data-label="Tài khoản / Số thẻ">
-            <span class="table-cell-val">${escapeHtml(r.username || "—")}</span>
+          <td data-label="${idColLabel}">
+            <span class="table-cell-val" style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:800;font-size:13px;color:var(--primary);letter-spacing:0.03em;">${escapeHtml(r.username || "—")}</span>
           </td>
-          <td data-label="Mật khẩu & 2FA">
+          <td class="kpw-td-fullwidth" data-label="${detailColLabel}">
             <span class="table-cell-val">
               ${pwdHtml}
               ${totpHtml}
-              ${attHtml}
-              ${histCount > 0 ? `<div style="font-size:10px;color:var(--text-muted);">Lịch sử: ${histCount} bản</div>` : ""}
+              ${inlineThumbsHtml}
+              ${histCount > 0 ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Lịch sử thay đổi: ${histCount} bản</div>` : ""}
             </span>
           </td>
-          <td data-label="Thao tác">
-            <span class="table-cell-val" style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
-              <button type="button" class="btn-chip-micro kpw-btn-toggle" data-id="${escapeHtml(r.record_id)}">${isRev ? "Ẩn" : "Hiện"}</button>
-              <button type="button" class="btn-chip-micro kpw-btn-copy" data-id="${escapeHtml(r.record_id)}">📋 Chép</button>
-              <button type="button" class="btn-chip-micro kpw-btn-snap" data-id="${escapeHtml(r.record_id)}">📸 Chụp Thẻ</button>
-              ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}">🖼️ Xem Ảnh</button>` : ""}
-              ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-pdf" data-id="${escapeHtml(r.record_id)}">🖨️ In PDF A4</button>` : ""}
-              <button type="button" class="btn-chip-micro kpw-btn-share-qr" data-id="${escapeHtml(r.record_id)}" title="Tạo mã QR chia sẻ tự hủy sau 5 phút">🔗 QR 5p</button>
-              <button type="button" class="btn-chip-micro kpw-btn-bio-lock" data-id="${escapeHtml(r.record_id)}" title="Bật/Tắt khóa vân tay riêng cho mục này">${(r.tags || []).includes("bio-locked") ? "🔒 Vân tay" : "🔓"}</button>
-              <button type="button" class="btn-chip-micro kpw-btn-del" data-id="${escapeHtml(r.record_id)}" style="color:#ef4444;">🗑️</button>
+          <td class="kpw-td-fullwidth" data-label="Thao tác nhanh">
+            <span class="table-cell-val">
+              <div class="kpw-action-grid">
+                <button type="button" class="btn-chip-micro kpw-btn-toggle" data-id="${escapeHtml(r.record_id)}">${isRev ? "🙈 Ẩn" : "👁️ Hiện"}</button>
+                <button type="button" class="btn-chip-micro kpw-btn-copy" data-id="${escapeHtml(r.record_id)}">📋 Sao chép</button>
+                ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-view-img" data-id="${escapeHtml(r.record_id)}">🖼️ Phóng to (${attCount})</button>` : ""}
+                ${attCount > 0 && isIdentityDoc ? `<button type="button" class="btn-chip-micro kpw-btn-reocr" data-id="${escapeHtml(r.record_id)}" style="color:#059669;">🔄 Quét lại</button>` : ""}
+                ${attCount > 0 ? `<button type="button" class="btn-chip-micro kpw-btn-pdf" data-id="${escapeHtml(r.record_id)}">🖨️ In PDF A4</button>` : ""}
+                <button type="button" class="btn-chip-micro kpw-btn-share-qr" data-id="${escapeHtml(r.record_id)}">🔗 QR 5 phút</button>
+                <button type="button" class="btn-chip-micro kpw-btn-bio-lock" data-id="${escapeHtml(r.record_id)}">${(r.tags || []).includes("bio-locked") ? "🔒 Vân tay" : "🔓 Khóa"}</button>
+                <button type="button" class="btn-chip-micro kpw-btn-del" data-id="${escapeHtml(r.record_id)}" style="color:#ef4444;">🗑️ Xóa</button>
+              </div>
             </span>
           </td>
         </tr>
@@ -4390,6 +4544,15 @@
       b.addEventListener("click", async () => {
         const id = b.getAttribute("data-id");
         await toggleRecordBiometricLock(id);
+      });
+    });
+
+    tbody.querySelectorAll(".kpw-btn-reocr").forEach((b) => {
+      b.addEventListener("click", () => {
+        const id = b.getAttribute("data-id");
+        requireRecordBiometricIfLocked(id, () => {
+          reExtractFullFieldsFromRecordImages(id, false);
+        });
       });
     });
 
@@ -4903,20 +5066,22 @@
         </div>
       </div>
 
-      <!-- SUB-PANEL 1: DANH BẠ MẬT KHẨU & THẺ (MẶC ĐỊNH MỞ RA GỌN SẠCH) -->
+      <!-- SUB-PANEL 1: DANH BẠ MẬT KHẨU & THẺ (MẶC ĐỊNH MỞ RA GỌN SẠCH - CHUẨN SINGLE-LEVEL CARD) -->
       <div id="kpw-panel-list" class="card settings-card" style="display: block;">
-        <div style="display: flex; gap: 5px; margin-bottom: 8px; align-items: center;">
-          <input type="search" id="kpw-search-input" placeholder="🔍 Tìm mật khẩu, thẻ Visa, CCCD, GPLX..." style="flex: 1; font-size: 12px; padding: 8px 10px; margin: 0;">
-          <button type="button" class="btn-chip-micro" style="padding: 8px 8px; font-size: 11px; font-weight: 700; white-space: nowrap;" onclick="window.KryptoPasswordVault.runSecurityAudit()">🛡️ Kiểm Toán</button>
-          <button type="button" class="btn-mobi-solid" style="padding: 8px 10px; font-size: 11.5px; white-space: nowrap; width: auto;" onclick="window.KryptoPasswordVault.switchSubView('add')">➕ Thêm</button>
-        </div>
-        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px;">
-          <button type="button" class="btn-chip-micro kpw-cat-chip active" onclick="window.KryptoPasswordVault.filterCategory('ALL', this)">Tất cả</button>
-          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('LOGIN', this)">🌐 Đăng nhập</button>
-          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('PAYMENT_CARD', this)">💳 Thẻ NH</button>
-          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('IDENTITY', this)">🪪 CCCD</button>
-          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('WIFI_NETWORK', this)">📶 Wi-Fi</button>
-          <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('SECURE_NOTE', this)">📝 Ghi chú / Ảnh</button>
+        <div class="kpw-list-toolbar-box">
+          <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
+            <input type="search" id="kpw-search-input" placeholder="🔍 Tìm CCCD, GPLX, Hộ chiếu, Thẻ Visa, Mật khẩu..." style="flex: 1; font-size: 12px; padding: 8px 10px; margin: 0;">
+            <button type="button" class="btn-chip-micro" style="padding: 8px 9px; font-size: 11px; font-weight: 700; white-space: nowrap;" onclick="window.KryptoPasswordVault.runSecurityAudit()">🛡️ Kiểm toán</button>
+            <button type="button" class="btn-mobi-solid" style="padding: 8px 11px; font-size: 11.5px; white-space: nowrap; width: auto;" onclick="window.KryptoPasswordVault.switchSubView('add')">➕ Thêm</button>
+          </div>
+          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button type="button" class="btn-chip-micro kpw-cat-chip active" onclick="window.KryptoPasswordVault.filterCategory('ALL', this)">Tất cả</button>
+            <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('IDENTITY', this)">🪪 Giấy tờ / CCCD</button>
+            <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('PAYMENT_CARD', this)">💳 Thẻ NH</button>
+            <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('LOGIN', this)">🌐 Đăng nhập</button>
+            <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('WIFI_NETWORK', this)">📶 Wi-Fi</button>
+            <button type="button" class="btn-chip-micro kpw-cat-chip" onclick="window.KryptoPasswordVault.filterCategory('SECURE_NOTE', this)">📝 Ghi chú</button>
+          </div>
         </div>
 
         <div id="kpw-image-preview-box" style="display:none;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--border);"></div>
